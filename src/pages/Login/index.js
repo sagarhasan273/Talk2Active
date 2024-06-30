@@ -1,19 +1,23 @@
-import { Box, Stack } from '@mui/material';
+import { Box, Button, Stack, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 import LabelWithInput from '../../components/common/LabelWithInput';
 import Logo from '../../components/common/Logo';
+import { useThemeContext } from '../../context/ThemeContextProvider';
 
 function Login({ loginFor }) {
+  const theme = useTheme();
+  const { setMode } = useThemeContext();
   const [passwordVisibleIcon, setPasswordVisibleIcon] = useState(false);
 
   const passwordVisibleIconHandler = () => {
     setPasswordVisibleIcon((prev) => !prev);
+    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
-  console.log(loginFor);
+
   return (
     <Box
       sx={{
-        backgroundColor: '#363636',
+        backgroundColor: theme.palette.background.primary,
         height: '100vh',
       }}
     >
@@ -29,7 +33,7 @@ function Login({ loginFor }) {
           }}
           gap={4}
         >
-          <Logo />
+          <Logo loginFor={loginFor} />
           <LabelWithInput label="Email" type="email" />
           <LabelWithInput
             label="Password"
@@ -37,6 +41,7 @@ function Login({ loginFor }) {
             passwordVisibleIcon={passwordVisibleIcon}
             passwordVisibleIconHandler={passwordVisibleIconHandler}
           />
+          <Button variant="contained">Log In</Button>
         </Stack>
       </Stack>
     </Box>
