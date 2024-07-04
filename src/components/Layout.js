@@ -1,3 +1,3 @@
 export default function Layout() {
-  return '';
+  return 'Welcome to Talk2Active';
 }

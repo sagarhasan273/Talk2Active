@@ -8,6 +8,7 @@ import React from 'react';
 function LabelWithInput({ label, type, inputProps, ...props }) {
   return (
     <Stack>
+      {type === 'text' && <TextField label={label} type={type} variant="standard" {...props} />}
       {type === 'email' && (
         <TextField
           label={label}

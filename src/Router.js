@@ -6,7 +6,8 @@ import Authmiddleware from './network/middleware/Authmiddleware';
 export default function Router() {
   return (
     <Routes>
-      <Route path="/login/*" element={<AuthLayout />} />
+      <Route path="/login/*" element={<AuthLayout type="login" />} />
+      <Route path="/register/*" element={<AuthLayout type="register" />} />
       <Route
         path="*"
         element={
