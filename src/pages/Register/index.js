@@ -1,17 +1,34 @@
 import { Box, Button, Stack, useTheme } from '@mui/material';
 import React, { useState } from 'react';
+import { useMutation } from 'react-query';
 import LabelWithInput from '../../components/common/LabelWithInput';
 import Logo from '../../components/common/Logo';
-import { useThemeContext } from '../../context/ThemeContextProvider';
+import * as API_URL from '../../network/Api';
+import AXIOS from '../../network/axios';
 
 function Register({ loginFor }) {
   const theme = useTheme();
-  const { setMode } = useThemeContext();
+  //   const { setMode } = useThemeContext();
+  const [formData, setFormData] = useState({});
   const [passwordVisibleIcon, setPasswordVisibleIcon] = useState(false);
+
+  const registerQuery = useMutation((data) => AXIOS.post(API_URL.USER_REGISTER, data), {
+    onSuccess: (data) => {
+      console.log(data);
+    },
+  });
 
   const passwordVisibleIconHandler = () => {
     setPasswordVisibleIcon((prev) => !prev);
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+    // setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const formHandler = (event) => {
+    setFormData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
+  };
+
+  const sumbitHandler = () => {
+    registerQuery.mutate(formData);
   };
 
   return (
@@ -35,17 +52,40 @@ function Register({ loginFor }) {
         >
           <Logo loginFor={loginFor} />
           <Stack flexDirection="row" justifyContent="space-between">
-            <LabelWithInput label="First Name" type="text" />
-            <LabelWithInput label="Last Name" type="text" />
+            <LabelWithInput
+              name="firstName"
+              label="First Name"
+              type="text"
+              value={formData?.firstName || ''}
+              onChange={formHandler}
+            />
+            <LabelWithInput
+              name="lastName"
+              label="Last Name"
+              type="text"
+              value={formData?.lastName || ''}
+              onChange={formHandler}
+            />
           </Stack>
-          <LabelWithInput label="Email" type="email" />
           <LabelWithInput
+            name="email"
+            label="Email"
+            type="email"
+            value={formData?.email || ''}
+            onChange={formHandler}
+          />
+          <LabelWithInput
+            name="password"
             label="Password"
             type="password"
+            value={formData?.password || ''}
+            onChange={formHandler}
             passwordVisibleIcon={passwordVisibleIcon}
             passwordVisibleIconHandler={passwordVisibleIconHandler}
           />
-          <Button variant="contained">Sign Up</Button>
+          <Button variant="contained" onClick={sumbitHandler} disabled={registerQuery.isLoading}>
+            Sign Up
+          </Button>
         </Stack>
       </Stack>
     </Box>

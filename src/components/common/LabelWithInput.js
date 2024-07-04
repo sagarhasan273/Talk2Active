@@ -5,7 +5,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { InputAdornment, Stack, TextField } from '@mui/material';
 import React from 'react';
 
-function LabelWithInput({ label, type, inputProps, ...props }) {
+function LabelWithInput({ label, type, inputProps, passwordVisibleIcon, passwordVisibleIconHandler, ...props }) {
   return (
     <Stack>
       {type === 'text' && <TextField label={label} type={type} variant="standard" {...props} />}
@@ -27,7 +27,7 @@ function LabelWithInput({ label, type, inputProps, ...props }) {
       {type === 'password' && (
         <TextField
           label={label}
-          type={type}
+          type={passwordVisibleIcon ? 'text' : 'password'}
           variant="standard"
           autoComplete="current-password"
           InputProps={{
@@ -37,8 +37,8 @@ function LabelWithInput({ label, type, inputProps, ...props }) {
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment sx={{ cursor: 'pointer' }} position="start" onClick={props?.passwordVisibleIconHandler}>
-                {props?.passwordVisibleIcon ? <VisibilityIcon /> : <VisibilityOffIcon />}
+              <InputAdornment sx={{ cursor: 'pointer' }} position="start" onClick={passwordVisibleIconHandler}>
+                {passwordVisibleIcon ? <VisibilityIcon /> : <VisibilityOffIcon />}
               </InputAdornment>
             ),
           }}
