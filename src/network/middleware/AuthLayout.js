@@ -9,14 +9,14 @@ export default function AuthLayout({ type }) {
     lastLoginType = JSON.parse(localStorage.getItem('lastLoginType'));
   }
 
-  const redirectPath = !lastLoginType || lastLoginType === 'user' ? '/login/user' : '/login/admin';
+  const redirectPath = !lastLoginType || lastLoginType === 'loginUser' ? '/login/user' : '/login/admin';
 
   return (
     <Routes>
       {type === 'login' && <Route path="user" element={<Login loginFor="user" />} />}
       {type === 'login' && <Route path="admin" element={<Login loginFor="admin" />} />}
-      {type === 'register' && <Route path="user" element={<Register loginFor="user" />} />}
-      {type === 'register' && <Route path="admin" element={<Register loginFor="admin" />} />}
+      {type === 'register' && <Route path="user" element={<Register registerFor="user" />} />}
+      {type === 'register' && <Route path="admin" element={<Register registerFor="admin" />} />}
       <Route path="*" element={<Navigate to={redirectPath} />} />
     </Routes>
   );

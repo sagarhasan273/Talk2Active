@@ -3,18 +3,21 @@ import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import LabelWithInput from '../../components/common/LabelWithInput';
 import Logo from '../../components/common/Logo';
+import { useGlobalContext } from '../../context/GlobalContextProvider';
 import * as API_URL from '../../network/Api';
 import AXIOS from '../../network/axios';
 
-function Register({ loginFor }) {
+function Register({ registerFor }) {
   const theme = useTheme();
+  const { setUser } = useGlobalContext();
   //   const { setMode } = useThemeContext();
   const [formData, setFormData] = useState({});
   const [passwordVisibleIcon, setPasswordVisibleIcon] = useState(false);
 
   const registerQuery = useMutation((data) => AXIOS.post(API_URL.USER_REGISTER, data), {
-    onSuccess: (data) => {
-      console.log(data);
+    onSuccess: (response) => {
+      setUser(response.data.user || {});
+      console.log(response.data.user);
     },
   });
 
@@ -50,7 +53,7 @@ function Register({ loginFor }) {
           }}
           gap={4}
         >
-          <Logo loginFor={loginFor} />
+          <Logo registerFor={registerFor} />
           <Stack flexDirection="row" justifyContent="space-between">
             <LabelWithInput
               name="firstName"

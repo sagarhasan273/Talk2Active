@@ -1,7 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
-import Layout from './components/Layout';
 import AuthLayout from './network/middleware/AuthLayout';
 import Authmiddleware from './network/middleware/Authmiddleware';
+import Layout from './pages/Layout';
 
 export default function Router() {
   return (

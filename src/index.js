@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import GlobalContextProvider from './context/GlobalContextProvider';
 import ThemeContextProvider from './context/ThemeContextProvider';
 import GlobalThemeProvider from './theme';
 
@@ -16,7 +17,9 @@ root.render(
       <GlobalThemeProvider>
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
-            <App />
+            <GlobalContextProvider>
+              <App />
+            </GlobalContextProvider>
           </QueryClientProvider>
         </BrowserRouter>
       </GlobalThemeProvider>

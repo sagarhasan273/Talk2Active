@@ -14,6 +14,7 @@ function LabelWithInput({ label, type, inputProps, passwordVisibleIcon, password
           label={label}
           type={type}
           variant="standard"
+          value=""
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

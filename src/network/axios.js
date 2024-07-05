@@ -25,7 +25,7 @@ AXIOS.interceptors.request.use(
 AXIOS.interceptors.response.use(
   (response) => {
     console.log('==============AXIOS RESPONSE============');
-    return response;
+    return response.data;
   },
   (error) => Promise.reject(error)
 );
