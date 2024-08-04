@@ -9,9 +9,13 @@ export default function Button() {
         fontSize: '16px',
         fontWeight: '500',
         lineHeight: '24px',
+        minWidth: '30px',
         borderRadius: '30px',
-        padding: '12px 30px',
+        padding: '10px 20px',
         textTransform: 'none',
+        '&.MuiButtonBase-root': {
+          color: `${theme.palette[ownerState.color].text}` || 'defaultColor',
+        },
 
         ...(ownerState.variant === 'danger' && {
           borderRadius: '11px',
@@ -39,7 +43,6 @@ export default function Button() {
           }),
 
           ...(ownerState.variant === 'contained' && {
-            color: `#fff!important`,
             background: `${theme.palette[ownerState.color].main}`,
           }),
 
@@ -57,7 +60,31 @@ export default function Button() {
         ...(ownerState.size === 'small' && {
           fontSize: '14px',
           lineHeight: '24px',
-          padding: '6px 16px',
+          padding: '5px 16px',
+          gap: '4px',
+          fontWeight: 600,
+
+          '& .MuiButton-startIcon': {
+            marginRight: 0,
+          },
+        }),
+
+        ...(ownerState.size === 'medium' && {
+          fontSize: '14px',
+          lineHeight: '24px',
+          padding: '7px 16px',
+          gap: '4px',
+          fontWeight: 600,
+
+          '& .MuiButton-startIcon': {
+            marginRight: 0,
+          },
+        }),
+
+        ...(ownerState.size === 'large' && {
+          fontSize: '14px',
+          lineHeight: '24px',
+          padding: '8px 16px',
           gap: '4px',
           fontWeight: 600,
 

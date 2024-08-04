@@ -1,11 +1,11 @@
 const getPalette = (mode = 'light') => {
   const commonPalette = {
     primary: {
-      main: '#5E97A9',
+      main: '#6495ED',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#15BFCA',
+      main: '#F2F2F2',
       contrastText: '#ffffff',
     },
     info: {
@@ -31,15 +31,21 @@ const getPalette = (mode = 'light') => {
       secondary: 'rgba(255, 0, 16, 1)',
     },
     text: {
+      main: '#c2c2c2',
       primary: '#363636',
       secondary: '#525252',
       secondary2: '#737373',
       body: '#3F4254',
       body2: '#8F93A0',
+      dark: '#383838',
     },
     grey: {
       200: 'rgba(0, 0, 0, 0.08)',
       201: '#EFEFEF',
+    },
+    button: {
+      main: '#39403e',
+      text: '#ffffff',
     },
     custom: {
       tableLoader: 'rgba(255, 255, 255, 0.7)',
@@ -48,7 +54,8 @@ const getPalette = (mode = 'light') => {
       border2: '#E5E7E9',
     },
     background: {
-      primary: '#363636',
+      main: '#383838',
+      primary: '#c2c2c2',
       secondary: '#F6F8FA',
       secondaryHover: '#f0f3f6',
       contrastText: '#ffffff',

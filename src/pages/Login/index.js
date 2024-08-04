@@ -55,12 +55,14 @@ function Login({ loginFor }) {
       <Stack sx={{ flex: 1, height: '100vh', alignItems: 'center' }}>
         <Stack
           sx={{
-            background: '#EEEEEE',
+            background: theme.palette.background.secondary,
             m: 'auto',
             p: 4,
-            width: '450px',
-            height: '500px',
+            width: '350px',
+            height: '450px',
             justifyContent: 'center',
+            borderRadius: '10px',
+            boxShadow: '15px 15px 60px 1px black',
           }}
           gap={4}
         >
@@ -75,7 +77,7 @@ function Login({ loginFor }) {
             passwordVisibleIcon={passwordVisibleIcon}
             passwordVisibleIconHandler={passwordVisibleIconHandler}
           />
-          <Button variant="contained" onClick={sumbitHandler}>
+          <Button variant="contained" color="button" size="small" onClick={sumbitHandler}>
             Log In
           </Button>
         </Stack>

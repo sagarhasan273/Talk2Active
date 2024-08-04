@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { useThemeContext } from '../context/ThemeContextProvider';
 import Components from './@components';
 import getPalette from './palette';
+import { getTypography } from './typography';
 
 function GlobalThemeProvider({ children }) {
   const { mode } = useThemeContext();
@@ -10,6 +11,7 @@ function GlobalThemeProvider({ children }) {
   const customTheme = useMemo(() => {
     const theme = createTheme({
       palette: getPalette(mode),
+      typography: getTypography(),
     });
     theme.components = Components(theme);
     return theme;

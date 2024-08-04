@@ -7,7 +7,7 @@ const AXIOS = axios.create({
 
 AXIOS.interceptors.request.use(
   (config) => {
-    console.log('=============AXIOS REQUEST============');
+    // console.log('=============AXIOS REQUEST============');
     // Do something before request is sent
     const accesstoken = localStorage.getItem('accesstoken');
     config.headers = {
@@ -23,10 +23,9 @@ AXIOS.interceptors.request.use(
 );
 
 AXIOS.interceptors.response.use(
-  (response) => {
-    console.log('==============AXIOS RESPONSE============');
-    return response.data;
-  },
+  (response) =>
+    // console.log('==============AXIOS RESPONSE============');
+    response.data,
   (error) => Promise.reject(error)
 );
 
