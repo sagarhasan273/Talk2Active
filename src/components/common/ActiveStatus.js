@@ -118,7 +118,12 @@ function ActiveStatus({ status, children }) {
       </CustomStack>
     );
   }
-  return null;
+
+  return (
+    <CustomStack direction="row" gap="5px" alignItems="center">
+      {children}
+    </CustomStack>
+  );
 }
 
 export default ActiveStatus;

@@ -8,3 +8,6 @@ export const ADMIN_LOGIN = `${USER_ENDPOINT}/login/admin`;
 
 // User Info
 export const USER_GET_DETAILS = `${USER_ENDPOINT}`;
+
+// Profile Update
+export const USER_PROFILE_STATUS_UPDATE = `${USER_ENDPOINT}/profile/status/update`;

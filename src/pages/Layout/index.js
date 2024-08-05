@@ -13,8 +13,9 @@ export default function Layout() {
     onSuccess: (response) => {
       if (response?.status) {
         setUser(response?.data?.user || {});
+      } else {
+        console.log("User isn't exist");
       }
-      console.log(response?.data?.user);
     },
   });
 

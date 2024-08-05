@@ -5,8 +5,12 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import PersonIcon from '@mui/icons-material/Person';
 import { Avatar, Button, Divider, Grid, Stack, styled, Typography } from '@mui/material';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React from 'react';
+import { useMutation, useQueryClient } from 'react-query';
+import { successMsg } from '../common/successMsg';
 import { useGlobalContext } from '../context/GlobalContextProvider';
+import * as API_URL from '../network/Api';
+import AXIOS from '../network/axios';
 import ActiveStatus from './common/ActiveStatus';
 import { statusButtons } from './helpers';
 
@@ -27,7 +31,8 @@ const StatusButton = styled(Button)(({ theme }) => ({
   border: `1px solid ${theme.palette.background.primary}`,
   color: theme.palette.background.primary,
   '&:hover': {
-    background: 'transparent',
+    color: theme.palette.text.dark,
+    background: theme.palette.background.primary,
     border: `2px solid ${theme.palette.background.primary}`,
   },
 }));
@@ -35,7 +40,17 @@ const StatusButton = styled(Button)(({ theme }) => ({
 function ProfileInfo() {
   const theme = useTheme();
   const { user } = useGlobalContext();
-  const [status, setStatus] = useState('online');
+  const queryClient = useQueryClient();
+
+  const liveStatusQuery = useMutation((data) => AXIOS.post(API_URL.USER_PROFILE_STATUS_UPDATE, data), {
+    onSuccess: (response) => {
+      if (response?.status) {
+        queryClient.invalidateQueries(API_URL.USER_GET_DETAILS);
+      } else {
+        successMsg(response?.message, 'info');
+      }
+    },
+  });
 
   const liveStatusStyle = {
     background: theme.palette.background.primary,
@@ -46,13 +61,16 @@ function ProfileInfo() {
   };
 
   const statusHandler = (status) => {
-    setStatus(status);
+    if (!status) {
+      return;
+    }
+    liveStatusQuery.mutate({ userId: user.userId, activeStatus: status });
   };
 
   return (
     <Stack pl={1}>
       <Stack sx={{ p: '10px 12px' }} direction="row" justifyContent="space-between">
-        <ActiveStatus status={status}>
+        <ActiveStatus status={user?.activeStatus}>
           <Avatar alt="Sagar Hasan" src={user?.image} sx={{ width: 100, height: 100 }} />
         </ActiveStatus>
         <Stack sx={{ width: '100px' }} justifyContent="center">
@@ -70,7 +88,7 @@ function ProfileInfo() {
           {statusButtons?.map((item, index) => (
             <StatusButton
               key={index}
-              sx={{ ...(status === item?.value && liveStatusStyle) }}
+              sx={{ ...(user?.activeStatus === item?.value && liveStatusStyle) }}
               onClick={() => statusHandler(item?.value)}
               disableRipple
             >
