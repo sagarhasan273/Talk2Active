@@ -4,21 +4,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PaletteIcon from '@mui/icons-material/Palette';
 import PersonIcon from '@mui/icons-material/Person';
 import { Avatar, Button, Divider, Grid, Stack, styled, Typography } from '@mui/material';
+import moment from 'moment';
 import React, { useState } from 'react';
+import { useGlobalContext } from '../context/GlobalContextProvider';
 import ActiveStatus from './common/ActiveStatus';
 import { statusButtons } from './helpers';
-
-const staticUser = {
-  name: 'Sagar Hasan',
-  image: 'https://photosnow.org/wp-content/uploads/2024/04/attitude-girl-anime-dp_8.jpg',
-  userId: 'fkji2532fg',
-  email: 'sagarhasan273@gmail.com',
-  activeStatus: 'offline', // online, busy, sleeping, brb, offline
-  followers: '57k',
-  friends: '9',
-  following: '9',
-  createdAt: '01/08/2023 01:23AM',
-};
 
 const CustomTypography = styled(Typography)(({ theme }) => ({
   textAlign: 'left',
@@ -44,6 +34,7 @@ const StatusButton = styled(Button)(({ theme }) => ({
 
 function ProfileInfo() {
   const theme = useTheme();
+  const { user } = useGlobalContext();
   const [status, setStatus] = useState('online');
 
   const liveStatusStyle = {
@@ -62,19 +53,19 @@ function ProfileInfo() {
     <Stack pl={1}>
       <Stack sx={{ p: '10px 12px' }} direction="row" justifyContent="space-between">
         <ActiveStatus status={status}>
-          <Avatar alt="Sagar Hasan" src={staticUser?.image} sx={{ width: 100, height: 100 }} />
+          <Avatar alt="Sagar Hasan" src={user?.image} sx={{ width: 100, height: 100 }} />
         </ActiveStatus>
         <Stack sx={{ width: '100px' }} justifyContent="center">
-          <CustomTypography sx={{}}>Followers: {staticUser?.followers}</CustomTypography>
-          <CustomTypography sx={{}}>Friends: {staticUser?.friends}</CustomTypography>
-          <CustomTypography sx={{}}>Following: {staticUser?.friends}</CustomTypography>
-          <CustomTypography sx={{}}>ID: {staticUser?.userId}</CustomTypography>
+          <CustomTypography sx={{}}>Followers: {user?.followers}</CustomTypography>
+          <CustomTypography sx={{}}>Friends: {user?.friends}</CustomTypography>
+          <CustomTypography sx={{}}>Following: {user?.friends}</CustomTypography>
+          <CustomTypography sx={{}}>ID: {user?.userId}</CustomTypography>
         </Stack>
       </Stack>
       <Stack sx={{ width: '100%', pb: 2 }}>
-        <CustomTypography>Name: {staticUser?.name}</CustomTypography>
-        <CustomTypography>Email: {staticUser?.email}</CustomTypography>
-        <CustomTypography>Creation Date: {staticUser?.createdAt}</CustomTypography>
+        <CustomTypography>Name: {user?.name}</CustomTypography>
+        <CustomTypography>Email: {user?.email}</CustomTypography>
+        <CustomTypography>Creation Date: {moment(user?.createdAt).format('L LT')}</CustomTypography>
         <Grid container gap="8px" pt={1}>
           {statusButtons?.map((item, index) => (
             <StatusButton

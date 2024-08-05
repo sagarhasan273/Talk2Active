@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie } from '../helpers/cookies';
 import { API_URL } from './Api';
 
 const AXIOS = axios.create({
@@ -9,7 +10,7 @@ AXIOS.interceptors.request.use(
   (config) => {
     // console.log('=============AXIOS REQUEST============');
     // Do something before request is sent
-    const accesstoken = localStorage.getItem('accesstoken');
+    const accesstoken = getCookie('accesstoken');
     config.headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accesstoken}`,

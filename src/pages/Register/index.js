@@ -1,6 +1,7 @@
 import { Box, Button, Stack, useTheme } from '@mui/material';
 import React, { useState } from 'react';
 import { useMutation } from 'react-query';
+import { successMsg } from '../../common/successMsg';
 import LabelWithInput from '../../components/common/LabelWithInput';
 import Logo from '../../components/common/Logo';
 import { useGlobalContext } from '../../context/GlobalContextProvider';
@@ -16,8 +17,10 @@ function Register({ registerFor }) {
 
   const registerQuery = useMutation((data) => AXIOS.post(API_URL.USER_REGISTER, data), {
     onSuccess: (response) => {
-      setUser(response.data.user || {});
-      console.log(response.data.user);
+      if (response?.status) {
+        setUser(response.data.user || {});
+        successMsg(response?.message, 'success');
+      }
     },
   });
 

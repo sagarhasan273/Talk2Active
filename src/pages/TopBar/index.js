@@ -21,7 +21,7 @@ const ProfilePopper = styled(Popper)(() => ({
   width: '250px',
 }));
 
-function TopBar() {
+function TopBar({ user = {} }) {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [profileArrowDrop, setProfileArrowDrop] = useState(false);
@@ -54,14 +54,10 @@ function TopBar() {
             <ChatIcon />
           </CustomButton>
           <CustomButton sx={{ p: '0px 2px' }} onClick={profileArrowDropHandler} disableRipple>
-            <ActiveStatus status="online">
-              <Avatar
-                alt="Remy Sharp"
-                src="https://photosnow.org/wp-content/uploads/2024/04/attitude-girl-anime-dp_8.jpg"
-                sx={{ width: 34, height: 34 }}
-              />
+            <ActiveStatus status={user?.activeStatus}>
+              <Avatar alt={user?.name} src={user?.image} sx={{ width: 34, height: 34 }} />
             </ActiveStatus>
-            <Typography>Sagar Hasan</Typography>
+            <Typography>{user?.name}</Typography>
             {profileArrowDrop ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
           </CustomButton>
           <ProfilePopper open={profileArrowDrop} anchorEl={anchorEl} sx={{}}>

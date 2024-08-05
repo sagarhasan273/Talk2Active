@@ -7,6 +7,7 @@ import LabelWithInput from '../../components/common/LabelWithInput';
 import Logo from '../../components/common/Logo';
 import { useGlobalContext } from '../../context/GlobalContextProvider';
 import { useThemeContext } from '../../context/ThemeContextProvider';
+import { setCookie } from '../../helpers/cookies';
 import * as API_URL from '../../network/Api';
 import AXIOS from '../../network/axios';
 
@@ -24,11 +25,13 @@ function Login({ loginFor }) {
       if (response?.status) {
         setUser(response.data.user);
         successMsg(response.message, 'success');
+        setCookie('accesstoken', response.data.accessToken, 30);
         history('/', {
           state: null,
         });
+      } else {
+        successMsg(response?.message, 'info');
       }
-      console.log(response.data.data);
     },
   });
 
@@ -67,7 +70,14 @@ function Login({ loginFor }) {
           gap={4}
         >
           <Logo loginFor={loginFor} />
-          <LabelWithInput label="Email" type="email" name="email" value={data.email || ''} onChange={formHandler} />
+          <LabelWithInput
+            label="Email"
+            type="email"
+            name="email"
+            value={data.email || ''}
+            onChange={formHandler}
+            disabled={loginQuery.isLoading}
+          />
           <LabelWithInput
             label="Password"
             type="password"
@@ -76,8 +86,15 @@ function Login({ loginFor }) {
             onChange={formHandler}
             passwordVisibleIcon={passwordVisibleIcon}
             passwordVisibleIconHandler={passwordVisibleIconHandler}
+            disabled={loginQuery.isLoading}
           />
-          <Button variant="contained" color="button" size="small" onClick={sumbitHandler}>
+          <Button
+            variant="contained"
+            color="button"
+            size="small"
+            onClick={sumbitHandler}
+            disabled={loginQuery.isLoading}
+          >
             Log In
           </Button>
         </Stack>
