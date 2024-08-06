@@ -7,8 +7,10 @@ import { Avatar, Button, Divider, Grid, Stack, styled, Typography } from '@mui/m
 import moment from 'moment';
 import React from 'react';
 import { useMutation, useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 import { successMsg } from '../common/successMsg';
 import { useGlobalContext } from '../context/GlobalContextProvider';
+import { deleteCookie } from '../helpers/cookies';
 import * as API_URL from '../network/Api';
 import AXIOS from '../network/axios';
 import ActiveStatus from './common/ActiveStatus';
@@ -38,14 +40,17 @@ const StatusButton = styled(Button)(({ theme }) => ({
 }));
 
 function ProfileInfo() {
+  const history = useNavigate();
+
   const theme = useTheme();
-  const { user } = useGlobalContext();
+  const { user, setUser } = useGlobalContext();
   const queryClient = useQueryClient();
 
   const liveStatusQuery = useMutation((data) => AXIOS.post(API_URL.USER_PROFILE_STATUS_UPDATE, data), {
     onSuccess: (response) => {
       if (response?.status) {
         queryClient.invalidateQueries(API_URL.USER_GET_DETAILS);
+        successMsg('Status updated successfully!', 'success', { position: 'top-left' });
       } else {
         successMsg(response?.message, 'info');
       }
@@ -65,6 +70,15 @@ function ProfileInfo() {
       return;
     }
     liveStatusQuery.mutate({ userId: user.userId, activeStatus: status });
+  };
+
+  const logoutHandle = () => {
+    deleteCookie('accesstoken');
+    setUser({});
+    history('/', {
+      state: null,
+    });
+    successMsg('Logout successfully!', 'success');
   };
 
   return (
@@ -108,7 +122,11 @@ function ProfileInfo() {
         <Button startIcon={<DeleteIcon />} sx={{ color: theme.palette.text.main, fontSize: '12px' }}>
           Delete Account
         </Button>
-        <Button startIcon={<LogoutIcon />} sx={{ color: theme.palette.text.main, fontSize: '12px' }}>
+        <Button
+          onClick={logoutHandle}
+          startIcon={<LogoutIcon />}
+          sx={{ color: theme.palette.text.main, fontSize: '12px' }}
+        >
           Logout
         </Button>
       </Stack>

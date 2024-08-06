@@ -9,6 +9,7 @@ export const successMsg = (msg, type, props) => {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
+      className: 'custom-toast',
 
       ...(props || {}),
     });
@@ -16,6 +17,7 @@ export const successMsg = (msg, type, props) => {
   if (type === 'dark') {
     return toast.dark(msg, {
       autoClose: 1500,
+      className: 'custom-toast',
 
       ...(props || {}),
     });
@@ -23,6 +25,7 @@ export const successMsg = (msg, type, props) => {
   if (type === 'info') {
     return toast.info(msg, {
       autoClose: 1500,
+      className: 'custom-toast',
 
       ...(props || {}),
     });
@@ -30,12 +33,15 @@ export const successMsg = (msg, type, props) => {
   if (type === 'error') {
     return toast.error(msg, {
       autoClose: 1500,
+      className: 'custom-toast',
 
       ...(props || {}),
     });
   }
   return toast.warn(msg, {
     autoClose: 2000,
+    className: 'custom-toast',
+
     ...(props || {}),
   });
 };
