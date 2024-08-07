@@ -56,7 +56,7 @@ const getPalette = (mode = 'light') => {
     background: {
       main: '#383838',
       primary: '#c2c2c2',
-      secondary: '#F6F8FA',
+      secondary: '#525252',
       secondaryHover: '#f0f3f6',
       contrastText: '#ffffff',
     },

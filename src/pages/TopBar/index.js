@@ -7,7 +7,19 @@ import HomeIcon from '@mui/icons-material/Home';
 import LoginIcon from '@mui/icons-material/Login';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Avatar, Box, Button, Divider, Popper, Stack, styled, Typography, useTheme } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Button,
+  ClickAwayListener,
+  Divider,
+  Paper,
+  Popper,
+  Stack,
+  styled,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileInfo from '../../components/ProfileInfo';
@@ -35,6 +47,10 @@ function TopBar({ user = {} }) {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
+  const handleClickAway = (event) => {
+    setProfileArrowDrop((prev) => !prev);
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
   const loginHandler = () => {
     history('/login/user', {
       state: null,
@@ -71,19 +87,22 @@ function TopBar({ user = {} }) {
               <Typography>{user?.name}</Typography>
               {profileArrowDrop ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
             </CustomButton>
-            <ProfilePopper open={profileArrowDrop} anchorEl={anchorEl} sx={{}}>
-              <Stack
-                className={profileArrowDrop ? 'dropDown-profile' : 'dropUp-profile'}
-                sx={{
-                  background: theme.palette.background.main,
-                  width: '100%',
-                  height: '400px',
-                  borderRadius: '10px',
-                  p: 1,
-                }}
-              >
-                <ProfileInfo />
-              </Stack>
+            <ProfilePopper open={profileArrowDrop} anchorEl={anchorEl}>
+              <ClickAwayListener onClickAway={handleClickAway}>
+                <Paper
+                  className={profileArrowDrop ? 'dropDown-profile' : 'dropUp-profile'}
+                  sx={{
+                    background: theme.palette.background.main,
+                    width: '100%',
+                    height: '400px',
+                    borderRadius: '10px',
+                    p: 1,
+                    border: `1px solid ${theme.palette.background.secondary}`,
+                  }}
+                >
+                  <ProfileInfo />
+                </Paper>
+              </ClickAwayListener>
             </ProfilePopper>
             <Divider orientation="vertical" sx={{ width: '1px', height: '40px', backgroundColor: 'black' }} />
             <CustomButton disableRipple>
