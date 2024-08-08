@@ -33,7 +33,7 @@ export const staticPostData = [
   {
     userName: 'Taha',
     postDuration: '01h ago',
-    image: 'https://d38b044pevnwc9.cloudfront.net/cutout-nuxt/enhancer/3.jpg',
+    image: 'https://i.pinimg.com/564x/a7/48/db/a748db82fa559ec6c1d6ecff9a18520c.jpg',
     likes: 15,
     comments: 4,
   },

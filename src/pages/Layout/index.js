@@ -1,10 +1,11 @@
 import { Box } from '@mui/material';
 import { useQuery } from 'react-query';
+import { Route, Routes } from 'react-router-dom';
 import { useGlobalContext } from '../../context/GlobalContextProvider';
 import { USER_GET_DETAILS } from '../../network/Api';
 import AXIOS from '../../network/axios';
+import { getUserRoutes } from '../../routes/user_routes';
 import TopBar from '../TopBar';
-import UserDashboard from '../UserDashboard';
 
 export default function Layout() {
   const { user, setUser } = useGlobalContext();
@@ -19,10 +20,16 @@ export default function Layout() {
     },
   });
 
+  const routes = getUserRoutes();
+
   return (
     <Box>
       <TopBar user={user} loading={userQuery.isLoading} />
-      <UserDashboard />
+      <Routes>
+        {routes?.map((route, index) => (
+          <Route key={index} path={route?.path} element={route?.component} />
+        ))}
+      </Routes>
     </Box>
   );
 }

@@ -3,6 +3,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import ChatIcon from '@mui/icons-material/Chat';
+import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
 import HomeIcon from '@mui/icons-material/Home';
 import LoginIcon from '@mui/icons-material/Login';
 import PeopleIcon from '@mui/icons-material/People';
@@ -24,6 +25,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileInfo from '../../components/ProfileInfo';
 import ActiveStatus from '../../components/common/ActiveStatus';
+import { changeTopBarActionRouteHistory } from './helper';
 
 const CustomButton = styled(Button)(() => ({
   color: '#c9c9c9',
@@ -51,10 +53,17 @@ function TopBar({ user = {} }) {
     setProfileArrowDrop((prev) => !prev);
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
+
   const loginHandler = () => {
     history('/login/user', {
       state: null,
     });
+  };
+
+  const topBarActionHandler = (event, type) => {
+    event.preventDefault();
+
+    changeTopBarActionRouteHistory(type, history);
   };
 
   return (
@@ -71,13 +80,16 @@ function TopBar({ user = {} }) {
         </Stack>
         {user?.name && (
           <Stack direction="row" gap={2} sx={{}}>
-            <CustomButton disableRipple>
+            <CustomButton onClick={(e) => topBarActionHandler(e, 'home')} disableRipple>
               <HomeIcon />
             </CustomButton>
-            <CustomButton disableRipple>
+            <CustomButton onClick={(e) => topBarActionHandler(e, 'posts')} disableRipple>
+              <DynamicFeedIcon />
+            </CustomButton>
+            <CustomButton onClick={(e) => topBarActionHandler(e, 'people')} disableRipple>
               <PeopleIcon />
             </CustomButton>
-            <CustomButton disableRipple>
+            <CustomButton onClick={(e) => topBarActionHandler(e, 'messages')} disableRipple>
               <ChatIcon />
             </CustomButton>
             <CustomButton sx={{ p: '0px 2px' }} onClick={profileArrowDropHandler} disableRipple>
