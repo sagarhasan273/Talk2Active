@@ -60,6 +60,9 @@ const getPalette = (mode = 'light') => {
       secondaryHover: '#f0f3f6',
       contrastText: '#ffffff',
     },
+    follow: {
+      main: '#70b5ff',
+    },
   };
 
   if (mode === 'dark') {
