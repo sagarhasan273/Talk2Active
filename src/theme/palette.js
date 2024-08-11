@@ -63,6 +63,12 @@ const getPalette = (mode = 'light') => {
     follow: {
       main: '#70b5ff',
     },
+    input: {
+      main: '#f0f0f0',
+    },
+    hover: {
+      main: '#70b5ff',
+    },
   };
 
   if (mode === 'dark') {

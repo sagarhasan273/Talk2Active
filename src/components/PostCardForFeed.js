@@ -17,6 +17,13 @@ const CustomBox = styled(Box)(({ theme }) => ({
   maxWidth: '100%',
 }));
 
+const CustomButton = styled(Button)(({ theme }) => ({
+  color: theme.palette.text.main,
+  '&: hover': {
+    color: theme.palette.hover.main,
+  },
+}));
+
 function PostCardForFeed({ postItem }) {
   const theme = useTheme();
 
@@ -91,19 +98,19 @@ function PostCardForFeed({ postItem }) {
       </Box>
       <Stack direction="row" sx={{ height: 40, p: '2px 25px' }} justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap="25px">
-          <Button sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
+          <CustomButton sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
             {!postItem?.likes ? <ThumbUpOffAltIcon /> : <ThumbUpAltIcon />}
             <Typography>{postItem?.likes}</Typography>
-          </Button>
-          <Button sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
+          </CustomButton>
+          <CustomButton sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
             <CommentIcon />
             <Typography>{postItem?.comments}</Typography>
-          </Button>
+          </CustomButton>
         </Stack>
         <Stack>
-          <Button sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
+          <CustomButton sx={{ flex: 0, color: theme.palette.text.main }} disableRipple>
             {postItem?.comments ? <TurnedInNotIcon /> : <TurnedInIcon />}
-          </Button>
+          </CustomButton>
         </Stack>
       </Stack>
     </CustomBox>

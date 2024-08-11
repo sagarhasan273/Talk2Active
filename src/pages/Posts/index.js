@@ -29,9 +29,7 @@ function Posts() {
               background: theme.palette.background.main,
               borderRadius: '10px',
             }}
-          >
-            hello
-          </Stack>
+          ></Stack>
         </Grid>
         <Grid item xs={7}>
           <Stack
