@@ -67,34 +67,10 @@ function PostCardForFeed({ postItem }) {
       <Box
         sx={{
           position: 'relative',
-          width: '100%',
-          height: '450px',
           overflow: 'hidden',
         }}
       >
-        <Box
-          sx={{
-            backgroundImage: `url(${postItem?.image})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            width: '100%',
-            height: '100%',
-            filter: 'blur(40px)',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundImage: `url(${postItem?.image})`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-          }}
-        />
+        <img src={postItem?.image} alt="Preview" style={{ width: '100%', height: 'auto' }} />
       </Box>
       <Stack direction="row" sx={{ height: 40, p: '2px 25px' }} justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap="25px">

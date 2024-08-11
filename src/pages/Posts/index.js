@@ -2,6 +2,7 @@ import { Box, Grid, Stack, useTheme } from '@mui/material';
 import React from 'react';
 import { staticPostData } from '../UserDashboard/helper';
 import Feeds from './Feeds';
+import ProfilePreview from './ProfilePreview';
 
 function Posts() {
   const theme = useTheme();
@@ -11,8 +12,8 @@ function Posts() {
         height: '100%',
         width: {
           xs: '100%',
-          sm: '600px',
-          md: '750px',
+          sm: '750px',
+          md: '880px',
           lg: '1000px',
           xl: '1000px',
         },
@@ -20,7 +21,7 @@ function Posts() {
       }}
     >
       <Grid container spacing={2} sx={{ height: '100%' }}>
-        <Grid item xs={2.5}>
+        <Grid item xs={0} sm={2.5} md={2.5}>
           <Stack
             sx={{
               mt: '10px',
@@ -28,10 +29,17 @@ function Posts() {
               height: '350px',
               background: theme.palette.background.main,
               borderRadius: '10px',
+              display: {
+                xs: 'none', // Hide on extra small screens
+                sm: 'none', // Hide on small screens
+                md: 'block', // Show on medium screens and above
+              },
             }}
-          ></Stack>
+          >
+            <ProfilePreview />
+          </Stack>
         </Grid>
-        <Grid item xs={7}>
+        <Grid item xs={12} sx={7} md={7}>
           <Stack
             sx={{
               p: '10px',
@@ -41,7 +49,7 @@ function Posts() {
             <Feeds feeds={staticPostData} />
           </Stack>
         </Grid>
-        <Grid item xs={2.5}>
+        <Grid item xs={0} sm={2.5} md={2.5}>
           <Stack
             sx={{
               mt: '10px',
@@ -49,6 +57,11 @@ function Posts() {
               height: '250px',
               // background: theme.palette.background.main,
               borderRadius: '10px',
+              display: {
+                xs: 'none', // Hide on extra small screens
+                sm: 'none', // Hide on small screens
+                md: 'block', // Show on medium screens and above
+              },
             }}
           ></Stack>
         </Grid>
