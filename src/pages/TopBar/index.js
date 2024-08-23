@@ -67,7 +67,9 @@ function TopBar({ user = {} }) {
   };
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.main, height: '50px' }}>
+    <Box
+      sx={{ backgroundColor: theme.palette.background.main, height: '50px', position: 'sticky', top: 0, zIndex: 9999 }}
+    >
       <Stack
         sx={{ pl: '50px', pr: '50px', height: '100%' }}
         direction="row"

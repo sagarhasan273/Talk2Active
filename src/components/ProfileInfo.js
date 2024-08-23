@@ -35,7 +35,7 @@ const StatusButton = styled(Button)(({ theme }) => ({
   '&:hover': {
     color: theme.palette.text.dark,
     background: theme.palette.background.primary,
-    border: `2px solid ${theme.palette.background.primary}`,
+    border: `1px solid ${theme.palette.background.primary}`,
   },
 }));
 

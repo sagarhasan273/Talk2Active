@@ -23,7 +23,7 @@ export default function Layout() {
   const routes = getUserRoutes();
 
   return (
-    <Box sx={{ height: '100vh', overflowY: 'hidden' }} className="custom-scroll-top-post">
+    <Box sx={{ height: '100vh', overflowY: 'scroll' }} className="custom-scroll-top-post">
       <TopBar user={user} loading={userQuery.isLoading} />
       <Routes>
         {routes?.map((route, index) => (

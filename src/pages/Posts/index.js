@@ -26,6 +26,10 @@ function Posts() {
             sx={{
               mt: '10px',
               p: '10px',
+              width: {
+                md: '150px', // Show on medium screens and above
+                lg: '180px',
+              },
               height: '350px',
               background: theme.palette.background.main,
               borderRadius: '10px',
@@ -34,12 +38,14 @@ function Posts() {
                 sm: 'none', // Hide on small screens
                 md: 'block', // Show on medium screens and above
               },
+              position: 'fixed',
+              top: '50px',
             }}
           >
             <ProfilePreview />
           </Stack>
         </Grid>
-        <Grid item xs={12} sx={7} md={7}>
+        <Grid item xs={12} sm={7} md={7}>
           <Stack
             sx={{
               p: '10px',

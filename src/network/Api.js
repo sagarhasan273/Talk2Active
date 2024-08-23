@@ -1,5 +1,10 @@
 export const API_URL = 'http://localhost:5000';
 
+export const UPLOAD_IMAGE_HOST_URL = 'https://freeimage.host/api/1/upload';
+export const UPLOAD_IMAGE_HOST_KEY = '6d207e02198a847aa98d0a2a901485a5';
+
+export const UPLOAD_IMAGE = '/image/upload';
+
 export const USER_ENDPOINT = '/user';
 
 export const USER_LOGIN = `/auth/user/login/`;

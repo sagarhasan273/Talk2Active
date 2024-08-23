@@ -34,8 +34,15 @@ const CustomTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-function PostMedia() {
+function PostMedia({ postData, setPostData }) {
   const theme = useTheme();
+
+  const onChangeHandle = (event) => {
+    setPostData((prev) => ({
+      ...prev,
+      mediaCaption: event.target.value,
+    }));
+  };
 
   return (
     <Stack direction="row" gap={2}>
@@ -47,7 +54,13 @@ function PostMedia() {
         <PermMediaIcon sx={{ color: theme.palette.text.main }} />
       </Stack>
       <Stack flex={1}>
-        <CustomTextField placeholder="Write your caption..." multiline maxRows={6} />
+        <CustomTextField
+          value={postData?.mediaCaption}
+          onChange={onChangeHandle}
+          placeholder="Write your caption..."
+          multiline
+          maxRows={6}
+        />
       </Stack>
     </Stack>
   );

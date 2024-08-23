@@ -11,10 +11,18 @@ AXIOS.interceptors.request.use(
     // console.log('=============AXIOS REQUEST============');
     // Do something before request is sent
     const accesstoken = getCookie('accesstoken');
-    config.headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accesstoken}`,
-    };
+
+    if (config.headers['Content-Type'] === 'multipart/form-data') {
+      config.headers = {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${accesstoken}`,
+      };
+    } else {
+      config.headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accesstoken}`,
+      };
+    }
 
     return config;
   },

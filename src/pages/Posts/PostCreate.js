@@ -4,6 +4,8 @@ import PermMediaIcon from '@mui/icons-material/PermMedia';
 import PublishIcon from '@mui/icons-material/Publish';
 import { Box, Button, Stack, styled, useTheme } from '@mui/material';
 import React, { useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+import { uploadImageToBackend } from '../../helpers/uploadImage';
 import PostMedia from './PostMedia';
 import PostQuote from './PostQuote';
 import PostStory from './PostStory';
@@ -17,18 +19,27 @@ const CustomButton = styled(Button)(({ theme }) => ({
 
 function PostCreate() {
   const theme = useTheme();
-  const [postType, setPostType] = useState('quote');
+  const [postData, setPostData] = useState({ postType: 'quote' });
+  const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
 
+  const imageUploadQuery = useMutation(uploadImageToBackend, {
+    onSuccess: (data) => {
+      console.log(data);
+    },
+  });
+
   const addPostButtonHandler = (event, type) => {
     event.preventDefault();
-    setPostType(type);
+
+    setPostData((prev) => ({ ...prev, postType: type }));
     if (type === 'media') fileInputRef.current.click();
   };
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
+    setImageFile(file);
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -38,16 +49,17 @@ function PostCreate() {
     }
   };
 
-  const publishPost = () => {
+  const publishPost = async () => {
+    if (imageFile) imageUploadQuery.mutate(imageFile);
     console.log('post pulishing...');
   };
 
   return (
     <Stack gap={2} sx={{ p: 1, borderRadius: '10px', background: theme.palette.background.main }}>
-      {postType === 'media' && <PostMedia />}
-      {postType === 'quote' && <PostQuote />}
-      {postType === 'story' && <PostStory />}
-      {preview && postType === 'media' && (
+      {postData?.postType === 'media' && <PostMedia postData={postData} setPostData={setPostData} />}
+      {postData?.postType === 'quote' && <PostQuote postData={postData} setPostData={setPostData} />}
+      {postData?.postType === 'story' && <PostStory postData={postData} setPostData={setPostData} />}
+      {preview && postData?.postType === 'media' && (
         <Box>
           <img src={preview} alt="Preview" style={{ width: '100%', height: 'auto' }} />
         </Box>
