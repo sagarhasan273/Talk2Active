@@ -5,7 +5,7 @@ import PublishIcon from '@mui/icons-material/Publish';
 import { Box, Button, Stack, styled, useTheme } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { uploadImageToBackend } from '../../helpers/uploadImage';
+import { uploadImageByFrontend } from '../../helpers/uploadImage';
 import PostMedia from './PostMedia';
 import PostQuote from './PostQuote';
 import PostStory from './PostStory';
@@ -24,7 +24,7 @@ function PostCreate() {
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
 
-  const imageUploadQuery = useMutation(uploadImageToBackend, {
+  const imageUploadQuery = useMutation(uploadImageByFrontend, {
     onSuccess: (data) => {
       console.log(data);
     },
@@ -67,6 +67,7 @@ function PostCreate() {
       <Stack p={2} direction="row" justifyContent="space-between">
         <input
           type="file"
+          name="image"
           accept="image/*"
           ref={fileInputRef}
           style={{ display: 'none' }} // Hide the input element
