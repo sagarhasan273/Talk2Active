@@ -1,7 +1,7 @@
 export const API_URL = 'http://localhost:5000';
 
-export const UPLOAD_IMAGE_HOST_URL = 'https://freeimage.host/api/1/upload';
-export const UPLOAD_IMAGE_HOST_KEY = '6d207e02198a847aa98d0a2a901485a5';
+export const UPLOAD_IMAGE_HOST_URL = 'https://api.imgbb.com/1/upload';
+export const UPLOAD_IMAGE_HOST_KEY = '55a01e90f1c4710fca767a449891c557';
 
 export const UPLOAD_IMAGE = '/image/upload';
 

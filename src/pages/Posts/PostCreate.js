@@ -51,7 +51,6 @@ function PostCreate() {
 
   const publishPost = async () => {
     if (imageFile) imageUploadQuery.mutate(imageFile);
-    console.log('post pulishing...');
   };
 
   return (

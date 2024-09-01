@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as API_URL from '../network/Api';
 
 export const uploadImageToBackend = async (image) => {
   const formData = new FormData();
@@ -16,9 +17,9 @@ export const uploadImageToBackend = async (image) => {
 export const uploadImageByFrontend = async (image) => {
   const formData = new FormData();
   formData.append('image', image);
-  formData.append('key', '66c72a274deb5826ae53ac0d86462173');
+  formData.append('key', API_URL.UPLOAD_IMAGE_HOST_KEY);
 
-  const response = await fetch('https://api.imgbb.com/1/upload', {
+  const response = await fetch(API_URL.UPLOAD_IMAGE_HOST_URL, {
     method: 'POST',
     body: formData,
   })

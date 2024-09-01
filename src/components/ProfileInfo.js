@@ -47,9 +47,10 @@ function ProfileInfo() {
   const queryClient = useQueryClient();
 
   const liveStatusQuery = useMutation((data) => AXIOS.post(API_URL.USER_PROFILE_STATUS_UPDATE, data), {
-    onSuccess: (response) => {
+    onSuccess: (response, payload) => {
       if (response?.status) {
         queryClient.invalidateQueries(API_URL.USER_GET_DETAILS);
+        setUser((prev) => ({ ...prev, activeStatus: payload?.activeStatus }));
         successMsg('Status updated successfully!', 'success', { position: 'top-left' });
       } else {
         successMsg(response?.message, 'info');
@@ -69,7 +70,7 @@ function ProfileInfo() {
     if (!status) {
       return;
     }
-    liveStatusQuery.mutate({ userId: user.userId, activeStatus: status });
+    if (status !== user?.activeStatus) liveStatusQuery.mutate({ userId: user.userId, activeStatus: status });
   };
 
   const logoutHandle = () => {

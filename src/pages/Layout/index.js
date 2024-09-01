@@ -11,6 +11,7 @@ export default function Layout() {
   const { user, setUser } = useGlobalContext();
 
   const userQuery = useQuery([USER_GET_DETAILS], () => AXIOS.get(USER_GET_DETAILS), {
+    enabled: !user?._id,
     onSuccess: (response) => {
       if (response?.status) {
         setUser(response?.data?.user || {});
