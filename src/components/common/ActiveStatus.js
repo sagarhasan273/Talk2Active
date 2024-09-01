@@ -4,7 +4,6 @@ import React from 'react';
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
     backgroundColor: '#44b700',
-    color: '#44b700',
     boxShadow: `0 0 0 2px ${theme.palette.background.primary}`,
     '&::after': {
       position: 'absolute',
@@ -13,7 +12,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
       width: '100%',
       height: '100%',
       borderRadius: '50%',
-      animation: 'ripple 2.2s infinite ease-in-out',
+      // animation: 'ripple 2.2s infinite ease-in-out',
       border: '1px solid currentColor',
       content: '""',
     },
@@ -42,7 +41,12 @@ function ActiveStatus({ status, children }) {
   if (status === 'online') {
     return (
       <CustomStack direction="row" gap="5px" alignItems="center">
-        <StyledBadge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot">
+        <StyledBadge
+          sx={{ color: 'transparent' }}
+          overlap="circular"
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          variant="dot"
+        >
           {children}
         </StyledBadge>
       </CustomStack>
@@ -52,7 +56,7 @@ function ActiveStatus({ status, children }) {
     return (
       <CustomStack>
         <StyledBadge
-          sx={{ '& .MuiBadge-badge': { backgroundColor: 'red', color: 'red' } }}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: 'black', color: 'transparent' } }}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
@@ -66,7 +70,7 @@ function ActiveStatus({ status, children }) {
     return (
       <CustomStack>
         <StyledBadge
-          sx={{ '& .MuiBadge-badge': { backgroundColor: '#ff8c00', color: '#ff8c00' } }}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: '#ff8c00', color: 'transparent' } }}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
@@ -80,7 +84,7 @@ function ActiveStatus({ status, children }) {
     return (
       <CustomStack>
         <StyledBadge
-          sx={{ '& .MuiBadge-badge': { backgroundColor: '#9e9e9e', color: '#9e9e9e' } }}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: '#9e9e9e', color: 'transparent' } }}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
@@ -94,7 +98,7 @@ function ActiveStatus({ status, children }) {
     return (
       <CustomStack>
         <StyledBadge
-          sx={{ '& .MuiBadge-badge': { backgroundColor: '#00ffe1', color: '#00ffe1' } }}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: '#00ffe1', color: 'transparent' } }}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
@@ -108,7 +112,7 @@ function ActiveStatus({ status, children }) {
     return (
       <CustomStack>
         <StyledBadge
-          sx={{ '& .MuiBadge-badge': { backgroundColor: '#ffeb3b', color: '#ffeb3b' } }}
+          sx={{ '& .MuiBadge-badge': { backgroundColor: '#ffeb3b', color: 'transparent' } }}
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
