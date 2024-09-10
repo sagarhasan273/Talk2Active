@@ -2,9 +2,10 @@ import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import NotesIcon from '@mui/icons-material/Notes';
 import PermMediaIcon from '@mui/icons-material/PermMedia';
 import PublishIcon from '@mui/icons-material/Publish';
-import { Box, Button, Stack, styled, useTheme } from '@mui/material';
+import { Box, Button, Modal, Stack, styled, useTheme } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import { useMutation } from 'react-query';
+import ImageEditorCroper from '../../components/ImageEditorCroper';
 import { uploadImageByFrontend } from '../../helpers/uploadImage';
 import PostMedia from './PostMedia';
 import PostQuote from './PostQuote';
@@ -85,6 +86,11 @@ function PostCreate() {
           Publish
         </Button>
       </Stack>
+      <Modal open={preview && postData?.postType === 'media'}>
+        <Box m={10} p={2} sx={{ overflow: 'scroll', height: '80vh', bgcolor: 'white' }}>
+          <ImageEditorCroper />
+        </Box>
+      </Modal>
     </Stack>
   );
 }
