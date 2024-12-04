@@ -25,8 +25,7 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
   );
 }
 
-export default function ImageEditorCroper() {
-  const [imgSrc, setImgSrc] = useState('');
+export default function ImageEditorCroper({ imgSrc, setImgSrc }) {
   const previewCanvasRef = useRef(null);
   const imgRef = useRef(null);
   const hiddenAnchorRef = useRef(null);
@@ -35,16 +34,16 @@ export default function ImageEditorCroper() {
   const [completedCrop, setCompletedCrop] = useState(null);
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
-  const [aspect, setAspect] = useState(16 / 9);
+  const [aspect, setAspect] = useState(undefined);
 
-  function onSelectFile(e) {
-    if (e.target.files && e.target.files.length > 0) {
-      setCrop(null); // Makes crop preview update between images.
-      const reader = new FileReader();
-      reader.addEventListener('load', () => setImgSrc(reader.result?.toString() || ''));
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  }
+  // function onSelectFile(e) {
+  //   if (e.target.files && e.target.files.length > 0) {
+  //     setCrop(null); // Makes crop preview update between images.
+  //     const reader = new FileReader();
+  //     reader.addEventListener('load', () => setImgSrc(reader.result?.toString() || ''));
+  //     reader.readAsDataURL(e.target.files[0]);
+  //   }
+  // }
 
   function onImageLoad(e) {
     if (aspect) {
@@ -97,6 +96,10 @@ export default function ImageEditorCroper() {
       reader.addEventListener('load', () => setImgSrc(reader.result?.toString() || ''));
       reader.readAsDataURL(blob);
     }
+
+    setScale(1);
+    setAspect(undefined);
+    setRotate(0);
   }
 
   useDebounceEffect(
@@ -109,7 +112,7 @@ export default function ImageEditorCroper() {
     [completedCrop, scale, rotate]
   );
 
-  function handleToggleAspectClick() {
+  const handleToggleAspectClick = () => {
     if (aspect) {
       setAspect(undefined);
     } else {
@@ -122,12 +125,21 @@ export default function ImageEditorCroper() {
         setCompletedCrop(convertToPixelCrop(newCrop, width, height));
       }
     }
-  }
+  };
+
+  const handleClose = () => {
+    setImgSrc('');
+  };
 
   return (
     <Box>
       <Box className="Crop-Controls">
-        <input type="file" accept="image/*" onChange={onSelectFile} />
+        {/* <input type="file" accept="image/*" onChange={onSelectFile} /> */}
+        <Box>
+          <button type="button" onClick={handleClose}>
+            Close
+          </button>
+        </Box>
         <Box>
           <label htmlFor="scale-input">Scale: </label>
           <input

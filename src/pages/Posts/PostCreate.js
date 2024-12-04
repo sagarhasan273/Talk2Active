@@ -88,7 +88,7 @@ function PostCreate() {
       </Stack>
       <Modal open={preview && postData?.postType === 'media'}>
         <Box m={10} p={2} sx={{ overflow: 'scroll', height: '80vh', bgcolor: 'white' }}>
-          <ImageEditorCroper />
+          <ImageEditorCroper imgSrc={preview} setImgSrc={setPreview} />
         </Box>
       </Modal>
     </Stack>
