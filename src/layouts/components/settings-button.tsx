@@ -26,7 +26,7 @@ export function SettingsButton({ sx, ...other }: SettingsButtonProps) {
         <SvgIcon
           component={m.svg}
           animate={{ rotate: 360 }}
-          transition={{ duration: 8, ease: 'linear', repeat: Infinity }}
+          // transition={{ duration: 8, ease: 'linear', repeat: Infinity }}
         >
           {/* https://icon-sets.iconify.design/solar/settings-bold-duotone/ */}
           <path

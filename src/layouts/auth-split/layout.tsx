@@ -67,10 +67,16 @@ export function AuthSplitLayout({ sx, section, children, header }: AuthSplitLayo
                   color="inherit"
                   sx={{ typography: 'subtitle2' }}
                 >
-                  Need help?
+                  About?
                 </Link>
                 {/* -- Settings button -- */}
-                <SettingsButton />
+                <SettingsButton
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                />
               </Box>
             ),
           }}
