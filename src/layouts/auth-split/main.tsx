@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
 import { layoutClasses } from 'src/layouts/classes';
+import { backgroundImages } from 'src/assets/background';
 
 // ----------------------------------------------------------------------
 
@@ -23,6 +24,10 @@ export function Main({ sx, children, layoutQuery, ...other }: MainProps) {
         display: 'flex',
         flex: '1 1 auto',
         flexDirection: 'column',
+        backgroundImage: backgroundImages.loginImageUrl,
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
         [theme.breakpoints.up(layoutQuery)]: {
           flexDirection: 'row',
         },

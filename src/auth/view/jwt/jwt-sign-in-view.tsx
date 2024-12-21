@@ -19,6 +19,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
+import { FormCard } from 'src/auth/components/form-card';
+
 import { useAuthContext } from '../../hooks';
 import { FormHead } from '../../components/form-head';
 import { signInWithPassword } from '../../context/jwt';
@@ -124,7 +126,7 @@ export function JwtSignInView() {
   );
 
   return (
-    <>
+    <FormCard>
       <FormHead
         title="Sign in to your account"
         description={
@@ -138,11 +140,11 @@ export function JwtSignInView() {
         sx={{ textAlign: { xs: 'center', md: 'left' } }}
       />
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      {/* <Alert severity="info" sx={{ mb: 3 }}>
         Use <strong>{defaultValues.email}</strong>
         {' with password '}
         <strong>{defaultValues.password}</strong>
-      </Alert>
+      </Alert> */}
 
       {!!errorMsg && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -153,6 +155,6 @@ export function JwtSignInView() {
       <Form methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </Form>
-    </>
+    </FormCard>
   );
 }

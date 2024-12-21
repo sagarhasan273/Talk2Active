@@ -19,6 +19,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
+import { FormCard } from 'src/auth/components/form-card';
+
 import { signUp } from '../../context/jwt';
 import { useAuthContext } from '../../hooks';
 import { FormHead } from '../../components/form-head';
@@ -127,7 +129,7 @@ export function JwtSignUpView() {
   );
 
   return (
-    <>
+    <FormCard>
       <FormHead
         title="Get started absolutely free"
         description={
@@ -152,6 +154,6 @@ export function JwtSignUpView() {
       </Form>
 
       <SignUpTerms />
-    </>
+    </FormCard>
   );
 }
