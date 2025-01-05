@@ -3,13 +3,14 @@
 const ROOTS = {
   AUTH: '/auth',
   DASHBOARD: '/dashboard',
+  USER: '/user',
 };
 
 // ----------------------------------------------------------------------
 
 export const paths = {
   faqs: '/faqs',
-  minimalStore: 'https://mui.com/store/items/minimal-dashboard/',
+  upgradeToPro: '/#',
   // AUTH
   auth: {
     jwt: {
@@ -27,5 +28,11 @@ export const paths = {
       five: `${ROOTS.DASHBOARD}/group/five`,
       six: `${ROOTS.DASHBOARD}/group/six`,
     },
+  },
+
+  // User
+  user: {
+    root: ROOTS.USER,
+    profile: `${ROOTS.USER}/profile`,
   },
 };
