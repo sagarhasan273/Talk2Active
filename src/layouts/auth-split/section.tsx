@@ -28,9 +28,9 @@ export function Section({
   method,
   layoutQuery,
   methods,
-  title = 'Manage the job',
-  imgUrl = `${CONFIG.assetsDir}/assets/illustrations/illustration-dashboard.webp`,
-  subtitle = 'More effectively with optimized workflows.',
+  title = 'Sign Up',
+  imgUrl = `${CONFIG.assetsDir}/assets/illustrations/illustration-dashboard.svg`,
+  subtitle = 'Learn how to speak.',
   ...other
 }: SectionProps) {
   const theme = useTheme();
@@ -49,7 +49,6 @@ export function Section({
         display: 'none',
         position: 'relative',
         pt: 'var(--layout-header-desktop-height)',
-        backdropFilter: 'blur(15px)',
         [theme.breakpoints.up(layoutQuery)]: {
           gap: 8,
           display: 'flex',
@@ -77,7 +76,7 @@ export function Section({
         component="img"
         alt="Dashboard illustration"
         src={imgUrl}
-        sx={{ width: 1, aspectRatio: '4/3', objectFit: 'cover' }}
+        sx={{ width: 1, aspectRatio: '4/3', objectFit: 'cover', padding: '10px' }}
       />
     </Box>
   );

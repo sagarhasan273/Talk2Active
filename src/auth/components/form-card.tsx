@@ -17,9 +17,8 @@ export function FormCard({ sx, children }: FormBoxProps) {
         color: 'text.disabled',
         padding: '20px',
         borderRadius: '20px',
-        backdropFilter: 'blur(15px)',
+        backdropFilter: 'blur(30px)',
         boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.44)',
-
         '&::before, :after': { borderTopStyle: 'dashed' },
         ...sx,
       }}

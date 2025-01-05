@@ -83,16 +83,6 @@ export function JwtSignInView() {
       <Field.Text name="email" label="Email address" InputLabelProps={{ shrink: true }} />
 
       <Box gap={1.5} display="flex" flexDirection="column">
-        <Link
-          component={RouterLink}
-          href="#"
-          variant="body2"
-          color="inherit"
-          sx={{ alignSelf: 'flex-end' }}
-        >
-          Forgot password?
-        </Link>
-
         <Field.Text
           name="password"
           label="Password"
@@ -110,6 +100,15 @@ export function JwtSignInView() {
           }}
         />
       </Box>
+      <Link
+        component={RouterLink}
+        href="#"
+        variant="body2"
+        color="inherit"
+        sx={{ alignSelf: 'flex-end' }}
+      >
+        Forgot password?
+      </Link>
 
       <LoadingButton
         fullWidth

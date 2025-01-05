@@ -24,7 +24,7 @@ const authJwt = {
       path: 'sign-in',
       element: (
         <GuestGuard>
-          <AuthSplitLayout section={{ title: 'Hi, Welcome back' }}>
+          <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
             <Jwt.SignInPage />
           </AuthSplitLayout>
         </GuestGuard>
@@ -34,7 +34,7 @@ const authJwt = {
       path: 'sign-up',
       element: (
         <GuestGuard>
-          <AuthSplitLayout>
+          <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
             <Jwt.SignUpPage />
           </AuthSplitLayout>
         </GuestGuard>

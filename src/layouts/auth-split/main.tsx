@@ -7,6 +7,8 @@ import { useTheme } from '@mui/material/styles';
 import { layoutClasses } from 'src/layouts/classes';
 import { backgroundImages } from 'src/assets/background';
 
+import { useSettingsContext } from 'src/components/settings';
+
 // ----------------------------------------------------------------------
 
 type MainProps = BoxProps & {
@@ -15,6 +17,7 @@ type MainProps = BoxProps & {
 
 export function Main({ sx, children, layoutQuery, ...other }: MainProps) {
   const theme = useTheme();
+  const settings = useSettingsContext();
 
   return (
     <Box
@@ -24,7 +27,10 @@ export function Main({ sx, children, layoutQuery, ...other }: MainProps) {
         display: 'flex',
         flex: '1 1 auto',
         flexDirection: 'column',
-        backgroundImage: backgroundImages.loginImageUrl,
+        backgroundImage:
+          settings?.colorScheme === 'light'
+            ? backgroundImages.loginLightImageUrl
+            : backgroundImages?.loginDarkImageUrl,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
