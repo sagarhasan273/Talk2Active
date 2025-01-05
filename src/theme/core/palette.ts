@@ -92,6 +92,18 @@ export const background = {
   dark: createPaletteChannel({ paper: grey[800], default: grey[900], neutral: '#28323D' }),
 };
 
+// Border
+export const border = {
+  light: createPaletteChannel({ primary: grey[300], secondary: grey[200], disabled: grey[100] }),
+  dark: createPaletteChannel({ primary: grey[500], secondary: grey[200], disabled: grey[100] }),
+};
+
+// button
+export const button = {
+  light: createPaletteChannel({ primary: grey[900], secondary: grey[700], disabled: grey[500] }),
+  dark: createPaletteChannel({ primary: grey[100], secondary: grey[200], disabled: grey[300] }),
+};
+
 // Action
 export const baseAction = {
   hover: varAlpha(grey['500Channel'], 0.08),
@@ -128,6 +140,8 @@ export const lightPalette = {
   ...basePalette,
   text: text.light,
   background: background.light,
+  border: border.light,
+  button: button.light,
   action: action.light,
 };
 
@@ -135,6 +149,8 @@ export const darkPalette = {
   ...basePalette,
   text: text.dark,
   background: background.dark,
+  border: border.dark,
+  button: button.dark,
   action: action.dark,
 };
 

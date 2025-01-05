@@ -92,7 +92,7 @@ export function JwtSignInView() {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={password.onToggle} edge="end">
+                <IconButton onClick={password.onToggle} edge="end" disableRipple>
                   <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
                 </IconButton>
               </InputAdornment>
@@ -105,7 +105,7 @@ export function JwtSignInView() {
         href="#"
         variant="body2"
         color="inherit"
-        sx={{ alignSelf: 'flex-end' }}
+        sx={{ alignSelf: 'flex-end', color: 'text.primary' }}
       >
         Forgot password?
       </Link>
@@ -118,6 +118,7 @@ export function JwtSignInView() {
         variant="contained"
         loading={isSubmitting}
         loadingIndicator="Sign in..."
+        sx={{ height: '40px' }}
       >
         Sign in
       </LoadingButton>
@@ -136,7 +137,7 @@ export function JwtSignInView() {
             </Link>
           </>
         }
-        sx={{ textAlign: { xs: 'center', md: 'left' } }}
+        sx={{ textAlign: { xs: 'center', md: 'left' }, color: 'text.primary' }}
       />
 
       {/* <Alert severity="info" sx={{ mb: 3 }}>

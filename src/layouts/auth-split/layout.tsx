@@ -72,6 +72,7 @@ export function AuthSplitLayout({ sx, section, children, header }: AuthSplitLayo
                 {/* -- Settings button -- */}
                 <SettingsButton
                   sx={{
+                    color: 'button.primary',
                     '&:hover': {
                       backgroundColor: 'transparent',
                     },

@@ -164,12 +164,13 @@ const MuiButton: Components<Theme>['MuiButton'] = {
         : { paddingLeft: '8px', paddingRight: '8px' }),
     }),
     sizeMedium: ({ ownerState }) => ({
+      height: 36,
       ...(ownerState.variant === 'text'
         ? { paddingLeft: '8px', paddingRight: '8px' }
         : { paddingLeft: '12px', paddingRight: '12px' }),
     }),
     sizeLarge: ({ ownerState }) => ({
-      height: 48,
+      height: 40,
       ...(ownerState.variant === 'text'
         ? { paddingLeft: '10px', paddingRight: '10px' }
         : { paddingLeft: '16px', paddingRight: '16px' }),

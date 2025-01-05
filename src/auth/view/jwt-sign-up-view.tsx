@@ -122,6 +122,7 @@ export function JwtSignUpView() {
         variant="contained"
         loading={isSubmitting}
         loadingIndicator="Create account..."
+        sx={{ height: '40px' }}
       >
         Create account
       </LoadingButton>
@@ -140,7 +141,7 @@ export function JwtSignUpView() {
             </Link>
           </>
         }
-        sx={{ textAlign: { xs: 'center', md: 'left' } }}
+        sx={{ textAlign: { xs: 'center', md: 'left' }, color: 'text.primary' }}
       />
 
       {!!errorMsg && (
