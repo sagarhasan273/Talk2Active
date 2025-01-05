@@ -21,9 +21,9 @@ import { Form, Field } from 'src/components/hook-form';
 
 import { FormCard } from 'src/auth/components/form-card';
 
-import { useAuthContext } from '../../hooks';
-import { FormHead } from '../../components/form-head';
-import { signInWithPassword } from '../../context/jwt';
+import { useAuthContext } from '../hooks';
+import { FormHead } from '../components/form-head';
+import { signInWithPassword } from '../context/jwt';
 
 // ----------------------------------------------------------------------
 

@@ -21,10 +21,10 @@ import { Form, Field } from 'src/components/hook-form';
 
 import { FormCard } from 'src/auth/components/form-card';
 
-import { signUp } from '../../context/jwt';
-import { useAuthContext } from '../../hooks';
-import { FormHead } from '../../components/form-head';
-import { SignUpTerms } from '../../components/sign-up-terms';
+import { signUp } from '../context/jwt';
+import { useAuthContext } from '../hooks';
+import { FormHead } from '../components/form-head';
+import { SignUpTerms } from '../components/sign-up-terms';
 
 // ----------------------------------------------------------------------
 

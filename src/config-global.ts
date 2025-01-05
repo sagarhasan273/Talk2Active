@@ -10,7 +10,7 @@ export type ConfigValue = {
   serverUrl: string;
   assetsDir: string;
   auth: {
-    method: 'jwt' | 'amplify' | 'firebase' | 'supabase' | 'auth0';
+    method: 'jwt';
     skip: boolean;
     redirectPath: string;
   };

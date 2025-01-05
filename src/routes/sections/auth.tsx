@@ -12,36 +12,33 @@ import { GuestGuard } from 'src/auth/guard';
 /** **************************************
  * Jwt
  *************************************** */
-const Jwt = {
-  SignInPage: lazy(() => import('src/pages/auth/jwt/sign-in')),
-  SignUpPage: lazy(() => import('src/pages/auth/jwt/sign-up')),
+const sign = {
+  SignInPage: lazy(() => import('src/pages/auth/sign-in')),
+  SignUpPage: lazy(() => import('src/pages/auth/sign-up')),
 };
 
-const authJwt = {
-  path: 'jwt',
-  children: [
-    {
-      path: 'sign-in',
-      element: (
-        <GuestGuard>
-          <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
-            <Jwt.SignInPage />
-          </AuthSplitLayout>
-        </GuestGuard>
-      ),
-    },
-    {
-      path: 'sign-up',
-      element: (
-        <GuestGuard>
-          <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
-            <Jwt.SignUpPage />
-          </AuthSplitLayout>
-        </GuestGuard>
-      ),
-    },
-  ],
-};
+const authJwt = [
+  {
+    path: 'sign-in',
+    element: (
+      <GuestGuard>
+        <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
+          <sign.SignInPage />
+        </AuthSplitLayout>
+      </GuestGuard>
+    ),
+  },
+  {
+    path: 'sign-up',
+    element: (
+      <GuestGuard>
+        <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active' }}>
+          <sign.SignUpPage />
+        </AuthSplitLayout>
+      </GuestGuard>
+    ),
+  },
+];
 
 // ----------------------------------------------------------------------
 
@@ -53,6 +50,6 @@ export const authRoutes = [
         <Outlet />
       </Suspense>
     ),
-    children: [authJwt],
+    children: authJwt,
   },
 ];
