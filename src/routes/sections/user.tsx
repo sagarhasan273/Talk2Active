@@ -2,7 +2,7 @@ import { Outlet } from 'react-router';
 import { lazy, Suspense } from 'react';
 
 import { CONFIG } from 'src/config-global';
-import { DashboardLayout } from 'src/layouts/dashboard';
+import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
@@ -15,11 +15,11 @@ const ProfilePage = lazy(() => import('src/pages/user/profile'));
 // ---------------------------------------------------------------
 
 const layoutContent = (
-  <DashboardLayout>
+  <UserLayout>
     <Suspense fallback={<LoadingScreen />}>
       <Outlet />
     </Suspense>
-  </DashboardLayout>
+  </UserLayout>
 );
 
 export const userRoutes = [
