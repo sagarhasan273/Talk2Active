@@ -12,7 +12,6 @@ import ListItemText from '@mui/material/ListItemText';
 
 import { fToNow } from 'src/utils/format-time';
 
-import { varHover } from 'src/components/animate';
 import { Scrollbar } from 'src/components/scrollbar';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
@@ -40,8 +39,6 @@ export function ContactsPopover({ data = [], sx, ...other }: ContactsPopoverProp
       <IconButton
         component={m.button}
         whileTap="tap"
-        whileHover="hover"
-        variants={varHover(1.05)}
         onClick={popover.onOpen}
         sx={{
           ...(popover.open && { bgcolor: (theme) => theme.vars.palette.action.selected }),
@@ -67,7 +64,7 @@ export function ContactsPopover({ data = [], sx, ...other }: ContactsPopoverProp
         }}
       >
         <Typography variant="h6" sx={{ p: 1.5 }}>
-          Contacts <span>({data.length})</span>
+          Friends <span>({data.length})</span>
         </Typography>
 
         <Scrollbar sx={{ height: 320, width: 320 }}>

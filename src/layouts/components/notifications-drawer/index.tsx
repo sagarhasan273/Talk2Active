@@ -18,7 +18,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { varHover } from 'src/components/animate';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
@@ -120,15 +119,7 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
 
   return (
     <>
-      <IconButton
-        component={m.button}
-        whileTap="tap"
-        whileHover="hover"
-        variants={varHover(1.05)}
-        onClick={drawer.onTrue}
-        sx={sx}
-        {...other}
-      >
+      <IconButton component={m.button} whileTap="tap" onClick={drawer.onTrue} sx={sx} {...other}>
         <Badge badgeContent={totalUnRead} color="error">
           <SvgIcon>
             {/* https://icon-sets.iconify.design/solar/bell-bing-bold-duotone/ */}

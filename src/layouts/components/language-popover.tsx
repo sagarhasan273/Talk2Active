@@ -7,7 +7,6 @@ import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 
-import { varHover } from 'src/components/animate';
 import { FlagIcon } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
@@ -41,8 +40,6 @@ export function LanguagePopover({ data = [], sx, ...other }: LanguagePopoverProp
       <IconButton
         component={m.button}
         whileTap="tap"
-        whileHover="hover"
-        variants={varHover(1.05)}
         onClick={popover.onOpen}
         sx={{
           p: 0,

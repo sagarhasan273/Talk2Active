@@ -8,7 +8,7 @@ import SvgIcon from '@mui/material/SvgIcon';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 
-import { varHover, AnimateAvatar } from 'src/components/animate';
+import { AnimateAvatar } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
@@ -40,14 +40,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
   );
 
   return (
-    <IconButton
-      component={m.button}
-      whileTap="tap"
-      whileHover="hover"
-      variants={varHover(1.05)}
-      sx={{ p: 0, ...sx }}
-      {...other}
-    >
+    <IconButton component={m.button} whileTap="tap" sx={{ p: 0, ...sx }} {...other}>
       <NoSsr fallback={renderFallback}>
         <AnimateAvatar
           slotProps={{

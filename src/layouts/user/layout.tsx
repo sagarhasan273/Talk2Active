@@ -12,14 +12,13 @@ import { UserMain } from './main';
 import { layoutClasses } from '../classes';
 import { useNavColorVars } from './styles';
 import { _account } from '../config-nav-account';
-import { navData } from '../config-nav-dashboard';
-import { Searchbar } from '../components/searchbar';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
+import { FeedButton } from '../components/feed-button';
 import { AccountDrawer } from '../components/account-drawer';
-import { SettingsButton } from '../components/settings-button';
 import { LanguagePopover } from '../components/language-popover';
 import { ContactsPopover } from '../components/contacts-popover';
+import { VoiceChatButton } from '../components/voice-chat-button';
 import { NotificationsDrawer } from '../components/notifications-drawer';
 
 export type UserLayoutProps = {
@@ -62,8 +61,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
-                {/* -- Searchbar -- */}
-                <Searchbar data={navData} />
                 {/* -- Language popover -- */}
                 <LanguagePopover
                   data={[
@@ -76,10 +73,12 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 />
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer data={_notifications} />
+                {/* --Feed Page */}
+                <FeedButton />
+                {/* --Voice Chat Page */}
+                <VoiceChatButton />
                 {/* -- Contacts popover -- */}
                 <ContactsPopover data={_contacts} />
-                {/* -- Settings button -- */}
-                <SettingsButton />
                 {/* -- Account drawer -- */}
                 <AccountDrawer data={_account} />
               </Box>
