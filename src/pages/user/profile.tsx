@@ -15,7 +15,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <BlankView title="Page two" />
+      <BlankView title="Profile" />
     </>
   );
 }
