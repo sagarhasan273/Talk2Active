@@ -29,8 +29,8 @@ export function Main({ sx, children, layoutQuery, ...other }: MainProps) {
         flexDirection: 'column',
         backgroundImage:
           settings?.colorScheme === 'light'
-            ? backgroundImages.loginLightImageUrl
-            : backgroundImages?.loginDarkImageUrl,
+            ? backgroundImages?.auth.loginLightImageUrl
+            : backgroundImages?.auth.loginDarkImageUrl,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
