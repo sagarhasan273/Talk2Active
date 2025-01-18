@@ -8,9 +8,9 @@ import Avatar from '@mui/material/Avatar';
 import Drawer from '@mui/material/Drawer';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import { useTheme, useColorScheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
 import { useRouter, usePathname } from 'src/routes/hooks';
@@ -22,6 +22,8 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateAvatar } from 'src/components/animate';
+import { useSettingsContext } from 'src/components/settings';
+import { BaseOption } from 'src/components/settings/drawer/base-option';
 
 import { useMockedUser } from 'src/auth/hooks';
 
@@ -42,6 +44,10 @@ export type AccountDrawerProps = IconButtonProps & {
 
 export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
   const theme = useTheme();
+
+  const settings = useSettingsContext();
+
+  const { mode, setMode } = useColorScheme();
 
   const router = useRouter();
 
@@ -144,6 +150,21 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
                 <Iconify icon="mingcute:add-line" />
               </IconButton>
             </Tooltip>
+          </Stack>
+
+          <Stack sx={{ py: 3, px: 2.5 }}>
+            <BaseOption
+              label={settings.colorScheme === 'dark' ? 'Dark mode' : 'Light mode'}
+              icon={settings.colorScheme === 'dark' ? 'moon' : 'sun'}
+              selected={settings.colorScheme === 'dark'}
+              onClick={() => {
+                settings.onUpdateField('colorScheme', mode === 'light' ? 'dark' : 'light');
+                setMode(mode === 'light' ? 'dark' : 'light');
+              }}
+              sx={{
+                height: 100,
+              }}
+            />
           </Stack>
 
           <Stack

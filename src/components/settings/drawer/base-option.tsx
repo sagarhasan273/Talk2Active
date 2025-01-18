@@ -21,7 +21,7 @@ type Props = ButtonBaseProps & {
   tooltip?: string;
 };
 
-export function BaseOption({ icon, label, tooltip, selected, ...other }: Props) {
+export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Props) {
   return (
     <ButtonBase
       disableRipple
@@ -37,6 +37,7 @@ export function BaseOption({ icon, label, tooltip, selected, ...other }: Props) 
         ...(selected && {
           bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
         }),
+        ...sx,
       }}
       {...other}
     >
