@@ -1,13 +1,15 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Stack, Avatar, useTheme, GlobalStyles } from '@mui/material';
+import { Stack, useTheme, GlobalStyles } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
-import { varAlpha } from 'src/theme/styles';
 import { UserContent } from 'src/layouts/user';
 import { backgroundImages } from 'src/assets/background';
 
 import { useSettingsContext } from 'src/components/settings';
+
+import { LabelValue } from '../components';
+import { AvaterBadgeButton } from '../components/avater-badge-button';
 
 // ----------------------------------------------------------------------
 
@@ -36,6 +38,18 @@ export function UserHeader({
             '--user-info-left': '10px',
             '--user-info-bottom': '10px',
             '--user-info-fontsize': '10px',
+            '--user-info-lineheight': '12px',
+
+            '--user-label-value-display': 'flex',
+
+            '--user-profile-image-button-size': '15px',
+            '--user-profile-image-button-bottom': '5px',
+            '--user-profile-image-button-right': '5px',
+
+            [theme.breakpoints.down('sm')]: {
+              '--user-label-value-display': 'none',
+              '--user-info-gap': '5px',
+            },
 
             [theme.breakpoints.up('sm')]: {
               '--user-profile-header-container': '250px',
@@ -46,6 +60,11 @@ export function UserHeader({
               '--user-info-left': '20px',
               '--user-info-bottom': '12px',
               '--user-info-fontsize': '12px',
+              '--user-info-lineheight': '14px',
+
+              '--user-profile-image-button-size': '24px',
+              '--user-profile-image-button-bottom': '8px',
+              '--user-profile-image-button-right': '8px',
             },
 
             [theme.breakpoints.up('md')]: {
@@ -57,6 +76,7 @@ export function UserHeader({
               '--user-info-left': '25px',
               '--user-info-bottom': '15px',
               '--user-info-fontsize': '14px',
+              '--user-info-lineheight': '16px',
             },
           },
         }}
@@ -82,6 +102,7 @@ export function UserHeader({
         <Stack
           direction="row"
           alignItems="flex-end"
+          justifyContent="space-between"
           sx={{
             position: 'absolute',
             flex: 1,
@@ -91,54 +112,75 @@ export function UserHeader({
             gap: 'var(--user-info-gap)',
           }}
         >
-          <Avatar
-            sx={{
-              width: 'var(--user-image-size)',
-              height: 'var(--user-image-size)',
-            }}
-            alt="The intended file is not exist!"
-            src={profileImage}
-          />
           <Stack
+            direction="row"
+            alignItems="flex-end"
             sx={{
-              padding: '2px 10px',
-              borderRadius: '10px',
-              bgcolor: varAlpha(
-                theme.vars.palette.grey[
-                  settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
-                ],
-                0.5
-              ),
-              border: `dashed 1px ${theme.vars.palette.divider}`,
+              gap: 'var(--user-info-gap)',
             }}
           >
-            <Typography variant="subtitle2" sx={{ fontSize: 'var(--user-info-fontsize)' }}>
-              Sagar Hasan Sagar Hasan Sagar Hasan Sagar Hasan
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontSize: 'var(--user-info-fontsize)', opacity: 0.5 }}
+            <AvaterBadgeButton src={profileImage} />
+            <Stack
+              direction="column"
+              sx={{
+                [theme.breakpoints.down('sm')]: {
+                  gap: 'var(--user-info-gap)',
+                },
+              }}
             >
-              Id: YdsdYh992
-            </Typography>
+              <LabelValue label="Sagar Hasan" userId="YdsdYh992" />
+              <Stack
+                direction="row"
+                sx={{
+                  gap: 'var(--user-info-gap)',
+                }}
+              >
+                <LabelValue
+                  label="Followers"
+                  value={80}
+                  sx={{
+                    [theme.breakpoints.up('sm')]: {
+                      display: 'none',
+                    },
+                  }}
+                />
+                <LabelValue
+                  label="Friends"
+                  value={15}
+                  sx={{
+                    [theme.breakpoints.up('sm')]: {
+                      display: 'none',
+                    },
+                  }}
+                />
+                <LabelValue
+                  label="Followings"
+                  value={5}
+                  sx={{
+                    [theme.breakpoints.up('sm')]: {
+                      display: 'none',
+                    },
+                  }}
+                />
+              </Stack>
+            </Stack>
           </Stack>
-          <Stack
-            sx={{
-              padding: '2px 10px',
-              borderRadius: '10px',
-              bgcolor: varAlpha(theme.vars.palette.grey['500Channel'], 0.5),
-              border: `dashed 1px ${theme.vars.palette.divider}`,
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ fontSize: 'var(--user-info-fontsize)' }}>
-              Sagar
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontSize: 'var(--user-info-fontsize)', opacity: 0.5 }}
-            >
-              Id: YdsdYh992
-            </Typography>
+          <Stack direction="row" sx={{ gap: 'var(--user-info-gap)' }}>
+            <LabelValue
+              label="Followers"
+              value={80}
+              sx={{ display: 'var(--user-label-value-display)' }}
+            />
+            <LabelValue
+              label="Friends"
+              value={15}
+              sx={{ display: 'var(--user-label-value-display)' }}
+            />
+            <LabelValue
+              label="Followings"
+              value={5}
+              sx={{ display: 'var(--user-label-value-display)' }}
+            />
           </Stack>
         </Stack>
       </Box>
