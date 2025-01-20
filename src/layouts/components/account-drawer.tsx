@@ -3,10 +3,9 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
+import { Button } from '@mui/material';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import Drawer from '@mui/material/Drawer';
-import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -15,7 +14,6 @@ import { useTheme, useColorScheme } from '@mui/material/styles';
 import { paths } from 'src/routes/paths';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
-import { _mock } from 'src/_mock';
 import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
@@ -40,9 +38,15 @@ export type AccountDrawerProps = IconButtonProps & {
     icon?: React.ReactNode;
     info?: React.ReactNode;
   }[];
+
+  status?: {
+    label: string;
+    value: string;
+    active: boolean;
+  }[];
 };
 
-export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
+export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountDrawerProps) {
   const theme = useTheme();
 
   const settings = useSettingsContext();
@@ -114,45 +118,39 @@ export function AccountDrawer({ data = [], sx, ...other }: AccountDrawerProps) {
         </IconButton>
 
         <Scrollbar>
-          <Stack alignItems="center" sx={{ pt: 8 }}>
+          <Stack alignItems="center" sx={{ pt: 5 }}>
             {renderAvatar}
 
-            <Typography variant="subtitle1" noWrap sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" noWrap sx={{ mt: 1 }}>
               {user?.displayName}
             </Typography>
 
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }} noWrap>
               {user?.email}
             </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', mt: 0.5, fontSize: '10px', opacity: 0.6 }}
+              noWrap
+            >
+              Id: {user?.userId}
+            </Typography>
           </Stack>
 
           <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="center" sx={{ p: 3 }}>
-            {[...Array(3)].map((_, index) => (
-              <Tooltip
-                key={_mock.fullName(index + 1)}
-                title={`Switch to: ${_mock.fullName(index + 1)}`}
+            {status.map((option) => (
+              <Button
+                key={option.label}
+                size="small"
+                variant={option.active ? 'contained' : 'outlined'}
               >
-                <Avatar
-                  alt={_mock.fullName(index + 1)}
-                  src={_mock.image.avatar(index + 1)}
-                  onClick={() => {}}
-                />
-              </Tooltip>
+                {option.label}
+              </Button>
             ))}
-
-            <Tooltip title="Add account">
-              <IconButton
-                sx={{
-                  bgcolor: varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                  border: `dashed 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.32)}`,
-                }}
-              >
-                <Iconify icon="mingcute:add-line" />
-              </IconButton>
-            </Tooltip>
           </Stack>
 
-          <Stack sx={{ py: 3, px: 2.5 }}>
+          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
             <BaseOption
               label={settings.colorScheme === 'dark' ? 'Dark mode' : 'Light mode'}
               icon={settings.colorScheme === 'dark' ? 'moon' : 'sun'}

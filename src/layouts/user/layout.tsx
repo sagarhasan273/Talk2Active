@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
 
 import { _contacts, _notifications } from 'src/_mock';
+import { getUserStatus } from 'src/assets/data/status';
 
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
@@ -11,7 +12,7 @@ import { useSettingsContext } from 'src/components/settings';
 import { UserMain } from './main';
 import { layoutClasses } from '../classes';
 import { useNavColorVars } from './styles';
-import { _account } from '../config-nav-account';
+import { _user_account } from '../config-nav-account';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { FeedButton } from '../components/feed-button';
@@ -85,7 +86,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* -- Contacts popover -- */}
                 <ContactsPopover data={_contacts} />
                 {/* -- Account drawer -- */}
-                <AccountDrawer data={_account} />
+                <AccountDrawer data={_user_account} status={getUserStatus('active')} />
               </Box>
             ),
           }}
