@@ -19,7 +19,7 @@ export function LabelValue({
     <Stack
       direction={userId ? 'column' : 'column-reverse'}
       sx={{
-        padding: '4px 10px',
+        padding: '6px 10px',
         borderRadius: '10px',
         bgcolor: varAlpha(
           theme.vars.palette.grey[settings?.colorScheme === 'light' ? '100Channel' : '900Channel'],
@@ -28,6 +28,7 @@ export function LabelValue({
         overflow: 'hidden',
         [theme.breakpoints.down('sm')]: {
           borderRadius: '5px',
+          padding: '4px 10px',
         },
         ...sx,
       }}

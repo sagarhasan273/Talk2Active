@@ -15,7 +15,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <UserHeader title="Profile" />
+      <UserHeader />
     </>
   );
 }

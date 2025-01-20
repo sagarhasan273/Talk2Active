@@ -1,5 +1,4 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { Stack, useTheme, GlobalStyles } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
@@ -14,12 +13,10 @@ import { AvaterBadgeButton } from '../components/avater-badge-button';
 // ----------------------------------------------------------------------
 
 type Props = {
-  title?: string;
   profileImage?: string;
 };
 
 export function UserHeader({
-  title = 'Blank',
   profileImage = `${CONFIG.assetsDir}/assets/images/profile/profileImage.jpg`,
 }: Props) {
   const theme = useTheme();
@@ -81,7 +78,6 @@ export function UserHeader({
           },
         }}
       />
-      <Typography variant="h4"> {title} </Typography>
       <Box
         component="main"
         sx={{
