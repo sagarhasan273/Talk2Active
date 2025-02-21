@@ -2,11 +2,13 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { UserHeader } from 'src/sections/profile-header/view';
+import { UserHeader } from 'src/sections/user/view';
+
+
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Page two | Dashboard - ${CONFIG.appName}` };
+const metadata = { title: `Profile - ${CONFIG.appName}` };
 
 export default function Page() {
   return (

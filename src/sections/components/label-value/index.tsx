@@ -1,32 +1,30 @@
 import { Stack, useTheme, Typography } from '@mui/material';
 
-import { varAlpha } from 'src/theme/styles';
+import { fNumber } from 'src/utils/format-number';
 
-import { useSettingsContext } from 'src/components/settings';
+import { varAlpha } from 'src/theme/styles';
 
 import type { LabelValueProps } from './types';
 
 export function LabelValue({
   label = 'Talk2Active',
   value = 0,
-  userId = undefined,
   sx,
 }: LabelValueProps) {
   const theme = useTheme();
-  const settings = useSettingsContext();
 
   return (
     <Stack
-      direction={userId ? 'column' : 'column-reverse'}
+      direction="column-reverse"
       sx={{
         padding: '6px 10px',
         borderRadius: '10px',
         bgcolor: varAlpha(
-          theme.vars.palette.grey[settings?.colorScheme === 'light' ? '100Channel' : '900Channel'],
+          theme.vars.palette.grey[theme.palette.mode === 'light' ? '600Channel' : '900Channel'],
           0.8
         ),
         overflow: 'hidden',
-        [theme.breakpoints.down('sm')]: {
+        [theme.breakpoints.down('md')]: {
           borderRadius: '5px',
           padding: '4px 10px',
         },
@@ -36,58 +34,34 @@ export function LabelValue({
       <Typography
         variant="subtitle2"
         sx={{
-          fontSize: 'var(--user-info-fontsize)',
-          lineHeight: 'var(--user-info-lineheight)',
-          opacity: userId ? 1 : 0.8,
+          opacity: 0.8,
           cursor: 'default',
-          ...(!userId
-            ? {
-                [theme.breakpoints.down('sm')]: {
-                  fontSize: '8px',
-                  lineHeight: '10px',
-                  opacity: 0.5,
-                },
-              }
-            : { textAlign: 'left' }),
+          [theme.breakpoints.down('md')]: {
+            fontSize: '10px',
+            lineHeight: '12px',
+          },
+
         }}
       >
         {label}
       </Typography>
 
-      {userId && (
-        <Typography
-          variant="caption"
-          sx={{
+      <Typography
+        variant="caption"
+        sx={{
+          textAlign: 'center',
+          cursor: 'default',
+
+          [theme.breakpoints.down('md')]: {
             fontSize: '10px',
-            opacity: 0.5,
-          }}
-        >
-          {`Id: ${userId}`}
-        </Typography>
-      )}
-      {!userId && (
-        <Typography
-          variant="caption"
-          sx={{
-            fontSize: 'var(--user-info-fontsize)',
-            lineHeight: 'var(--user-info-lineheight)',
-            opacity: 0.8,
-            textAlign: 'center',
-            cursor: 'default',
-            ...(!userId
-              ? {
-                  [theme.breakpoints.down('sm')]: {
-                    fontSize: '8px',
-                    lineHeight: '10px',
-                    opacity: 0.5,
-                  },
-                }
-              : {}),
-          }}
-        >
-          {value.toString()}
-        </Typography>
-      )}
+            lineHeight: '12px',
+          },
+
+        }}
+      >
+        {fNumber(value)}
+      </Typography>
+
     </Stack>
   );
 }

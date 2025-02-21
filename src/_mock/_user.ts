@@ -12,13 +12,15 @@ export const USER_STATUS_OPTIONS = [
 export const _userAbout = {
   id: _mock.id(1),
   role: _mock.role(1),
+  userId: "YdsdYh992",
   email: _mock.email(1),
   school: _mock.companyNames(2),
   company: _mock.companyNames(1),
   country: _mock.countryNames(2),
   coverUrl: _mock.image.cover(3),
-  totalFollowers: _mock.number.nativeL(1),
-  totalFollowing: _mock.number.nativeL(2),
+  totalFollowers: _mock.number.nativeL(2),
+  totalFollowing: _mock.number.nativeL(3),
+  totalFriends: _mock.number.nativeL(1),
   quote:
     'Tart I love sugar plum I love oat cake. Sweet roll caramels I love jujubes. Topping cake wafer..',
   socialLinks: {

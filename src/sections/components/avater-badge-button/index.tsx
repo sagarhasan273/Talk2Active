@@ -1,5 +1,5 @@
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import { Stack, Avatar, useTheme, IconButton } from '@mui/material';
+import { Box, Stack, Avatar, useTheme, IconButton } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -12,46 +12,52 @@ export function AvaterBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
   const settings = useSettingsContext();
 
   return (
-    <Stack sx={{ position: 'relative' }}>
-      <Avatar
-        sx={{
-          width: 'var(--user-image-size)',
-          height: 'var(--user-image-size)',
-        }}
-        alt="The intended file is not exist!"
-        src={src}
-      />
-      <IconButton
-        sx={{
-          position: 'absolute',
-          bottom: 'var(--user-profile-image-button-bottom)',
-          right: 'var(--user-profile-image-button-right)',
-          padding: '2px',
-          borderRadius: '5px',
-          bgcolor: varAlpha(
-            theme.vars.palette.grey[
-              settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
-            ],
-            0.8
-          ),
-          '&:hover': {
-            background: varAlpha(
+    <Stack>
+      <Box sx={{ mx: 'auto', position: 'relative' }}>
+        <Avatar
+          sx={{
+            mx: 'auto',
+            width: { xs: 64, md: 128 },
+            height: { xs: 64, md: 128 },
+            border: `solid 2px ${theme.vars.palette.common.white}`,
+          }}
+          alt="The intended file is not exist!"
+          src={src}
+        />
+        <IconButton
+          sx={{
+            position: 'absolute',
+            bottom: -4,
+            right: -4,
+            padding: '2px',
+            borderRadius: '5px',
+            width: { xs: 22, md: 34 },
+            height: { xs: 22, md: 34 },
+            bgcolor: varAlpha(
               theme.vars.palette.grey[
-                settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
+              settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
               ],
               0.8
             ),
-          },
-        }}
-        disableRipple
-      >
-        <PhotoCameraIcon
-          sx={{
-            height: 'var(--user-profile-image-button-size)',
-            width: 'var(--user-profile-image-button-size)',
+            '&:hover': {
+              background: varAlpha(
+                theme.vars.palette.grey[
+                settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
+                ],
+                0.8
+              ),
+            },
           }}
-        />
-      </IconButton>
+          disableRipple
+        >
+          <PhotoCameraIcon
+            sx={{
+              height: 'var(--user-profile-image-button-size)',
+              width: 'var(--user-profile-image-button-size)',
+            }}
+          />
+        </IconButton>
+      </Box>
     </Stack>
   );
 }
