@@ -8,12 +8,9 @@ import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import InputBase from '@mui/material/InputBase';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
-
-import { fNumber } from 'src/utils/format-number';
 
 import { _socials } from 'src/_mock';
 import { varAlpha } from 'src/theme/styles';
@@ -38,29 +35,6 @@ export function ProfileHome({ info, posts }: Props) {
       fileRef.current.click();
     }
   };
-
-  const renderFollows = (
-    <Card sx={{ py: 3, textAlign: 'center', typography: 'h4' }}>
-      <Stack
-        direction="row"
-        divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-      >
-        <Stack width={1}>
-          {fNumber(info.totalFollowers)}
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Follower
-          </Box>
-        </Stack>
-
-        <Stack width={1}>
-          {fNumber(info.totalFollowing)}
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Following
-          </Box>
-        </Stack>
-      </Stack>
-    </Card>
-  );
 
   const renderAbout = (
     <Card>
@@ -120,12 +94,7 @@ export function ProfileHome({ info, posts }: Props) {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
           <Fab size="small" color="inherit" variant="softExtended" onClick={handleAttach}>
             <Iconify icon="solar:gallery-wide-bold" width={24} sx={{ color: 'success.main' }} />
-            Image/Video
-          </Fab>
-
-          <Fab size="small" color="inherit" variant="softExtended">
-            <Iconify icon="solar:videocamera-record-bold" width={24} sx={{ color: 'error.main' }} />
-            Streaming
+            Image
           </Fab>
         </Stack>
 
@@ -169,7 +138,6 @@ export function ProfileHome({ info, posts }: Props) {
     <Grid container spacing={3}>
       <Grid xs={12} md={4}>
         <Stack spacing={3}>
-          {renderFollows}
           {renderAbout}
           {renderSocials}
         </Stack>
