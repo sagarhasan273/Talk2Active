@@ -22,7 +22,7 @@ const authJwt = [
     path: 'sign-in',
     element: (
       <GuestGuard>
-        <AuthSplitLayout section={{ title: 'Hi, Welcome to FameDeal' }}>
+        <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active.' }}>
           <sign.SignInPage />
         </AuthSplitLayout>
       </GuestGuard>
@@ -32,7 +32,7 @@ const authJwt = [
     path: 'sign-up',
     element: (
       <GuestGuard>
-        <AuthSplitLayout section={{ title: 'Hi, Welcome to FameDeal' }}>
+        <AuthSplitLayout section={{ title: 'Hi, Welcome to Talk2Active.' }}>
           <sign.SignUpPage />
         </AuthSplitLayout>
       </GuestGuard>
