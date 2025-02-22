@@ -13,6 +13,25 @@ function processInput(inputValue: InputNumberValue): number | null {
     return Number(inputValue);
 }
 
+// ----------------------------------------------------------------------
+
+export function fShortenNumber(inputValue: InputNumberValue, options?: Options) {
+    const locale = formatNumberLocale() || DEFAULT_LOCALE;
+  
+    const number = processInput(inputValue);
+    if (number === null) return '';
+  
+    const fm = new Intl.NumberFormat(locale.code, {
+      notation: 'compact',
+      maximumFractionDigits: 2,
+      ...options,
+    }).format(number);
+  
+    return fm.replace(/[A-Z]/g, (match) => match.toLowerCase());
+}
+
+// ----------------------------------------------------------------------
+
 export function fNumber(inputValue: InputNumberValue, options?: Options) {
     const locale = formatNumberLocale() || DEFAULT_LOCALE;
 

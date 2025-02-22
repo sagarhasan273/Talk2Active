@@ -1,19 +1,27 @@
 import type { IUserProfile, IUserProfilePost } from 'src/types/user';
 
+import { useRef } from 'react';
+
+import Fab from '@mui/material/Fab';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import InputBase from '@mui/material/InputBase';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 
 import { fNumber } from 'src/utils/format-number';
 
 import { _socials } from 'src/_mock';
+import { varAlpha } from 'src/theme/styles';
 import { TwitterIcon, FacebookIcon, LinkedinIcon, InstagramIcon } from 'src/assets/icons';
 
 import { Iconify } from 'src/components/iconify';
+
+import { ProfilePostItem } from './profile-post-item';
 
 // ----------------------------------------------------------------------
 
@@ -23,6 +31,13 @@ type Props = {
 };
 
 export function ProfileHome({ info, posts }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleAttach = () => {
+    if (fileRef.current) {
+      fileRef.current.click();
+    }
+  };
 
   const renderFollows = (
     <Card sx={{ py: 3, textAlign: 'center', typography: 'h4' }}>
@@ -85,6 +100,42 @@ export function ProfileHome({ info, posts }: Props) {
       </Stack>
     </Card>
   );
+
+  const renderPostInput = (
+    <Card sx={{ p: 3 }}>
+      <InputBase
+        multiline
+        fullWidth
+        rows={4}
+        placeholder="Share what you are thinking here..."
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 1,
+          border: (theme) => `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.2)}`,
+        }}
+      />
+
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
+          <Fab size="small" color="inherit" variant="softExtended" onClick={handleAttach}>
+            <Iconify icon="solar:gallery-wide-bold" width={24} sx={{ color: 'success.main' }} />
+            Image/Video
+          </Fab>
+
+          <Fab size="small" color="inherit" variant="softExtended">
+            <Iconify icon="solar:videocamera-record-bold" width={24} sx={{ color: 'error.main' }} />
+            Streaming
+          </Fab>
+        </Stack>
+
+        <Button variant="contained">Post</Button>
+      </Stack>
+
+      <input ref={fileRef} type="file" style={{ display: 'none' }} />
+    </Card>
+  );
+
   const renderSocials = (
     <Card>
       <CardHeader title="Social" />
@@ -121,6 +172,16 @@ export function ProfileHome({ info, posts }: Props) {
           {renderFollows}
           {renderAbout}
           {renderSocials}
+        </Stack>
+      </Grid>
+
+      <Grid xs={12} md={8}>
+        <Stack spacing={3}>
+          {renderPostInput}
+
+          {posts.map((post) => (
+            <ProfilePostItem key={post.id} post={post} />
+          ))}
         </Stack>
       </Grid>
     </Grid>

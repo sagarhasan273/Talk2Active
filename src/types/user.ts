@@ -1,4 +1,5 @@
-import type { ISocialLink } from './common';
+import type { IDateValue, ISocialLink } from './common';
+
 
 // ----------------------------------------------------------------
 
@@ -19,16 +20,15 @@ export type IUserProfilePost = {
     id: string;
     media: string;
     message: string;
-    createdAt: number;
+    createdAt: IDateValue;
     personLikes: { name: string; avatarUrl: string }[];
     comments: {
-        id: string;
-        message: string;
-        avatarUrl: string;
-        author: { id: string; name: string; avatarUrl: string };
+      id: string;
+      message: string;
+      createdAt: IDateValue;
+      author: { id: string; name: string; avatarUrl: string };
     }[];
-}
-
+  };
 export type IUserProfileCover = {
     name: string;
     userId: string;

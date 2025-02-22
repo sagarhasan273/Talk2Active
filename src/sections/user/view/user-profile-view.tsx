@@ -3,13 +3,14 @@ import { Tab, Tabs, Card } from '@mui/material';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
-import { _userAbout } from 'src/_mock';
 import { UserContent } from 'src/layouts/user';
+import { _userAbout, _userFeeds } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
 
 import { useMockedUser } from 'src/auth/hooks';
 
+import { ProfileHome } from '../profile-home';
 import { ProfileCover } from '../profile-cover';
 
 // ----------------------------------------------------------------------
@@ -68,6 +69,8 @@ export function UserHeader() {
           </Tabs>
         </Box>
       </Card>
+
+      {tabs.value === 'profile' && <ProfileHome info={_userAbout} posts={_userFeeds} />}
     </UserContent>
   );
 }
