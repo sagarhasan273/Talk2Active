@@ -14,7 +14,7 @@ export type IUserProfile = {
     totalFollowers: number;
     totalFollowing: number;
     socialLinks: ISocialLink;
-}
+};
 
 export type IUserProfilePost = {
     id: string;
@@ -28,7 +28,8 @@ export type IUserProfilePost = {
       createdAt: IDateValue;
       author: { id: string; name: string; avatarUrl: string };
     }[];
-  };
+};
+
 export type IUserProfileCover = {
     name: string;
     userId: string;
@@ -40,3 +41,23 @@ export type IUserProfileCover = {
     following: number;
 };
 
+export type IUserProfileFollower = {
+  id: string;
+  name: string;
+  country: string;
+  avatarUrl: string;
+};
+
+export type IUserProfileFriend = {
+  id: string;
+  name: string;
+  role: string;
+  avatarUrl: string;
+};
+
+export type IUserProfileGallery = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  postedAt: IDateValue;
+};
