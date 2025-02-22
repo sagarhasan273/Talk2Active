@@ -3,13 +3,10 @@ import { Box, Stack, Avatar, useTheme, IconButton } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
-import { useSettingsContext } from 'src/components/settings';
-
 import type { AvaterBadgeButtonProps } from './types';
 
 export function AvaterBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
   const theme = useTheme();
-  const settings = useSettingsContext();
 
   return (
     <Stack>
@@ -35,16 +32,16 @@ export function AvaterBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
             height: { xs: 22, md: 34 },
             bgcolor: varAlpha(
               theme.vars.palette.grey[
-              settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
+              theme.palette.mode === 'light' ? '400Channel' : '900Channel'
               ],
-              0.8
+              0.7
             ),
             '&:hover': {
               background: varAlpha(
                 theme.vars.palette.grey[
-                settings?.colorScheme === 'light' ? '100Channel' : '900Channel'
+                theme.palette.mode === 'light' ? '400Channel' : '900Channel'
                 ],
-                0.8
+                0.7
               ),
             },
           }}

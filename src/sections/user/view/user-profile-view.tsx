@@ -37,7 +37,7 @@ export function UserHeader() {
 
   return (
     <UserContent maxWidth="lg">
-      <Card sx={{ mt: 3, mb: 3, height: 290 }}>
+      <Card sx={{ mt: 3, mb: 3, height: 290, position: 'relative' }}>
         <ProfileCover
           role={_userAbout.role}
           userId={_userAbout.userId}
@@ -55,7 +55,7 @@ export function UserHeader() {
           sx={{
             width: 1,
             bottom: 0,
-            zIndex: 9,
+            borderRadius: '0px',
             px: { md: 3 },
             position: 'absolute',
             bgcolor: 'background.paper',

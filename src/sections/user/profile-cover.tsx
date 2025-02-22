@@ -22,7 +22,7 @@ export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, follo
           color: `0deg, ${varAlpha(theme.vars.palette.primary.darkerChannel, 0.8)}, ${varAlpha(theme.vars.palette.primary.darkerChannel, 0.8)}`,
           imgUrl: coverUrl,
         }),
-        height: 1,
+        height: 'calc(100% - 48px)',
         color: 'common.white',
       }}
     >
@@ -34,7 +34,7 @@ export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, follo
           zIndex: { md: 10 },
           pt: { xs: 6, md: 0 },
           position: { md: 'absolute' },
-          width: { sm: 'auto', md: 'calc(100% - 40px)'}
+          width: { sm: 'auto', md: 'calc(100% - 40px)' }
         }}
       >
         <AvaterBadgeButton
@@ -75,7 +75,6 @@ export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, follo
           <LabelValue
             label="Followings"
             value={following}
-
           />
         </Stack>
       </Stack>
