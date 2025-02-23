@@ -35,24 +35,6 @@ export function RHFTextField({ name, helperText, type, ...other }: Props) {
           inputProps={{
             autoComplete: 'off',
           }}
-          sx={{
-            '& .MuiInputBase-root': {},
-            '& .MuiInputBase-input': {
-              height: '40px',
-              padding: '0px 10px',
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: 'border.primary',
-              },
-              '&:hover fieldset': {
-                borderColor: 'border.secondary',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'border.disabled',
-              },
-            },
-          }}
           {...other}
         />
       )}

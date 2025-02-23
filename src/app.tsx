@@ -14,22 +14,28 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
+import { I18nProvider, LocalizationProvider } from './locales';
+
 // ----------------------------------------------------------------------
 
 export default function App() {
   useScrollToTop();
 
   return (
-    <AuthProvider>
-      <SettingsProvider settings={defaultSettings}>
-        <ThemeProvider>
-          <MotionLazy>
-            <ProgressBar />
-            <SettingsDrawer />
-            <Router />
-          </MotionLazy>
-        </ThemeProvider>
-      </SettingsProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <LocalizationProvider>
+        <AuthProvider>
+          <SettingsProvider settings={defaultSettings}>
+            <ThemeProvider>
+              <MotionLazy>
+                <ProgressBar />
+                <SettingsDrawer />
+                <Router />
+              </MotionLazy>
+            </ThemeProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </LocalizationProvider>
+    </I18nProvider>
   );
 }

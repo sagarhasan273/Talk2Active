@@ -43,7 +43,7 @@ export function UserHeader() {
 
   const tabs = useTabs('profile');
 
-  const handleSearchFriends = useCallback((event: React.ChangeEvent<HTMLInputElement>) => { 
+  const handleSearchFriends = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchFriends(event.target.value);
   }, [])
 
@@ -73,7 +73,7 @@ export function UserHeader() {
             bgcolor: 'background.paper',
           }}
         >
-          <Tabs value={tabs.value} onChange={tabs.onChange}>
+          <Tabs sx={{ zIndex: 10 }} value={tabs.value} onChange={tabs.onChange}>
             {TABS.map((tab) => (
               <Tab key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} />
             ))}
@@ -82,7 +82,7 @@ export function UserHeader() {
       </Card>
 
       {tabs.value === 'profile' && <ProfileHome info={_userAbout} posts={_userFeeds} />}
-      
+
       {tabs.value === 'followers' && <ProfileFollowers followers={_userFollowers} />}
 
       {tabs.value === 'friends' && (
