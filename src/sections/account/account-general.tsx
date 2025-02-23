@@ -1,7 +1,6 @@
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -29,12 +28,10 @@ export const UpdateUserSchema = zod.object({
     .min(1, { message: 'Email is required!' })
     .email({ message: 'Email must be a valid email address!' }),
   photoURL: schemaHelper.file({ message: { required_error: 'Avatar is required!' } }),
-  phoneNumber: schemaHelper.phoneNumber({ isValidPhoneNumber }),
   country: schemaHelper.objectOrNull({ message: { required_error: 'Country is required!' } }),
-  address: zod.string().min(1, { message: 'Address is required!' }),
+  nativeLanguage: zod.string().min(1, { message: 'Address is required!' }),
+  secondaryLanguage: zod.string().min(1, { message: 'Address is required!' }),
   state: zod.string().min(1, { message: 'State is required!' }),
-  city: zod.string().min(1, { message: 'City is required!' }),
-  zipCode: zod.string().min(1, { message: 'Zip code is required!' }),
   about: zod.string().min(1, { message: 'About is required!' }),
   // Not required
   isPublic: zod.boolean(),
@@ -47,12 +44,11 @@ export function AccountGeneral() {
     displayName: user?.displayName || '',
     email: user?.email || '',
     photoURL: user?.photoURL || null,
-    phoneNumber: user?.phoneNumber || '',
     country: user?.country || '',
     address: user?.address || '',
     state: user?.state || '',
-    city: user?.city || '',
-    zipCode: user?.zipCode || '',
+    nativeLanguage: user?.nativeLanguage || '',
+    secondaryLanguage: user?.secondaryLanguage || '',
     about: user?.about || '',
     isPublic: user?.isPublic || false,
   };
@@ -72,7 +68,6 @@ export function AccountGeneral() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success('Update success!');
-      console.info('DATA', data);
     } catch (error) {
       console.error(error);
     }
@@ -133,14 +128,10 @@ export function AccountGeneral() {
             >
               <Field.Text name="displayName" label="Name" />
               <Field.Text name="email" label="Email address" />
-              <Field.Phone name="phoneNumber" label="Phone number" />
-              <Field.Text name="address" label="Address" />
-
               <Field.CountrySelect name="country" label="Country" placeholder="Choose a country" />
-
               <Field.Text name="state" label="State/region" />
-              <Field.Text name="city" label="City" />
-              <Field.Text name="zipCode" label="Zip/code" />
+              <Field.Text name="nativeLanguage" label="Native Language" />
+              <Field.Text name="secondaryLanguage" label="Secondary Language" />
             </Box>
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>

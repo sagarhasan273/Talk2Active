@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { UserHeader } from 'src/sections/user/view';
+import { UserProfileView } from 'src/sections/user/view';
 
 
 
@@ -17,7 +17,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <UserHeader />
+      <UserProfileView />
     </>
   );
 }

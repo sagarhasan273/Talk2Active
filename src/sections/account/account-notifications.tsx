@@ -16,20 +16,11 @@ import { Form } from 'src/components/hook-form';
 const NOTIFICATIONS = [
   {
     subheader: 'Activity',
-    caption: 'Donec mi odio, faucibus at, scelerisque quis',
+    caption: 'messages, calls, posts events',
     items: [
-      { id: 'activity_comments', label: 'Email me when someone comments onmy article' },
-      { id: 'activity_answers', label: 'Email me when someone answers on my form' },
-      { id: 'activityFollows', label: 'Email me hen someone follows me' },
-    ],
-  },
-  {
-    subheader: 'Application',
-    caption: 'Donec mi odio, faucibus at, scelerisque quis',
-    items: [
-      { id: 'application_news', label: 'News and announcements' },
-      { id: 'application_product', label: 'Weekly product updates' },
-      { id: 'application_blog', label: 'Weekly blog digest' },
+      { id: 'activity_likes', label: 'Notify me when someone comments on my article' },
+      { id: 'activity_comments', label: 'Notify me when someone comments on my article' },
+      { id: 'activity_follows', label: 'Notify me when someone follows me' },
     ],
   },
 ];

@@ -8,6 +8,7 @@ import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
 import { ThemeProvider } from 'src/theme/theme-provider';
 
+import { Snackbar } from 'src/components/snackbar';
 import { ProgressBar } from 'src/components/progress-bar';
 import { MotionLazy } from 'src/components/animate/motion-lazy';
 import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/components/settings';
@@ -28,6 +29,7 @@ export default function App() {
           <SettingsProvider settings={defaultSettings}>
             <ThemeProvider>
               <MotionLazy>
+              <Snackbar />
                 <ProgressBar />
                 <SettingsDrawer />
                 <Router />

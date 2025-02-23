@@ -6,6 +6,8 @@ import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
+import { AccountView } from 'src/sections/account/view';
+
 import { AuthGuard } from 'src/auth/guard';
 
 // ---------------------------------------------------------------
@@ -29,6 +31,7 @@ export const userRoutes = [
     children: [
       { element: <IndexPage />, index: true },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'account-settings', element: <AccountView /> },
     ],
   },
 ];

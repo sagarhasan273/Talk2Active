@@ -36,7 +36,7 @@ const TABS = [
 ];
 
 
-export function UserHeader() {
+export function UserProfileView() {
   const { user } = useMockedUser();
 
   const [searchFriends, setSearchFriends] = useState<string>('');

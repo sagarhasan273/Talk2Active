@@ -9,6 +9,8 @@ import { getUserStatus } from 'src/assets/data/status';
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
 
+import { useMockedUser } from 'src/auth/hooks';
+
 import { UserMain } from './main';
 import { layoutClasses } from '../classes';
 import { useNavColorVars } from './styles';
@@ -17,7 +19,7 @@ import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { FeedButton } from '../components/feed-button';
 import { AccountDrawer } from '../components/account-drawer';
-import { LanguagePopover } from '../components/language-popover';
+import { LanguageViewer } from '../components/language-viewer';
 import { ContactsPopover } from '../components/contacts-popover';
 import { VoiceChatButton } from '../components/voice-chat-button';
 import { NotificationsDrawer } from '../components/notifications-drawer';
@@ -37,6 +39,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
   const theme = useTheme();
 
   const settings = useSettingsContext();
+  const { user } = useMockedUser();
 
   const navColorVars = useNavColorVars(theme, settings);
 
@@ -68,14 +71,8 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 {/* -- Language popover -- */}
-                <LanguagePopover
-                  data={[
-                    { value: 'en', label: 'English', countryCode: 'GB' },
-                    { value: 'fr', label: 'French', countryCode: 'FR' },
-                    { value: 'vi', label: 'Vietnamese', countryCode: 'VN' },
-                    { value: 'cn', label: 'Chinese', countryCode: 'CN' },
-                    { value: 'ar', label: 'Arabic', countryCode: 'SA' },
-                  ]}
+                <LanguageViewer
+                  language={user.secondaryLanguage}
                 />
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer data={_notifications} />
