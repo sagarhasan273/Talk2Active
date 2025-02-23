@@ -32,6 +32,25 @@ export function fShortenNumber(inputValue: InputNumberValue, options?: Options) 
 
 // ----------------------------------------------------------------------
 
+export function fCurrency(inputValue: InputNumberValue, options?: Options) {
+    const locale = formatNumberLocale() || DEFAULT_LOCALE;
+  
+    const number = processInput(inputValue);
+    if (number === null) return '';
+  
+    const fm = new Intl.NumberFormat(locale.code, {
+      style: 'currency',
+      currency: locale.currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      ...options,
+    }).format(number);
+  
+    return fm;
+  }
+
+// ----------------------------------------------------------------------
+
 export function fNumber(inputValue: InputNumberValue, options?: Options) {
     const locale = formatNumberLocale() || DEFAULT_LOCALE;
 

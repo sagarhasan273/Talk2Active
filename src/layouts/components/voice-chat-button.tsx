@@ -3,13 +3,21 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 import { SvgIcon } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 
+import { useRouter } from 'src/routes/hooks';
+
 // ----------------------------------------------------------------------
 
 type VoiceChatButtonProps = IconButtonProps;
 
 export function VoiceChatButton({ sx, ...other }: VoiceChatButtonProps) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push('voice-chat');
+  }
+
   return (
-    <IconButton sx={sx} {...other}>
+    <IconButton onClick={handleClick} sx={sx} {...other}>
       <SvgIcon>
         <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
           <path

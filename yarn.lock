@@ -1561,6 +1561,44 @@ dom-helpers@^5.0.1:
     "@babel/runtime" "^7.8.7"
     csstype "^3.0.2"
 
+embla-carousel-auto-height@^8.2.0:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-auto-height/-/embla-carousel-auto-height-8.5.2.tgz"
+  integrity sha512-cWO35ThnVVr8kSS5zni/Ywf6gNSpROV8PgFTd/jfiQZ73Wd6SltugitVQ74kHfchLXMWXGQgHxmUg4Ya+r4axg==
+
+embla-carousel-auto-scroll@^8.2.0:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-auto-scroll/-/embla-carousel-auto-scroll-8.5.2.tgz"
+  integrity sha512-B0QF4vcHRLu7DJwDpgTq5q8qsX4185hOuXfpWPtOlZW+a+QG7ZIN3zTSUTI3Xt0MTWkAB5ZJ0gsFj2zUMKL3ig==
+
+embla-carousel-autoplay@^8.2.0:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-autoplay/-/embla-carousel-autoplay-8.5.2.tgz"
+  integrity sha512-27emJ0px3q/c0kCHCjwRrEbYcyYUPfGO3g5IBWF1i7714TTzE6L9P81V6PHLoSMAKJ1aHoT2e7YFOsuFKCbyag==
+
+embla-carousel-fade@^8.2.0:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-fade/-/embla-carousel-fade-8.5.2.tgz"
+  integrity sha512-QJ46Xy+mpijjquQeIY0d0sPSy34XduREUnz7tn1K20hcKyZYTONNIXQZu3GGNwG59cvhMqYJMw9ki92Rjd14YA==
+
+embla-carousel-react@^8.2.0:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-react/-/embla-carousel-react-8.5.2.tgz"
+  integrity sha512-Tmx+uY3MqseIGdwp0ScyUuxpBgx5jX1f7od4Cm5mDwg/dptEiTKf9xp6tw0lZN2VA9JbnVMl/aikmbc53c6QFA==
+  dependencies:
+    embla-carousel "8.5.2"
+    embla-carousel-reactive-utils "8.5.2"
+
+embla-carousel-reactive-utils@8.5.2:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel-reactive-utils/-/embla-carousel-reactive-utils-8.5.2.tgz"
+  integrity sha512-QC8/hYSK/pEmqEdU1IO5O+XNc/Ptmmq7uCB44vKplgLKhB/l0+yvYx0+Cv0sF6Ena8Srld5vUErZkT+yTahtDg==
+
+embla-carousel@^8.2.0, embla-carousel@8.5.2:
+  version "8.5.2"
+  resolved "https://registry.npmjs.org/embla-carousel/-/embla-carousel-8.5.2.tgz"
+  integrity sha512-xQ9oVLrun/eCG/7ru3R+I5bJ7shsD8fFwLEY7yPe27/+fDHCNj0OT5EoG5ZbFyOxOcG6yTwW8oTz/dWyFnyGpg==
+
 emoji-regex@^9.2.2:
   version "9.2.2"
   resolved "https://registry.npmjs.org/emoji-regex/-/emoji-regex-9.2.2.tgz"
@@ -3378,7 +3416,7 @@ react-transition-group@^4.4.5:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-"react@^15.x.x || ^16.x.x || ^17.x.x || ^18.x.x || ^19.x.x", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8.0 || ^17 || ^18 || ^19", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^17.0.0 || ^18.0.0", "react@^17.0.0 || ^18.0.0 || ^19.0.0", react@^18.0.0, "react@^18.0.0 || ^19.0.0 || ^19.0.0-rc", react@^18.3.1, "react@>= 16.8 || 18.0.0", "react@>= 16.8.0", react@>=16, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18.1.0:
+"react@^15.x.x || ^16.x.x || ^17.x.x || ^18.x.x || ^19.x.x", "react@^16.6.0 || ^17.0.0 || ^18.0.0", "react@^16.8.0 || ^17 || ^18 || ^19", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.8.0 || ^17.0.1 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc", "react@^17.0.0 || ^18.0.0", "react@^17.0.0 || ^18.0.0 || ^19.0.0", react@^18.0.0, "react@^18.0.0 || ^19.0.0 || ^19.0.0-rc", react@^18.3.1, "react@>= 16.8 || 18.0.0", "react@>= 16.8.0", react@>=16, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18.1.0:
   version "18.3.1"
   resolved "https://registry.npmjs.org/react/-/react-18.3.1.tgz"
   integrity sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==
