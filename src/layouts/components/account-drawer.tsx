@@ -22,6 +22,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { AnimateAvatar } from 'src/components/animate';
 import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
+import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
 import { useMockedUser } from 'src/auth/hooks';
 
@@ -91,6 +92,20 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     >
       {user?.displayName?.charAt(0).toUpperCase()}
     </AnimateAvatar>
+  );
+
+  const renderColor = (
+    <NavOptions
+      value={{
+        color: settings.primaryColor,
+      }}
+      onClickOption={{
+        color: (newValue) => settings.onUpdateField('primaryColor', newValue),
+      }}
+      options={{
+        colors: ['blue', 'cyan', 'orange', 'purple', 'red'],
+      }}
+    />
   );
 
   return (
@@ -163,6 +178,10 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 height: 100,
               }}
             />
+          </Stack>
+
+          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
+            {renderColor}
           </Stack>
 
           <Stack

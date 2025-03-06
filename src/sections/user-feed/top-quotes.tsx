@@ -111,7 +111,7 @@ function CarouselItem({ item, sx, ...other }: CarouselItemProps) {
       <Box component="span" sx={{ typography: 'body2', color: 'text.secondary', flexGrow: 1 }}>
         / year
       </Box>
-      <Button variant="contained" size="small">
+      <Button variant="text" size="small">
         Join
       </Button>
     </Box>

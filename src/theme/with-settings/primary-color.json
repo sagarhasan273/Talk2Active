@@ -1,10 +1,10 @@
 {
   "cyan": {
-    "lighter": "#CCF4FE",
-    "light": "#68CDF9",
-    "main": "#078DEE",
-    "dark": "#0351AB",
-    "darker": "#012972",
+    "lighter": "#d0f8ff",
+    "light": "#8feeff",
+    "main": "#3ce1fa",
+    "dark": "#1ab0cc",
+    "darker": "#127c8f",
     "contrastText": "#FFFFFF"
   },
   "purple": {

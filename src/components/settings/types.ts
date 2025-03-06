@@ -1,5 +1,5 @@
+import type { ThemeColorScheme } from 'src/theme/types';
 import type { Theme, SxProps } from '@mui/material/styles';
-import type { ThemeDirection, ThemeColorScheme } from 'src/theme/types';
 
 // ----------------------------------------------------------------------
 
@@ -18,11 +18,8 @@ export type SettingsDrawerProps = {
 export type SettingsState = {
   fontFamily: string;
   compactLayout: boolean;
-  direction: ThemeDirection;
   colorScheme: ThemeColorScheme;
   contrast: 'default' | 'hight';
-  navColor: 'integrate' | 'apparent';
-  navLayout: 'vertical' | 'horizontal' | 'mini';
   primaryColor: 'default' | 'cyan' | 'purple' | 'blue' | 'orange' | 'red';
 };
 

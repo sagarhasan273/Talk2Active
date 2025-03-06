@@ -11,11 +11,10 @@ import { updateCoreWithSettings, updateComponentsWithSettings } from './with-set
 // ----------------------------------------------------------------------
 
 export function createTheme(settings: SettingsState): Theme {
-  const initialTheme = {
+  const initialTheme: any = {
     colorSchemes,
     shadows: shadows(settings.colorScheme),
     customShadows: customShadows(settings.colorScheme),
-    direction: settings.direction,
     shape: { borderRadius: 8 },
     components,
     typography: {

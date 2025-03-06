@@ -13,7 +13,7 @@ import { svgColorClasses } from '../../svg-color';
 // ----------------------------------------------------------------------
 
 type Props = {
-  title: string;
+  title?: string;
   tooltip?: string;
   sx?: SxProps<Theme>;
   children: React.ReactNode;

@@ -7,13 +7,11 @@ import { _contacts, _notifications } from 'src/_mock';
 import { getUserStatus } from 'src/assets/data/status';
 
 import { Logo } from 'src/components/logo';
-import { useSettingsContext } from 'src/components/settings';
 
 import { useMockedUser } from 'src/auth/hooks';
 
 import { UserMain } from './main';
 import { layoutClasses } from '../classes';
-import { useNavColorVars } from './styles';
 import { _user_account } from '../config-nav-account';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
@@ -38,10 +36,7 @@ export type UserLayoutProps = {
 export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
   const theme = useTheme();
 
-  const settings = useSettingsContext();
   const { user } = useMockedUser();
-
-  const navColorVars = useNavColorVars(theme, settings);
 
   const layoutQuery: Breakpoint = 'lg';
 
@@ -71,9 +66,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 {/* -- Language popover -- */}
-                <LanguageViewer
-                  language={user.secondaryLanguage}
-                />
+                <LanguageViewer language={user.secondaryLanguage} />
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer data={_notifications} />
                 {/* --Feed Page */}
@@ -90,7 +83,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
         />
       }
       cssVars={{
-        ...navColorVars.layout,
         '--layout-transition-easing': 'linear',
         '--layout-transition-duration': '120ms',
         '--layout-nav-mini-width': '88px',

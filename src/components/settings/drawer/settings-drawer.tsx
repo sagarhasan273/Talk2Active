@@ -84,19 +84,14 @@ export function SettingsDrawer({
   const renderNav = (
     <NavOptions
       value={{
-        color: settings.navColor,
-        layout: settings.navLayout,
+        color: settings.primaryColor,
       }}
       onClickOption={{
-        color: (newValue) => settings.onUpdateField('navColor', newValue),
-        layout: (newValue) => settings.onUpdateField('navLayout', newValue),
+        color: (newValue) => settings.onUpdateField('primaryColor', newValue),
       }}
       options={{
-        colors: ['integrate', 'apparent'],
-        layouts: ['vertical', 'mini'],
+        colors: ['blue', 'cyan', 'orange', 'purple', 'red'],
       }}
-      hideNavColor={hideNavColor}
-      hideNavLayout={hideNavLayout}
     />
   );
 

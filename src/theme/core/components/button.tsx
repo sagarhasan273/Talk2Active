@@ -104,15 +104,15 @@ const MuiButton: Components<Theme>['MuiButton'] = {
           ...(ownerState.color === 'inherit' &&
             !ownerState.disabled && {
               color: theme.vars.palette.common.white,
-              backgroundColor: theme.vars.palette.grey[800],
+              backgroundColor: theme.vars.palette.primary.main,
               '&:hover': {
                 boxShadow: theme.customShadows.z8,
-                backgroundColor: theme.vars.palette.grey[700],
+                backgroundColor: theme.vars.palette.primary.dark,
               },
               [stylesMode.dark]: {
                 color: theme.vars.palette.grey[800],
-                backgroundColor: theme.vars.palette.common.white,
-                '&:hover': { backgroundColor: theme.vars.palette.grey[400] },
+                backgroundColor: theme.vars.palette.primary.main,
+                '&:hover': { backgroundColor: theme.vars.palette.primary.dark },
               },
             }),
         },
@@ -130,7 +130,8 @@ const MuiButton: Components<Theme>['MuiButton'] = {
         inheritColor: {
           ...(ownerState.color === 'inherit' &&
             !ownerState.disabled && {
-              borderColor: varAlpha(theme.vars.palette.grey['500Channel'], 0.32),
+              borderColor: theme.vars.palette.primary.main,
+              color: theme.vars.palette.primary.main,
               '&:hover': { backgroundColor: theme.vars.palette.action.hover },
             }),
         },
@@ -148,7 +149,10 @@ const MuiButton: Components<Theme>['MuiButton'] = {
         inheritColor: {
           ...(ownerState.color === 'inherit' &&
             !ownerState.disabled && {
-              '&:hover': { backgroundColor: theme.vars.palette.action.hover },
+              color: theme.vars.palette.primary.main,
+              '&:hover': {
+                backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.18),
+              },
             }),
         },
       };
@@ -158,19 +162,19 @@ const MuiButton: Components<Theme>['MuiButton'] = {
      * @size
      */
     sizeSmall: ({ ownerState }) => ({
-      height: 30,
+      height: 24,
       ...(ownerState.variant === 'text'
         ? { paddingLeft: '4px', paddingRight: '4px' }
         : { paddingLeft: '8px', paddingRight: '8px' }),
     }),
     sizeMedium: ({ ownerState }) => ({
-      height: 36,
+      height: 28,
       ...(ownerState.variant === 'text'
         ? { paddingLeft: '8px', paddingRight: '8px' }
         : { paddingLeft: '12px', paddingRight: '12px' }),
     }),
     sizeLarge: ({ ownerState }) => ({
-      height: 40,
+      height: 32,
       ...(ownerState.variant === 'text'
         ? { paddingLeft: '10px', paddingRight: '10px' }
         : { paddingLeft: '16px', paddingRight: '16px' }),

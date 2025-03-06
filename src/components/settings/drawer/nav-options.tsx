@@ -3,10 +3,10 @@ import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
-import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
-import { SvgColor } from '../../svg-color';
+import { Iconify } from 'src/components/iconify';
+
 import { Block, BlockOption } from './styles';
 
 import type { SettingsState } from '../types';
@@ -15,22 +15,17 @@ import type { SettingsState } from '../types';
 
 type Props = {
   value: {
-    color: SettingsState['navColor'];
-    layout: SettingsState['navLayout'];
+    color: SettingsState['primaryColor'];
   };
   options: {
-    colors: SettingsState['navColor'][];
-    layouts: SettingsState['navLayout'][];
+    colors: SettingsState['primaryColor'][];
   };
   onClickOption: {
-    color: (newValue: SettingsState['navColor']) => void;
-    layout: (newValue: SettingsState['navLayout']) => void;
+    color: (newValue: SettingsState['primaryColor']) => void;
   };
-  hideNavColor?: boolean;
-  hideNavLayout?: boolean;
 };
 
-export function NavOptions({ options, value, onClickOption, hideNavColor, hideNavLayout }: Props) {
+export function NavOptions({ options, value, onClickOption }: Props) {
   const theme = useTheme();
 
   const labelStyles: React.CSSProperties = {
@@ -41,30 +36,18 @@ export function NavOptions({ options, value, onClickOption, hideNavColor, hideNa
     fontSize: theme.typography.pxToRem(11),
   };
 
-  const renderLayout = (
-    <Box gap={1.5} display="flex" flexDirection="column">
-      <Box component="span" sx={labelStyles}>
-        Layout
-      </Box>
-      <Box gap={1.5} display="flex">
-        {options.layouts.map((option) => (
-          <LayoutOption
-            key={option}
-            option={option}
-            selected={value.layout === option}
-            onClick={() => onClickOption.layout(option)}
-          />
-        ))}
-      </Box>
-    </Box>
-  );
-
   const renderColor = (
     <Box gap={1.5} display="flex" flexDirection="column">
       <Box component="span" sx={labelStyles}>
-        Color
+        Color Palette
       </Box>
-      <Box gap={1.5} display="flex">
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 1.5,
+        }}
+      >
         {options.colors.map((option) => (
           <ColorOption
             key={option}
@@ -77,12 +60,7 @@ export function NavOptions({ options, value, onClickOption, hideNavColor, hideNa
     </Box>
   );
 
-  return (
-    <Block title="Nav" tooltip="Dashboard only" sx={{ gap: 2.5 }}>
-      {!hideNavLayout && renderLayout}
-      {!hideNavColor && renderColor}
-    </Block>
-  );
+  return <Block sx={{ gap: 2.5 }}>{renderColor}</Block>;
 }
 
 // ----------------------------------------------------------------------
@@ -211,19 +189,20 @@ export function LayoutOption({ option, selected, sx, ...other }: OptionProps) {
 // ----------------------------------------------------------------------
 
 export function ColorOption({ option, selected, sx, ...other }: OptionProps) {
+  const theme = useTheme();
   return (
     <BlockOption
       selected={selected}
-      icon={
-        <SvgColor
-          src={`${CONFIG.assetsDir}/assets/icons/settings/ic-sidebar-${option === 'integrate' ? 'outline' : 'filled'}.svg`}
-        />
-      }
+      icon={<Iconify icon={`material-symbols:palette${!selected ? '-outline' : ''}`} width={20} />}
       label={option}
       sx={{
         gap: 1.5,
         height: 56,
         textTransform: 'capitalize',
+        ...(selected && {
+          color: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
+          backgroundColor: theme.vars.palette.primary.main,
+        }),
         ...sx,
       }}
       {...other}
