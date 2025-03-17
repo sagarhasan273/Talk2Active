@@ -4,17 +4,16 @@ import type { CardProps } from '@mui/material/Card';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
-import Button from '@mui/material/Button';
+import { Stack } from '@mui/material';
 import Typography from '@mui/material/Typography';
 
-import { fCurrency, fShortenNumber } from 'src/utils/format-number';
-
-import { maxLine } from 'src/theme/styles';
+import { useBoolean } from 'src/hooks/use-boolean';
 
 import { Image } from 'src/components/image';
 import { Iconify } from 'src/components/iconify';
-import { Label, labelClasses } from 'src/components/label';
 import { Carousel, useCarousel, CarouselArrowBasicButtons } from 'src/components/carousel';
+
+import { PostHeader } from '../components/header/post-header';
 
 // ----------------------------------------------------------------------
 
@@ -27,6 +26,13 @@ type Props = BoxProps & {
     coverUrl: string;
     totalDuration: number;
     totalStudents: number;
+    header: {
+      caption: string;
+      photoUrl: string;
+      time: string;
+      userName: string;
+      alt: string;
+    };
   }[];
 };
 
@@ -34,7 +40,7 @@ export function TopQuotes({ title, list, sx, ...other }: Props) {
   const carousel = useCarousel({
     align: 'start',
     slideSpacing: '24px',
-    slidesToShow: { xs: 1, sm: 2, md: 3, lg: '40%', xl: '30%' },
+    slidesToShow: { xs: 1, sm: 2, md: 3, lg: '30%', xl: '35%' },
   });
 
   return (
@@ -69,74 +75,73 @@ type CarouselItemProps = CardProps & {
 };
 
 function CarouselItem({ item, sx, ...other }: CarouselItemProps) {
+  const favoritePopWiggle = useBoolean(false);
+
+  const favoritePopWiggleClick = () => {
+    favoritePopWiggle.onTrue();
+    setTimeout(() => favoritePopWiggle.onFalse(), 500);
+  };
+
   const renderImage = (
-    <Box sx={{ px: 1, pt: 1 }}>
-      <Image alt={item.title} src={item.coverUrl} ratio="5/4" sx={{ borderRadius: 1.5 }} />
-    </Box>
-  );
-
-  const renderLabels = (
-    <Box
-      sx={{
-        gap: 1,
-        mb: 1.5,
-        display: 'flex',
-        flexWrap: 'wrap',
-        [`& .${labelClasses.root}`]: {
-          typography: 'caption',
-          color: 'text.secondary',
-        },
-      }}
-    >
-      <Label startIcon={<Iconify width={12} icon="solar:clock-circle-outline" />}>1h 40m</Label>
-
-      <Label startIcon={<Iconify width={12} icon="solar:users-group-rounded-bold" />}>
-        {fShortenNumber(item.totalStudents)}
-      </Label>
+    <Box sx={{ px: 1, pt: 1, overflow: 'hidden' }}>
+      <Image alt={item.title} src={item.coverUrl} ratio="6/4" sx={{ borderRadius: 1.5 }} />
     </Box>
   );
 
   const renderFooter = (
-    <Box
-      sx={{
-        mt: 2.5,
-        gap: 0.5,
-        display: 'flex',
-        alignItems: 'center',
-      }}
-    >
-      <Box component="span" sx={{ typography: 'h6' }}>
-        {fCurrency(item.price)}
-      </Box>
-      <Box component="span" sx={{ typography: 'body2', color: 'text.secondary', flexGrow: 1 }}>
-        / year
-      </Box>
-      <Button variant="text" size="small">
-        Join
-      </Button>
-    </Box>
+    <Stack direction="row" spacing={1}>
+      <Link
+        variant="subtitle2"
+        underline="none"
+        sx={{
+          cursor: 'pointer',
+          color: 'primary.main',
+          display: 'inline-flex',
+          alignItems: 'center',
+        }}
+        onClick={favoritePopWiggleClick}
+      >
+        <Iconify
+          icon="solar:heart-bold"
+          width={16}
+          sx={{
+            mr: 0.5,
+          }}
+          popWiggle={favoritePopWiggle.value}
+        />
+        12k Favorite
+      </Link>
+
+      <Link
+        variant="subtitle2"
+        color="inherit"
+        underline="none"
+        sx={{
+          cursor: 'pointer',
+          color: 'text.secondary',
+          display: 'inline-flex',
+          alignItems: 'center',
+        }}
+      >
+        <Iconify
+          icon="solar:share-bold"
+          width={16}
+          sx={{
+            mr: 1,
+          }}
+        />
+        6k Share
+      </Link>
+    </Stack>
   );
 
   return (
-    <Card sx={{ width: 1, ...sx }} {...other}>
+    <Card sx={{ width: 1, userSelect: 'none', ...sx }} {...other}>
+      <PostHeader item={item.header} />
+
       {renderImage}
 
-      <Box sx={{ px: 2, py: 2.5 }}>
-        {renderLabels}
-
-        <Link
-          variant="subtitle2"
-          color="inherit"
-          underline="none"
-          sx={(theme) => ({
-            ...maxLine({ line: 2, persistent: theme.typography.subtitle2 }),
-          })}
-        >
-          {item.title}
-        </Link>
-
-        {renderFooter}
-      </Box>
+      <Box sx={{ px: 2, py: 1.5 }}>{renderFooter}</Box>
     </Card>
   );
 }

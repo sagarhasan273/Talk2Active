@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 
 import Box from '@mui/material/Box';
+import { Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 import { StyledLabel } from './styles';
@@ -33,20 +34,26 @@ export const Label = forwardRef<HTMLSpanElement, LabelProps>(
         component="span"
         className={labelClasses.root.concat(className ? ` ${className}` : '')}
         ownerState={{ color, variant }}
-        sx={{ ...(startIcon && { pl: 0.75 }), ...(endIcon && { pr: 0.75 }), ...sx }}
+        sx={{
+          ...(startIcon && { pl: 0.5 }),
+          ...(endIcon && { pr: 0.5 }),
+          ...sx,
+        }}
         theme={theme}
         {...other}
       >
         {startIcon && (
-          <Box component="span" className={labelClasses.icon} sx={{ mr: 0.75, ...iconStyles }}>
+          <Box component="span" className={labelClasses.icon} sx={{ mr: 0.5, ...iconStyles }}>
             {startIcon}
           </Box>
         )}
 
-        {typeof children === 'string' ? sentenceCase(children) : children}
+        <Typography variant="caption">
+          {typeof children === 'string' ? sentenceCase(children) : children}
+        </Typography>
 
         {endIcon && (
-          <Box component="span" className={labelClasses.icon} sx={{ ml: 0.75, ...iconStyles }}>
+          <Box component="span" className={labelClasses.icon} sx={{ ml: 0.5, ...iconStyles }}>
             {endIcon}
           </Box>
         )}

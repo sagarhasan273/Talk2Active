@@ -71,8 +71,8 @@ export const typography: TypographyOptions = {
   },
   h6: {
     fontWeight: 600,
-    lineHeight: 28 / 18,
-    fontSize: pxToRem(17),
+    lineHeight: 24 / 15,
+    fontSize: pxToRem(14),
     ...responsiveFontSizes({ sm: 18, md: 18, lg: 18 }),
   },
   subtitle1: {
@@ -83,30 +83,30 @@ export const typography: TypographyOptions = {
   subtitle2: {
     fontWeight: 600,
     lineHeight: 22 / 14,
-    fontSize: pxToRem(14),
+    fontSize: pxToRem(12),
   },
   body1: {
     lineHeight: 1.5,
-    fontSize: pxToRem(16),
+    fontSize: pxToRem(14),
   },
   body2: {
-    lineHeight: 22 / 14,
-    fontSize: pxToRem(14),
+    lineHeight: 20 / 12,
+    fontSize: pxToRem(12),
   },
   caption: {
     lineHeight: 1.5,
-    fontSize: pxToRem(12),
+    fontSize: pxToRem(10),
   },
   overline: {
     fontWeight: 700,
     lineHeight: 1.5,
-    fontSize: pxToRem(12),
+    fontSize: pxToRem(10),
     textTransform: 'uppercase',
   },
   button: {
     fontWeight: 700,
-    lineHeight: 24 / 14,
-    fontSize: pxToRem(14),
+    lineHeight: 22 / 12,
+    fontSize: pxToRem(12),
     textTransform: 'unset',
   },
 };

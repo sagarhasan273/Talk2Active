@@ -35,9 +35,6 @@ export function UserFeedView() {
             flexDirection: 'column',
             flex: { lg: '1 1 auto' },
             px: { xs: 2, sm: 3, xl: 5 },
-            borderRight: (theme) => ({
-              lg: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)}`,
-            }),
           }}
         >
           <TopQuotes title="Most Liked Quotes" list={_coursesFeatured} />

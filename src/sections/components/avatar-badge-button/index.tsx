@@ -5,7 +5,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import type { AvaterBadgeButtonProps } from './types';
 
-export function AvaterBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
+export function AvatarBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
   const theme = useTheme();
 
   return (
@@ -31,15 +31,13 @@ export function AvaterBadgeButton({ src = 'noimage' }: AvaterBadgeButtonProps) {
             width: { xs: 22, md: 34 },
             height: { xs: 22, md: 34 },
             bgcolor: varAlpha(
-              theme.vars.palette.grey[
-              theme.palette.mode === 'light' ? '400Channel' : '900Channel'
-              ],
+              theme.vars.palette.grey[theme.palette.mode === 'light' ? '400Channel' : '900Channel'],
               0.7
             ),
             '&:hover': {
               background: varAlpha(
                 theme.vars.palette.grey[
-                theme.palette.mode === 'light' ? '400Channel' : '900Channel'
+                  theme.palette.mode === 'light' ? '400Channel' : '900Channel'
                 ],
                 0.7
               ),

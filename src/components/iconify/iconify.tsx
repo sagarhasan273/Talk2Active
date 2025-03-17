@@ -10,7 +10,7 @@ import type { IconifyProps } from './types';
 // ----------------------------------------------------------------------
 
 export const Iconify = forwardRef<SVGElement, IconifyProps>(
-  ({ className, width = 20, sx, ...other }, ref) => (
+  ({ className, width = 20, sx, popWiggle, ...other }, ref) => (
     <Box
       ssr
       ref={ref}
@@ -21,6 +21,15 @@ export const Iconify = forwardRef<SVGElement, IconifyProps>(
         height: width,
         flexShrink: 0,
         display: 'inline-flex',
+        animation: popWiggle ? 'popWiggle 0.6s ease' : 'none',
+        '@keyframes popWiggle': {
+          '0%': { transform: 'scale(1) rotate(0deg)' },
+          '20%': { transform: 'scale(1.2) rotate(-15deg)' },
+          '40%': { transform: 'scale(1.2) rotate(15deg)' },
+          '60%': { transform: 'scale(1.1) rotate(-10deg)' },
+          '80%': { transform: 'scale(1.05) rotate(10deg)' },
+          '100%': { transform: 'scale(1) rotate(0deg)' },
+        },
         ...sx,
       }}
       {...other}

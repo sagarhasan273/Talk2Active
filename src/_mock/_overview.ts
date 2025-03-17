@@ -335,6 +335,13 @@ export const _coursesFeatured = [...Array(6)].map((_, index) => ({
   totalDuration: 220,
   totalStudents: _mock.number.nativeM(index),
   price: _mock.number.price(index),
+  header: {
+    caption: _mock.sentence(index),
+    photoUrl: _mock.image.course(index + 6),
+    time: '1hr 45mins ago',
+    userName: _mock.fullName(index),
+    alt: _mock.courseNames(index),
+  },
 }));
 
 export const _coursesReminder = [...Array(4)].map((_, index) => ({

@@ -3,4 +3,4 @@ import type { BoxProps } from '@mui/material/Box';
 
 // ----------------------------------------------------------------------
 
-export type IconifyProps = BoxProps & IconProps;
+export type IconifyProps = BoxProps & IconProps & { popWiggle?: boolean };

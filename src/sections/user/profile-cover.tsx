@@ -7,12 +7,19 @@ import ListItemText from '@mui/material/ListItemText';
 
 import { varAlpha, bgGradient } from 'src/theme/styles';
 
-import { LabelValue } from '../components';
-import { AvaterBadgeButton } from '../components/avater-badge-button';
+import { LabelValue, AvatarBadgeButton } from '../components';
 
 // ----------------------------------------------------------------------
 
-export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, followers, following }: IUserProfileCover) {
+export function ProfileCover({
+  name,
+  avatarUrl,
+  userId,
+  coverUrl,
+  friends,
+  followers,
+  following,
+}: IUserProfileCover) {
   const theme = useTheme();
 
   return (
@@ -34,12 +41,10 @@ export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, follo
           zIndex: { md: 10 },
           pt: { xs: 6, md: 0 },
           position: { md: 'absolute' },
-          width: { sm: 'auto', md: 'calc(100% - 40px)' }
+          width: { sm: 'auto', md: 'calc(100% - 40px)' },
         }}
       >
-        <AvaterBadgeButton
-          src={avatarUrl}
-        />
+        <AvatarBadgeButton src={avatarUrl} />
 
         <ListItemText
           sx={{ mt: 3, ml: { md: 3 }, textAlign: { xs: 'center', md: 'unset' } }}
@@ -57,27 +62,18 @@ export function ProfileCover({ name, avatarUrl, userId, coverUrl, friends, follo
         <Stack
           direction="row"
           sx={{
-            gap: "5px",
+            gap: '5px',
             mt: 1,
             display: 'flex-end',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'center',
           }}
         >
-          <LabelValue
-            label="Followers"
-            value={followers}
-          />
-          <LabelValue
-            label="Friends"
-            value={friends}
-          />
-          <LabelValue
-            label="Followings"
-            value={following}
-          />
+          <LabelValue label="Followers" value={followers} />
+          <LabelValue label="Friends" value={friends} />
+          <LabelValue label="Followings" value={following} />
         </Stack>
       </Stack>
-    </Box >
+    </Box>
   );
 }
