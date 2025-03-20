@@ -66,6 +66,7 @@ export function UserContent({
           px: 'var(--layout-dashboard-content-px',
         },
       }}
+      {...other}
     >
       {children}
     </Container>

@@ -328,7 +328,7 @@ export const _coursesContinue = [...Array(4)].map((_, index) => ({
   currentLesson: index + 7,
 }));
 
-export const _coursesFeatured = [...Array(6)].map((_, index) => ({
+export const _coursesFeatured = [...Array(7)].map((_, index) => ({
   id: _mock.id(index),
   title: _mock.courseNames(index),
   coverUrl: _mock.image.course(index + 6),

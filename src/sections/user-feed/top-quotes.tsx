@@ -40,7 +40,7 @@ export function TopQuotes({ title, list, sx, ...other }: Props) {
   const carousel = useCarousel({
     align: 'start',
     slideSpacing: '24px',
-    slidesToShow: { xs: 1, sm: 2, md: 3, lg: '30%', xl: '35%' },
+    slidesToShow: { xs: 1, sm: 2, md: 3, lg: '25%', xl: '25%' },
   });
 
   return (

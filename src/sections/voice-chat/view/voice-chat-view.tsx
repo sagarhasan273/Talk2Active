@@ -12,7 +12,7 @@ import { VoiceChatCards } from '../voice-chat-cards';
 export function VoiceChatView() {
   return (
     <UserContent
-      disablePadding
+      maxWidth="lg"
       sx={{
         borderTop: (theme) => ({
           lg: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)}`,
