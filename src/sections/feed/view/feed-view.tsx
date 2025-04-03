@@ -4,7 +4,7 @@ import { varAlpha } from 'src/theme/styles';
 import { _coursesFeatured } from 'src/_mock';
 import { UserContent } from 'src/layouts/user';
 
-import FeedPost from '../feed-post';
+import FeedPostBody from '../feed-post-body';
 import FeedTopQuotes from '../feed-top-quotes';
 
 // ----------------------------------------------------------------------
@@ -39,7 +39,7 @@ export function FeedView() {
           <FeedTopQuotes title="Most Liked Quotes" list={_coursesFeatured} />
         </Box>
       </Box>
-      <FeedPost />
+      <FeedPostBody />
     </UserContent>
   );
 }

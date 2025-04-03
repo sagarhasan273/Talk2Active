@@ -331,7 +331,7 @@ export const _coursesContinue = [...Array(4)].map((_, index) => ({
 export const _coursesFeatured = [...Array(7)].map((_, index) => ({
   id: _mock.id(index),
   title: _mock.courseNames(index),
-  coverUrl: _mock.image.course(index + 6),
+  coverUrl: _mock.image.course(index),
   totalDuration: 220,
   totalStudents: _mock.number.nativeM(index),
   price: _mock.number.price(index),

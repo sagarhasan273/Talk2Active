@@ -3,11 +3,14 @@ import React, { useRef } from 'react';
 import { Fab, Box, Card, Stack, Button, InputBase } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
+import { _coursesFeatured } from 'src/_mock';
 import { UserContent } from 'src/layouts/user';
 
 import { Iconify } from 'src/components/iconify';
 
-function FeedPost() {
+import FeedPostList from './feed-post-list';
+
+export default function FeedPostBody() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleAttach = () => {
@@ -64,10 +67,11 @@ function FeedPost() {
           <Card sx={{ p: 3 }} />
         </Stack>
 
-        <Stack>{renderPostInput}</Stack>
+        <Stack gap={2}>
+          {renderPostInput}
+          <FeedPostList list={_coursesFeatured} />
+        </Stack>
       </Box>
     </UserContent>
   );
 }
-
-export default FeedPost;
