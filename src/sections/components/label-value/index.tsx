@@ -6,11 +6,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import type { LabelValueProps } from './types';
 
-export function LabelValue({
-  label = 'Talk2Active',
-  value = 0,
-  sx,
-}: LabelValueProps) {
+export function LabelValue({ label = 'Talk2Active', value = 0, sx }: LabelValueProps) {
   const theme = useTheme();
 
   return (
@@ -40,7 +36,6 @@ export function LabelValue({
             fontSize: '10px',
             lineHeight: '12px',
           },
-
         }}
       >
         {label}
@@ -51,17 +46,14 @@ export function LabelValue({
         sx={{
           textAlign: 'center',
           cursor: 'default',
-
           [theme.breakpoints.down('md')]: {
             fontSize: '10px',
             lineHeight: '12px',
           },
-
         }}
       >
         {fNumber(value)}
       </Typography>
-
     </Stack>
   );
 }

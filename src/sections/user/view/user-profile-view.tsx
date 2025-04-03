@@ -6,7 +6,7 @@ import { Tab, Tabs, Card } from '@mui/material';
 import { useTabs } from 'src/hooks/use-tabs';
 
 import { UserContent } from 'src/layouts/user';
-import { _userAbout, _userFeeds, _userFriends, _userGallery, _userFollowers } from 'src/_mock';
+import { _userAbout, _userFeeds, _userFriends, _userFollowers } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -15,7 +15,6 @@ import { useMockedUser } from 'src/auth/hooks';
 import { ProfileHome } from '../profile-home';
 import { ProfileCover } from '../profile-cover';
 import { ProfileFriends } from '../profile-friends';
-import { ProfileGallery } from '../profile-gallery';
 import { ProfileFollowers } from '../profile-followers';
 
 // ----------------------------------------------------------------------
@@ -27,11 +26,6 @@ const TABS = [
     value: 'friends',
     label: 'Friends',
     icon: <Iconify icon="solar:users-group-rounded-bold" width={24} />,
-  },
-  {
-    value: 'gallery',
-    label: 'Gallery',
-    icon: <Iconify icon="solar:gallery-wide-bold" width={24} />,
   },
 ];
 
@@ -47,7 +41,7 @@ export function UserProfileView() {
   }, []);
 
   return (
-    <UserContent>
+    <UserContent maxWidth="md">
       <Card sx={{ mt: 3, mb: 3, height: 290, position: 'relative' }}>
         <ProfileCover
           role={_userAbout.role}
@@ -72,9 +66,24 @@ export function UserProfileView() {
             bgcolor: 'background.paper',
           }}
         >
-          <Tabs sx={{ zIndex: 10 }} value={tabs.value} onChange={tabs.onChange}>
+          <Tabs
+            sx={{ zIndex: 10, color: 'primary.main' }}
+            value={tabs.value}
+            onChange={tabs.onChange}
+          >
             {TABS.map((tab) => (
-              <Tab key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} />
+              <Tab
+                key={tab.value}
+                value={tab.value}
+                icon={tab.icon}
+                label={tab.label}
+                sx={{
+                  color: 'primary.dark',
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                  },
+                }}
+              />
             ))}
           </Tabs>
         </Box>
@@ -91,7 +100,6 @@ export function UserProfileView() {
           onSearchFriends={handleSearchFriends}
         />
       )}
-      {tabs.value === 'gallery' && <ProfileGallery gallery={_userGallery} />}
     </UserContent>
   );
 }
