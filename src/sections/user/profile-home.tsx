@@ -7,6 +7,8 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 
+import { _coursesFeatured } from 'src/_mock';
+
 import { Iconify } from 'src/components/iconify';
 
 import { ProfilePostItem } from './profile-post-item';
@@ -65,11 +67,7 @@ export function ProfileHome({ info, posts }: Props) {
       </Grid>
 
       <Grid xs={12} md={8}>
-        <Stack spacing={3}>
-          {posts.map((post) => (
-            <ProfilePostItem key={post.id} post={post} />
-          ))}
-        </Stack>
+        <ProfilePostItem list={_coursesFeatured} />
       </Grid>
     </Grid>
   );
