@@ -65,6 +65,7 @@ export function UserContent({
         [theme.breakpoints.up(layoutQuery)]: {
           px: 'var(--layout-dashboard-content-px',
         },
+        ...sx,
       }}
       {...other}
     >

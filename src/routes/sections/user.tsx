@@ -6,8 +6,8 @@ import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
+import { FeedView } from 'src/sections/feed/view';
 import { AccountView } from 'src/sections/account/view';
-import { UserFeedView } from 'src/sections/user-feed/view';
 import { VoiceChatView } from 'src/sections/voice-chat/view';
 
 import { AuthGuard } from 'src/auth/guard';
@@ -35,7 +35,7 @@ export const userRoutes = [
       { path: 'profile', element: <ProfilePage /> },
       { path: 'account-settings', element: <AccountView /> },
       { path: 'voice-chat', element: <VoiceChatView /> },
-      { path: 'feed', element: <UserFeedView /> },
+      { path: 'feed', element: <FeedView /> },
     ],
   },
 ];

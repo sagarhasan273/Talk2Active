@@ -36,7 +36,7 @@ type Props = BoxProps & {
   }[];
 };
 
-export function TopQuotes({ title, list, sx, ...other }: Props) {
+export default function FeedTopQuotes({ title, list, sx, ...other }: Props) {
   const carousel = useCarousel({
     align: 'start',
     slideSpacing: '24px',
@@ -45,7 +45,7 @@ export function TopQuotes({ title, list, sx, ...other }: Props) {
 
   return (
     <Box sx={sx} {...other}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', px: 1, mt: 1 }}>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>

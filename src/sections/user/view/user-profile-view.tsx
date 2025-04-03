@@ -35,7 +35,6 @@ const TABS = [
   },
 ];
 
-
 export function UserProfileView() {
   const { user } = useMockedUser();
 
@@ -45,7 +44,7 @@ export function UserProfileView() {
 
   const handleSearchFriends = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchFriends(event.target.value);
-  }, [])
+  }, []);
 
   return (
     <UserContent>
@@ -92,9 +91,7 @@ export function UserProfileView() {
           onSearchFriends={handleSearchFriends}
         />
       )}
-
       {tabs.value === 'gallery' && <ProfileGallery gallery={_userGallery} />}
-
     </UserContent>
   );
 }

@@ -33,7 +33,6 @@ type Props = BoxProps & {
 };
 
 export function VoiceChatCards({ title, list, sx, ...other }: Props) {
-
   return (
     <Box sx={sx} {...other}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
@@ -55,7 +54,6 @@ export function VoiceChatCards({ title, list, sx, ...other }: Props) {
           <Item key={item.id} item={item} />
         ))}
       </Box>
-
     </Box>
   );
 }
@@ -78,10 +76,7 @@ function Item({ item, sx, ...other }: ItemProps) {
         >
           {COLORS.map((color, index) => (
             <Tooltip title="owner" key={color}>
-              <Avatar
-                alt={_mock.fullAddress(index + 1)}
-                src={_mock.image.avatar(index + 1)}
-              />
+              <Avatar alt={_mock.fullAddress(index + 1)} src={_mock.image.avatar(index + 1)} />
             </Tooltip>
           ))}
         </AvatarGroup>
