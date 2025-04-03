@@ -13,7 +13,7 @@ export function FeedButton({ sx, ...other }: FeedButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('feed');
+    router.push('');
   };
 
   return (

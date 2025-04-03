@@ -6,16 +6,14 @@ import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
-import { FeedView } from 'src/sections/feed/view';
-import { AccountView } from 'src/sections/account/view';
-import { VoiceChatView } from 'src/sections/voice-chat/view';
-
 import { AuthGuard } from 'src/auth/guard';
 
 // ---------------------------------------------------------------
 
-const IndexPage = lazy(() => import('src/pages/user/home'));
+const FeedView = lazy(() => import('src/pages/user/feed'));
 const ProfilePage = lazy(() => import('src/pages/user/profile'));
+const AccountView = lazy(() => import('src/pages/user/account'));
+const VoiceChatView = lazy(() => import('src/pages/user/voice-chat'));
 // ---------------------------------------------------------------
 
 const layoutContent = (
@@ -31,11 +29,11 @@ export const userRoutes = [
     path: 'user',
     element: CONFIG.auth.skip ? <>{layoutContent}</> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
-      { element: <IndexPage />, index: true },
+      { element: <FeedView />, index: true },
+      { path: 'feed', element: <FeedView /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'account-settings', element: <AccountView /> },
       { path: 'voice-chat', element: <VoiceChatView /> },
-      { path: 'feed', element: <FeedView /> },
     ],
   },
 ];

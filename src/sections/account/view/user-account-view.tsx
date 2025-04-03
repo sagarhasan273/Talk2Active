@@ -33,8 +33,11 @@ export function AccountView() {
 
   return (
     <UserContent>
-
-      <Tabs value={tabs.value} onChange={tabs.onChange} sx={{ mt: { xs: 3, md: 5 }, mb: { xs: 3, md: 5 } }}>
+      <Tabs
+        value={tabs.value}
+        onChange={tabs.onChange}
+        sx={{ mt: { xs: 3, md: 5 }, mb: { xs: 3, md: 5 } }}
+      >
         {TABS.map((tab) => (
           <Tab key={tab.value} label={tab.label} icon={tab.icon} value={tab.value} />
         ))}
