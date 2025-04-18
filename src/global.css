@@ -29,7 +29,7 @@
 * Baseline
 *************************************** */
 html {
-  height: 100%;
+  height: 100vh;
   -webkit-overflow-scrolling: touch;
 }
 body,
@@ -37,9 +37,8 @@ body,
 #root__layout {
   display: flex;
   flex: 1 1 auto;
-  min-height: 100%;
+  min-height: 100vh;
   flex-direction: column;
-  overflow: auto;
 }
 img {
   max-width: 100%;

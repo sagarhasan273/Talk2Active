@@ -45,11 +45,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
       headerSection={
         <HeaderSection
           layoutQuery={layoutQuery}
-          slotProps={{
-            container: {
-              maxWidth: false,
-            },
-          }}
           sx={header?.sx}
           slots={{
             leftArea: (
