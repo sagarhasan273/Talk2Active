@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import { Avatar, Tooltip, AvatarGroup, avatarGroupClasses } from '@mui/material';
 
 import { fShortenNumber } from 'src/utils/format-number';
@@ -21,7 +20,6 @@ import { ComponentBlock } from '../components';
 // ----------------------------------------------------------------------
 
 type Props = BoxProps & {
-  title: string;
   list: {
     id: string;
     title: string;
@@ -32,28 +30,21 @@ type Props = BoxProps & {
   }[];
 };
 
-export function VoiceChatCards({ title, list, sx, ...other }: Props) {
+export function VoiceChatCards({ list, sx, ...other }: Props) {
   return (
-    <Box sx={sx} {...other}>
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          {title}
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          gap: 3,
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(1, 1fr)',
-            md: 'repeat(3, 1fr)',
-          },
-        }}
-      >
-        {list.map((item) => (
-          <Item key={item.id} item={item} />
-        ))}
-      </Box>
+    <Box
+      sx={{
+        gap: 3,
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: 'repeat(1, 1fr)',
+          md: 'repeat(3, 1fr)',
+        },
+      }}
+    >
+      {list.map((item) => (
+        <Item key={item.id} item={item} />
+      ))}
     </Box>
   );
 }
