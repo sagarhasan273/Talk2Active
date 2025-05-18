@@ -29,6 +29,8 @@ export function Upload({
   helperText,
   onRemoveAll,
   className,
+  placeholder,
+  sxRoot,
   multiple = false,
   ...other
 }: UploadProps) {
@@ -99,12 +101,17 @@ export function Upload({
             bgcolor: (theme) => varAlpha(theme.vars.palette.error.mainChannel, 0.08),
           }),
           ...(hasFile && { padding: '28% 0' }),
+          ...sxRoot,
         }}
       >
         <input {...getInputProps()} />
 
         {/* Single file */}
-        {hasFile ? <SingleFilePreview file={value as File} /> : <UploadPlaceholder />}
+        {hasFile ? (
+          <SingleFilePreview file={value as File} />
+        ) : (
+          placeholder || <UploadPlaceholder />
+        )}
       </Box>
 
       {/* Single file */}

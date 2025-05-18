@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { FeedView } from 'src/sections/feed/view';
+import { FeedView } from 'src/sections/feed';
 
 // ----------------------------------------------------------------------
 

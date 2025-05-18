@@ -1,33 +1,33 @@
 export * from './fields';
 
-export * from './rhf-code';
+export * from './input-code';
 
-export * from './rhf-upload';
+export * from './input-upload';
 
-export * from './rhf-select';
+export * from './input-switch';
 
-export * from './rhf-rating';
+export * from './input-slider';
 
-export * from './rhf-switch';
+export * from './input-select';
 
-export * from './rhf-editor';
+export * from './input-rating';
 
-export * from './rhf-slider';
-
-export * from './rhf-checkbox';
+export * from './input-editor';
 
 export * from './schema-helper';
 
 export * from './form-provider';
 
-export * from './rhf-text-field';
+export * from './input-checkbox';
 
-export * from './rhf-date-picker';
+export * from './input-text-field';
 
-export * from './rhf-radio-group';
+export * from './input-radio-group';
 
-export * from './rhf-phone-input';
+export * from './input-phone-input';
 
-export * from './rhf-autocomplete';
+export * from './input-date-picker';
 
-export * from './rhf-country-select';
+export * from './input-autocomplete';
+
+export * from './input-country-select';

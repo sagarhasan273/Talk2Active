@@ -82,9 +82,9 @@ export function PostItem({ item, sx, ...other }: Props) {
         }}
       />
       <Carousel carousel={carousel} sx={{ borderRadius: 1 }}>
-        {slides.map((slide) => (
+        {slides.map((slide, index) => (
           <Image
-            key={slide.src}
+            key={index}
             alt={slide.src}
             src={slide.src}
             ratio="1/1"
@@ -114,7 +114,7 @@ export function PostItem({ item, sx, ...other }: Props) {
       >
         {slides.map((slide, index) => (
           <CarouselThumb
-            key={slide.src}
+            key={index}
             index={index}
             src={slide.src}
             selected={index === carousel.thumbs.selectedIndex}

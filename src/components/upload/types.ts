@@ -28,6 +28,7 @@ export type MultiFilePreviewProps = BoxProps & {
 export type UploadProps = DropzoneOptions & {
   error?: boolean;
   sx?: SxProps<Theme>;
+  sxRoot?: SxProps<Theme>;
   className?: string;
   thumbnail?: boolean;
   onDelete?: () => void;
