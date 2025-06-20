@@ -1,11 +1,9 @@
 import Box from '@mui/material/Box';
 
 import { varAlpha } from 'src/theme/styles';
-import { _coursesFeatured } from 'src/_mock';
 import { UserContent } from 'src/layouts/user';
 
-import FeedPostBody from '../feed-post-body';
-import FeedTopQuotes from '../feed-top-quotes';
+import { FeedPosts } from '../feed-posts';
 
 // ----------------------------------------------------------------------
 
@@ -26,15 +24,7 @@ export function FeedView() {
           flexDirection: 'column',
         }}
       >
-        <Box
-          sx={{
-            gap: 3,
-            px: { xs: 0.5, sm: 0.5, md: 1, xl: 5 },
-          }}
-        >
-          <FeedTopQuotes title="Most Liked Quotes" list={_coursesFeatured} />
-        </Box>
-        <FeedPostBody />
+        <FeedPosts />
       </Box>
     </UserContent>
   );

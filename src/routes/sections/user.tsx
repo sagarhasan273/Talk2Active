@@ -10,9 +10,9 @@ import { AuthGuard } from 'src/auth/guard';
 
 // ---------------------------------------------------------------
 
-const FeedView = lazy(() => import('src/pages/user/feed'));
-const ProfilePage = lazy(() => import('src/pages/user/profile'));
-const AccountView = lazy(() => import('src/pages/user/account'));
+const FeedView = lazy(() => import('src/pages/feed'));
+const ProfilePage = lazy(() => import('src/pages/profile'));
+const SettingsView = lazy(() => import('src/pages/settings'));
 const VoiceChatView = lazy(() => import('src/pages/user/voice-chat'));
 // ---------------------------------------------------------------
 
@@ -32,7 +32,7 @@ export const userRoutes = [
       { element: <FeedView />, index: true },
       { path: 'feed', element: <FeedView /> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'account-settings', element: <AccountView /> },
+      { path: 'settings', element: <SettingsView /> },
       { path: 'voice-chat', element: <VoiceChatView /> },
     ],
   },

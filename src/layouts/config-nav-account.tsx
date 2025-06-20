@@ -62,7 +62,7 @@ export const _account = [
     icon: <Iconify icon="solar:shield-keyhole-bold-duotone" />,
   },
   {
-    label: 'Account settings',
+    label: 'Settings',
     href: '#',
     icon: <Iconify icon="solar:settings-bold-duotone" />,
   },
@@ -126,13 +126,8 @@ export const _user_account = [
     ),
   },
   {
-    label: 'Privacy & Security',
-    href: '#',
-    icon: <Iconify icon="solar:shield-keyhole-bold-duotone" />,
-  },
-  {
-    label: 'Account settings',
-    href: '/user/account-settings',
+    label: 'Settings',
+    href: '/user/settings',
     icon: <Iconify icon="solar:settings-bold-duotone" />,
   },
 ];
