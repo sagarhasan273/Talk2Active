@@ -9,7 +9,7 @@ type MessageButtonProps = IconButtonProps;
 
 export function MessageButton({ sx, ...other }: MessageButtonProps) {
   return (
-    <IconButton sx={sx} {...other}>
+    <IconButton sx={{ color: 'primary.main', ...sx }} {...other}>
       <MessageIcon />
     </IconButton>
   );

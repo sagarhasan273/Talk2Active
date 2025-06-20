@@ -1,18 +1,8 @@
-import type { LucideIcon } from 'lucide-react';
-
 import React from 'react';
 
 import { Box, useTheme, IconButton, Typography } from '@mui/material';
 
-interface InteractionButtonProps {
-  icon: LucideIcon;
-  count: number;
-  isActive: boolean;
-  onClick: () => void;
-  activeColor: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
-  hoverColor: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
-  label: string;
-}
+import type { InteractionButtonProps } from './types';
 
 export const InteractionButton: React.FC<InteractionButtonProps> = ({
   icon: Icon,
@@ -20,7 +10,6 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
   isActive,
   onClick,
   activeColor,
-  hoverColor,
   label,
 }) => {
   const theme = useTheme();

@@ -14,10 +14,10 @@ export function VoiceChatButton({ sx, ...other }: VoiceChatButtonProps) {
 
   const handleClick = () => {
     router.push('voice-chat');
-  }
+  };
 
   return (
-    <IconButton onClick={handleClick} sx={sx} {...other}>
+    <IconButton onClick={handleClick} sx={{ color: 'primary.main', ...sx }} {...other}>
       <SvgIcon>
         <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
           <path

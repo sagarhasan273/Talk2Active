@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 
 import { SettingsView } from 'src/sections/settings';
-import { currentUserProfile } from 'src/sections/feed/data/userProfile';
+import { currentUserProfile } from 'src/_mock/data/userProfile';
 
 // ----------------------------------------------------------------------
 

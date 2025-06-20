@@ -3,21 +3,22 @@ import type { Post as PostType } from 'src/types/post';
 import React, { useState } from 'react';
 import { Plus, Quote } from 'lucide-react';
 
-import { Box, Fab, Grid, Container, Typography } from '@mui/material';
+import { Box, Fab, Grid, useTheme, Container, Typography } from '@mui/material';
 
-import { Post } from './post';
-import { CreatePost } from './create-post';
-import { initialPosts } from './data/posts';
 import { DiscoveryPanel } from './discovery-panal';
-import { CategorySidebar } from './catagory-sidebar';
-import { currentUserProfile } from './data/userProfile';
+import { PostCard } from '../components/post-card';
+import { initialPosts } from '../../_mock/data/posts';
+import { CreatePost } from '../components/create-post';
+import { CategorySidebarView } from './catagory-sidebar';
+import { currentUserProfile } from '../../_mock/data/userProfile';
 
 export const FeedPosts: React.FC = () => {
+  const theme = useTheme();
+
   const [posts, setPosts] = useState<PostType[]>(initialPosts);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [userProfile] = useState(currentUserProfile);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLike = (postId: string) => {
     setPosts((prevPosts) =>
@@ -111,14 +112,13 @@ export const FeedPosts: React.FC = () => {
         sx={{ px: 0, pb: 0, height: 'calc(100vh - 64px)', overflowY: 'hidden' }}
       >
         <Grid container spacing={3} sx={{ height: '100%', mt: 0 }}>
-          {/* Other grid items */}
           <Grid
             item
             xs={12}
             sm={3}
             sx={{ p: '10px !important', height: '100%', overflowY: 'auto' }}
           >
-            <CategorySidebar
+            <CategorySidebarView
               selectedCategory={selectedCategory}
               onCategorySelect={setSelectedCategory}
             />
@@ -144,7 +144,7 @@ export const FeedPosts: React.FC = () => {
                 sx={{
                   p: 1,
                   borderRadius: '50%',
-                  background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                  background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -156,7 +156,7 @@ export const FeedPosts: React.FC = () => {
                 variant="h6"
                 sx={{
                   fontWeight: 'bold',
-                  background: 'linear-gradient(to right, #7c3aed, #db2777)',
+                  background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -169,10 +169,10 @@ export const FeedPosts: React.FC = () => {
                 onClick={() => setIsCreatePostOpen(true)}
                 sx={{
                   ml: 'auto',
-                  background: 'linear-gradient(to right, #8b5cf6, #ec4899)',
+                  background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                   color: 'white',
                   '&:hover': {
-                    background: 'linear-gradient(to right, #7c3aed, #db2777)',
+                    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
                   },
                 }}
                 size="small"
@@ -183,7 +183,7 @@ export const FeedPosts: React.FC = () => {
             </Box>
             <Box display="flex" flexDirection="column" gap={3}>
               {posts.map((post) => (
-                <Post
+                <PostCard
                   key={post.id}
                   post={post}
                   onLike={handleLike}

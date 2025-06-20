@@ -1,22 +1,17 @@
 import type { Post as PostType } from 'src/types/post';
 
 import React, { useState } from 'react';
-import { Heart, Repeat2, MessageCircle, MoreHorizontal } from 'lucide-react';
+import { Heart, Repeat2, MessageCircle } from 'lucide-react';
 
-import { Box, Paper, Avatar, TextField, IconButton, Typography } from '@mui/material';
+import { Box, Paper, Avatar, Button, TextField, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
-import { InteractionButton } from './interaction-button';
+import { InteractionButton } from '../interaction-button';
 
-interface PostProps {
-  post: PostType;
-  onLike: (postId: string) => void;
-  onRepost: (postId: string) => void;
-  onComment: (postId: string, comment: string) => void;
-}
+import type { PostCardProps } from './types';
 
-export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onComment }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
 
@@ -40,15 +35,11 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
 
   return (
     <Paper
-      elevation={1}
       sx={{
-        borderRadius: 4,
-        transition: '0.3s',
+        borderRadius: 3,
         border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-        '&:hover': {
-          boxShadow: (theme) =>
-            `0px 4px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
-        },
+        boxShadow: (theme) =>
+          `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
       }}
     >
       {/* Repost Header */}
@@ -87,9 +78,22 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
               </Typography>
             </Box>
           </Box>
-          <IconButton>
-            <MoreHorizontal size={20} color="#9ca3af" />
-          </IconButton>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{
+              background: (theme) =>
+                `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              color: 'common.white',
+              borderRadius: 6,
+              '&:hover': {
+                background: (theme) =>
+                  `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+              },
+            }}
+          >
+            Follow
+          </Button>
         </Box>
 
         {/* Content */}
@@ -144,7 +148,7 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
         {/* Comments */}
         {showComments && (
           <Box
-            mt={4}
+            mt={1}
             pt={2}
             sx={{
               borderTop: (theme) =>
@@ -208,7 +212,7 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
                   <Box flex={1}>
                     <Box
                       sx={{
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: 'background.neutral',
                         borderRadius: 3,
                         px: 2,
                         py: 1.5,

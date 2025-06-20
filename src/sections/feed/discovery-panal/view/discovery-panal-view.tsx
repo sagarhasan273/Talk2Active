@@ -143,13 +143,13 @@ export const DiscoveryPanel: React.FC = () => {
             <Grid item xs={6}>
               <StatCard
                 sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.primary.light}, ${theme.palette.secondary.light})`,
+                  background: `linear-gradient(to bottom right, ${theme.palette.secondary.main}, ${theme.palette.secondary.light})`,
                 }}
               >
-                <Typography variant="h5" fontWeight="bold" color="primary.main">
+                <Typography variant="h5" fontWeight="bold" color="secondary.darker">
                   {todaysStats.totalPosts}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="common.black">
                   Posts Today
                 </Typography>
               </StatCard>
@@ -157,13 +157,13 @@ export const DiscoveryPanel: React.FC = () => {
             <Grid item xs={6}>
               <StatCard
                 sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.info.light}, ${theme.palette.info.lighter})`,
+                  background: `linear-gradient(to bottom right, ${theme.palette.cyan.main}, ${theme.palette.cyan.light})`,
                 }}
               >
-                <Typography variant="h5" fontWeight="bold" color="info.main">
+                <Typography variant="h5" fontWeight="bold" color="info.dark">
                   {todaysStats.activeUsers}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="common.black">
                   Active Users
                 </Typography>
               </StatCard>
@@ -171,13 +171,13 @@ export const DiscoveryPanel: React.FC = () => {
             <Grid item xs={6}>
               <StatCard
                 sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.success.light}, ${theme.palette.success.lighter})`,
+                  background: `linear-gradient(to bottom right, ${theme.palette.success.main}, ${theme.palette.success.light})`,
                 }}
               >
-                <Typography variant="h5" fontWeight="bold" color="success.main">
+                <Typography variant="h5" fontWeight="bold" color="success.darker">
                   {todaysStats.newQuotes}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="common.black">
                   New Quotes
                 </Typography>
               </StatCard>
@@ -188,10 +188,10 @@ export const DiscoveryPanel: React.FC = () => {
                   background: `linear-gradient(to bottom right, ${theme.palette.warning.light}, ${theme.palette.warning.lighter})`,
                 }}
               >
-                <Typography variant="h5" fontWeight="bold" color="warning.main">
+                <Typography variant="h5" fontWeight="bold" color="warning.dark">
                   {todaysStats.engagement}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="common.black">
                   Engagement
                 </Typography>
               </StatCard>
@@ -206,7 +206,7 @@ export const DiscoveryPanel: React.FC = () => {
           avatar={
             <IconButton
               sx={{
-                background: `linear-gradient(to right, ${theme.palette.warning.main}, ${theme.palette.error.main})`,
+                background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
                 color: 'common.white',
               }}
             >
@@ -230,7 +230,7 @@ export const DiscoveryPanel: React.FC = () => {
                 <ListItemAvatar>
                   <Avatar
                     sx={{
-                      background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.darker})`,
                       color: 'common.white',
                       fontSize: theme.typography.body2.fontSize,
                       fontWeight: 'bold',
@@ -346,7 +346,7 @@ export const DiscoveryPanel: React.FC = () => {
           titleTypographyProps={{ fontWeight: 'bold' }}
         />
         <Divider />
-        <CardContent>
+        <CardContent sx={{ p: 1 }}>
           <List disablePadding>
             {upcomingEvents.map((event, index) => (
               <ListItem key={index} disablePadding sx={{ mb: 2 }}>

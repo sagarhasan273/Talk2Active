@@ -17,7 +17,7 @@ export function FeedButton({ sx, ...other }: FeedButtonProps) {
   };
 
   return (
-    <IconButton onClick={handleClick} sx={sx} {...other}>
+    <IconButton onClick={handleClick} sx={{ color: 'primary.main', ...sx }} {...other}>
       <FeedIcon />
     </IconButton>
   );

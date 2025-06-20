@@ -11,11 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 
-interface CreatePostProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (content: string) => void;
-}
+import type { CreatePostProps } from './types';
 
 export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onSubmit }) => {
   const [content, setContent] = useState('');
@@ -25,7 +21,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onSubmi
     e.preventDefault();
     if (content.trim() && !isSubmitting) {
       setIsSubmitting(true);
-      await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 800));
       onSubmit(content.trim());
       setContent('');
       setIsSubmitting(false);

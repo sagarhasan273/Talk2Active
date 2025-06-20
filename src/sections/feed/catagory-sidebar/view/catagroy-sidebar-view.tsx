@@ -50,7 +50,7 @@ const CategoryButton = styled(Button)(({ theme }) => ({
     duration: theme.transitions.duration.standard,
   }),
   '&.selected': {
-    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
     color: theme.palette.common.white,
     boxShadow: theme.shadows[3],
     transform: 'scale(1.05)',
@@ -84,7 +84,7 @@ const CategoryIconWrapper = styled('div')(({ theme }) => ({
   }),
 }));
 
-export const CategorySidebar: React.FC<CategorySidebarProps> = ({
+export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
   selectedCategory,
   onCategorySelect,
 }) => {
@@ -95,7 +95,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
       key: 'all',
       label: 'All Posts',
       icon: Globe,
-      color: theme.palette.text.secondary,
+      color: theme.palette.primary.main,
       bgColor: theme.palette.grey[100],
     },
     {
@@ -213,7 +213,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
           <IconButton
             sx={{
               p: 1.5,
-              background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
               color: 'common.white',
             }}
           >
@@ -244,10 +244,12 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                   onClick={() => onCategorySelect(category.key)}
                   sx={{ p: 3 }}
                 >
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 2 }}>
+                  <ListItemIcon sx={{ minWidth: 'auto', mr: 2, borderRadius: 1 }}>
                     <CategoryIconWrapper
                       sx={{
-                        backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.2)' : category.bgColor,
+                        backgroundColor: isSelected
+                          ? 'rgba(155, 154, 154, 0.27)'
+                          : category.bgColor,
                       }}
                     >
                       <Icon

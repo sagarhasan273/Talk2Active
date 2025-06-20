@@ -41,6 +41,7 @@ export function ContactsPopover({ data = [], sx, ...other }: ContactsPopoverProp
         whileTap="tap"
         onClick={popover.onOpen}
         sx={{
+          color: 'primary.main',
           ...(popover.open && { bgcolor: (theme) => theme.vars.palette.action.selected }),
           ...sx,
         }}
