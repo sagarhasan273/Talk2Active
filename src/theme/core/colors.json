@@ -47,6 +47,81 @@
     "darker": "#7A0916",
     "contrastText": "#FFFFFF"
   },
+  "purple": {
+    "light": "#EDE7F6",
+    "main": "#7E57C2",
+    "dark": "#5E35B1"
+  },
+  "yellow": {
+    "light": "#FFF8E1",
+    "main": "#FFCA28",
+    "dark": "#FFB300"
+  },
+  "blue": {
+    "light": "#E3F2FD",
+    "main": "#42A5F5",
+    "dark": "#1E88E5"
+  },
+  "red": {
+    "light": "#FFEBEE",
+    "main": "#EF5350",
+    "dark": "#E53935"
+  },
+  "green": {
+    "light": "#E8F5E9",
+    "main": "#66BB6A",
+    "dark": "#43A047"
+  },
+  "indigo": {
+    "light": "#E8EAF6",
+    "main": "#5C6BC0",
+    "dark": "#3949AB"
+  },
+  "pink": {
+    "light": "#FCE4EC",
+    "main": "#EC407A",
+    "dark": "#D81B60"
+  },
+  "cyan": {
+    "light": "#E0F7FA",
+    "main": "#26C6DA",
+    "dark": "#00ACC1"
+  },
+  "orange": {
+    "light": "#FFF3E0",
+    "main": "#FFA726",
+    "dark": "#FB8C00"
+  },
+  "teal": {
+    "light": "#E0F2F1",
+    "main": "#26A69A",
+    "dark": "#00897B"
+  },
+  "violet": {
+    "light": "#F3E5F5",
+    "main": "#AB47BC",
+    "dark": "#8E24AA"
+  },
+  "emerald": {
+    "light": "#E8F5E9",
+    "main": "#66BB6A",
+    "dark": "#43A047"
+  },
+  "rose": {
+    "light": "#FFE4E1",
+    "main": "#FF5252",
+    "dark": "#FF1744"
+  },
+  "amber": {
+    "light": "#FFF8E1",
+    "main": "#FFC107",
+    "dark": "#FFA000"
+  },
+  "stone": {
+    "light": "#FAFAFA",
+    "main": "#9E9E9E",
+    "dark": "#616161"
+  },
   "grey": {
     "50": "#FCFDFD",
     "100": "#F9FAFB",

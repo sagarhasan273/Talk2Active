@@ -1,5 +1,29 @@
 import { varAlpha } from '../styles';
-import { grey, info, error, common, primary, success, warning, secondary } from './palette';
+import {
+  red,
+  grey,
+  info,
+  blue,
+  pink,
+  cyan,
+  teal,
+  rose,
+  error,
+  green,
+  amber,
+  stone,
+  common,
+  purple,
+  yellow,
+  indigo,
+  orange,
+  violet,
+  primary,
+  success,
+  warning,
+  emerald,
+  secondary,
+} from './palette';
 
 import type { ThemeColorScheme } from '../types';
 
@@ -20,6 +44,21 @@ export interface CustomShadows {
   success?: string;
   warning?: string;
   error?: string;
+  purple?: string;
+  yellow?: string;
+  blue?: string;
+  red?: string;
+  green?: string;
+  indigo?: string;
+  pink?: string;
+  cyan?: string;
+  orange?: string;
+  teal?: string;
+  violet?: string;
+  emerald?: string;
+  rose?: string;
+  amber?: string;
+  stone?: string;
   //
   card?: string;
   dialog?: string;
@@ -66,5 +105,20 @@ export function customShadows(colorScheme: ThemeColorScheme) {
     success: createShadowColor(success.mainChannel),
     warning: createShadowColor(warning.mainChannel),
     error: createShadowColor(error.mainChannel),
+    purple: createShadowColor(purple.mainChannel),
+    yellow: createShadowColor(yellow.mainChannel),
+    blue: createShadowColor(blue.mainChannel),
+    red: createShadowColor(red.mainChannel),
+    green: createShadowColor(green.mainChannel),
+    indigo: createShadowColor(indigo.mainChannel),
+    pink: createShadowColor(pink.mainChannel),
+    cyan: createShadowColor(cyan.mainChannel),
+    orange: createShadowColor(orange.mainChannel),
+    teal: createShadowColor(teal.mainChannel),
+    violet: createShadowColor(violet.mainChannel),
+    emerald: createShadowColor(emerald.mainChannel),
+    rose: createShadowColor(rose.mainChannel),
+    amber: createShadowColor(amber.mainChannel),
+    stone: createShadowColor(stone.mainChannel),
   };
 }

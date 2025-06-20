@@ -52,7 +52,28 @@ declare module '@mui/material' {
   }
 }
 
-export type ColorType = 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error';
+export type ColorType =
+  | 'primary'
+  | 'secondary'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'purple'
+  | 'yellow'
+  | 'blue'
+  | 'red'
+  | 'green'
+  | 'indigo'
+  | 'pink'
+  | 'cyan'
+  | 'orange'
+  | 'teal'
+  | 'violet'
+  | 'emerald'
+  | 'rose'
+  | 'amber'
+  | 'stone';
 
 // ----------------------------------------------------------------------
 
@@ -76,6 +97,51 @@ export const warning = createPaletteChannel(COLORS.warning);
 
 // Error
 export const error = createPaletteChannel(COLORS.error);
+
+// purple
+export const purple = createPaletteChannel(COLORS.purple);
+
+// yellow
+export const yellow = createPaletteChannel(COLORS.yellow);
+
+// blue
+export const blue = createPaletteChannel(COLORS.blue);
+
+// red
+export const red = createPaletteChannel(COLORS.red);
+
+// green
+export const green = createPaletteChannel(COLORS.green);
+
+// indigo
+export const indigo = createPaletteChannel(COLORS.indigo);
+
+// pink
+export const pink = createPaletteChannel(COLORS.pink);
+
+// cyan
+export const cyan = createPaletteChannel(COLORS.cyan);
+
+// orange
+export const orange = createPaletteChannel(COLORS.orange);
+
+// teal
+export const teal = createPaletteChannel(COLORS.teal);
+
+// violet
+export const violet = createPaletteChannel(COLORS.violet);
+
+// emerald
+export const emerald = createPaletteChannel(COLORS.emerald);
+
+// rose
+export const rose = createPaletteChannel(COLORS.rose);
+
+// amber
+export const amber = createPaletteChannel(COLORS.amber);
+
+// stone
+export const stone = createPaletteChannel(COLORS.stone);
 
 // Common
 export const common = createPaletteChannel(COLORS.common);
@@ -130,6 +196,21 @@ export const basePalette = {
   success,
   warning,
   error,
+  purple,
+  yellow,
+  blue,
+  red,
+  green,
+  indigo,
+  pink,
+  cyan,
+  orange,
+  teal,
+  violet,
+  emerald,
+  rose,
+  amber,
+  stone,
   grey,
   common,
   divider: varAlpha(grey['500Channel'], 0.2),

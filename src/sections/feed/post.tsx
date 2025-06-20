@@ -5,6 +5,8 @@ import { Heart, Repeat2, MessageCircle, MoreHorizontal } from 'lucide-react';
 
 import { Box, Paper, Avatar, TextField, IconButton, Typography } from '@mui/material';
 
+import { varAlpha } from 'src/theme/styles';
+
 import { InteractionButton } from './interaction-button';
 
 interface PostProps {
@@ -41,12 +43,11 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
       elevation={1}
       sx={{
         borderRadius: 4,
-        mb: 3,
         transition: '0.3s',
-        border: '1px solid #f3f4f6',
+        border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0px 4px 12px rgba(168, 85, 247, 0.15)',
+          boxShadow: (theme) =>
+            `0px 4px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
         },
       }}
     >
@@ -65,14 +66,19 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
         </Box>
       )}
 
-      <Box px={3} py={2}>
+      <Box px={2} py={1}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={2}>
             <Avatar
               src={post.author.avatar}
               alt={post.author.name}
-              sx={{ width: 48, height: 48, border: '2px solid #e9d5ff' }}
+              sx={{
+                width: 48,
+                height: 48,
+                border: (theme) =>
+                  `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+              }}
             />
             <Box>
               <Typography fontWeight={600}>{post.author.name}</Typography>
@@ -88,7 +94,7 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
 
         {/* Content */}
         <Typography
-          variant="body1"
+          variant="h6"
           fontWeight={500}
           color="text.primary"
           sx={{ mb: 2, fontSize: '1.125rem', lineHeight: 1.6 }}
@@ -97,39 +103,54 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
         </Typography>
 
         {/* Interactions */}
-        <Box display="flex" justifyContent="space-between" pt={2} borderTop="1px solid #f3f4f6">
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          pt={1}
+          sx={{
+            borderTop: (theme) =>
+              `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+          }}
+        >
           <InteractionButton
             icon={Heart}
             count={post.likes}
             isActive={post.isLiked}
             onClick={() => onLike(post.id)}
-            activeColor="#ef4444"
-            hoverColor="#f87171"
+            activeColor="error"
+            hoverColor="error"
             label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
-          />
-          <InteractionButton
-            icon={Repeat2}
-            count={post.reposts}
-            isActive={post.isReposted}
-            onClick={() => onRepost(post.id)}
-            activeColor="#22c55e"
-            hoverColor="#4ade80"
-            label={`${post.isReposted ? 'Unrepost' : 'Repost'} post`}
           />
           <InteractionButton
             icon={MessageCircle}
             count={post.comments.length}
             isActive={showComments}
             onClick={() => setShowComments(!showComments)}
-            activeColor="#3b82f6"
-            hoverColor="#60a5fa"
+            activeColor="secondary"
+            hoverColor="secondary"
             label="View comments"
+          />
+          <InteractionButton
+            icon={Repeat2}
+            count={post.reposts}
+            isActive={post.isReposted}
+            onClick={() => onRepost(post.id)}
+            activeColor="success"
+            hoverColor="success"
+            label={`${post.isReposted ? 'Unrepost' : 'Repost'} post`}
           />
         </Box>
 
         {/* Comments */}
         {showComments && (
-          <Box mt={4} pt={2} borderTop="1px solid #f3f4f6">
+          <Box
+            mt={4}
+            pt={2}
+            sx={{
+              borderTop: (theme) =>
+                `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+            }}
+          >
             {/* Comment Form */}
             <Box
               component="form"
@@ -141,7 +162,12 @@ export const Post: React.FC<PostProps> = ({ post, onLike, onRepost, onComment })
             >
               <Avatar
                 src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop"
-                sx={{ width: 32, height: 32, border: '2px solid #e9d5ff' }}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: (theme) =>
+                    `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+                }}
               />
               <TextField
                 value={newComment}
