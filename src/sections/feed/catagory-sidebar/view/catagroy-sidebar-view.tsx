@@ -46,6 +46,8 @@ const CategoryButton = styled(Button)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius * 2,
   textTransform: 'none',
   width: '100%',
+  marginBottom: 1.5,
+  marginTop: 1.5,
   transition: theme.transitions.create(['background', 'transform', 'box-shadow'], {
     duration: theme.transitions.duration.standard,
   }),
@@ -53,7 +55,6 @@ const CategoryButton = styled(Button)(({ theme }) => ({
     background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
     color: theme.palette.common.white,
     boxShadow: theme.shadows[3],
-    transform: 'scale(1.05)',
     '& .MuiListItemIcon-root': {
       backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
@@ -66,9 +67,6 @@ const CategoryButton = styled(Button)(({ theme }) => ({
     '&:hover': {
       backgroundColor: theme.palette.action.hover,
       color: theme.palette.text.primary,
-      '& .MuiListItemIcon-root': {
-        transform: 'scale(1.1)',
-      },
     },
   },
 }));

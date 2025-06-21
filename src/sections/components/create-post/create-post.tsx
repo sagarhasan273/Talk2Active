@@ -1,165 +1,187 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { z as zod } from 'zod';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
 import { X, Sparkles } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   Box,
   Modal,
   Button,
-  TextField,
+  useTheme,
   Typography,
   IconButton,
   CircularProgress,
 } from '@mui/material';
 
+import { Form, Field } from 'src/components/hook-form';
+
 import type { CreatePostProps } from './types';
 
-export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose, onSubmit }) => {
-  const [content, setContent] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const SignUpSchema = zod.object({
+  content: zod.string().min(1, { message: 'First name is required!' }),
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (content.trim() && !isSubmitting) {
-      setIsSubmitting(true);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      onSubmit(content.trim());
-      setContent('');
-      setIsSubmitting(false);
-      onClose();
-    }
+export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose }) => {
+  const theme = useTheme();
+
+  const defaultValues = {
+    content: '',
   };
+
+  const methods = useForm({
+    resolver: zodResolver(SignUpSchema),
+    defaultValues,
+  });
+
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      if (!isSubmitting) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        onClose();
+      }
+    } catch (error) {
+      console.error(error);
+      toast(typeof error === 'string' ? error : error.message);
+    }
+  });
 
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          p: 2,
-        }}
-      >
+      <Form methods={methods} onSubmit={onSubmit}>
         <Box
-          component="form"
-          onSubmit={handleSubmit}
           sx={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 600,
-            bgcolor: 'white',
-            borderRadius: 4,
-            boxShadow: 24,
-            p: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
           }}
         >
-          {/* Header */}
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 3,
-              borderBottom: '1px solid #eee',
-              pb: 2,
+              position: 'relative',
+              width: '100%',
+              maxWidth: 600,
+              bgcolor: 'background.paper',
+              border: `1px solid ${theme.palette.primary.main}`,
+              borderRadius: 4,
+              boxShadow: 24,
+              p: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Sparkles size={24} color="#a855f7" />
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(to right, #7c3aed, #ec4899)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Share Your Thoughts
-              </Typography>
-            </Box>
-            <IconButton onClick={onClose}>
-              <X size={20} color="#9ca3af" />
-            </IconButton>
-          </Box>
-
-          {/* Textarea */}
-          <TextField
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's inspiring you today? Share a quote, thought, or wisdom..."
-            multiline
-            rows={5}
-            fullWidth
-            variant="outlined"
-            autoFocus
-            inputProps={{ maxLength: 280 }}
-            sx={{
-              mb: 1,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-              },
-            }}
-          />
-
-          {/* Word count + helper */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Share something meaningful
-            </Typography>
-            <Typography variant="body2" color="text.disabled">
-              {content.length}/280
-            </Typography>
-          </Box>
-
-          {/* Actions */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={onClose}
+            {/* Header */}
+            <Box
               sx={{
-                borderRadius: 3,
-                py: 1.5,
-                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 2,
+                border: '1px solid primary.main',
               }}
             >
-              Cancel
-            </Button>
-            <Button
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Sparkles size={24} color={theme.palette.primary.main} />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 'bold',
+                    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  Share Your Thoughts
+                </Typography>
+              </Box>
+              <IconButton onClick={onClose}>
+                <X size={20} color="#9ca3af" />
+              </IconButton>
+            </Box>
+
+            {/* Textarea */}
+            <Field.Text
+              name="content"
+              placeholder="What's inspiring you today? Share a quote, thought, or wisdom..."
+              multiline
+              rows={5}
               fullWidth
-              type="submit"
-              disabled={!content.trim() || isSubmitting}
+              autoFocus
+              inputProps={{ maxLength: 280 }}
               sx={{
-                borderRadius: 3,
-                py: 1.5,
-                fontWeight: 'bold',
-                background:
-                  content.trim() && !isSubmitting
-                    ? 'linear-gradient(to right, #8b5cf6, #ec4899)'
-                    : '#e5e7eb',
-                color: content.trim() && !isSubmitting ? 'white' : '#9ca3af',
-                cursor: !content.trim() || isSubmitting ? 'not-allowed' : 'pointer',
-                '&:hover': {
-                  background:
-                    content.trim() && !isSubmitting
-                      ? 'linear-gradient(to right, #7c3aed, #db2777)'
-                      : '#e5e7eb',
+                '& .MuiOutlinedInput-root': {
+                  p: 0,
+                  borderRadius: 2,
+                },
+                '& .MuiOutlinedInput-input': {
+                  padding: 2,
+                  borderRadius: 2,
                 },
               }}
-            >
-              {isSubmitting ? (
-                <>
-                  <CircularProgress size={18} thickness={5} sx={{ color: 'white', mr: 1 }} />
-                  Sharing...
-                </>
-              ) : (
-                'Share'
-              )}
-            </Button>
+            />
+
+            {/* Word count + helper */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Share something meaningful
+              </Typography>
+              <Typography variant="body2" color="text.disabled">
+                {1}/280
+              </Typography>
+            </Box>
+
+            {/* Actions */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={onClose}
+                sx={{
+                  borderRadius: 3,
+                  py: 1.5,
+                  fontWeight: 'bold',
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                fullWidth
+                type="submit"
+                disabled={isSubmitting}
+                sx={{
+                  borderRadius: 3,
+                  py: 1.5,
+                  fontWeight: 'bold',
+                  background: !isSubmitting
+                    ? `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                    : '#e5e7eb',
+                  color: !isSubmitting ? 'white' : '#9ca3af',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  '&:hover': {
+                    background: !isSubmitting
+                      ? `linear-gradient(to right, ${theme.palette.primary.darker}, ${theme.palette.secondary.dark})`
+                      : '#e5e7eb',
+                  },
+                }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <CircularProgress size={18} thickness={5} sx={{ color: 'white', mr: 1 }} />
+                    Sharing...
+                  </>
+                ) : (
+                  'Share'
+                )}
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </Form>
     </Modal>
   );
 };
