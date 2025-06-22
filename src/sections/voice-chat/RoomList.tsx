@@ -188,7 +188,7 @@ const RoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
       </Card>
 
       {/* Room Grid */}
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {filteredRooms.map((room) => {
           const isFull = room.participants.length >= room.maxParticipants;
 
