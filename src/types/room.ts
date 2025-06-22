@@ -26,6 +26,11 @@ export interface Room {
   description: string;
   language: string;
   hostId: string;
+  host: {
+    name: string;
+    username: string;
+    avatar: string;
+  };
   participants: User[];
   maxParticipants: number;
   isPrivate: boolean;
