@@ -2,11 +2,11 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { VoiceChatView } from 'src/sections/voice-chat/view';
+import { VoiceRoomView } from 'src/sections/voice-room';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Voice Chat - ${CONFIG.appName}` };
+const metadata = { title: `Voice Room - ${CONFIG.appName}` };
 
 export default function Page() {
   return (
@@ -15,7 +15,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <VoiceChatView />
+      <VoiceRoomView />
     </>
   );
 }

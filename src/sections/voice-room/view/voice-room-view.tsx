@@ -1,11 +1,11 @@
 import { varAlpha } from 'src/theme/styles';
 import { UserContent } from 'src/layouts/user';
 
-import RoomManager from '../RoomManager';
+import { VoiceRoomManager } from '../voice-room-manager';
 
 // ----------------------------------------------------------------------
 
-export function VoiceChatView() {
+export function VoiceRoomView() {
   return (
     <UserContent
       maxWidth="lg"
@@ -15,7 +15,7 @@ export function VoiceChatView() {
         }),
       }}
     >
-      <RoomManager />
+      <VoiceRoomManager />
     </UserContent>
   );
 }

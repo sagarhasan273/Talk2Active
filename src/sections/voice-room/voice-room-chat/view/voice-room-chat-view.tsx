@@ -28,17 +28,18 @@ import {
   EmojiEmotions,
 } from '@mui/icons-material';
 
-import VoiceControls from './VoiceControls';
-import VoiceParticipants from './VoiceParticipants';
-import { getLanguageFlag } from '../../_mock/data/languages';
-import { mockUsers, mockMessages } from '../../_mock/data/mockData';
+import { getLanguageFlag } from 'src/_mock/data/languages';
+import { mockUsers, mockMessages } from 'src/_mock/data/mockData';
+
+import { VoiceRoomControls } from '../../voice-room-controls';
+import { VoiceRoomParticipants } from '../../voice-room-participants';
 
 interface ChatRoomProps {
   room: Room;
   onLeaveRoom: () => void;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) => {
+export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) => {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
@@ -227,7 +228,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
           {/* Voice Controls */}
           <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
-            <VoiceControls
+            <VoiceRoomControls
               currentUser={currentUser}
               isHost={room.hostId === currentUser.id}
               voiceSettings={room.voiceSettings}
@@ -393,7 +394,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) => {
               overflow: 'auto',
             }}
           >
-            <VoiceParticipants
+            <VoiceRoomParticipants
               participants={room.participants}
               currentUserId={currentUser.id}
               hostId={room.hostId}
@@ -407,5 +408,3 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) => {
     </Box>
   );
 };
-
-export default ChatRoom;

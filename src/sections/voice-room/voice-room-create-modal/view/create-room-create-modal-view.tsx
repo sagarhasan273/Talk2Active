@@ -15,15 +15,17 @@ import {
   TextField,
   InputLabel,
   Typography,
+  IconButton,
   DialogTitle,
   FormControl,
   CardContent,
   DialogContent,
   DialogActions,
+  InputAdornment,
   FormControlLabel,
 } from '@mui/material';
 
-import { languages } from '../../_mock/data/languages';
+import { languages } from '../../../../_mock/data/languages';
 
 interface CreateRoomModalProps {
   open: boolean;
@@ -31,7 +33,11 @@ interface CreateRoomModalProps {
   onCreateRoom: (roomData: any) => void;
 }
 
-const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCreateRoom }) => {
+export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
+  open,
+  onClose,
+  onCreateRoom,
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -119,6 +125,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     fullWidth
                     label="Room Name"
                     required
+                    size="small"
                     value={formData.name}
                     onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="e.g., Spanish Conversation Circle"
@@ -130,6 +137,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     fullWidth
                     label="Description"
                     required
+                    size="small"
                     multiline
                     rows={3}
                     value={formData.description}
@@ -146,6 +154,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     <Select
                       value={formData.language}
                       label="Language"
+                      size="small"
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, language: e.target.value }))
                       }
@@ -165,6 +174,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     <Select
                       value={formData.skillLevel}
                       label="Skill Level"
+                      size="small"
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, skillLevel: e.target.value }))
                       }
@@ -208,7 +218,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
-                  p: 2,
+                  p: 0,
                   bgcolor: 'grey.50',
                   borderRadius: 2,
                 }}
@@ -235,6 +245,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                   fullWidth
                   label="Room Password"
                   type="password"
+                  size="small"
                   value={formData.password}
                   onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   sx={{ mt: 2 }}
@@ -259,6 +270,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     control={
                       <Switch
                         checked={formData.voiceSettings.pushToTalk}
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -276,6 +288,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     control={
                       <Switch
                         checked={formData.voiceSettings.noiseSupression}
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -296,6 +309,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     control={
                       <Switch
                         checked={formData.voiceSettings.echoCancellation}
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -316,6 +330,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     control={
                       <Switch
                         checked={formData.voiceSettings.autoGainControl}
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -356,6 +371,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                     <Select
                       value={formData.voiceSettings.moderationMode}
                       label="Moderation Mode"
+                      size="small"
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
@@ -390,6 +406,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                 control={
                   <Switch
                     checked={formData.aiAssistant.isActive}
+                    size="small"
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -410,6 +427,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                       <Select
                         value={formData.aiAssistant.personality}
                         label="Personality"
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -434,6 +452,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                       <Select
                         value={formData.aiAssistant.specialization}
                         label="Specialization"
+                        size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
@@ -458,6 +477,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                       control={
                         <Switch
                           checked={formData.aiAssistant.voiceEnabled}
+                          size="small"
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
@@ -481,18 +501,35 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
                 Tags
               </Typography>
 
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <TextField
                   fullWidth
                   label="Add tags"
+                  size="small"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  onKeyUp={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   placeholder="conversation, grammar, culture..."
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={addTag} edge="end" sx={{ m: 0 }}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24" // Adjusted for better alignment
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10s10-4.477 10-10S17.523 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4z"
+                            />
+                          </svg>
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-                <Button variant="outlined" onClick={addTag}>
-                  Add
-                </Button>
               </Box>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -522,5 +559,3 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ open, onClose, onCrea
     </Dialog>
   );
 };
-
-export default CreateRoomModal;

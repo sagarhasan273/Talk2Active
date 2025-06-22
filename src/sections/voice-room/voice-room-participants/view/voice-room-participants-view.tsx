@@ -28,7 +28,7 @@ import {
   CardContent,
 } from '@mui/material';
 
-interface VoiceParticipantsProps {
+interface VoiceRoomParticipantsProps {
   participants: User[];
   currentUserId: string;
   hostId: string;
@@ -37,7 +37,7 @@ interface VoiceParticipantsProps {
   onPromoteUser?: (userId: string) => void;
 }
 
-const VoiceParticipants: React.FC<VoiceParticipantsProps> = ({
+export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
   participants,
   currentUserId,
   hostId,
@@ -287,5 +287,3 @@ const VoiceParticipants: React.FC<VoiceParticipantsProps> = ({
     </Box>
   );
 };
-
-export default VoiceParticipants;

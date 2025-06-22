@@ -36,7 +36,7 @@ interface VoiceControlsProps {
   onSettingsChange: (settings: Partial<VoiceRoomSettings>) => void;
 }
 
-const VoiceControls: React.FC<VoiceControlsProps> = ({
+export const VoiceRoomControls: React.FC<VoiceControlsProps> = ({
   currentUser,
   isHost,
   voiceSettings,
@@ -288,5 +288,3 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
     </Box>
   );
 };
-
-export default VoiceControls;

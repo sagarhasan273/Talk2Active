@@ -2,10 +2,10 @@ import type { Room } from 'src/types/room';
 
 import React, { useState } from 'react';
 
-import ChatRoom from './ChatRoom';
-import RoomList from './RoomList';
+import { VoiceRoomList } from '../../voice-room-list';
+import { VoiceRoomChat } from '../../voice-room-chat';
 
-const RoomManager: React.FC = () => {
+export const VoiceRoomManager: React.FC = () => {
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
 
   const handleJoinRoom = (room: Room) => {
@@ -19,12 +19,10 @@ const RoomManager: React.FC = () => {
   return (
     <>
       {currentRoom ? (
-        <ChatRoom room={currentRoom} onLeaveRoom={handleLeaveRoom} />
+        <VoiceRoomChat room={currentRoom} onLeaveRoom={handleLeaveRoom} />
       ) : (
-        <RoomList onJoinRoom={handleJoinRoom} />
+        <VoiceRoomList onJoinRoom={handleJoinRoom} />
       )}
     </>
   );
 };
-
-export default RoomManager;

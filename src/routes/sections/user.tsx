@@ -13,7 +13,7 @@ import { AuthGuard } from 'src/auth/guard';
 const FeedView = lazy(() => import('src/pages/feed'));
 const ProfilePage = lazy(() => import('src/pages/profile'));
 const SettingsView = lazy(() => import('src/pages/settings'));
-const VoiceChatView = lazy(() => import('src/pages/user/voice-chat'));
+const VoiceRoomView = lazy(() => import('src/pages/voice-room'));
 // ---------------------------------------------------------------
 
 const layoutContent = (
@@ -33,7 +33,7 @@ export const userRoutes = [
       { path: 'feed', element: <FeedView /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'settings', element: <SettingsView /> },
-      { path: 'voice-chat', element: <VoiceChatView /> },
+      { path: 'voice-chat', element: <VoiceRoomView /> },
     ],
   },
 ];

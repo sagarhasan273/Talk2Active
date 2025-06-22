@@ -35,17 +35,18 @@ import {
   FormControl,
 } from '@mui/material';
 
+import { mockRooms } from 'src/_mock/data/mockData';
+import { getLanguageFlag } from 'src/_mock/data/languages';
+
 import { Iconify } from 'src/components/iconify';
 
-import CreateRoomModal from './CreateRoomModal';
-import { mockRooms } from '../../_mock/data/mockData';
-import { getLanguageFlag } from '../../_mock/data/languages';
+import { CreateRoomModal } from '../../voice-room-create-modal';
 
 interface RoomListProps {
   onJoinRoom: (room: Room) => void;
 }
 
-const RoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
+export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
   const theme = useTheme();
 
   const [rooms] = useState<Room[]>(mockRooms);
@@ -110,9 +111,18 @@ const RoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
   }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4, pb: { xs: 10, md: 4 } }}>
+    <Container maxWidth="lg" sx={{ p: 1, py: 2, pb: { xs: 10, md: 4 } }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+          mb: 4,
+        }}
+      >
         <Box>
           <Typography variant="h3" component="h2" gutterBottom sx={{ fontWeight: 700 }}>
             Voice Learning Rooms
@@ -121,12 +131,13 @@ const RoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
             Join live conversations and practice with native speakers worldwide
           </Typography>
         </Box>
+
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => setShowCreateModal(true)}
           size="large"
-          sx={{ borderRadius: 3 }}
+          sx={{ borderRadius: 3, width: '180px', alignSelf: 'flex-end' }}
         >
           Create Room
         </Button>
@@ -465,5 +476,3 @@ const RoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
     </Container>
   );
 };
-
-export default RoomList;
