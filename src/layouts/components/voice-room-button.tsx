@@ -7,13 +7,13 @@ import { useRouter } from 'src/routes/hooks';
 
 // ----------------------------------------------------------------------
 
-type VoiceChatButtonProps = IconButtonProps;
+type VoiceRoomButtonProps = IconButtonProps;
 
-export function VoiceChatButton({ sx, ...other }: VoiceChatButtonProps) {
+export function VoiceRoomButton({ sx, ...other }: VoiceRoomButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('voice-chat');
+    router.push('voice-room');
   };
 
   return (

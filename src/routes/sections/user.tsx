@@ -26,14 +26,13 @@ const layoutContent = (
 
 export const userRoutes = [
   {
-    path: 'user',
+    path: '/',
     element: CONFIG.auth.skip ? <>{layoutContent}</> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
       { element: <FeedView />, index: true },
-      { path: 'feed', element: <FeedView /> },
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'settings', element: <SettingsView /> },
-      { path: 'voice-chat', element: <VoiceRoomView /> },
+      { path: 'user/profile', element: <ProfilePage /> },
+      { path: 'user/settings', element: <SettingsView /> },
+      { path: 'voice-room', element: <VoiceRoomView /> },
     ],
   },
 ];

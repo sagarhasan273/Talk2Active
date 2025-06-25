@@ -19,7 +19,7 @@ import { FeedButton } from '../components/feed-button';
 import { AccountDrawer } from '../components/account-drawer';
 import { LanguageViewer } from '../components/language-viewer';
 import { ContactsPopover } from '../components/contacts-popover';
-import { VoiceChatButton } from '../components/voice-chat-button';
+import { VoiceRoomButton } from '../components/voice-room-button';
 import { NotificationsDrawer } from '../components/notifications-drawer';
 
 export type UserLayoutProps = {
@@ -67,7 +67,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* --Feed Page */}
                 <FeedButton />
                 {/* --Voice Chat Page */}
-                <VoiceChatButton />
+                <VoiceRoomButton />
                 {/* -- Contacts popover -- */}
                 <ContactsPopover data={_contacts} />
                 {/* -- Account drawer -- */}

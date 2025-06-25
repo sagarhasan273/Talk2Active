@@ -21,6 +21,7 @@ export function UserMain({ children, isNavHorizontal, sx, ...other }: MainProps)
       component="main"
       className={layoutClasses.main}
       sx={{
+        position: 'relative',
         display: 'flex',
         flex: '1 1 auto',
         flexDirection: 'column',

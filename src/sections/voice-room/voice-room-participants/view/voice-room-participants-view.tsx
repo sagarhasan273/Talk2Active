@@ -9,7 +9,6 @@ import {
   MicOff,
   MoreVert,
   VolumeOff,
-  VoiceChat,
   GraphicEq,
   PersonRemove,
 } from '@mui/icons-material';
@@ -100,7 +99,7 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
 
       <Grid container spacing={2}>
         {participants.map((participant) => (
-          <Grid item xs={12} sm={6} md={4} key={participant.id}>
+          <Grid item xs={12} sm={6} md={6} key={participant.id}>
             <Card
               elevation={participant.voiceStatus.isSpeaking ? 4 : 1}
               sx={{
@@ -110,8 +109,10 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
                 transform: participant.voiceStatus.isSpeaking ? 'scale(1.02)' : 'scale(1)',
               }}
             >
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CardContent sx={{ p: 1 }}>
+                <Box
+                  sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+                >
                   <Badge
                     overlap="circular"
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -222,25 +223,6 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
                     </Box>
                   </Box>
                 </Box>
-
-                {participant.voiceStatus.isSpeaking && (
-                  <Box
-                    sx={{
-                      mt: 1,
-                      p: 1,
-                      bgcolor: 'success.light',
-                      borderRadius: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <VoiceChat fontSize="small" color="success" />
-                    <Typography variant="caption" color="success.dark" sx={{ fontWeight: 500 }}>
-                      Currently speaking
-                    </Typography>
-                  </Box>
-                )}
               </CardContent>
             </Card>
           </Grid>

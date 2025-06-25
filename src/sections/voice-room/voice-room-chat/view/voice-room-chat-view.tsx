@@ -1,5 +1,6 @@
 import type { Room, User, Message } from 'src/types/room';
 
+import EmojiPicker from 'emoji-picker-react';
 import React, { useRef, useState, useEffect } from 'react';
 
 import {
@@ -19,7 +20,6 @@ import {
   Send,
   People,
   Videocam,
-  Settings,
   SmartToy,
   ArrowBack,
   PlayArrow,
@@ -32,6 +32,7 @@ import { getLanguageFlag } from 'src/_mock/data/languages';
 import { mockUsers, mockMessages } from 'src/_mock/data/mockData';
 
 import { VoiceRoomControls } from '../../voice-room-controls';
+import { VoiceRoomChatSettings } from '../voice-room-chat-settings';
 import { VoiceRoomParticipants } from '../../voice-room-participants';
 
 interface ChatRoomProps {
@@ -44,8 +45,22 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
   const [newMessage, setNewMessage] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const emojiButtonRef = useRef(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const currentUser = mockUsers[0];
+
+  interface EmojiClickData {
+    emoji: string;
+    [key: string]: any;
+  }
+
+  const handleEmojiClick = (emojiData: EmojiClickData): void => {
+    setNewMessage((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -172,9 +187,16 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <Box
+      sx={{
+        height: 'calc(100vh - 64px)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {/* Header */}
-      <Paper elevation={1} sx={{ p: 2, borderRadius: 0 }}>
+      <Card sx={{ p: 2, borderRadius: 0, flex: '0 0 auto' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton onClick={onLeaveRoom}>
@@ -216,18 +238,36 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
             <IconButton onClick={() => setShowParticipants(!showParticipants)}>
               <People />
             </IconButton>
-            <IconButton>
-              <Settings />
-            </IconButton>
+            <VoiceRoomChatSettings
+              isHost={room.hostId === currentUser.id}
+              voiceSettings={room.voiceSettings}
+              onSettingsChange={() => {}}
+            />
           </Box>
         </Box>
-      </Paper>
+      </Card>
 
-      <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+      <Box
+        sx={{
+          flex: '1 1 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
         {/* Main Chat Area */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-          {/* Voice Controls */}
-          <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
+        <Box
+          sx={{
+            gridColumn: '1 / -2',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
+        >
+          {/* Voice Controls - Fixed height */}
+          <Box sx={{ flex: '0 0 auto', p: 2 }}>
             <VoiceRoomControls
               currentUser={currentUser}
               isHost={room.hostId === currentUser.id}
@@ -237,10 +277,16 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
               onVolumeChange={() => {}}
               onSettingsChange={() => {}}
             />
-          </Paper>
+          </Box>
 
-          {/* Messages */}
-          <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+          {/* Messages - Scrollable area with flex grow */}
+          <Box
+            sx={{
+              flex: '1 1 auto',
+              overflowY: 'auto',
+              px: 2,
+            }}
+          >
             {messages.map((message) => {
               const user = getUserById(message.userId);
               const isCurrentUser = message.userId === currentUser.id;
@@ -289,19 +335,18 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
                       )}
 
                       <Paper
-                        elevation={1}
                         sx={{
                           p: 1.5,
                           bgcolor: isCurrentUser
                             ? 'primary.main'
                             : isAI
                               ? 'secondary.light'
-                              : 'background.paper',
+                              : 'background.neutral',
                           color: isCurrentUser ? 'primary.contrastText' : 'text.primary',
                           borderRadius: 2,
                         }}
                       >
-                        <Typography variant="body2">{message.content}</Typography>
+                        <Typography variant="subtitle1">{message.content}</Typography>
 
                         {message.type === 'voice' && renderVoiceMessage(message)}
 
@@ -338,72 +383,114 @@ export const VoiceRoomChat: React.FC<ChatRoomProps> = ({ room, onLeaveRoom }) =>
             <div ref={messagesEndRef} />
           </Box>
 
-          {/* Message Input */}
-          <Paper elevation={1} sx={{ p: 2 }}>
-            <Box component="form" onSubmit={handleSendMessage} sx={{ display: 'flex', gap: 1 }}>
-              <IconButton>
-                <AttachFile />
-              </IconButton>
-              <IconButton>
+          {/* Message Input - Fixed height with min-height */}
+          <Box
+            component="form"
+            onSubmit={handleSendMessage}
+            sx={{
+              flex: '0 0 auto',
+              display: 'flex',
+              gap: 1,
+              p: 2,
+              bgcolor: 'background.paper',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              minHeight: 'fit-content',
+              alignItems: 'center',
+            }}
+          >
+            <IconButton size="small">
+              <AttachFile />
+            </IconButton>
+            {/* Emoji picker button and dropdown */}
+            <Box sx={{ position: 'relative' }}>
+              <IconButton
+                size="small"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                ref={emojiButtonRef}
+              >
                 <EmojiEmotions />
               </IconButton>
 
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Type your message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                size="small"
-                sx={{ borderRadius: 3 }}
-              />
-
-              <Tooltip title={isRecording ? 'Stop Recording' : 'Record Voice Message'}>
-                <IconButton
-                  onClick={handleVoiceRecord}
-                  color={isRecording ? 'error' : 'default'}
+              {showEmojiPicker && (
+                <Box
                   sx={{
-                    bgcolor: isRecording ? 'error.light' : 'action.hover',
-                    animation: isRecording ? 'pulse 1s infinite' : 'none',
+                    position: 'absolute',
+                    bottom: '100%',
+                    left: 0,
+                    zIndex: 10,
+                    mb: 1,
                   }}
                 >
-                  {isRecording ? <GraphicEq /> : <Mic />}
-                </IconButton>
-              </Tooltip>
-
-              <IconButton
-                type="submit"
-                disabled={!newMessage.trim()}
-                color="primary"
-                sx={{ bgcolor: 'primary.light' }}
-              >
-                <Send />
-              </IconButton>
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    width={300}
+                    height={350}
+                    previewConfig={{ showPreview: false }}
+                  />
+                </Box>
+              )}
             </Box>
-          </Paper>
+
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              size="small"
+              sx={{
+                borderRadius: 3,
+                '& .MuiOutlinedInput-root': {
+                  padding: '8.5px 14px',
+                },
+              }}
+              multiline
+              maxRows={4}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+            />
+
+            <Tooltip title={isRecording ? 'Stop Recording' : 'Record Voice Message'}>
+              <IconButton
+                size="small"
+                onClick={handleVoiceRecord}
+                color={isRecording ? 'error' : 'default'}
+                sx={{
+                  bgcolor: isRecording ? 'error.light' : 'action.hover',
+                  animation: isRecording ? 'pulse 1s infinite' : 'none',
+                }}
+              >
+                {isRecording ? <GraphicEq /> : <Mic />}
+              </IconButton>
+            </Tooltip>
+
+            <IconButton type="submit" size="small" disabled={!newMessage.trim()} color="primary">
+              <Send />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Voice Participants Panel */}
-        {showParticipants && (
-          <Paper
-            elevation={1}
-            sx={{
-              width: 400,
-              borderLeft: 1,
-              borderColor: 'divider',
-              overflow: 'auto',
-            }}
-          >
-            <VoiceRoomParticipants
-              participants={room.participants}
-              currentUserId={currentUser.id}
-              hostId={room.hostId}
-              onMuteUser={(userId) => console.log('Mute user:', userId)}
-              onKickUser={(userId) => console.log('Kick user:', userId)}
-              onPromoteUser={(userId) => console.log('Promote user:', userId)}
-            />
-          </Paper>
-        )}
+        <Box
+          sx={{
+            width: 400,
+            overflow: 'auto',
+          }}
+        >
+          <VoiceRoomParticipants
+            participants={room.participants}
+            currentUserId={currentUser.id}
+            hostId={room.hostId}
+            onMuteUser={(userId) => console.log('Mute user:', userId)}
+            onKickUser={(userId) => console.log('Kick user:', userId)}
+            onPromoteUser={(userId) => console.log('Promote user:', userId)}
+          />
+        </Box>
       </Box>
     </Box>
   );

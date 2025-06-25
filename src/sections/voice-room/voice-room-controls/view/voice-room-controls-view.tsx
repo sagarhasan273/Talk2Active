@@ -78,13 +78,14 @@ export const VoiceRoomControls: React.FC<VoiceControlsProps> = ({
   return (
     <Box
       sx={{
+        flex: '0 0 auto',
         display: 'flex',
         alignItems: 'center',
         gap: 1,
         p: 2,
-        bgcolor: 'background.paper',
+        mb: 2,
+        bgcolor: 'background.neutral',
         borderRadius: 2,
-        boxShadow: 1,
       }}
     >
       {/* Microphone Control */}

@@ -13,7 +13,6 @@ export type LayoutSectionProps = {
   children?: React.ReactNode;
   footerSection?: React.ReactNode;
   headerSection?: React.ReactNode;
-  sidebarSection?: React.ReactNode;
 };
 
 export function LayoutSection({
@@ -22,7 +21,6 @@ export function LayoutSection({
   children,
   footerSection,
   headerSection,
-  sidebarSection,
 }: LayoutSectionProps) {
   const inputGlobalStyles = (
     <GlobalStyles
@@ -45,27 +43,9 @@ export function LayoutSection({
       {inputGlobalStyles}
 
       <Box id="root__layout" className={layoutClasses.root} sx={sx}>
-        {sidebarSection ? (
-          <>
-            {sidebarSection}
-            <Box
-              display="flex"
-              flex="1 1 auto"
-              flexDirection="column"
-              className={layoutClasses.hasSidebar}
-            >
-              {headerSection}
-              {children}
-              {footerSection}
-            </Box>
-          </>
-        ) : (
-          <>
-            {headerSection}
-            {children}
-            {footerSection}
-          </>
-        )}
+        {headerSection}
+        {children}
+        {footerSection}
       </Box>
     </>
   );
