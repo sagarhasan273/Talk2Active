@@ -61,10 +61,13 @@ export function UserContent({
         display: 'flex',
         flex: '1 1 auto',
         flexDirection: 'column',
-        pt: 'var(--layout-dashboard-content-pt)',
-        pb: 'var(--layout-dashboard-content-pb)',
+        p: 0,
+        mb: 0,
         [theme.breakpoints.up(layoutQuery)]: {
-          px: 'var(--layout-dashboard-content-px',
+          px: 'var(--layout-dashboard-content-px)',
+        },
+        [theme.breakpoints.down('sm')]: {
+          px: 0,
         },
         ...sx,
       }}

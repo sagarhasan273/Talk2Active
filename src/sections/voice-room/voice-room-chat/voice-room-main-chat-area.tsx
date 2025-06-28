@@ -1,16 +1,15 @@
 import type { Room, User, Message } from 'src/types/room';
 
-import { Mic, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import React, { useRef, useState, useEffect } from 'react';
 
-import { SmartToy, GraphicEq, PlayArrow, AttachFile, EmojiEmotions } from '@mui/icons-material';
+import { SmartToy, PlayArrow, EmojiEmotions } from '@mui/icons-material';
 import {
   Box,
   Card,
   Paper,
   Avatar,
-  Tooltip,
   TextField,
   IconButton,
   Typography,
@@ -19,8 +18,6 @@ import {
 
 import { mockUsers, mockMessages } from 'src/_mock/data/mockData';
 
-import { VoiceRoomControls } from '../voice-room-controls';
-
 interface VoiceRoomMainChatAreaProps {
   room: Room;
 }
@@ -28,7 +25,6 @@ interface VoiceRoomMainChatAreaProps {
 function VoiceRoomMainChatArea({ room }: VoiceRoomMainChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const emojiButtonRef = useRef(null);
@@ -101,31 +97,6 @@ function VoiceRoomMainChatArea({ room }: VoiceRoomMainChatAreaProps) {
     return mockUsers.find((user) => user.id === userId) || null;
   };
 
-  const handleVoiceRecord = () => {
-    setIsRecording(!isRecording);
-    // Simulate voice recording
-    if (!isRecording) {
-      setTimeout(() => {
-        setIsRecording(false);
-        const voiceMessage: Message = {
-          id: Date.now().toString(),
-          userId: currentUser.id,
-          content: 'Voice message',
-          timestamp: new Date(),
-          type: 'voice',
-          reactions: [],
-          voiceData: {
-            duration: 3.5,
-            waveform: [0.2, 0.4, 0.8, 0.6, 0.3, 0.7, 0.9, 0.4, 0.2],
-            transcription: 'This is a voice message in the target language',
-            language: room.language,
-          },
-        };
-        setMessages((prev) => [...prev, voiceMessage]);
-      }, 2000);
-    }
-  };
-
   const formatTimestamp = (date: Date) =>
     date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -173,32 +144,18 @@ function VoiceRoomMainChatArea({ room }: VoiceRoomMainChatAreaProps) {
   return (
     <Box
       sx={{
-        gridColumn: '1 / -2',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         minHeight: 0,
       }}
     >
-      {/* Voice Controls - Fixed height */}
-      <Box sx={{ flex: '0 0 auto', p: 2 }}>
-        <VoiceRoomControls
-          currentUser={currentUser}
-          isHost={room.hostId === currentUser.id}
-          voiceSettings={room.voiceSettings}
-          onMuteToggle={() => {}}
-          onDeafenToggle={() => {}}
-          onVolumeChange={() => {}}
-          onSettingsChange={() => {}}
-        />
-      </Box>
-
       {/* Messages - Scrollable area with flex grow */}
       <Box
         sx={{
           flex: '1 1 auto',
           overflowY: 'auto',
-          px: 2,
+          px: 1,
         }}
       >
         {messages.map((message) => {
@@ -309,15 +266,16 @@ function VoiceRoomMainChatArea({ room }: VoiceRoomMainChatAreaProps) {
           alignItems: 'center',
         }}
       >
-        <IconButton size="small">
+        {/* <IconButton size="small">
           <AttachFile />
-        </IconButton>
+        </IconButton> */}
         {/* Emoji picker button and dropdown */}
         <Box sx={{ position: 'relative' }}>
           <IconButton
             size="small"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             ref={emojiButtonRef}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
             <EmojiEmotions />
           </IconButton>
@@ -364,20 +322,6 @@ function VoiceRoomMainChatArea({ room }: VoiceRoomMainChatAreaProps) {
             }
           }}
         />
-
-        <Tooltip title={isRecording ? 'Stop Recording' : 'Record Voice Message'}>
-          <IconButton
-            size="small"
-            onClick={handleVoiceRecord}
-            color={isRecording ? 'error' : 'default'}
-            sx={{
-              bgcolor: isRecording ? 'error.light' : 'action.hover',
-              animation: isRecording ? 'pulse 1s infinite' : 'none',
-            }}
-          >
-            {isRecording ? <GraphicEq /> : <Mic />}
-          </IconButton>
-        </Tooltip>
 
         <IconButton type="submit" size="small" disabled={!newMessage.trim()} color="primary">
           <Send />

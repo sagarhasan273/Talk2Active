@@ -17,7 +17,7 @@ import {
   Menu,
   Chip,
   Card,
-  Grid,
+  Stack,
   Badge,
   Avatar,
   Tooltip,
@@ -27,6 +27,10 @@ import {
   CardContent,
 } from '@mui/material';
 
+import { Iconify } from 'src/components/iconify';
+
+import { MessageAreaDrawer } from '../message-area-drawer';
+
 interface VoiceRoomParticipantsProps {
   participants: User[];
   currentUserId: string;
@@ -34,6 +38,7 @@ interface VoiceRoomParticipantsProps {
   onMuteUser?: (userId: string) => void;
   onKickUser?: (userId: string) => void;
   onPromoteUser?: (userId: string) => void;
+  mainChatArea?: React.ReactNode;
 }
 
 export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
@@ -43,6 +48,7 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
   onMuteUser,
   onKickUser,
   onPromoteUser,
+  mainChatArea,
 }) => {
   const [menuAnchor, setMenuAnchor] = useState<{ element: HTMLElement; userId: string } | null>(
     null
@@ -92,21 +98,42 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-        Voice Participants ({participants.length})
-      </Typography>
+    <Box sx={{ py: 2 }}>
+      <Stack
+        sx={{
+          mb: 2,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          bgcolor: 'background.paper',
+          borderRadius: 1,
+          px: 2,
+          py: 1,
+        }}
+      >
+        <Chip
+          icon={<Iconify icon="formkit:people" />}
+          label={`${participants.length} Voice Perticipants`}
+          size="small"
+          color="default"
+          variant="outlined"
+        />
+        <MessageAreaDrawer>{mainChatArea}</MessageAreaDrawer>
+      </Stack>
 
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          gap: 2,
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(2, 1fr)' },
+        }}
+      >
         {participants.map((participant) => (
-          <Grid item xs={12} sm={6} md={6} key={participant.id}>
+          <Box key={participant.id}>
             <Card
-              elevation={participant.voiceStatus.isSpeaking ? 4 : 1}
               sx={{
-                transition: 'all 0.3s',
                 border: participant.voiceStatus.isSpeaking ? 2 : 0,
                 borderColor: 'success.main',
-                transform: participant.voiceStatus.isSpeaking ? 'scale(1.02)' : 'scale(1)',
               }}
             >
               <CardContent sx={{ p: 1 }}>
@@ -225,9 +252,9 @@ export const VoiceRoomParticipants: React.FC<VoiceRoomParticipantsProps> = ({
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Context Menu */}
       <Menu anchorEl={menuAnchor?.element} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
