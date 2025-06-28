@@ -318,7 +318,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                           </Typography>
                           <Iconify
                             icon="solar:crown-bold"
-                            color="warning.main"
+                            color="primary.darker"
                             sx={{ width: 14, height: 14 }}
                           />
                         </Box>
