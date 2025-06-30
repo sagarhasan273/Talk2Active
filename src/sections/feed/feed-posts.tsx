@@ -3,14 +3,18 @@ import type { Post as PostType } from 'src/types/post';
 import React, { useState } from 'react';
 import { Plus, Quote } from 'lucide-react';
 
-import { Box, Fab, Grid, useTheme, Container, Typography } from '@mui/material';
+import { Box, Fab, Stack, useTheme, Container, Typography } from '@mui/material';
 
-import { DiscoveryPanel } from './discovery-panal';
+import { useResponsive } from 'src/hooks/use-responsive';
+
 import { PostCard } from '../components/post-card';
 import { initialPosts } from '../../_mock/data/posts';
 import { CreatePost } from '../components/create-post';
-import { CategorySidebarView } from './catagory-sidebar';
+import { DiscoveryPanel } from './feed-discovery-panal';
+import { CategorySidebarView } from './feed-catagory-sidebar';
 import { currentUserProfile } from '../../_mock/data/userProfile';
+import { DiscoveryPanalDrawer } from './feed-discovery-panal/discovery-panal-drawer';
+import { CategorySidebarDrawer } from './feed-catagory-sidebar/catagory-sidebar-drawer';
 
 export const FeedPosts: React.FC = () => {
   const theme = useTheme();
@@ -104,31 +108,48 @@ export const FeedPosts: React.FC = () => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
+  const mid = useResponsive('down', 'lg');
+  const small = useResponsive('down', 'md');
+
   return (
     <>
       {/* Main Content */}
       <Container
         maxWidth="lg"
-        sx={{ px: 0, pb: 0, height: 'calc(100vh - 64px)', overflowY: 'hidden' }}
+        sx={{ px: 0, pb: 0, height: 'calc(100vh - 65px)', overflowY: 'hidden' }}
       >
-        <Grid container spacing={3} sx={{ height: '100%', mt: 0 }}>
-          <Grid
-            item
-            xs={12}
-            sm={3}
-            sx={{ p: '10px !important', height: '100%', overflowY: 'auto' }}
-          >
-            <CategorySidebarView
-              selectedCategory={selectedCategory}
-              onCategorySelect={setSelectedCategory}
-            />
-          </Grid>
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            sx={{ p: '10px !important', height: '100%', overflowY: 'auto' }}
-          >
+        <Box
+          sx={{
+            height: '100%',
+            mx: 'auto',
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: '1fr',
+              md: '1fr 300px',
+              lg: '1fr 550px 1fr',
+            },
+            px: { xs: 2, sm: 2 },
+            gridTemplateRows: 'auto',
+            gap: 2,
+            overflowY: 'hidden',
+          }}
+        >
+          {!mid && (
+            <Box
+              sx={{
+                py: 2,
+                height: '100%',
+                overflowY: 'auto',
+              }}
+            >
+              <CategorySidebarView
+                selectedCategory={selectedCategory}
+                onCategorySelect={setSelectedCategory}
+              />
+            </Box>
+          )}
+          <Box sx={{ py: 2, ml: 'auto', height: '100%', overflowY: 'auto' }}>
             <Box
               sx={{
                 m: 'auto',
@@ -163,25 +184,39 @@ export const FeedPosts: React.FC = () => {
               >
                 Wisdom Feed
               </Typography>
-              {/* Floating Action Button */}
-              <Fab
-                color="secondary"
-                onClick={() => setIsCreatePostOpen(true)}
-                sx={{
-                  ml: 'auto',
-                  background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                  color: 'white',
-                  '&:hover': {
-                    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
-                  },
-                }}
-                size="small"
-                aria-label="Create new post"
-              >
-                <Plus size={24} />
-              </Fab>
+              <Stack direction="row" sx={{ ml: 'auto', gap: 1 }}>
+                {small && (
+                  <DiscoveryPanalDrawer>
+                    <DiscoveryPanel />
+                  </DiscoveryPanalDrawer>
+                )}
+                {mid && (
+                  <CategorySidebarDrawer>
+                    <CategorySidebarView
+                      selectedCategory={selectedCategory}
+                      onCategorySelect={setSelectedCategory}
+                    />
+                  </CategorySidebarDrawer>
+                )}
+                {/* Floating Action Button */}
+                <Fab
+                  color="secondary"
+                  onClick={() => setIsCreatePostOpen(true)}
+                  sx={{
+                    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                    color: 'white',
+                    '&:hover': {
+                      background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
+                    },
+                  }}
+                  size="small"
+                  aria-label="Create new post"
+                >
+                  <Plus size={24} />
+                </Fab>
+              </Stack>
             </Box>
-            <Box display="flex" flexDirection="column" gap={3}>
+            <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={3}>
               {posts.map((post) => (
                 <PostCard
                   key={post.id}
@@ -192,16 +227,13 @@ export const FeedPosts: React.FC = () => {
                 />
               ))}
             </Box>
-          </Grid>
-          <Grid
-            item
-            xs={12}
-            sm={3}
-            sx={{ p: '10px !important', height: '100%', overflowY: 'auto' }}
-          >
-            <DiscoveryPanel />
-          </Grid>
-        </Grid>
+          </Box>
+          {!small && (
+            <Box sx={{ py: 2, height: '100%', overflowY: 'auto' }}>
+              <DiscoveryPanel />
+            </Box>
+          )}
+        </Box>
       </Container>
 
       {/* Create Post Modal */}

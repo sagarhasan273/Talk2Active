@@ -204,7 +204,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
   ];
 
   return (
-    <Card>
+    <Card sx={{ flex: '1 1 auto' }}>
       {/* Header */}
       <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
