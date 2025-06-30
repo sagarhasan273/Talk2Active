@@ -61,6 +61,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose }) => {
             alignItems: 'center',
             justifyContent: 'center',
             height: '100vh',
+            mx: 2,
           }}
         >
           <Box

@@ -3,7 +3,7 @@ import type { NavSectionProps } from 'src/components/nav-section';
 import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
 
-import { _contacts, _notifications } from 'src/_mock';
+import { _notifications } from 'src/_mock';
 import { getUserStatus } from 'src/assets/data/status';
 
 import { Logo } from 'src/components/logo';
@@ -18,7 +18,6 @@ import { HeaderSection } from '../core/header-section';
 import { FeedButton } from '../components/feed-button';
 import { AccountDrawer } from '../components/account-drawer';
 import { LanguageViewer } from '../components/language-viewer';
-import { ContactsPopover } from '../components/contacts-popover';
 import { VoiceRoomButton } from '../components/voice-room-button';
 import { NotificationsDrawer } from '../components/notifications-drawer';
 
@@ -68,8 +67,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 <FeedButton />
                 {/* --Voice Chat Page */}
                 <VoiceRoomButton />
-                {/* -- Contacts popover -- */}
-                <ContactsPopover data={_contacts} />
                 {/* -- Account drawer -- */}
                 <AccountDrawer data={_user_account} status={getUserStatus('active')} />
               </Box>

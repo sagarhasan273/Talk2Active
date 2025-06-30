@@ -6,11 +6,9 @@ import {
   People,
   Settings,
   ArrowBack,
-  MoreHoriz,
   LocationOn,
   CheckCircle,
   CalendarToday,
-  Notifications,
   ChatBubbleOutline,
 } from '@mui/icons-material';
 import {
@@ -21,15 +19,17 @@ import {
   Paper,
   Stack,
   alpha,
-  Button,
   Avatar,
   AppBar,
+  Tooltip,
   useTheme,
   Container,
   Typography,
   IconButton,
   Link as MuiLink,
 } from '@mui/material';
+
+import { Iconify } from 'src/components/iconify';
 
 import UserProfileRightDisplay from '../user-profile-right-display';
 
@@ -214,48 +214,54 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   )}
                 </Box>
 
-                <Stack direction="row" spacing={1} sx={{ mt: 8 }}>
-                  <IconButton sx={{ border: 1, borderColor: 'divider' }}>
-                    <MoreHoriz />
-                  </IconButton>
-                  <IconButton sx={{ border: 1, borderColor: 'divider' }}>
-                    <Share />
-                  </IconButton>
-                  <IconButton sx={{ border: 1, borderColor: 'divider' }}>
-                    <Notifications />
-                  </IconButton>
-                  <IconButton sx={{ border: 1, borderColor: 'divider' }}>
-                    <ChatBubbleOutline />
-                  </IconButton>
-                  <Button
-                    variant={isFollowing ? 'outlined' : 'contained'}
-                    onClick={() => setIsFollowing(!isFollowing)}
+                <Stack direction="row" sx={{ mt: 8, gap: { xs: 0.8, md: 1 } }}>
+                  <IconButton
                     sx={{
-                      px: 3,
-                      py: 1,
-                      borderRadius: 3,
-                      fontWeight: 'bold',
-                      textTransform: 'none',
-                      ...(isFollowing
-                        ? {
-                            color: 'text.primary',
-                            borderColor: 'divider',
-                            '&:hover': {
-                              bgcolor: 'error.light',
-                              color: 'error.main',
-                              borderColor: 'error.main',
-                            },
-                          }
-                        : {
-                            background: 'linear-gradient(45deg, #9333ea, #ec4899)',
-                            '&:hover': {
-                              background: 'linear-gradient(45deg, #7c3aed, #db2777)',
-                            },
-                          }),
+                      border: 1,
+                      height: 40,
+                      width: 40,
+                      borderColor: 'primary.dark',
+                      color: 'primary.main',
                     }}
                   >
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
+                    <Share />
+                  </IconButton>
+                  <IconButton
+                    sx={{
+                      border: 1,
+                      height: 40,
+                      width: 40,
+                      borderColor: 'primary.dark',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Iconify icon="ant-design:message-filled" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => setIsFollowing(!isFollowing)}
+                    sx={{
+                      border: 1,
+                      height: 40,
+                      width: 40,
+                      ...(isFollowing
+                        ? { borderColor: 'error.dark', color: 'error.main' }
+                        : { borderColor: 'primary.dark', color: 'primary.main' }),
+
+                      '&:hover': {
+                        borderColor: 'inherit',
+                        color: 'inherit',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
+                  >
+                    <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'}>
+                      {isFollowing ? (
+                        <Iconify icon="ri:user-unfollow-fill" />
+                      ) : (
+                        <Iconify icon="ri:user-follow-fill" />
+                      )}
+                    </Tooltip>
+                  </IconButton>
                 </Stack>
               </Box>
 
