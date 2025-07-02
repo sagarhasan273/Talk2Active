@@ -27,7 +27,7 @@ export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Pro
       disableRipple
       sx={{
         px: 2,
-        py: 2.5,
+        py: 1.5,
         borderRadius: 2,
         cursor: 'pointer',
         flexDirection: 'column',
@@ -45,7 +45,7 @@ export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Pro
         display="flex"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ width: 1, mb: 3 }}
+        sx={{ width: 1, mb: 1 }}
       >
         <SvgColor src={`${CONFIG.assetsDir}/assets/icons/settings/ic-${icon}.svg`} />
         <Switch name={label} size="small" color="default" checked={selected} sx={{ mr: -0.75 }} />
@@ -72,7 +72,7 @@ export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Pro
             }}
           >
             <Iconify
-              width={16}
+              width={10}
               icon="eva:info-outline"
               sx={{ cursor: 'pointer', color: 'text.disabled' }}
             />

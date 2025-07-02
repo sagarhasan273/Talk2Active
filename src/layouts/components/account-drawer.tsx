@@ -175,7 +175,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 setMode(mode === 'light' ? 'dark' : 'light');
               }}
               sx={{
-                height: 100,
+                height: 1,
               }}
             />
           </Stack>

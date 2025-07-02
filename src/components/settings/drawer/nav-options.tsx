@@ -44,8 +44,8 @@ export function NavOptions({ options, value, onClickOption }: Props) {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 1.5,
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 1,
         }}
       >
         {options.colors.map((option) => (
@@ -60,7 +60,7 @@ export function NavOptions({ options, value, onClickOption }: Props) {
     </Box>
   );
 
-  return <Block sx={{ gap: 2.5 }}>{renderColor}</Block>;
+  return <Block sx={{ py: 1.5, backgroundColor: 'background.neutral' }}>{renderColor}</Block>;
 }
 
 // ----------------------------------------------------------------------
@@ -196,8 +196,8 @@ export function ColorOption({ option, selected, sx, ...other }: OptionProps) {
       icon={<Iconify icon={`material-symbols:palette${!selected ? '-outline' : ''}`} width={20} />}
       label={option}
       sx={{
-        gap: 1.5,
-        height: 56,
+        gap: 0.5,
+        height: 40,
         textTransform: 'capitalize',
         ...(selected && {
           color: theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50',
