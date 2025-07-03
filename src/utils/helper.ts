@@ -3,6 +3,8 @@
  * https://github.com/you-dont-need-x/you-dont-need-lodash
  */
 
+import axiosInstance, { endpoints } from './axios';
+
 // ----------------------------------------------------------------------
 
 export function flattenArray<T>(list: T[], key = 'children'): T[] {
@@ -127,4 +129,31 @@ export const merge = (target: any, ...sources: any[]): any => {
   }
 
   return merge(target, ...sources);
+};
+
+interface UploadImageResponse {
+  success: boolean;
+  imageUrl: string;
+  publicId: string;
+}
+
+export const uploadImage = async (file: File): Promise<{ imageUrl: string } | undefined> => {
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await axiosInstance.post<UploadImageResponse>(
+      endpoints.inventory.image,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return { imageUrl: response.data.imageUrl };
+  } catch (err) {
+    console.error('Upload error:', err);
+    return undefined;
+  }
 };

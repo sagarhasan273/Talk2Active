@@ -27,7 +27,12 @@ export type MultiFilePreviewProps = BoxProps & {
 
 export type UploadProps = DropzoneOptions & {
   error?: boolean;
+  loading?: boolean;
   sx?: SxProps<Theme>;
+  loaderSx?: {
+    sx?: SxProps<Theme>;
+    textVariant?: 'caption' | 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'h4' | 'h5' | 'h6';
+  };
   sxRoot?: SxProps<Theme>;
   className?: string;
   thumbnail?: boolean;

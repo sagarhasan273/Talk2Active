@@ -1,23 +1,7 @@
 import type { UserProfile } from 'src/types/post';
 
 import React, { useState } from 'react';
-import {
-  Eye,
-  Sun,
-  User,
-  Mail,
-  Link,
-  Save,
-  Bell,
-  Moon,
-  Camera,
-  MapPin,
-  Upload,
-  EyeOff,
-  Shield,
-  Palette,
-  FileText,
-} from 'lucide-react';
+import { Eye, Sun, User, Bell, Moon, EyeOff, Shield, Palette } from 'lucide-react';
 
 import { grey } from '@mui/material/colors';
 import {
@@ -32,13 +16,14 @@ import {
   Button,
   Switch,
   styled,
-  useTheme,
   TextField,
   IconButton,
   Typography,
   CardContent,
   InputAdornment,
 } from '@mui/material';
+
+import SettingsProfileInformation from '../settings-profile-information';
 
 interface SettingsProps {
   profile: UserProfile;
@@ -84,16 +69,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
   const [activeTab, setActiveTab] = useState<
     'profile' | 'account' | 'privacy' | 'notifications' | 'appearance'
   >('profile');
-  const [formData, setFormData] = useState({
-    name: profile.name,
-    username: profile.username,
-    bio: profile.bio,
-    location: profile.location,
-    website: profile.website,
-    avatar: profile.avatar,
-    coverImage: profile.coverImage,
-  });
-  const [isUploading, setIsUploading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notifications, setNotifications] = useState({
@@ -103,37 +79,6 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
     follows: true,
     mentions: true,
   });
-  const theme = useTheme();
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageUpload = async (type: 'avatar' | 'cover') => {
-    setIsUploading(true);
-    // Simulate image upload
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // For demo purposes, we'll use placeholder images
-    const newImageUrl =
-      type === 'avatar'
-        ? 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-        : 'https://images.pexels.com/photos/1323550/pexels-photo-1323550.jpeg?auto=compress&cs=tinysrgb&w=1200&h=400&fit=crop';
-
-    setFormData((prev) => ({
-      ...prev,
-      [type === 'avatar' ? 'avatar' : 'coverImage']: newImageUrl,
-    }));
-    setIsUploading(false);
-  };
-
-  const handleSaveProfile = () => {
-    const updatedProfile: UserProfile = {
-      ...profile,
-      ...formData,
-    };
-    onUpdateProfile(updatedProfile);
-  };
 
   const tabs = [
     { key: 'profile', label: 'Profile', icon: User },
@@ -182,280 +127,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
           <Grid item xs={12} md={9}>
             <Card sx={{ borderRadius: 4, boxShadow: 1, overflow: 'hidden' }}>
               {/* Profile Tab */}
-              {activeTab === 'profile' && (
-                <CardContent sx={{ p: 4 }}>
-                  <Box mb={4}>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      Profile Information
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Update your profile details and images
-                    </Typography>
-                  </Box>
-
-                  {/* Cover Image */}
-                  <Box mb={4}>
-                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                      Cover Image
-                    </Typography>
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        height: 192,
-                        background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.secondary.light})`,
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        '&:hover .cover-overlay': {
-                          opacity: 1,
-                        },
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={formData.coverImage}
-                        alt="Cover"
-                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <Box
-                        className="cover-overlay"
-                        sx={{
-                          position: 'absolute',
-                          inset: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                          opacity: 0,
-                          transition: 'opacity 300ms',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Button
-                          onClick={() => handleImageUpload('cover')}
-                          disabled={isUploading}
-                          startIcon={isUploading ? null : <Camera size={18} />}
-                          sx={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            backdropFilter: 'blur(10px)',
-                            color: 'common.white',
-                            '&:hover': {
-                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                            },
-                          }}
-                        >
-                          {isUploading ? (
-                            <>
-                              <Box
-                                sx={{
-                                  width: 16,
-                                  height: 16,
-                                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                                  borderTopColor: 'common.white',
-                                  borderRadius: '50%',
-                                  animation: 'spin 1s linear infinite',
-                                  mr: 1,
-                                }}
-                              />
-                              Uploading...
-                            </>
-                          ) : (
-                            'Change Cover'
-                          )}
-                        </Button>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {/* Avatar */}
-                  <Box mb={4}>
-                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                      Profile Picture
-                    </Typography>
-                    <Stack direction="row" alignItems="center" spacing={3}>
-                      <Box sx={{ position: 'relative', '&:hover .avatar-overlay': { opacity: 1 } }}>
-                        <Box
-                          component="img"
-                          src={formData.avatar}
-                          alt="Avatar"
-                          sx={{
-                            width: 96,
-                            height: 96,
-                            borderRadius: '50%',
-                            border: '4px solid white',
-                            boxShadow: 3,
-                          }}
-                        />
-                        <Box
-                          className="avatar-overlay"
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                            opacity: 0,
-                            transition: 'opacity 300ms',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <IconButton
-                            onClick={() => handleImageUpload('avatar')}
-                            disabled={isUploading}
-                            sx={{ color: 'common.white' }}
-                          >
-                            <Camera size={20} />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                      <Box>
-                        <GradientButton
-                          onClick={() => handleImageUpload('avatar')}
-                          disabled={isUploading}
-                          startIcon={<Upload size={16} />}
-                          sx={{ borderRadius: 6 }}
-                        >
-                          {isUploading ? (
-                            <>
-                              <Box
-                                sx={{
-                                  width: 16,
-                                  height: 16,
-                                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                                  borderTopColor: 'common.white',
-                                  borderRadius: '50%',
-                                  animation: 'spin 1s linear infinite',
-                                  mr: 1,
-                                }}
-                              />
-                              Uploading...
-                            </>
-                          ) : (
-                            'Upload New'
-                          )}
-                        </GradientButton>
-                        <Typography variant="caption" color="text.secondary" mt={1} display="block">
-                          JPG, PNG or GIF. Max size 5MB.
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Box>
-
-                  {/* Form Fields */}
-                  <Stack spacing={3}>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <User size={16} />
-                              <span>Display Name</span>
-                            </Stack>
-                          }
-                          value={formData.name}
-                          onChange={(e) => handleInputChange('name', e.target.value)}
-                          placeholder="Your display name"
-                          variant="outlined"
-                          InputProps={{
-                            sx: { borderRadius: 3 },
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Mail size={16} />
-                              <span>Username</span>
-                            </Stack>
-                          }
-                          value={formData.username}
-                          onChange={(e) => handleInputChange('username', e.target.value)}
-                          placeholder="@username"
-                          variant="outlined"
-                          InputProps={{
-                            sx: { borderRadius: 3 },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={4}
-                      label={
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <FileText size={16} />
-                          <span>Bio</span>
-                        </Stack>
-                      }
-                      value={formData.bio}
-                      onChange={(e) => handleInputChange('bio', e.target.value)}
-                      placeholder="Tell us about yourself..."
-                      variant="outlined"
-                      inputProps={{ maxLength: 160 }}
-                      InputProps={{
-                        sx: { borderRadius: 3 },
-                      }}
-                    />
-                    <Typography variant="caption" color="text.secondary" textAlign="right">
-                      {formData.bio.length}/160
-                    </Typography>
-
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <MapPin size={16} />
-                              <span>Location</span>
-                            </Stack>
-                          }
-                          value={formData.location}
-                          onChange={(e) => handleInputChange('location', e.target.value)}
-                          placeholder="Your location"
-                          variant="outlined"
-                          InputProps={{
-                            sx: { borderRadius: 3 },
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Link size={16} />
-                              <span>Website</span>
-                            </Stack>
-                          }
-                          value={formData.website}
-                          onChange={(e) => handleInputChange('website', e.target.value)}
-                          placeholder="yourwebsite.com"
-                          variant="outlined"
-                          InputProps={{
-                            sx: { borderRadius: 3 },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Stack>
-
-                  {/* Save Button */}
-                  <Box mt={4} pt={3} borderTop={`1px solid ${theme.palette.divider}`}>
-                    <GradientButton
-                      onClick={handleSaveProfile}
-                      startIcon={<Save size={18} />}
-                      sx={{ borderRadius: 3, boxShadow: 3 }}
-                    >
-                      Save Changes
-                    </GradientButton>
-                  </Box>
-                </CardContent>
-              )}
+              {activeTab === 'profile' && <SettingsProfileInformation profile={profile} />}
 
               {/* Account Tab */}
               {activeTab === 'account' && (

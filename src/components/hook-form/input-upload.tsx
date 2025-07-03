@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import FormHelperText from '@mui/material/FormHelperText';
+
+import { uploadImage } from 'src/utils/helper';
 
 import { Upload, UploadBox, UploadAvatar } from '../upload';
 
@@ -46,16 +49,52 @@ export function RHFUploadAvatar({ name, ...other }: Props) {
 
 // ----------------------------------------------------------------------
 
-export function RHFUploadBox({ name, ...other }: Props) {
-  const { control } = useFormContext();
+export function RHFUploadBox({ name, multiple, helperText, loaderSx, ...other }: Props) {
+  const { control, setValue } = useFormContext();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   return (
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState: { error } }) => (
-        <UploadBox value={field.value} error={!!error} {...other} />
-      )}
+      render={({ field, fieldState: { error } }) => {
+        const uploadProps = {
+          multiple,
+          accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.heic', '.heif'] },
+          error: !!error,
+          helperText: error?.message ?? helperText,
+        };
+
+        const onDrop = async (acceptedFiles: File[]) => {
+          setIsLoading(true);
+          if (multiple) {
+            const images = await Promise.all(acceptedFiles.map((file) => uploadImage(file)));
+            setValue(
+              name,
+              images.map((img) => img?.imageUrl),
+              { shouldValidate: true }
+            );
+          } else {
+            const image = await uploadImage(acceptedFiles[0]);
+            setValue(name, image?.imageUrl, { shouldValidate: true });
+          }
+          setIsLoading(false);
+        };
+
+        return (
+          <UploadBox
+            {...uploadProps}
+            value={field.value}
+            onDrop={onDrop}
+            error={!!error}
+            {...other}
+            loading={isLoading}
+            disabled={isLoading}
+            loaderSx={loaderSx}
+          />
+        );
+      }}
     />
   );
 }
@@ -72,12 +111,12 @@ export function RHFUpload({ name, multiple, helperText, ...other }: Props) {
       render={({ field, fieldState: { error } }) => {
         const uploadProps = {
           multiple,
-          accept: { 'image/*': [] },
+          accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.heic', '.heif'] },
           error: !!error,
           helperText: error?.message ?? helperText,
         };
 
-        const onDrop = (acceptedFiles: File[]) => {
+        const onDrop = async (acceptedFiles: File[]) => {
           const value = multiple ? [...field.value, ...acceptedFiles] : acceptedFiles[0];
 
           setValue(name, value, { shouldValidate: true });

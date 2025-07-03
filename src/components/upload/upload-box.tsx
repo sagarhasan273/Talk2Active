@@ -1,6 +1,7 @@
 import { useDropzone } from 'react-dropzone';
 
 import Box from '@mui/material/Box';
+import { Stack, keyframes, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -11,7 +12,22 @@ import type { UploadProps } from './types';
 
 // ----------------------------------------------------------------------
 
-export function UploadBox({ placeholder, error, disabled, className, sx, ...other }: UploadProps) {
+// Define the spin animation
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+export function UploadBox({
+  placeholder,
+  error,
+  disabled,
+  className,
+  loading,
+  loaderSx,
+  sx,
+  ...other
+}: UploadProps) {
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     disabled,
     ...other,
@@ -31,24 +47,57 @@ export function UploadBox({ placeholder, error, disabled, className, sx, ...othe
         borderRadius: 1,
         cursor: 'pointer',
         alignItems: 'center',
-        color: 'text.disabled',
+        color: 'primary.light',
         justifyContent: 'center',
-        bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+
+        bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.48),
         border: (theme) => `dashed 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
         ...(isDragActive && { opacity: 0.72 }),
-        ...(disabled && { opacity: 0.48, pointerEvents: 'none' }),
+        ...(disabled && { pointerEvents: 'none' }),
         ...(hasError && {
           color: 'error.main',
           borderColor: 'error.main',
           bgcolor: (theme) => varAlpha(theme.vars.palette.error.mainChannel, 0.08),
         }),
-        '&:hover': { opacity: 0.72 },
+        '&:hover': { opacity: 0.72, color: 'common.white' },
+        ...(loading && { bgcolor: 'none' }),
         ...sx,
       }}
     >
       <input {...getInputProps()} />
 
-      {placeholder || <Iconify icon="eva:cloud-upload-fill" width={28} />}
+      {!loading &&
+        (placeholder || (
+          <Iconify
+            icon="bi:camera-fill"
+            sx={{
+              '&:hover': {
+                color: 'common.white',
+              },
+            }}
+            width={28}
+          />
+        ))}
+
+      {loading ? (
+        <Stack direction="row">
+          <Box
+            sx={{
+              width: 16,
+              height: 16,
+              border: '2px solid rgba(255, 255, 255, 0.24)',
+              borderTopColor: 'common.white',
+              borderRadius: '50%',
+              animation: `${spin} 1s linear infinite`,
+              mr: 1,
+              ...loaderSx?.sx,
+            }}
+          />
+          <Typography variant={loaderSx?.textVariant} sx={{ color: 'common.white' }}>
+            Uploading...
+          </Typography>
+        </Stack>
+      ) : null}
     </Box>
   );
 }
