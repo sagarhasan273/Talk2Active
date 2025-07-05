@@ -1,17 +1,21 @@
-import type { UserProfile } from 'src/types/post';
+import type { UserType } from 'src/validations/user';
 
-import React from 'react';
-import { z as zod } from 'zod';
+import { toast } from 'sonner';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { User, Mail, Link, MapPin, Upload, FileText } from 'lucide-react';
 
-import { Box, Grid, Stack, Button, styled, useTheme, Typography, CardContent } from '@mui/material';
+import { Box, Grid, Card, Stack, Button, styled, useTheme, Typography } from '@mui/material';
 
-import axiosInstance, { endpoints } from 'src/utils/axios';
+import { useUserContext } from 'src/routes/components';
+
+import { UserSchema } from 'src/validations/user';
+import { useUpdateUserMutation } from 'src/services/user-api';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
+import { LoadingScreen } from 'src/components/loading-screen';
 
 const GradientButton = styled(Button)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -22,63 +26,28 @@ const GradientButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-export type FormSchemaType = zod.infer<typeof FormSchema>;
-
-export const FormSchema = zod.object({
-  name: zod
-    .string()
-    .min(1, { message: 'Full name is required!' })
-    .min(6, { message: 'Mininum 6 characters!' })
-    .max(32, { message: 'Maximum 32 characters!' }),
-  username: zod
-    .string()
-    .min(1, { message: 'User name is required!' })
-    .min(6, { message: 'Mininum 6 characters!' })
-    .max(32, { message: 'Maximum 32 characters!' }),
-  email: zod
-    .string()
-    .min(1, { message: 'Email is required!' })
-    .email({ message: 'Email must be a valid email address!' }),
-  bio: zod.string().min(0, { message: 'Add your bio!' }),
-  location: zod.string().min(0, { message: 'Add your bio!' }),
-  website: zod.string().min(0, { message: 'Add your location!' }),
-
-  // phoneNumber: schemaHelper.phoneNumber({ isValidPhoneNumber }),
-  // password: zod
-  //   .string()
-  //   .min(1, { message: 'Password is required!' })
-  //   .min(6, { message: 'Password is too short!' }),
-  // confirmPassword: zod.string().min(1, { message: 'Confirm password is required!' }),
-
-  profilePhoto: zod.string().min(1, { message: 'There is no Profile Photo!' }),
-  coverPhoto: zod.string().min(1, { message: 'There is no Cover Photo!' }),
+const getFormData = (user: UserType | null) => ({
+  _id: user?._id || '',
+  name: user?.name || '',
+  username: user?.username || '',
+  email: user?.email || '',
+  profilePhoto: user?.profilePhoto || '',
+  coverPhoto: user?.coverPhoto || '',
+  bio: user?.bio || '',
+  location: user?.location || '',
+  website: user?.website || '',
 });
-// .refine((data) => data.password === data.confirmPassword, {
-//   message: 'Passwords do not match!',
-//   path: ['confirmPassword'],
-// });
 
-interface SettingsProfileInformationProps {
-  profile: UserProfile;
-}
+function SettingsProfileInformation() {
+  const { user, loading } = useUserContext();
 
-function SettingsProfileInformation({ profile }: SettingsProfileInformationProps) {
   const theme = useTheme();
 
-  const defaultValues = {
-    name: profile.name,
-    username: profile.username,
-    email: 'sagarhasan273@gmail.com',
-    bio: profile.bio,
-    location: profile.location,
-    website: profile.website,
-    profilePhoto: profile.avatar,
-    coverPhoto: profile.coverImage,
-  };
+  const [updateUser] = useUpdateUserMutation();
 
-  const methods = useForm<FormSchemaType>({
-    resolver: zodResolver(FormSchema),
-    defaultValues,
+  const methods = useForm<UserType>({
+    resolver: zodResolver(UserSchema),
+    defaultValues: getFormData(user),
   });
 
   const {
@@ -86,24 +55,31 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
     reset,
     setValue,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = methods;
 
   const values = watch();
-  console.log(errors);
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
     try {
-      const response = await axiosInstance.post(endpoints.user.profile, data);
-      reset();
+      const response = await updateUser({ _id: user?._id, ...data });
+      reset(getFormData(data));
       console.info('DATA', response);
-    } catch (error) {
-      console.error(error);
+      toast.success('Profile updated successfully');
+    } catch (err) {
+      console.error(err);
     }
   });
 
+  useEffect(() => {
+    if (!loading && user) {
+      reset(getFormData(user));
+    }
+  }, [user, loading, reset]);
+
+  if (loading && !values) return <LoadingScreen />;
+
   return (
-    <CardContent sx={{ p: 4 }}>
+    <Card sx={{ p: 3, borderRadius: 1, backgroundColor: 'background.neutral' }}>
       <Box mb={4}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
           Profile Information
@@ -132,7 +108,7 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
           >
             <Box
               component="img"
-              src={values.coverPhoto}
+              src={values?.coverPhoto}
               alt="Cover"
               sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -167,7 +143,7 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
             <Box sx={{ position: 'relative', '&:hover .avatar-overlay': { opacity: 1 } }}>
               <Box
                 component="img"
-                src={values.profilePhoto}
+                src={values?.profilePhoto}
                 alt="Avatar"
                 sx={{
                   width: 96,
@@ -244,6 +220,7 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Field.Text
+                key="name-field"
                 name="name"
                 label={
                   <Stack direction="row" alignItems="center" spacing={1}>
@@ -251,11 +228,9 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                     <span>Display Name</span>
                   </Stack>
                 }
-                value={values.name}
+                value={values?.name}
                 placeholder="Your display name"
-                InputProps={{
-                  sx: { borderRadius: 3 },
-                }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -267,12 +242,10 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                     <span>Username</span>
                   </Stack>
                 }
-                value={values.username}
+                value={values?.username}
                 placeholder="@username"
                 variant="outlined"
-                InputProps={{
-                  sx: { borderRadius: 3 },
-                }}
+                size="small"
               />
             </Grid>
           </Grid>
@@ -285,13 +258,11 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                 <span>Email</span>
               </Stack>
             }
-            value={values.email}
+            value={values?.email}
             placeholder="Write Email..."
             variant="outlined"
             inputProps={{ maxLength: 60 }}
-            InputProps={{
-              sx: { borderRadius: 3 },
-            }}
+            size="small"
           />
           <Field.Text
             name="bio"
@@ -303,16 +274,20 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                 <span>Bio</span>
               </Stack>
             }
-            value={values.bio}
             placeholder="Tell us about yourself..."
             variant="outlined"
             inputProps={{ maxLength: 160 }}
             InputProps={{
-              sx: { borderRadius: 3 },
+              sx: {
+                '& .MuiInputBase-input:focus': {
+                  borderRadius: 0,
+                },
+              },
             }}
+            size="small"
           />
           <Typography variant="caption" color="text.secondary" textAlign="right">
-            {values.bio.length}/160
+            {values?.bio?.length}/160
           </Typography>
 
           <Grid container spacing={3}>
@@ -325,12 +300,10 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                     <span>Location</span>
                   </Stack>
                 }
-                value={values.location}
+                value={values?.location}
                 placeholder="Your location"
                 variant="outlined"
-                InputProps={{
-                  sx: { borderRadius: 3 },
-                }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -342,12 +315,10 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
                     <span>Website</span>
                   </Stack>
                 }
-                value={values.website}
+                value={values?.website}
                 placeholder="yourwebsite.com"
                 variant="outlined"
-                InputProps={{
-                  sx: { borderRadius: 3 },
-                }}
+                size="small"
               />
             </Grid>
           </Grid>
@@ -365,7 +336,7 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
           </Button>
         </Box>
       </Form>
-    </CardContent>
+    </Card>
   );
 }
 

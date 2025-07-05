@@ -31,6 +31,8 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
+import { fDate } from 'src/utils/format-time';
+
 import { Iconify } from 'src/components/iconify';
 
 import UserProfileRightDisplay from '../user-profile-right-display';
@@ -77,32 +79,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-
-  // TabPanel is now defined outside this component
-
-  interface FormatJoinDate {
-    (date: Date): string;
-  }
-
-  const formatJoinDate: FormatJoinDate = (date) =>
-    date.toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric',
-    });
-
-  interface FormatNumber {
-    (num: number): string;
-  }
-
-  const formatNumber: FormatNumber = (num) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
 
   interface TabChangeEvent extends React.SyntheticEvent<Element, Event> {}
 
@@ -315,7 +291,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <Stack direction="row" alignItems="center" spacing={0.5}>
                     <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
-                      Joined {user?.joinDate}
+                      Joined {user?.joinDate ? fDate(user.joinDate) : ''}
                     </Typography>
                   </Stack>
                 </Stack>

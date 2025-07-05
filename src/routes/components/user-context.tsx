@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
-import type { IUserProfile, UserContextTypes } from 'src/types/user';
+import type { UserType } from 'src/validations/user';
+import type { UserContextTypes } from 'src/types/user';
 
 import { useMemo, useState, useContext, createContext } from 'react';
 
 const UserContext = createContext<UserContextTypes | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<IUserProfile | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const memoValues = useMemo(

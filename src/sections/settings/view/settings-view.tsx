@@ -127,7 +127,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
           <Grid item xs={12} md={9}>
             <Card sx={{ borderRadius: 4, boxShadow: 1, overflow: 'hidden' }}>
               {/* Profile Tab */}
-              {activeTab === 'profile' && <SettingsProfileInformation profile={profile} />}
+              {activeTab === 'profile' && <SettingsProfileInformation />}
 
               {/* Account Tab */}
               {activeTab === 'account' && (

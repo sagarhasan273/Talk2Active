@@ -1,5 +1,5 @@
 // services/userApi.ts
-import type { IUserProfile } from 'src/types/user';
+import type { UserType, UserProfileFormType } from 'src/validations/user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -20,17 +20,17 @@ export const userApi = createApi({
     },
   }), // your REST API base
   endpoints: (builder) => ({
-    getUserById: builder.query<{ user: IUserProfile; status: boolean }, string>({
+    getUserById: builder.query<{ user: UserType; status: boolean }, string>({
       query: (id) => `user/profile/${id}`,
     }),
-    updateUser: builder.mutation<IUserProfile, Partial<IUserProfile>>({
+    updateUser: builder.mutation<UserProfileFormType, Partial<UserProfileFormType>>({
       query: (body) => ({
-        url: `profile/update`,
+        url: `user/profile/update`,
         method: 'POST',
         body,
       }),
     }),
-    createUser: builder.mutation<IUserProfile, IUserProfile>({
+    createUser: builder.mutation<UserType, UserType>({
       query: (newUser) => ({
         url: `users`,
         method: 'POST',

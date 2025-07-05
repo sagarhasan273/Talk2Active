@@ -12,7 +12,7 @@ export const USER_STATUS_OPTIONS = [
 export const _userAbout = {
   id: _mock.id(1),
   role: _mock.role(1),
-  userId: "YdsdYh992",
+  userId: 'YdsdYh992',
   email: _mock.email(1),
   school: _mock.companyNames(2),
   company: _mock.companyNames(1),
@@ -143,3 +143,30 @@ export const _userList = [...Array(20)].map((_, index) => ({
   status:
     (index % 2 && 'pending') || (index % 3 && 'banned') || (index % 4 && 'rejected') || 'active',
 }));
+
+export const _user = {
+  _id: '',
+  username: '',
+  email: '',
+  profilePhoto: '',
+  coverPhoto: '',
+  bio: '',
+  fullName: '',
+  dateOfBirth: new Date(),
+  gender: '',
+  joinDate: new Date(),
+  lastActive: new Date(),
+  status: '',
+  verified: true,
+  followersCount: 0,
+  followingCount: 0,
+  postCount: 0,
+  location: '',
+  website: '',
+  socialLinks: {
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+  },
+};

@@ -1,3 +1,4 @@
+import type { UserType } from 'src/validations/user';
 import type { Dispatch, SetStateAction } from 'react';
 
 import type { IDateValue } from './common';
@@ -21,41 +22,10 @@ export type IUserProfileCover = {
   avatarUrl: string;
 };
 
-export type IUserProfile = {
-  _id: string;
-  name: string;
-  username: string;
-  email: string;
-  profilePhoto: string;
-  coverPhoto: string;
-  bio: string;
-  dateOfBirth: string;
-  gender: 'male' | 'female' | 'other';
-  joinDate: IDateValue;
-  lastActive: string;
-  status: 'active' | 'inactive' | 'banned';
-  verified: boolean;
-  followersCount: number;
-  followingCount: number;
-  postCount: number;
-  location: string;
-  website: string;
-  socialLinks: {
-    facebook?: string;
-    instagram?: string;
-    linkedin?: string;
-    [key: string]: string | undefined;
-  };
-  password: string;
-  createdAt: string;
-  updatedAt: string;
-  profileStatus: 'public' | 'private';
-};
-
 export type UserContextTypes = {
-  user: IUserProfile | null;
+  user: UserType | null;
   loading: boolean;
-  setUser: Dispatch<SetStateAction<IUserProfile | null>>;
+  setUser: Dispatch<SetStateAction<UserType | null>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
 };
 
