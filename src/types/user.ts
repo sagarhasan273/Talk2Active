@@ -1,4 +1,6 @@
-import type { IDateValue, ISocialLink } from './common';
+import type { Dispatch, SetStateAction } from 'react';
+
+import type { IDateValue } from './common';
 
 // ----------------------------------------------------------------------
 
@@ -20,16 +22,41 @@ export type IUserProfileCover = {
 };
 
 export type IUserProfile = {
-  id: string;
-  role: string;
-  quote: string;
+  _id: string;
+  name: string;
+  username: string;
   email: string;
-  school: string;
-  country: string;
-  company: string;
-  totalFollowers: number;
-  totalFollowing: number;
-  socialLinks: ISocialLink;
+  profilePhoto: string;
+  coverPhoto: string;
+  bio: string;
+  dateOfBirth: string;
+  gender: 'male' | 'female' | 'other';
+  joinDate: IDateValue;
+  lastActive: string;
+  status: 'active' | 'inactive' | 'banned';
+  verified: boolean;
+  followersCount: number;
+  followingCount: number;
+  postCount: number;
+  location: string;
+  website: string;
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    [key: string]: string | undefined;
+  };
+  password: string;
+  createdAt: string;
+  updatedAt: string;
+  profileStatus: 'public' | 'private';
+};
+
+export type UserContextTypes = {
+  user: IUserProfile | null;
+  loading: boolean;
+  setUser: Dispatch<SetStateAction<IUserProfile | null>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 };
 
 export type IUserProfileFollower = {

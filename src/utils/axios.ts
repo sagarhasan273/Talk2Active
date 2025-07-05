@@ -38,6 +38,9 @@ export const endpoints = {
     signIn: '/user/auth/sign-in',
     signUp: '/user/auth/sign-up',
   },
+  user: {
+    profile: '/user/profile/update',
+  },
   inventory: {
     image: '/inventory/image/upload',
     details: '/api/mail/details',

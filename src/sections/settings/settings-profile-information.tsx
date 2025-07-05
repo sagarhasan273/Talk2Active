@@ -8,6 +8,8 @@ import { User, Mail, Link, MapPin, Upload, FileText } from 'lucide-react';
 
 import { Box, Grid, Stack, Button, styled, useTheme, Typography, CardContent } from '@mui/material';
 
+import axiosInstance, { endpoints } from 'src/utils/axios';
+
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
@@ -66,6 +68,7 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
   const defaultValues = {
     name: profile.name,
     username: profile.username,
+    email: 'sagarhasan273@gmail.com',
     bio: profile.bio,
     location: profile.location,
     website: profile.website,
@@ -83,16 +86,17 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
     reset,
     setValue,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = methods;
 
   const values = watch();
-
+  console.log(errors);
   const onSubmit = handleSubmit(async (data) => {
+    console.log(data);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const response = await axiosInstance.post(endpoints.user.profile, data);
       reset();
-      console.info('DATA', data);
+      console.info('DATA', response);
     } catch (error) {
       console.error(error);
     }
@@ -274,6 +278,22 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
           </Grid>
 
           <Field.Text
+            name="email"
+            label={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <FileText size={16} />
+                <span>Email</span>
+              </Stack>
+            }
+            value={values.email}
+            placeholder="Write Email..."
+            variant="outlined"
+            inputProps={{ maxLength: 60 }}
+            InputProps={{
+              sx: { borderRadius: 3 },
+            }}
+          />
+          <Field.Text
             name="bio"
             multiline
             rows={4}
@@ -335,14 +355,14 @@ function SettingsProfileInformation({ profile }: SettingsProfileInformationProps
 
         {/* Save Button */}
         <Box mt={4} pt={3} borderTop={`1px solid ${theme.palette.divider}`}>
-          <GradientButton
+          <Button
             type="submit"
             startIcon={<Iconify icon={isSubmitting ? 'eos-icons:loading' : 'mi:save'} />}
             sx={{ borderRadius: 3, boxShadow: 3, px: 1.5 }}
             disabled={isSubmitting}
           >
             Save Changes
-          </GradientButton>
+          </Button>
         </Box>
       </Form>
     </CardContent>

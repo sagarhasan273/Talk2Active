@@ -1,12 +1,12 @@
 export type UserType = Record<string, any> | null;
 
 export type AuthState = {
-  user: UserType;
+  authUser: UserType;
   loading: boolean;
 };
 
 export type AuthContextValue = {
-  user: UserType;
+  authUser: UserType;
   loading: boolean;
   authenticated: boolean;
   unauthenticated: boolean;

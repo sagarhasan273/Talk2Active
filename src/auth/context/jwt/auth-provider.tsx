@@ -24,7 +24,7 @@ type Props = {
 
 export function AuthProvider({ children }: Props) {
   const { state, setState } = useSetState<AuthState>({
-    user: null,
+    authUser: null,
     loading: true,
   });
 
@@ -36,16 +36,14 @@ export function AuthProvider({ children }: Props) {
         setSession(accessToken);
 
         const res = await axios.get(endpoints.auth.me);
-
-        const { user } = res.data;
-
-        setState({ user: { ...user, accessToken }, loading: false });
+        const user = res.data;
+        setState({ authUser: { ...user, accessToken }, loading: false });
       } else {
-        setState({ user: null, loading: false });
+        setState({ authUser: null, loading: false });
       }
     } catch (error) {
       console.error(error);
-      setState({ user: null, loading: false });
+      setState({ authUser: null, loading: false });
     }
   }, [setState]);
 
@@ -56,16 +54,16 @@ export function AuthProvider({ children }: Props) {
 
   // ----------------------------------------------------------------------
 
-  const checkAuthenticated = state.user ? 'authenticated' : 'unauthenticated';
+  const checkAuthenticated = state.authUser ? 'authenticated' : 'unauthenticated';
 
   const status = state.loading ? 'loading' : checkAuthenticated;
 
   const memoizedValue = useMemo(
     () => ({
-      user: state.user
+      authUser: state.authUser
         ? {
-            ...state.user,
-            role: state.user?.role ?? 'admin',
+            ...state.authUser,
+            role: state.authUser?.role ?? 'admin',
           }
         : null,
       checkUserSession,
@@ -73,7 +71,7 @@ export function AuthProvider({ children }: Props) {
       authenticated: status === 'authenticated',
       unauthenticated: status === 'unauthenticated',
     }),
-    [checkUserSession, state.user, status]
+    [checkUserSession, state.authUser, status]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

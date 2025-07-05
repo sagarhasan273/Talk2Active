@@ -29,6 +29,8 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 
+import { useUserContext } from 'src/routes/components';
+
 import { Iconify } from 'src/components/iconify';
 
 import UserProfileRightDisplay from '../user-profile-right-display';
@@ -69,7 +71,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   onBack,
   onSettings,
 }) => {
+  const { user } = useUserContext();
+
   const theme = useTheme();
+
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
@@ -132,10 +137,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-              {profile.name}
+              {user?.name}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {formatNumber(profile.posts)} posts
+              {user?.postCount} posts
             </Typography>
           </Box>
           {onSettings && (
@@ -156,7 +161,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               sx={{
                 height: 200,
                 background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
-                backgroundImage: `url(${profile.coverImage})`,
+                backgroundImage: `url(${user?.coverPhoto})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 borderRadius: 3,
@@ -189,8 +194,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               >
                 <Box sx={{ position: 'relative' }}>
                   <Avatar
-                    src={profile.avatar}
-                    alt={profile.name}
+                    src={user?.profilePhoto ? user.profilePhoto.toString() : undefined}
+                    alt={user?.name ? user.name.toString() : undefined}
                     sx={{
                       width: 128,
                       height: 128,
@@ -270,49 +275,47 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <Box>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <Typography variant="h4" fontWeight="bold">
-                      {profile.name}
+                      {user?.name}
                     </Typography>
-                    {profile.verified && (
-                      <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />
-                    )}
+                    {user?.verified && <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />}
                   </Stack>
                   <Typography variant="body1" color="text.secondary">
-                    @{profile.username}
+                    @{user?.username}
                   </Typography>
                 </Box>
 
                 <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                  {profile.bio}
+                  {user?.bio}
                 </Typography>
 
                 <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                  {profile.location && (
+                  {user?.location && (
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
                       <Typography variant="body2" color="text.secondary">
-                        {profile.location}
+                        {user?.location}
                       </Typography>
                     </Stack>
                   )}
-                  {profile.website && (
+                  {user?.website && (
                     <Stack direction="row" alignItems="center" spacing={0.5}>
                       <Link sx={{ fontSize: 16, color: 'text.secondary' }} />
                       <MuiLink
-                        href={`https://${profile.website}`}
+                        href={`https://${user?.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         color="primary"
                         underline="hover"
                         variant="body2"
                       >
-                        {profile.website}
+                        {user?.website}
                       </MuiLink>
                     </Stack>
                   )}
                   <Stack direction="row" alignItems="center" spacing={0.5}>
                     <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
                     <Typography variant="body2" color="text.secondary">
-                      Joined {formatJoinDate(profile.joinDate)}
+                      Joined {user?.joinDate}
                     </Typography>
                   </Stack>
                 </Stack>
@@ -321,7 +324,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <Stack direction="row" spacing={3}>
                   <Box>
                     <Typography component="span" fontWeight="bold" color="text.primary">
-                      {formatNumber(profile.following)}
+                      {user?.followersCount}
                     </Typography>
                     <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
                       Following
@@ -329,7 +332,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </Box>
                   <Box>
                     <Typography component="span" fontWeight="bold" color="text.primary">
-                      {formatNumber(profile.followers)}
+                      {user?.followingCount}
                     </Typography>
                     <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
                       Followers
@@ -370,7 +373,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     No posts yet
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    When {profile.name} posts, theyll show up here.
+                    When {user?.name} posts, theyll show up here.
                   </Typography>
                 </Box>
               </TabPanel>
