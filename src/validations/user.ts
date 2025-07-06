@@ -3,12 +3,9 @@ import { z as zod } from 'zod';
 export const UserSchema = zod
   .object({
     _id: zod.string().optional(), // Optional for creation, required for updates
-    userId: zod
-      .string()
-      .regex(/^USR\d{8}\d{4}$/, {
-        message: 'User ID must follow the format USRYYYYMMDDCOUNTER',
-      })
-      .optional(),
+    userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
+      message: 'User ID must follow the format USRYYYYMMDDCOUNTER',
+    }),
     username: zod
       .string()
       .min(3, { message: 'Username must be at least 3 characters' })
@@ -57,7 +54,7 @@ export const UserSchema = zod
       .union([zod.string().datetime(), zod.date()])
       .transform((val) => new Date(val))
       .optional(),
-    status: zod.enum(['active', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
+    status: zod.enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
     followersCount: zod.number().int().nonnegative().optional(),
@@ -112,4 +109,10 @@ export const UserProfileFormSchema = UserSchema.pick({
   website: true,
 });
 
+export const UserStatusSchema = UserSchema.required({
+  _id: true,
+  status: true,
+});
+
 export type UserProfileFormType = zod.infer<typeof UserProfileFormSchema>;
+export type UserStatusType = zod.infer<typeof UserStatusSchema>;

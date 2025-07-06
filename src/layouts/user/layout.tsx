@@ -68,7 +68,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* --Voice Chat Page */}
                 <VoiceRoomButton />
                 {/* -- Account drawer -- */}
-                <AccountDrawer data={_user_account} status={getUserStatus('active')} />
+                <AccountDrawer data={_user_account} status={getUserStatus()} />
               </Box>
             ),
           }}

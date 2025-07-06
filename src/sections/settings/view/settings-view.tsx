@@ -62,14 +62,19 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
       }}
     >
       <Box sx={{ maxWidth: 'md', mx: 'auto', px: 2, py: 3 }}>
-        <Grid container spacing={4}>
+        <Grid container spacing={3}>
           {/* Sidebar */}
           <Grid item xs={12} md={3}>
             <StyledTabs
               orientation="vertical"
               value={activeTab}
               onChange={(e, newValue) => setActiveTab(newValue)}
-              sx={{ '& .MuiTabs-flexContainer': { gap: 1 } }}
+              sx={{
+                p: { xs: 1, sm: 2 },
+                borderRadius: { xs: 1, sm: 2, md: 3 },
+                '& .MuiTabs-flexContainer': { gap: 1 },
+                backgroundColor: 'background.neutral',
+              }}
             >
               {tabs.map((tab) => {
                 const Icon = tab.icon;

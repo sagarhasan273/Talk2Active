@@ -1,5 +1,6 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
+import { toast } from 'sonner';
 import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -16,6 +17,7 @@ import { useUserContext } from 'src/routes/components';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { varAlpha } from 'src/theme/styles';
+import { useUpdateUserStatusMutation } from 'src/services/user-api';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -42,7 +44,6 @@ export type AccountDrawerProps = IconButtonProps & {
   status?: {
     label: string;
     value: string;
-    active: boolean;
   }[];
 };
 
@@ -60,6 +61,8 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
   const { user } = useUserContext();
 
   const [open, setOpen] = useState(false);
+
+  const [updateUser] = useUpdateUserStatusMutation();
 
   const handleOpenDrawer = useCallback(() => {
     setOpen(true);
@@ -157,7 +160,21 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
               <Button
                 key={option.label}
                 size="small"
-                variant={option.active ? 'contained' : 'outlined'}
+                variant={option.value === user?.status ? 'contained' : 'outlined'}
+                onClick={async () => {
+                  try {
+                    const response = await updateUser({
+                      _id: user?._id,
+                      status: option.value as 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz',
+                    });
+
+                    if (response?.data?.status) {
+                      toast.success(`Profile status ${option.label}`);
+                    }
+                  } catch (error) {
+                    toast.error(error);
+                  }
+                }}
               >
                 {option.label}
               </Button>

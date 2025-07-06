@@ -1,5 +1,5 @@
 // services/userApi.ts
-import type { UserType, UserProfileFormType } from 'src/validations/user';
+import type { UserType, UserStatusType, UserProfileFormType } from 'src/validations/user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -36,6 +36,17 @@ export const userApi = createApi({
       }),
       invalidatesTags: ['user-recall'],
     }),
+    updateUserStatus: builder.mutation<
+      { message: string; status: boolean },
+      Partial<UserStatusType>
+    >({
+      query: (body) => ({
+        url: `user/profile/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['user-recall'],
+    }),
     createUser: builder.mutation<UserType, UserType>({
       query: (newUser) => ({
         url: `users`,
@@ -55,6 +66,7 @@ export const userApi = createApi({
 export const {
   useGetUserByIdQuery,
   useUpdateUserMutation,
+  useUpdateUserStatusMutation,
   useCreateUserMutation,
   useDeleteUserMutation,
 } = userApi;
