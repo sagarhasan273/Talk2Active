@@ -25,7 +25,10 @@ export const userApi = createApi({
       query: (id) => `user/profile/${id}`,
       providesTags: ['user-recall'],
     }),
-    updateUser: builder.mutation<UserProfileFormType, Partial<UserProfileFormType>>({
+    updateUser: builder.mutation<
+      { message: string; status: boolean },
+      Partial<UserProfileFormType>
+    >({
       query: (body) => ({
         url: `user/profile/update`,
         method: 'POST',

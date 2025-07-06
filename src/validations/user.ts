@@ -3,6 +3,12 @@ import { z as zod } from 'zod';
 export const UserSchema = zod
   .object({
     _id: zod.string().optional(), // Optional for creation, required for updates
+    userId: zod
+      .string()
+      .regex(/^USR\d{8}\d{4}$/, {
+        message: 'User ID must follow the format USRYYYYMMDDCOUNTER',
+      })
+      .optional(),
     username: zod
       .string()
       .min(3, { message: 'Username must be at least 3 characters' })
@@ -51,8 +57,9 @@ export const UserSchema = zod
       .union([zod.string().datetime(), zod.date()])
       .transform((val) => new Date(val))
       .optional(),
-    status: zod.enum(['active', 'inactive', 'suspended', '']).optional(),
+    status: zod.enum(['active', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
     verified: zod.boolean().optional(),
+    accountActive: zod.boolean().optional(),
     followersCount: zod.number().int().nonnegative().optional(),
     followingCount: zod.number().int().nonnegative().optional(),
     postCount: zod.number().int().nonnegative().optional(),
@@ -99,6 +106,7 @@ export const UserProfileFormSchema = UserSchema.pick({
   email: true,
   profilePhoto: true,
   coverPhoto: true,
+  accountActive: true,
   bio: true,
   location: true,
   website: true,

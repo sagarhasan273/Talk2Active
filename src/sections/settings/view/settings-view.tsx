@@ -1,29 +1,15 @@
 import type { UserProfile } from 'src/types/post';
 
 import React, { useState } from 'react';
-import { Eye, Sun, User, Bell, Moon, EyeOff, Shield, Palette } from 'lucide-react';
+import { Eye, User, Bell, Shield, Palette } from 'lucide-react';
 
-import { grey } from '@mui/material/colors';
-import {
-  Box,
-  Tab,
-  Card,
-  Grid,
-  Tabs,
-  Paper,
-  Radio,
-  Stack,
-  Button,
-  Switch,
-  styled,
-  TextField,
-  IconButton,
-  Typography,
-  CardContent,
-  InputAdornment,
-} from '@mui/material';
+import { Box, Tab, Card, Grid, Tabs, Stack, styled } from '@mui/material';
 
+import SettingsProfileAccount from '../settings-profile-account';
+import SettingsProfilePrivacy from '../settings-profile-privacy';
+import SettingsProfileAppearance from '../settings-profile-appearance';
 import SettingsProfileInformation from '../settings-profile-information';
+import SettingsProfileNotifications from '../settings-profile-notifications';
 
 interface SettingsProps {
   profile: UserProfile;
@@ -56,29 +42,10 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
-const GradientButton = styled(Button)(({ theme }) => ({
-  background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-  color: theme.palette.common.white,
-  '&:hover': {
-    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-    transform: 'scale(1.05)',
-  },
-}));
-
 export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile }) => {
   const [activeTab, setActiveTab] = useState<
     'profile' | 'account' | 'privacy' | 'notifications' | 'appearance'
   >('profile');
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState({
-    likes: true,
-    reposts: true,
-    comments: true,
-    follows: true,
-    mentions: true,
-  });
 
   const tabs = [
     { key: 'profile', label: 'Profile', icon: User },
@@ -130,203 +97,16 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
               {activeTab === 'profile' && <SettingsProfileInformation />}
 
               {/* Account Tab */}
-              {activeTab === 'account' && (
-                <CardContent sx={{ p: 4 }}>
-                  <Box mb={4}>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      Account Settings
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Manage your account security and preferences
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={3}>
-                    <TextField
-                      fullWidth
-                      label="Email Address"
-                      value="alex@example.com"
-                      type="email"
-                      variant="outlined"
-                      size="small"
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Current Password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter current password"
-                      variant="outlined"
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                      size="small"
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="New Password"
-                      type="password"
-                      placeholder="Enter new password"
-                      variant="outlined"
-                      size="small"
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Confirm New Password"
-                      type="password"
-                      placeholder="Confirm new password"
-                      variant="outlined"
-                      size="small"
-                    />
-
-                    <GradientButton sx={{ borderRadius: 3 }}>Update Password</GradientButton>
-                  </Stack>
-                </CardContent>
-              )}
+              {activeTab === 'account' && <SettingsProfileAccount />}
 
               {/* Notifications Tab */}
-              {activeTab === 'notifications' && (
-                <CardContent sx={{ p: 4 }}>
-                  <Box mb={4}>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      Notification Preferences
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Choose what notifications you want to receive
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={2}>
-                    {Object.entries(notifications).map(([key, value]) => (
-                      <Paper
-                        key={key}
-                        elevation={0}
-                        sx={{ p: 2, bgcolor: grey[50], borderRadius: 3 }}
-                      >
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight="medium"
-                              textTransform="capitalize"
-                            >
-                              {key}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Get notified when someone{' '}
-                              {key === 'follows' ? 'follows you' : `${key} your posts`}
-                            </Typography>
-                          </Box>
-                          <Switch
-                            checked={value}
-                            onChange={() =>
-                              setNotifications((prev) => ({ ...prev, [key]: !value }))
-                            }
-                            color="primary"
-                          />
-                        </Stack>
-                      </Paper>
-                    ))}
-                  </Stack>
-                </CardContent>
-              )}
+              {activeTab === 'notifications' && <SettingsProfileNotifications />}
 
               {/* Appearance Tab */}
-              {activeTab === 'appearance' && (
-                <CardContent sx={{ p: 4 }}>
-                  <Box mb={4}>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      Appearance
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Customize how the app looks and feels
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={2}>
-                    <Paper elevation={0} sx={{ p: 2, bgcolor: grey[50], borderRadius: 3 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
-                          <Box>
-                            <Typography variant="subtitle1" fontWeight="medium">
-                              Dark Mode
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Switch between light and dark themes
-                            </Typography>
-                          </Box>
-                        </Stack>
-                        <Switch
-                          checked={isDarkMode}
-                          onChange={() => setIsDarkMode(!isDarkMode)}
-                          color="primary"
-                        />
-                      </Stack>
-                    </Paper>
-                  </Stack>
-                </CardContent>
-              )}
+              {activeTab === 'appearance' && <SettingsProfileAppearance />}
 
               {/* Privacy Tab */}
-              {activeTab === 'privacy' && (
-                <CardContent sx={{ p: 4 }}>
-                  <Box mb={4}>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom>
-                      Privacy Settings
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Control who can see your content and interact with you
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={3}>
-                    <Paper elevation={0} sx={{ p: 3, bgcolor: grey[50], borderRadius: 3 }}>
-                      <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
-                        Account Privacy
-                      </Typography>
-                      <Stack spacing={1}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Radio checked color="primary" />
-                          <Typography>Public - Anyone can see your posts</Typography>
-                        </Stack>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Radio color="primary" />
-                          <Typography>Private - Only followers can see your posts</Typography>
-                        </Stack>
-                      </Stack>
-                    </Paper>
-
-                    <Paper elevation={0} sx={{ p: 3, bgcolor: grey[50], borderRadius: 3 }}>
-                      <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
-                        Who can message you
-                      </Typography>
-                      <Stack spacing={1}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Radio checked color="primary" />
-                          <Typography>Everyone</Typography>
-                        </Stack>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Radio color="primary" />
-                          <Typography>People you follow</Typography>
-                        </Stack>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Radio color="primary" />
-                          <Typography>No one</Typography>
-                        </Stack>
-                      </Stack>
-                    </Paper>
-                  </Stack>
-                </CardContent>
-              )}
+              {activeTab === 'privacy' && <SettingsProfilePrivacy />}
             </Card>
           </Grid>
         </Grid>

@@ -190,7 +190,7 @@ function UserProfileRightDisplay() {
         </Grid>
       </Paper>
       {/* Achievements */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box
@@ -255,7 +255,7 @@ function UserProfileRightDisplay() {
       </Paper>
 
       {/* Interests */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box
@@ -308,7 +308,7 @@ function UserProfileRightDisplay() {
       </Paper>
 
       {/* Top Posts */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box
@@ -365,7 +365,7 @@ function UserProfileRightDisplay() {
       </Paper>
 
       {/* Recent Activity */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Box
@@ -429,7 +429,7 @@ function UserProfileRightDisplay() {
       </Paper>
 
       {/* Mutual Connections */}
-      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Stack direction="row" alignItems="center" spacing={2}>

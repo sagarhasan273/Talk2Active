@@ -1,40 +1,23 @@
 import React, { useState } from 'react';
 
-import {
-  Link,
-  Share,
-  People,
-  Settings,
-  ArrowBack,
-  LocationOn,
-  CheckCircle,
-  CalendarToday,
-  ChatBubbleOutline,
-} from '@mui/icons-material';
+import { People, Settings, ArrowBack, ChatBubbleOutline } from '@mui/icons-material';
 import {
   Box,
   Tab,
   Grid,
   Tabs,
   Paper,
-  Stack,
   alpha,
-  Avatar,
   AppBar,
-  Tooltip,
   useTheme,
   Container,
   Typography,
   IconButton,
-  Link as MuiLink,
 } from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
 
-import { fDate } from 'src/utils/format-time';
-
-import { Iconify } from 'src/components/iconify';
-
+import UserProfileInfo from '../user-profile-info';
 import UserProfileRightDisplay from '../user-profile-right-display';
 
 interface UserProfileViewProps {
@@ -77,7 +60,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   const theme = useTheme();
 
-  const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
   interface TabChangeEvent extends React.SyntheticEvent<Element, Event> {}
@@ -157,169 +139,12 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             />
 
             {/* Profile Info */}
-            <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
-              {/* Avatar and Actions */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  mt: -10,
-                  mb: 3,
-                }}
-              >
-                <Box sx={{ position: 'relative' }}>
-                  <Avatar
-                    src={user?.profilePhoto ? user.profilePhoto.toString() : undefined}
-                    alt={user?.name ? user.name.toString() : undefined}
-                    sx={{
-                      width: 128,
-                      height: 128,
-                      border: '4px solid white',
-                      boxShadow: theme.shadows[4],
-                    }}
-                  />
-                  {profile.verified && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8,
-                        bgcolor: 'background.paper',
-                        borderRadius: '50%',
-                        p: 0.5,
-                      }}
-                    >
-                      <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />
-                    </Box>
-                  )}
-                </Box>
-
-                <Stack direction="row" sx={{ mt: 8, gap: { xs: 0.8, md: 1 } }}>
-                  <IconButton
-                    sx={{
-                      border: 1,
-                      height: 40,
-                      width: 40,
-                      borderColor: 'primary.dark',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Share />
-                  </IconButton>
-                  <IconButton
-                    sx={{
-                      border: 1,
-                      height: 40,
-                      width: 40,
-                      borderColor: 'primary.dark',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Iconify icon="ant-design:message-filled" />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    sx={{
-                      border: 1,
-                      height: 40,
-                      width: 40,
-                      ...(isFollowing
-                        ? { borderColor: 'error.dark', color: 'error.main' }
-                        : { borderColor: 'primary.dark', color: 'primary.main' }),
-
-                      '&:hover': {
-                        borderColor: 'inherit',
-                        color: 'inherit',
-                        backgroundColor: 'transparent',
-                      },
-                    }}
-                  >
-                    <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'}>
-                      {isFollowing ? (
-                        <Iconify icon="ri:user-unfollow-fill" />
-                      ) : (
-                        <Iconify icon="ri:user-follow-fill" />
-                      )}
-                    </Tooltip>
-                  </IconButton>
-                </Stack>
-              </Box>
-
-              {/* User Info */}
-              <Stack spacing={2}>
-                <Box>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography variant="h4" fontWeight="bold">
-                      {user?.name}
-                    </Typography>
-                    {user?.verified && <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />}
-                  </Stack>
-                  <Typography variant="body1" color="text.secondary">
-                    @{user?.username}
-                  </Typography>
-                </Box>
-
-                <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                  {user?.bio}
-                </Typography>
-
-                <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                  {user?.location && (
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {user?.location}
-                      </Typography>
-                    </Stack>
-                  )}
-                  {user?.website && (
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <Link sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <MuiLink
-                        href={`https://${user?.website}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        color="primary"
-                        underline="hover"
-                        variant="body2"
-                      >
-                        {user?.website}
-                      </MuiLink>
-                    </Stack>
-                  )}
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Joined {user?.joinDate ? fDate(user.joinDate) : ''}
-                    </Typography>
-                  </Stack>
-                </Stack>
-
-                {/* Stats */}
-                <Stack direction="row" spacing={3}>
-                  <Box>
-                    <Typography component="span" fontWeight="bold" color="text.primary">
-                      {user?.followersCount}
-                    </Typography>
-                    <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
-                      Following
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography component="span" fontWeight="bold" color="text.primary">
-                      {user?.followingCount}
-                    </Typography>
-                    <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
-                      Followers
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Stack>
-            </Paper>
+            <UserProfileInfo />
 
             {/* Tabs */}
-            <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+            <Paper
+              sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}
+            >
               <Tabs
                 value={activeTab}
                 onChange={handleTabChange}

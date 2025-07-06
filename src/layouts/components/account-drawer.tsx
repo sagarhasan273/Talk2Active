@@ -12,6 +12,7 @@ import IconButton from '@mui/material/IconButton';
 import { useTheme, useColorScheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
+import { useUserContext } from 'src/routes/components';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { varAlpha } from 'src/theme/styles';
@@ -23,8 +24,6 @@ import { AnimateAvatar } from 'src/components/animate';
 import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
-
-import { useMockedUser } from 'src/auth/hooks';
 
 import { UpgradeBlock } from './nav-upgrade';
 import { AccountButton } from './account-button';
@@ -58,7 +57,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
 
   const pathname = usePathname();
 
-  const { user } = useMockedUser();
+  const { user } = useUserContext();
 
   const [open, setOpen] = useState(false);
 
@@ -82,7 +81,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     <AnimateAvatar
       width={96}
       slotProps={{
-        avatar: { src: user?.photoURL, alt: user?.displayName },
+        avatar: { src: user?.profilePhoto, alt: user?.name },
         overlay: {
           border: 2,
           spacing: 3,
@@ -90,7 +89,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
         },
       }}
     >
-      {user?.displayName?.charAt(0).toUpperCase()}
+      {user?.name?.charAt(0).toUpperCase()}
     </AnimateAvatar>
   );
 
@@ -112,8 +111,8 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     <>
       <AccountButton
         onClick={handleOpenDrawer}
-        photoURL={user?.photoURL}
-        displayName={user?.displayName}
+        photoURL={user?.profilePhoto}
+        displayName={user?.name}
         sx={sx}
         {...other}
       />
@@ -137,7 +136,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
             {renderAvatar}
 
             <Typography variant="subtitle1" noWrap sx={{ mt: 1 }}>
-              {user?.displayName}
+              {user?.name}
             </Typography>
 
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }} noWrap>

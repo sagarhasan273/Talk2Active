@@ -1,12 +1,22 @@
 import type { UserType } from 'src/validations/user';
 
 import { toast } from 'sonner';
-import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User, Mail, Link, MapPin, Upload, FileText } from 'lucide-react';
+import { User, Mail, Link, MapPin, FileText } from 'lucide-react';
 
-import { Box, Grid, Card, Stack, Button, styled, useTheme, Typography } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Card,
+  Stack,
+  Button,
+  styled,
+  useTheme,
+  keyframes,
+  Typography,
+} from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
 
@@ -19,17 +29,56 @@ import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
 
+// ------------------------------------------
+
+// Define animations
+const pulseAnimation = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+`;
+
+const bounceAnimation = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+`;
+
 const GradientButton = styled(Button)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   color: theme.palette.common.white,
+
+  transition: 'all 0.3s ease',
   '&:hover': {
+    transform: 'translateY(-2px)',
     background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-    transform: 'scale(1.05)',
+
+    boxShadow: `0 5px 8px 3px ${theme.palette.primary.lighter}`,
+  },
+  '&.activating': {
+    animation: `${pulseAnimation} 0.5s ease-in-out`,
+  },
+  '&.active': {
+    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+  },
+  '&.inactive': {
+    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+  },
+}));
+
+const AnimatedIcon = styled(Box)(() => ({
+  display: 'inline-flex',
+  animation: `${bounceAnimation} 0.5s ease-in-out`,
+  '&:hover': {
+    animation: `${pulseAnimation} 0.5s ease-in-out`,
+  },
+  '&.activating': {
+    animation: `${pulseAnimation} 0.5s ease-in-out`,
   },
 }));
 
 const getFormData = (user: UserType | null) => ({
   _id: user?._id || '',
+  userId: user?.userId || '',
   name: user?.name || '',
   username: user?.username || '',
   email: user?.email || '',
@@ -48,6 +97,8 @@ function SettingsProfileInformation() {
   const coverPhotoBoolean = useBoolean(false);
   const profilePhotoBoolean = useBoolean(false);
 
+  const [isAnimating, setIsAnimating] = useState(false);
+
   const [updateUser] = useUpdateUserMutation();
 
   const methods = useForm<UserType>({
@@ -60,10 +111,29 @@ function SettingsProfileInformation() {
     reset,
     setValue,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isDirty },
   } = methods;
 
   const values = watch();
+
+  const handleAccountActiveClick = async () => {
+    setIsAnimating(true);
+    try {
+      const response = await updateUser({
+        _id: user?._id,
+        accountActive: !user?.accountActive,
+      });
+
+      if (response?.data?.status) {
+        toast.success(`Profile ${!user?.accountActive ? 'Activated' : 'Deactivated'}`);
+      }
+    } catch (error) {
+      toast.error('Failed to update status');
+    } finally {
+      setTimeout(() => setIsAnimating(false), 500);
+    }
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       const response = await updateUser({ _id: user?._id, ...data });
@@ -146,7 +216,7 @@ function SettingsProfileInformation() {
           <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
             Profile Picture
           </Typography>
-          <Stack direction="row" alignItems="center" spacing={3}>
+          <Stack sx={{ display: 'grid', gridTemplateColumns: '96px 1fr', gap: 2 }}>
             <Box sx={{ position: 'relative', '&:hover .avatar-overlay': { opacity: 1 } }}>
               <Box
                 component="img"
@@ -192,32 +262,24 @@ function SettingsProfileInformation() {
             </Box>
             <Box>
               <GradientButton
-                onClick={() => {}}
-                startIcon={<Upload size={16} />}
+                onClick={handleAccountActiveClick}
+                className={`${isAnimating ? 'activating' : ''} ${user?.accountActive ? 'active' : 'inactive'}`}
+                startIcon={
+                  <AnimatedIcon className={`${isAnimating ? 'activating' : ''}`}>
+                    {user?.accountActive ? (
+                      <Iconify icon="entypo:emoji-happy" width={20} height={20} />
+                    ) : (
+                      <Iconify icon="fa-regular:sad-tear" width={20} height={20} />
+                    )}
+                  </AnimatedIcon>
+                }
                 sx={{ borderRadius: 6 }}
+                disabled={isAnimating}
               >
-                {/* {isUploading ? (
-                  <>
-                    <Box
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        border: '2px solid rgba(255, 255, 255, 0.2)',
-                        borderTopColor: 'common.white',
-                        borderRadius: '50%',
-                        animation: `${spin} 1s linear infinite`,
-                        mr: 1,
-                      }}
-                    />
-                    Uploading...
-                  </>
-                ) : (
-                  'Upload New'
-                )} */}
-                Upload New
+                {user?.accountActive ? 'Activated' : 'Deactivated'}
               </GradientButton>
               <Typography variant="caption" color="text.secondary" mt={1} display="block">
-                JPG, PNG or GIF. Max size 5MB.
+                This account will be deactivated automatically after you leave the app.
               </Typography>
             </Box>
           </Stack>
@@ -338,7 +400,7 @@ function SettingsProfileInformation() {
             type="submit"
             startIcon={<Iconify icon={isSubmitting ? 'eos-icons:loading' : 'mi:save'} />}
             sx={{ borderRadius: 3, boxShadow: 3, px: 1.5 }}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isDirty}
           >
             Save Changes
           </Button>

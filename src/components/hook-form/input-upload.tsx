@@ -78,11 +78,11 @@ export function RHFUploadBox({ name, multiple, helperText, loaderSx, uploading, 
             setValue(
               name,
               images.map((img) => img?.imageUrl),
-              { shouldValidate: true }
+              { shouldValidate: true, shouldDirty: true }
             );
           } else {
             const image = await uploadImage(acceptedFiles[0]);
-            setValue(name, image?.imageUrl, { shouldValidate: true });
+            setValue(name, image?.imageUrl, { shouldValidate: true, shouldDirty: true });
           }
           setIsLoading(false);
           uploading?.onFalse();
