@@ -1,3 +1,6 @@
+import type { UseBooleanReturn } from 'src/hooks/use-boolean';
+
+import { toast } from 'sonner';
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -13,6 +16,7 @@ import type { UploadProps } from '../upload';
 
 type Props = UploadProps & {
   name: string;
+  uploading?: UseBooleanReturn;
 };
 
 // ----------------------------------------------------------------------
@@ -49,7 +53,7 @@ export function RHFUploadAvatar({ name, ...other }: Props) {
 
 // ----------------------------------------------------------------------
 
-export function RHFUploadBox({ name, multiple, helperText, loaderSx, ...other }: Props) {
+export function RHFUploadBox({ name, multiple, helperText, loaderSx, uploading, ...other }: Props) {
   const { control, setValue } = useFormContext();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -67,6 +71,7 @@ export function RHFUploadBox({ name, multiple, helperText, loaderSx, ...other }:
         };
 
         const onDrop = async (acceptedFiles: File[]) => {
+          uploading?.onTrue();
           setIsLoading(true);
           if (multiple) {
             const images = await Promise.all(acceptedFiles.map((file) => uploadImage(file)));
@@ -80,6 +85,8 @@ export function RHFUploadBox({ name, multiple, helperText, loaderSx, ...other }:
             setValue(name, image?.imageUrl, { shouldValidate: true });
           }
           setIsLoading(false);
+          uploading?.onFalse();
+          toast.info('Save the changes.');
         };
 
         return (

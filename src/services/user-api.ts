@@ -19,9 +19,11 @@ export const userApi = createApi({
       return headers;
     },
   }), // your REST API base
+  tagTypes: ['user-recall'],
   endpoints: (builder) => ({
     getUserById: builder.query<{ user: UserType; status: boolean }, string>({
       query: (id) => `user/profile/${id}`,
+      providesTags: ['user-recall'],
     }),
     updateUser: builder.mutation<UserProfileFormType, Partial<UserProfileFormType>>({
       query: (body) => ({
@@ -29,6 +31,7 @@ export const userApi = createApi({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['user-recall'],
     }),
     createUser: builder.mutation<UserType, UserType>({
       query: (newUser) => ({

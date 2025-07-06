@@ -125,6 +125,70 @@ function UserProfileRightDisplay() {
   ];
   return (
     <Stack spacing={3}>
+      {/* Profile Stats */}
+      <Paper
+        sx={{
+          borderRadius: 3,
+          background: 'linear-gradient(45deg, #9333ea, #ec4899)',
+          color: 'white',
+          p: 3,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+          <EmojiEvents sx={{ fontSize: 24 }} />
+          <Box>
+            <Typography variant="h6" fontWeight="bold">
+              Profile Insights
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              Your impact
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight="bold">
+                4.8K
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Profile Views
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight="bold">
+                92%
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Engagement Rate
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight="bold">
+                156
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Posts Shared
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h4" fontWeight="bold">
+                2.1K
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Total Reactions
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
       {/* Achievements */}
       <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
@@ -426,71 +490,6 @@ function UserProfileRightDisplay() {
             </Button>
           </Stack>
         </Box>
-      </Paper>
-
-      {/* Profile Stats */}
-      <Paper
-        sx={{
-          borderRadius: 3,
-          background: 'linear-gradient(45deg, #9333ea, #ec4899)',
-          color: 'white',
-          p: 3,
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-          <EmojiEvents sx={{ fontSize: 24 }} />
-          <Box>
-            <Typography variant="h6" fontWeight="bold">
-              Profile Insights
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              Your impact
-            </Typography>
-          </Box>
-        </Stack>
-
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" fontWeight="bold">
-                4.8K
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Profile Views
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" fontWeight="bold">
-                92%
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Engagement Rate
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" fontWeight="bold">
-                156
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Posts Shared
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" fontWeight="bold">
-                2.1K
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Total Reactions
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
       </Paper>
     </Stack>
   );

@@ -10,6 +10,8 @@ import { Box, Grid, Card, Stack, Button, styled, useTheme, Typography } from '@m
 
 import { useUserContext } from 'src/routes/components';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { UserSchema } from 'src/validations/user';
 import { useUpdateUserMutation } from 'src/services/user-api';
 
@@ -43,6 +45,9 @@ function SettingsProfileInformation() {
 
   const theme = useTheme();
 
+  const coverPhotoBoolean = useBoolean(false);
+  const profilePhotoBoolean = useBoolean(false);
+
   const [updateUser] = useUpdateUserMutation();
 
   const methods = useForm<UserType>({
@@ -62,7 +67,8 @@ function SettingsProfileInformation() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       const response = await updateUser({ _id: user?._id, ...data });
-      reset(getFormData(data));
+      const updatedUser = getFormData(data);
+      reset(updatedUser);
       console.info('DATA', response);
       toast.success('Profile updated successfully');
     } catch (err) {
@@ -79,8 +85,8 @@ function SettingsProfileInformation() {
   if (loading && !values) return <LoadingScreen />;
 
   return (
-    <Card sx={{ p: 3, borderRadius: 1, backgroundColor: 'background.neutral' }}>
-      <Box mb={4}>
+    <Card sx={{ p: { xs: 1, sm: 2 }, borderRadius: 1, backgroundColor: 'background.neutral' }}>
+      <Box mb={2}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
           Profile Information
         </Typography>
@@ -90,7 +96,7 @@ function SettingsProfileInformation() {
       </Box>
       <Form methods={methods} onSubmit={onSubmit}>
         {/* Cover Image */}
-        <Box mb={4}>
+        <Box mb={2}>
           <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
             Cover Image
           </Typography>
@@ -118,7 +124,7 @@ function SettingsProfileInformation() {
                 position: 'absolute',
                 inset: 0,
                 backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                opacity: 0,
+                opacity: coverPhotoBoolean.value ? 1 : 0,
                 transition: 'opacity 300ms',
                 display: 'flex',
                 alignItems: 'center',
@@ -129,13 +135,14 @@ function SettingsProfileInformation() {
                 name="coverPhoto"
                 maxSize={3145728}
                 onDelete={() => setValue('coverPhoto', '', { shouldValidate: true })}
+                uploading={coverPhotoBoolean}
               />
             </Box>
           </Box>
         </Box>
 
         {/* Avatar */}
-        <Box mb={4}>
+        <Box mb={2}>
           <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
             Profile Picture
           </Typography>
@@ -159,7 +166,7 @@ function SettingsProfileInformation() {
                   position: 'absolute',
                   inset: 0,
                   backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                  opacity: 0,
+                  opacity: profilePhotoBoolean.value ? 1 : 0,
                   transition: 'opacity 300ms',
                   borderRadius: '50%',
                   display: 'flex',
@@ -179,6 +186,7 @@ function SettingsProfileInformation() {
                     },
                     textVariant: 'caption',
                   }}
+                  uploading={profilePhotoBoolean}
                 />
               </Box>
             </Box>
@@ -325,7 +333,7 @@ function SettingsProfileInformation() {
         </Stack>
 
         {/* Save Button */}
-        <Box mt={4} pt={3} borderTop={`1px solid ${theme.palette.divider}`}>
+        <Box mt={4} mb={4} pt={3} borderTop={`1px solid ${theme.palette.divider}`}>
           <Button
             type="submit"
             startIcon={<Iconify icon={isSubmitting ? 'eos-icons:loading' : 'mi:save'} />}

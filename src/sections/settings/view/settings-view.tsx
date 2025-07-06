@@ -125,7 +125,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
 
           {/* Content */}
           <Grid item xs={12} md={9}>
-            <Card sx={{ borderRadius: 4, boxShadow: 1, overflow: 'hidden' }}>
+            <Card sx={{ borderRadius: { xs: 1, sm: 2, md: 3 }, boxShadow: 1, overflow: 'hidden' }}>
               {/* Profile Tab */}
               {activeTab === 'profile' && <SettingsProfileInformation />}
 
@@ -148,9 +148,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                       value="alex@example.com"
                       type="email"
                       variant="outlined"
-                      InputProps={{
-                        sx: { borderRadius: 3 },
-                      }}
+                      size="small"
                     />
 
                     <TextField
@@ -160,7 +158,6 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                       placeholder="Enter current password"
                       variant="outlined"
                       InputProps={{
-                        sx: { borderRadius: 3 },
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
@@ -169,6 +166,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                           </InputAdornment>
                         ),
                       }}
+                      size="small"
                     />
 
                     <TextField
@@ -177,9 +175,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                       type="password"
                       placeholder="Enter new password"
                       variant="outlined"
-                      InputProps={{
-                        sx: { borderRadius: 3 },
-                      }}
+                      size="small"
                     />
 
                     <TextField
@@ -188,9 +184,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                       type="password"
                       placeholder="Confirm new password"
                       variant="outlined"
-                      InputProps={{
-                        sx: { borderRadius: 3 },
-                      }}
+                      size="small"
                     />
 
                     <GradientButton sx={{ borderRadius: 3 }}>Update Password</GradientButton>
