@@ -6,7 +6,6 @@ import { useUserContext } from 'src/routes/components/user-context';
 
 import { CONFIG } from 'src/config-global';
 import { useGetUserByIdQuery } from 'src/services/user-api';
-import { currentUserProfile } from 'src/_mock/data/userProfile';
 
 import { UserProfileView } from 'src/sections/user';
 
@@ -31,14 +30,14 @@ export default function Profile() {
   useEffect(() => {
     setLoading(isLoading);
   }, [isLoading, setLoading]);
-
+  console.log('render counter');
   return (
     <>
       <Helmet>
         <title> {metadata.title}</title>
       </Helmet>
 
-      <UserProfileView profile={currentUserProfile} />
+      <UserProfileView />
     </>
   );
 }

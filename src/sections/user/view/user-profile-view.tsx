@@ -21,20 +21,6 @@ import UserProfileInfo from '../user-profile-info';
 import UserProfileRightDisplay from '../user-profile-right-display';
 
 interface UserProfileViewProps {
-  profile: {
-    name: string;
-    username: string;
-    avatar: string;
-    coverImage: string;
-    verified: boolean;
-    bio: string;
-    location?: string;
-    website?: string;
-    joinDate: Date;
-    posts: number;
-    following: number;
-    followers: number;
-  };
   onBack?: () => void;
   onSettings?: () => void;
 }
@@ -51,11 +37,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </Box>
 );
 
-export const UserProfileView: React.FC<UserProfileViewProps> = ({
-  profile,
-  onBack,
-  onSettings,
-}) => {
+export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSettings }) => {
   const { user } = useUserContext();
 
   const theme = useTheme();

@@ -107,6 +107,7 @@ export const UserProfileFormSchema = UserSchema.pick({
   bio: true,
   location: true,
   website: true,
+  status: true,
 });
 
 export const UserStatusSchema = UserSchema.required({

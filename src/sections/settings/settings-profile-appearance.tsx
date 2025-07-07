@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { grey } from '@mui/material/colors';
 import { Box, Card, Stack, Paper, Switch, Typography } from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
@@ -15,7 +14,9 @@ import { UserSchema } from 'src/validations/user';
 import { useUpdateUserMutation } from 'src/services/user-api';
 
 import { Form } from 'src/components/hook-form';
+import { useSettingsContext } from 'src/components/settings';
 import { LoadingScreen } from 'src/components/loading-screen';
+import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
 const getFormData = (user: UserType | null) => ({
   _id: user?._id || '',
@@ -32,6 +33,7 @@ const getFormData = (user: UserType | null) => ({
 
 function SettingsProfileAppearance() {
   const { user, loading } = useUserContext();
+  const settings = useSettingsContext();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -64,6 +66,20 @@ function SettingsProfileAppearance() {
     }
   }, [user, loading, reset]);
 
+  const renderColor = (
+    <NavOptions
+      value={{
+        color: settings.primaryColor,
+      }}
+      onClickOption={{
+        color: (newValue) => settings.onUpdateField('primaryColor', newValue),
+      }}
+      options={{
+        colors: ['blue', 'cyan', 'orange', 'purple', 'red'],
+      }}
+    />
+  );
+
   if (loading && !values) return <LoadingScreen />;
 
   return (
@@ -79,7 +95,7 @@ function SettingsProfileAppearance() {
         </Box>
 
         <Stack spacing={2}>
-          <Paper elevation={0} sx={{ p: 2, bgcolor: grey[50], borderRadius: 3 }}>
+          <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Stack direction="row" alignItems="center" spacing={2}>
                 {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
@@ -100,6 +116,7 @@ function SettingsProfileAppearance() {
             </Stack>
           </Paper>
         </Stack>
+        <Stack sx={{ mt: 3 }}>{renderColor}</Stack>
       </Form>
     </Card>
   );

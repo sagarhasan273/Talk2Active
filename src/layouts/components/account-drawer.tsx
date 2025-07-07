@@ -1,3 +1,4 @@
+import type { UserType } from 'src/validations/user';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { toast } from 'sonner';
@@ -58,7 +59,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
 
   const pathname = usePathname();
 
-  const { user } = useUserContext();
+  const { user, setUser } = useUserContext();
 
   const [open, setOpen] = useState(false);
 
@@ -163,9 +164,12 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 variant={option.value === user?.status ? 'contained' : 'outlined'}
                 onClick={async () => {
                   try {
+                    setUser((prev) =>
+                      prev ? { ...prev, status: option.value as UserType['status'] } : prev
+                    );
                     const response = await updateUser({
                       _id: user?._id,
-                      status: option.value as 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz',
+                      status: option.value as UserType['status'],
                     });
 
                     if (response?.data?.status) {
@@ -179,25 +183,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 {option.label}
               </Button>
             ))}
-          </Stack>
-
-          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
-            <BaseOption
-              label={settings.colorScheme === 'dark' ? 'Dark mode' : 'Light mode'}
-              icon={settings.colorScheme === 'dark' ? 'moon' : 'sun'}
-              selected={settings.colorScheme === 'dark'}
-              onClick={() => {
-                settings.onUpdateField('colorScheme', mode === 'light' ? 'dark' : 'light');
-                setMode(mode === 'light' ? 'dark' : 'light');
-              }}
-              sx={{
-                height: 1,
-              }}
-            />
-          </Stack>
-
-          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
-            {renderColor}
           </Stack>
 
           <Stack
@@ -238,6 +223,25 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 </MenuItem>
               );
             })}
+          </Stack>
+
+          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
+            <BaseOption
+              label={settings.colorScheme === 'dark' ? 'Dark mode' : 'Light mode'}
+              icon={settings.colorScheme === 'dark' ? 'moon' : 'sun'}
+              selected={settings.colorScheme === 'dark'}
+              onClick={() => {
+                settings.onUpdateField('colorScheme', mode === 'light' ? 'dark' : 'light');
+                setMode(mode === 'light' ? 'dark' : 'light');
+              }}
+              sx={{
+                height: 1,
+              }}
+            />
+          </Stack>
+
+          <Stack sx={{ py: 3, px: 2.5, borderTop: `dashed 1px ${theme.vars.palette.divider}` }}>
+            {renderColor}
           </Stack>
 
           <Box sx={{ px: 2.5, py: 3 }}>

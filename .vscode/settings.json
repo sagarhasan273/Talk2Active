@@ -4,7 +4,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "eslint.workingDirectories": [
-    "./"
-  ]
+  "eslint.workingDirectories": ["./"],
+  "editor.minimap.enabled": false
 }
