@@ -35,6 +35,7 @@ import {
   FormControl,
 } from '@mui/material';
 
+import { varAlpha } from 'src/theme/styles';
 import { mockRooms } from 'src/_mock/data/mockData';
 import { getLanguageFlag } from 'src/_mock/data/languages';
 
@@ -144,7 +145,15 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
       </Box>
 
       {/* Filters */}
-      <Card elevation={1} sx={{ p: 2, mb: 4, borderRadius: 2 }}>
+      <Card
+        sx={{
+          p: 2,
+          mb: 4,
+          borderRadius: 2,
+          backgroundColor: 'background.neutral',
+          border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.1)}`,
+        }}
+      >
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={12} md={6}>
             <TextField
@@ -210,7 +219,11 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                   height: 1,
                   display: 'flex',
                   flexDirection: 'column',
-                  border: `1px solid ${theme.palette.divider}`,
+                  backgroundColor: 'background.neutral',
+                  border: () =>
+                    `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+                  boxShadow: () =>
+                    `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
                 }}
               >
                 <CardContent sx={{ flexGrow: 1, p: 2, pb: 1 }}>

@@ -121,7 +121,7 @@ export const DiscoveryPanel: React.FC = () => {
       }}
     >
       {/* Today's Stats */}
-      <Card>
+      <Card sx={{ backgroundColor: 'background.neutral' }}>
         <CardHeader
           avatar={
             <IconButton
@@ -201,7 +201,7 @@ export const DiscoveryPanel: React.FC = () => {
       </Card>
 
       {/* Trending Topics */}
-      <Card>
+      <Card sx={{ backgroundColor: 'background.neutral' }}>
         <CardHeader
           avatar={
             <IconButton
@@ -265,7 +265,7 @@ export const DiscoveryPanel: React.FC = () => {
       </Card>
 
       {/* Suggested Users */}
-      <Card>
+      <Card sx={{ backgroundColor: 'background.neutral' }}>
         <CardHeader
           avatar={
             <IconButton
@@ -329,7 +329,7 @@ export const DiscoveryPanel: React.FC = () => {
       </Card>
 
       {/* Upcoming Events */}
-      <Card>
+      <Card sx={{ backgroundColor: 'background.neutral' }}>
         <CardHeader
           avatar={
             <IconButton

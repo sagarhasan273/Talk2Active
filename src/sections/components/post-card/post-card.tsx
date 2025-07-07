@@ -3,7 +3,7 @@ import type { Post as PostType } from 'src/types/post';
 import React, { useState } from 'react';
 import { Heart, Repeat2, MessageCircle } from 'lucide-react';
 
-import { Box, Paper, Avatar, Button, TextField, Typography } from '@mui/material';
+import { Box, Card, Avatar, Button, TextField, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -34,9 +34,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
   };
 
   return (
-    <Paper
+    <Card
       sx={{
-        borderRadius: 3,
+        borderRadius: 2,
+        backgroundColor: 'background.neutral',
         border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
         boxShadow: (theme) =>
           `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
@@ -238,6 +239,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
           </Box>
         )}
       </Box>
-    </Paper>
+    </Card>
   );
 };
