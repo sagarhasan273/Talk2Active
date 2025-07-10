@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import type { UserType } from 'src/validations/user';
-import type { UserContextTypes } from 'src/types/user';
+import type { UserType, UserContextTypes } from 'src/types/user';
 
 import { useMemo, useState, useContext, createContext } from 'react';
 

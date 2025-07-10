@@ -1,4 +1,4 @@
-import type { UserType } from 'src/validations/user';
+import type { UserType } from 'src/types/user';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { toast } from 'sonner';

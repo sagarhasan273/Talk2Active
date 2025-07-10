@@ -1,4 +1,4 @@
-import type { UserType } from 'src/validations/user';
+import type { UserType } from 'src/types/user';
 
 import { toast } from 'sonner';
 import { Sun, Moon } from 'lucide-react';

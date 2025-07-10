@@ -1,4 +1,4 @@
-import type { UserType } from 'src/validations/user';
+import type { UserAccountUpdateType } from 'src/types/user';
 
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
@@ -19,8 +19,8 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
-import { UserSchema } from 'src/validations/user';
 import { useUpdateUserMutation } from 'src/services/user-api';
+import { UserAccountUpdateSchema } from 'src/validations/user';
 
 import { Form, Field } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
@@ -34,17 +34,13 @@ const GradientButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const getFormData = (user: UserType | null) => ({
+const getFormData = (user: Partial<UserAccountUpdateType> | null) => ({
   _id: user?._id || '',
   userId: user?.userId || '',
-  name: user?.name || '',
   username: user?.username || '',
-  email: user?.email || '',
-  profilePhoto: user?.profilePhoto || '',
-  coverPhoto: user?.coverPhoto || '',
-  bio: user?.bio || '',
-  location: user?.location || '',
-  website: user?.website || '',
+  password: '',
+  newPassword: '',
+  confirmNewPassword: '',
 });
 
 function SettingsProfileAccount() {
@@ -54,8 +50,8 @@ function SettingsProfileAccount() {
 
   const [updateUser] = useUpdateUserMutation();
 
-  const methods = useForm<UserType>({
-    resolver: zodResolver(UserSchema),
+  const methods = useForm<UserAccountUpdateType>({
+    resolver: zodResolver(UserAccountUpdateSchema),
     defaultValues: getFormData(user),
   });
 
@@ -64,14 +60,22 @@ function SettingsProfileAccount() {
     reset,
 
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = methods;
 
   const values = watch();
+  console.log('ERRORS', errors);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await updateUser({ _id: user?._id, ...data });
+      const formData = {
+        _id: user?._id,
+        userId: data.userId,
+        username: data.username,
+        password: data.password,
+        newPassword: data.newPassword,
+      };
+      const response = await updateUser(formData);
       const updatedUser = getFormData(data);
       reset(updatedUser);
       console.info('DATA', response);
@@ -102,7 +106,7 @@ function SettingsProfileAccount() {
         </Box>
 
         <Stack spacing={3}>
-          <Field.Text label="Email Address" name="email" variant="outlined" size="small" />
+          <Field.Text label="Username" name="username" variant="outlined" size="small" />
 
           <Field.Text
             label="Current Password"
@@ -117,27 +121,30 @@ function SettingsProfileAccount() {
                   </IconButton>
                 </InputAdornment>
               ),
+              type: showPassword ? 'text' : 'password',
             }}
             size="small"
           />
 
           <Field.Text
             label="New Password"
-            name="password"
+            name="newPassword"
             placeholder="Enter new password"
             variant="outlined"
             size="small"
+            type="password"
           />
 
           <Field.Text
             label="Confirm New Password"
-            name="password"
+            name="confirmNewPassword"
             placeholder="Confirm new password"
             variant="outlined"
             size="small"
+            type="password"
           />
 
-          <GradientButton sx={{ borderRadius: 3 }} disabled={isSubmitting}>
+          <GradientButton type="submit" sx={{ borderRadius: 3 }} disabled={isSubmitting}>
             Update Password
           </GradientButton>
         </Stack>

@@ -1,5 +1,5 @@
 // services/userApi.ts
-import type { UserType, UserStatusType, UserProfileFormType } from 'src/validations/user';
+import type { UserType, UserStatusType, UserProfileFormType } from 'src/types/user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

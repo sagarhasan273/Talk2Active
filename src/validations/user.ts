@@ -92,9 +92,6 @@ export const UserSchema = zod
   })
   .strict(); // Using strict() to prevent unknown fields
 
-// Type for TypeScript
-export type UserType = zod.infer<typeof UserSchema>;
-
 // Then create a subset schema for the form
 export const UserProfileFormSchema = UserSchema.pick({
   _id: true,
@@ -115,5 +112,22 @@ export const UserStatusSchema = UserSchema.required({
   status: true,
 });
 
-export type UserProfileFormType = zod.infer<typeof UserProfileFormSchema>;
-export type UserStatusType = zod.infer<typeof UserStatusSchema>;
+export const UserAccountUpdateSchema = UserSchema.pick({
+  _id: true,
+  userId: true,
+  username: true,
+})
+  .extend({
+    password: zod
+      .string()
+      .min(1, { message: 'Password is required' })
+      .min(8, { message: 'Password must be at least 8 characters!' }),
+    newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters!' }),
+    confirmNewPassword: zod
+      .string()
+      .min(8, { message: 'Confirm new password must be at least 8 characters!' }),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmNewPassword'],
+  });

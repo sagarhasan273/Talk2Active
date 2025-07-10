@@ -1,114 +1,23 @@
-import type { UserType } from 'src/validations/user';
+import type { z as zod } from 'zod';
 import type { Dispatch, SetStateAction } from 'react';
-
-import type { IDateValue } from './common';
+import type {
+  UserSchema,
+  UserStatusSchema,
+  UserProfileFormSchema,
+  UserAccountUpdateSchema,
+} from 'src/validations/user';
 
 // ----------------------------------------------------------------------
+export type UserType = zod.infer<typeof UserSchema>;
+export type UserProfileFormType = zod.infer<typeof UserProfileFormSchema>;
+export type UserStatusType = zod.infer<typeof UserStatusSchema>;
+export type UserAccountUpdateType = zod.infer<typeof UserAccountUpdateSchema>;
 
-export type IUserTableFilters = {
-  name: string;
-  role: string[];
-  status: string;
-};
-
-export type IUserProfileCover = {
-  name: string;
-  role: string;
-  userId: string;
-  coverUrl: string;
-  followers: number;
-  friends: number;
-  following: number;
-  avatarUrl: string;
-};
+// ----------------------------------------------------------------------
 
 export type UserContextTypes = {
   user: UserType | null;
   loading: boolean;
   setUser: Dispatch<SetStateAction<UserType | null>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
-};
-
-export type IUserProfileFollower = {
-  id: string;
-  name: string;
-  country: string;
-  avatarUrl: string;
-};
-
-export type IUserProfileGallery = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  postedAt: IDateValue;
-};
-
-export type IUserProfileFriend = {
-  id: string;
-  name: string;
-  role: string;
-  avatarUrl: string;
-};
-
-export type IUserProfilePost = {
-  id: string;
-  media: string;
-  message: string;
-  createdAt: IDateValue;
-  personLikes: { name: string; avatarUrl: string }[];
-  comments: {
-    id: string;
-    message: string;
-    createdAt: IDateValue;
-    author: { id: string; name: string; avatarUrl: string };
-  }[];
-};
-
-export type IUserCard = {
-  id: string;
-  name: string;
-  role: string;
-  coverUrl: string;
-  avatarUrl: string;
-  totalPosts: number;
-  totalFollowers: number;
-  totalFollowing: number;
-};
-
-export type IUserItem = {
-  id: string;
-  name: string;
-  city: string;
-  role: string;
-  email: string;
-  state: string;
-  status: string;
-  address: string;
-  country: string;
-  zipCode: string;
-  company: string;
-  avatarUrl: string;
-  phoneNumber: string;
-  isVerified: boolean;
-};
-
-export type IUserAccount = {
-  city: string;
-  email: string;
-  state: string;
-  about: string;
-  address: string;
-  zipCode: string;
-  isPublic: boolean;
-  displayName: string;
-  phoneNumber: string;
-  country: string | null;
-  photoURL: File | string | null;
-};
-
-export type IUserAccountBillingHistory = {
-  id: string;
-  price: number;
-  invoiceNumber: string;
-  createdAt: IDateValue;
 };
