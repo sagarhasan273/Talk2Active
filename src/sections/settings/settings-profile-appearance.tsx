@@ -10,7 +10,7 @@ import { Box, Card, Stack, Paper, Switch, Typography } from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
 
-import { UserSchema } from 'src/validations/user';
+import { UserSchema } from 'src/schemas/user';
 import { useUpdateUserMutation } from 'src/services/user-api';
 
 import { Form } from 'src/components/hook-form';
@@ -19,7 +19,7 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
 const getFormData = (user: UserType | null) => ({
-  _id: user?._id || '',
+  id: user?.id || '',
   userId: user?.userId || '',
   name: user?.name || '',
   username: user?.username || '',
@@ -50,7 +50,7 @@ function SettingsProfileAppearance() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await updateUser({ _id: user?._id, ...data });
+      const response = await updateUser({ ...data });
       const updatedUser = getFormData(data);
       reset(updatedUser);
       console.info('DATA', response);

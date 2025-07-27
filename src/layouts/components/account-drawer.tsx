@@ -168,7 +168,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                       prev ? { ...prev, status: option.value as UserType['status'] } : prev
                     );
                     const response = await updateUser({
-                      _id: user?._id,
+                      id: user?.id,
                       status: option.value as UserType['status'],
                     });
 

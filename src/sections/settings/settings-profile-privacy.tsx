@@ -26,7 +26,7 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
-import { UserSchema } from 'src/validations/user';
+import { UserSchema } from 'src/schemas/user';
 import { useUpdateUserMutation } from 'src/services/user-api';
 
 import { Form } from 'src/components/hook-form';
@@ -34,7 +34,7 @@ import { Iconify } from 'src/components/iconify';
 import { LoadingScreen } from 'src/components/loading-screen';
 
 const getFormData = (user: UserType | null) => ({
-  _id: user?._id || '',
+  id: user?.id || '',
   userId: user?.userId || '',
   name: user?.name || '',
   username: user?.username || '',
@@ -119,7 +119,11 @@ function SettingsProfilePrivacy() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const response = await updateUser({ _id: user?._id, ...data });
+      if (!user?.id) {
+        toast.error('User ID is required for updating profile');
+        return;
+      }
+      const response = await updateUser({ ...data, id: user.id });
       const updatedUser = getFormData(data);
       reset(updatedUser);
       console.info('DATA', response);

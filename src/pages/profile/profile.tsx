@@ -19,7 +19,7 @@ export default function Profile() {
   const { authUser } = useAuthContext();
   const { setUser, setLoading } = useUserContext();
 
-  const { data, isLoading } = useGetUserByIdQuery(authUser?._id ? authUser._id : skipToken);
+  const { data, isLoading } = useGetUserByIdQuery(authUser?.id ? authUser.id : skipToken);
 
   useEffect(() => {
     if (data?.status) {

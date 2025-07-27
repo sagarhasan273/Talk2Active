@@ -4,6 +4,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+import { useUserContext } from 'src/routes/components';
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
 import { setSession, isValidToken } from './utils';
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function AuthProvider({ children }: Props) {
+  const { setUser } = useUserContext();
   const { state, setState } = useSetState<AuthState>({
     authUser: null,
     loading: true,
@@ -36,8 +38,10 @@ export function AuthProvider({ children }: Props) {
         setSession(accessToken);
 
         const res = await axios.get(endpoints.auth.me);
-        const user = res.data;
+
+        const user = res.data.user;
         setState({ authUser: { ...user, accessToken }, loading: false });
+        setUser(user);
       } else {
         setState({ authUser: null, loading: false });
       }
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: Props) {
       console.error(error);
       setState({ authUser: null, loading: false });
     }
-  }, [setState]);
+  }, [setState, setUser]);
 
   useEffect(() => {
     checkUserSession();
@@ -62,9 +66,9 @@ export function AuthProvider({ children }: Props) {
     () => ({
       authUser: state.authUser
         ? {
-            ...state.authUser,
-            role: state.authUser?.role ?? 'admin',
-          }
+          ...state.authUser,
+          role: state.authUser?.role ?? 'admin',
+        }
         : null,
       checkUserSession,
       loading: status === 'loading',

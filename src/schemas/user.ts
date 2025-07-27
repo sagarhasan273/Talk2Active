@@ -2,7 +2,7 @@ import { z as zod } from 'zod';
 
 export const UserSchema = zod
   .object({
-    _id: zod.string().optional(), // Optional for creation, required for updates
+    id: zod.string(),
     userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
       message: 'User ID must follow the format USRYYYYMMDDCOUNTER',
     }),
@@ -94,7 +94,7 @@ export const UserSchema = zod
 
 // Then create a subset schema for the form
 export const UserProfileFormSchema = UserSchema.pick({
-  _id: true,
+  id: true,
   name: true,
   username: true,
   email: true,
@@ -108,12 +108,12 @@ export const UserProfileFormSchema = UserSchema.pick({
 });
 
 export const UserStatusSchema = UserSchema.required({
-  _id: true,
+  id: true,
   status: true,
 });
 
 export const UserAccountUpdateSchema = UserSchema.pick({
-  _id: true,
+  id: true,
   userId: true,
   username: true,
 })

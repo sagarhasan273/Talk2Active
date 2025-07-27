@@ -19,11 +19,12 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
-import { useUpdateUserMutation } from 'src/services/user-api';
-import { UserAccountUpdateSchema } from 'src/validations/user';
+import { useUpdateUserAccountMutation, useUpdateUserMutation } from 'src/services/user-api';
+import { UserAccountUpdateSchema } from 'src/schemas/user';
 
 import { Form, Field } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
+import { toastErrorResponse, toastSuccessResponse } from 'src/utils/response';
 
 const GradientButton = styled(Button)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -35,7 +36,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
 }));
 
 const getFormData = (user: Partial<UserAccountUpdateType> | null) => ({
-  _id: user?._id || '',
+  id: user?.id || '',
   userId: user?.userId || '',
   username: user?.username || '',
   password: '',
@@ -44,11 +45,11 @@ const getFormData = (user: Partial<UserAccountUpdateType> | null) => ({
 });
 
 function SettingsProfileAccount() {
-  const { user, loading } = useUserContext();
+  const { user, setUser, loading } = useUserContext();
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const [updateUser] = useUpdateUserMutation();
+  const [updateUser] = useUpdateUserAccountMutation();
 
   const methods = useForm<UserAccountUpdateType>({
     resolver: zodResolver(UserAccountUpdateSchema),
@@ -64,24 +65,35 @@ function SettingsProfileAccount() {
   } = methods;
 
   const values = watch();
-  console.log('ERRORS', errors);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      if (!user?.id) {
+        toast.error('User ID is required for updating account');
+        return;
+      }
+
       const formData = {
-        _id: user?._id,
+        id: user.id,
         userId: data.userId,
         username: data.username,
         password: data.password,
         newPassword: data.newPassword,
       };
+
       const response = await updateUser(formData);
+      if (response?.data?.status) {
+        setUser({ ...user, ...formData });
+        toastSuccessResponse(response || 'Account updated successfully');
+      } else {
+        toastErrorResponse(response);
+      }
+
       const updatedUser = getFormData(data);
       reset(updatedUser);
-      console.info('DATA', response);
-      toast.success('Profile updated successfully');
     } catch (err) {
-      console.error(err);
+      console.log(err);
+      toast.error(err?.data?.message || 'Failed to update account');
     }
   });
 

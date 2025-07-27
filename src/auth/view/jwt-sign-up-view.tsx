@@ -64,10 +64,10 @@ export function JwtSignUpView() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const defaultValues = {
-    name: 'Hello',
-    username: 'Friend',
-    email: 'hello@gmail.com',
-    password: '@demo1',
+    name: 'Sagar Hasan',
+    username: 'sagarhasan1650',
+    email: 'sagarhasan1650@gmail.com',
+    password: '12344321',
   };
 
   const methods = useForm<SignUpSchemaType>({

@@ -19,6 +19,7 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 import { store } from './services/store';
 import { I18nProvider, LocalizationProvider } from './locales';
+import { UserProvider } from './routes/components';
 
 // ----------------------------------------------------------------------
 
@@ -29,18 +30,20 @@ export default function App() {
     <I18nProvider>
       <LocalizationProvider>
         <Provider store={store}>
-          <AuthProvider>
-            <SettingsProvider settings={defaultSettings}>
-              <ThemeProvider>
-                <MotionLazy>
-                  <Snackbar />
-                  <ProgressBar />
-                  <SettingsDrawer />
-                  <Router />
-                </MotionLazy>
-              </ThemeProvider>
-            </SettingsProvider>
-          </AuthProvider>
+          <UserProvider>
+            <AuthProvider>
+              <SettingsProvider settings={defaultSettings}>
+                <ThemeProvider>
+                  <MotionLazy>
+                    <Snackbar />
+                    <ProgressBar />
+                    <SettingsDrawer />
+                    <Router />
+                  </MotionLazy>
+                </ThemeProvider>
+              </SettingsProvider>
+            </AuthProvider>
+          </UserProvider>
         </Provider>
       </LocalizationProvider>
     </I18nProvider>

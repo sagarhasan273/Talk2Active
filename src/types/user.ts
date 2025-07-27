@@ -5,7 +5,7 @@ import type {
   UserStatusSchema,
   UserProfileFormSchema,
   UserAccountUpdateSchema,
-} from 'src/validations/user';
+} from 'src/schemas/user';
 
 // ----------------------------------------------------------------------
 export type UserType = zod.infer<typeof UserSchema>;

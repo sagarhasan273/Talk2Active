@@ -8,8 +8,6 @@ import { LoadingScreen } from 'src/components/loading-screen';
 
 import { AuthGuard } from 'src/auth/guard';
 
-import { UserProvider } from '../components/user-context';
-
 // ---------------------------------------------------------------
 
 const FeedView = lazy(() => import('src/pages/feed'));
@@ -19,13 +17,11 @@ const VoiceRoomView = lazy(() => import('src/pages/voice-room'));
 // ---------------------------------------------------------------
 
 const layoutContent = (
-  <UserProvider>
-    <UserLayout>
-      <Suspense fallback={<LoadingScreen />}>
-        <Outlet />
-      </Suspense>
-    </UserLayout>
-  </UserProvider>
+  <UserLayout>
+    <Suspense fallback={<LoadingScreen />}>
+      <Outlet />
+    </Suspense>
+  </UserLayout>
 );
 
 export const userRoutes = [
