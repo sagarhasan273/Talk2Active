@@ -12,7 +12,7 @@ import { Box, Card, Grid, Paper, Stack, Switch, Typography } from '@mui/material
 import { useUserContext } from 'src/routes/components';
 
 import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserMutation } from 'src/services/user-api';
+import { useUpdateUserMutation } from 'src/services/slices/user-api';
 
 import { Form } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';

@@ -27,7 +27,7 @@ import {
 import { useUserContext } from 'src/routes/components';
 
 import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserMutation } from 'src/services/user-api';
+import { useUpdateUserMutation } from 'src/services/slices/user-api';
 
 import { Form } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';

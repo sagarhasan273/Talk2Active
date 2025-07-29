@@ -5,7 +5,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useUserContext } from 'src/routes/components';
 
 import { CONFIG } from 'src/config-global';
-import { useGetUserByIdQuery } from 'src/services/user-api';
+import { useGetUserByIdQuery } from 'src/services/slices/user-api';
 import { currentUserProfile } from 'src/_mock/data/userProfile';
 
 import { SettingsView } from 'src/sections/settings';
@@ -38,7 +38,7 @@ export default function Settings() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <SettingsView profile={currentUserProfile} onUpdateProfile={() => {}} />
+      <SettingsView profile={currentUserProfile} onUpdateProfile={() => { }} />
     </>
   );
 }

@@ -131,3 +131,7 @@ export const UserAccountUpdateSchema = UserSchema.pick({
     message: 'Passwords do not match',
     path: ['confirmNewPassword'],
   });
+export const UserAccountActivateUpdateSchema = UserSchema.pick({
+  id: true,
+  accountActive: true,
+})

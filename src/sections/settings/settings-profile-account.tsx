@@ -2,7 +2,7 @@ import type { UserAccountUpdateType } from 'src/types/user';
 
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Wifi } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -15,11 +15,13 @@ import {
   Typography,
   IconButton,
   InputAdornment,
+  MenuItem,
+  TextField,
 } from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
 
-import { useUpdateUserAccountMutation, useUpdateUserMutation } from 'src/services/user-api';
+import { useUpdateUserAccountMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
 import { UserAccountUpdateSchema } from 'src/schemas/user';
 
 import { Form, Field } from 'src/components/hook-form';
@@ -31,7 +33,6 @@ const GradientButton = styled(Button)(({ theme }) => ({
   color: theme.palette.common.white,
   '&:hover': {
     background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-    transform: 'scale(1.05)',
   },
 }));
 
@@ -48,6 +49,7 @@ function SettingsProfileAccount() {
   const { user, setUser, loading } = useUserContext();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [sessionTimeout, setSessionTimeout] = useState('10');
 
   const [updateUser] = useUpdateUserAccountMutation();
 
@@ -117,8 +119,18 @@ function SettingsProfileAccount() {
           </Typography>
         </Box>
 
-        <Stack spacing={3}>
-          <Field.Text label="Username" name="username" variant="outlined" size="small" />
+        <Card
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            px: { xs: 1, sm: 2 },
+            py: 3,
+            mb: { xs: 2, sm: 3 },
+            borderRadius: { xs: 1, sm: 2, md: 3 },
+          }}
+        >
+          <Field.Text label="Username" name="username" variant="outlined" size="small" disabled />
 
           <Field.Text
             label="Current Password"
@@ -156,10 +168,95 @@ function SettingsProfileAccount() {
             type="password"
           />
 
-          <GradientButton type="submit" sx={{ borderRadius: 3 }} disabled={isSubmitting}>
+          <GradientButton type="submit" disabled={isSubmitting}>
             Update Password
           </GradientButton>
-        </Stack>
+        </Card>
+
+        {/* Session Management */}
+        <Card sx={{
+          borderRadius: { xs: 1, sm: 2, md: 3 },
+          p: { xs: 1, sm: 2 },
+          mb: 4
+        }}>
+          <Typography variant="h6" sx={{
+            fontWeight: 'semibold',
+            color: 'text.primary',
+            mb: 2
+          }}>
+            Session Management
+          </Typography>
+
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{
+                mb: 1
+              }}>
+                Session Timeout
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                value={sessionTimeout}
+                onChange={(e) => setSessionTimeout(e.target.value)}
+                variant="outlined"
+                size='small'
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                    },
+                    '&:hover fieldset': {
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="10">10 days</MenuItem>
+                <MenuItem value="15">15 days</MenuItem>
+                <MenuItem value="30">30 months</MenuItem>
+                <MenuItem value="never">Never</MenuItem>
+              </TextField>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Set how long your session remains active before automatic logout when you are away.
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<LogOut />}
+                sx={{
+                  py: 1.5,
+                  bgcolor: 'error.light',
+                  color: 'error.dark',
+                  textTransform: 'none',
+                  fontWeight: 'semibold',
+                  '&:hover': {
+                    bgcolor: 'error.main',
+                    color: 'white',
+                  },
+                }}
+                disabled
+              >
+                Sign Out All Devices
+              </Button>
+
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{
+                  py: 1.5,
+                }}
+                disabled
+              >
+                Save Session
+              </Button>
+            </Box>
+          </Stack>
+        </Card>
       </Form>
     </Card>
   );

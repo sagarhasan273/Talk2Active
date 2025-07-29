@@ -23,7 +23,7 @@ import { useUserContext } from 'src/routes/components';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserMutation } from 'src/services/user-api';
+import { useUpdateUserAccountActivateMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -90,7 +90,7 @@ const getFormData = (user: UserType | null) => ({
 });
 
 function SettingsProfileInformation() {
-  const { user, loading } = useUserContext();
+  const { user, setUser, loading } = useUserContext();
 
   const theme = useTheme();
 
@@ -100,6 +100,7 @@ function SettingsProfileInformation() {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const [updateUser] = useUpdateUserMutation();
+  const [updateUserAccountActivate] = useUpdateUserAccountActivateMutation();
 
   const methods = useForm<UserType>({
     resolver: zodResolver(UserSchema),
@@ -123,13 +124,14 @@ function SettingsProfileInformation() {
         toast.error('User ID is required for updating profile');
         return;
       }
-      const response = await updateUser({
+      const response = await updateUserAccountActivate({
         id: user.id,
         accountActive: !user?.accountActive,
       });
 
       if (response?.data?.status) {
         toast.success(`Profile ${!user?.accountActive ? 'Activated' : 'Deactivated'}`);
+        setUser(prev => prev ? { ...prev, accountActive: !user.accountActive } : prev);
       }
     } catch (error) {
       toast.error('Failed to update status');
@@ -145,10 +147,21 @@ function SettingsProfileInformation() {
         return;
       }
       const response = await updateUser({ ...data, id: user.id });
-      const updatedUser = getFormData(data);
-      reset(updatedUser);
-      console.info('DATA', response);
-      toast.success('Profile updated successfully');
+
+      if (response.data && response.data.status) {
+        const updatedUser = getFormData(data);
+        reset(updatedUser);
+        toast.success(response.data.message);
+      } else if (
+        response.error &&
+        typeof response.error === 'object' &&
+        'data' in response.error &&
+        (response.error as any).data
+      ) {
+        toast.error((response.error as any).data.message || 'Failed to update profile');
+      } else {
+        toast.error('Failed to update profile');
+      }
     } catch (err) {
       console.error(err);
     }
@@ -324,6 +337,7 @@ function SettingsProfileInformation() {
                 placeholder="@username"
                 variant="outlined"
                 size="small"
+                disabled
               />
             </Grid>
           </Grid>
@@ -341,6 +355,7 @@ function SettingsProfileInformation() {
             variant="outlined"
             inputProps={{ maxLength: 60 }}
             size="small"
+            disabled
           />
           <Field.Text
             name="bio"

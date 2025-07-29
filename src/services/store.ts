@@ -1,7 +1,7 @@
 // store.ts
 import { configureStore } from '@reduxjs/toolkit';
 
-import { userApi } from './user-api';
+import { userApi } from './slices/user-api';
 
 export const store = configureStore({
   reducer: {
