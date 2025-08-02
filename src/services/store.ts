@@ -1,11 +1,14 @@
-// store.ts
 import { configureStore } from '@reduxjs/toolkit';
-
-import { userApi } from './slices/user-api';
+import { apis } from './apis';
 
 export const store = configureStore({
-  reducer: {
-    [userApi.reducerPath]: userApi.reducer,
-  },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(userApi.middleware),
+  // 1. Dynamically add the reducer for each API slice
+  reducer: apis.reduce(
+    (acc, api) => ({ ...acc, [api.reducerPath]: api.reducer }),
+    {}
+  ),
+
+  // 2. Dynamically add the middleware for each API slice
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(apis.map((api) => api.middleware)),
 });

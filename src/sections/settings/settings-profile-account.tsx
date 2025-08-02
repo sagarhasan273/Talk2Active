@@ -21,7 +21,7 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
-import { useUpdateUserAccountMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
+import { useUpdateUserAccountMutation, useUpdateUserAccountSessionMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
 import { UserAccountUpdateSchema } from 'src/schemas/user';
 
 import { Form, Field } from 'src/components/hook-form';
@@ -52,6 +52,7 @@ function SettingsProfileAccount() {
   const [sessionTimeout, setSessionTimeout] = useState('10');
 
   const [updateUser] = useUpdateUserAccountMutation();
+  const [updateSession] = useUpdateUserAccountSessionMutation();
 
   const methods = useForm<UserAccountUpdateType>({
     resolver: zodResolver(UserAccountUpdateSchema),
@@ -102,6 +103,9 @@ function SettingsProfileAccount() {
   useEffect(() => {
     if (!loading && user) {
       reset(getFormData(user));
+    }
+    if (user?.sessionTimeOut) {
+      setSessionTimeout(user.sessionTimeOut.toString());
     }
   }, [user, loading, reset]);
 
@@ -215,8 +219,8 @@ function SettingsProfileAccount() {
               >
                 <MenuItem value="10">10 days</MenuItem>
                 <MenuItem value="15">15 days</MenuItem>
-                <MenuItem value="30">30 months</MenuItem>
-                <MenuItem value="never">Never</MenuItem>
+                <MenuItem value="30">30 days</MenuItem>
+                <MenuItem value="10000000">Never</MenuItem>
               </TextField>
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                 Set how long your session remains active before automatic logout when you are away.
@@ -247,10 +251,31 @@ function SettingsProfileAccount() {
               <Button
                 fullWidth
                 variant="contained"
+                onClick={async () => {
+                  if (!user?.id) {
+                    toast.error('User ID is required to update session timeout');
+                    return;
+                  }
+                  try {
+                    const response = await updateSession({
+                      id: user.id,
+                      sessionTimeOut: parseInt(sessionTimeout, 10),
+                    });
+                    if (response?.data?.status) {
+                      setUser({ ...user, sessionTimeOut: parseInt(sessionTimeout, 10) });
+                      toastSuccessResponse(response || 'Session timeout updated successfully');
+                    } else {
+                      toastErrorResponse(response);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    toast.error(err?.data?.message || 'Failed to update session timeout');
+                  }
+                }}
                 sx={{
                   py: 1.5,
                 }}
-                disabled
+                disabled={!user?.id || isSubmitting || sessionTimeout === user?.sessionTimeOut?.toString()}
               >
                 Save Session
               </Button>

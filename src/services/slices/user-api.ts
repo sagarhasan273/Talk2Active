@@ -1,5 +1,5 @@
 // services/userApi.ts
-import type { UserType, UserStatusType, UserProfileFormType, UserAccountUpdateType, UserAccountActivateUpdateType } from 'src/types/user';
+import type { UserType, UserStatusType, UserProfileFormType, UserAccountUpdateType, UserAccountActivateUpdateType, UserAccountSessionUpdateType } from 'src/types/user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -25,6 +25,7 @@ export const userApi = createApi({
       query: (id) => `user/profile/${id}`,
       providesTags: ['user-recall'],
     }),
+
     updateUser: builder.mutation<
       { message: string; status: boolean },
       Partial<UserProfileFormType>
@@ -36,6 +37,7 @@ export const userApi = createApi({
       }),
       invalidatesTags: ['user-recall'],
     }),
+
     updateUserStatus: builder.mutation<
       { message: string; status: boolean },
       Partial<UserStatusType>
@@ -47,6 +49,7 @@ export const userApi = createApi({
       }),
       invalidatesTags: ['user-recall'],
     }),
+
     createUser: builder.mutation<UserType, UserType>({
       query: (newUser) => ({
         url: `users`,
@@ -54,6 +57,7 @@ export const userApi = createApi({
         body: newUser,
       }),
     }),
+
     updateUserAccount: builder.mutation<
       { message: string; status: boolean },
       Omit<UserAccountUpdateType, 'confirmNewPassword'>
@@ -65,6 +69,7 @@ export const userApi = createApi({
       }),
       invalidatesTags: ['user-recall'],
     }),
+
     updateUserAccountActivate: builder.mutation<
       { message: string; status: boolean },
       UserAccountActivateUpdateType
@@ -76,6 +81,19 @@ export const userApi = createApi({
       }),
       invalidatesTags: ['user-recall'],
     }),
+
+    updateUserAccountSession: builder.mutation<
+      { message: string; status: boolean },
+      UserAccountSessionUpdateType
+    >({
+      query: (body) => ({
+        url: `user/profile/update/session`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['user-recall'],
+    }),
+
     deleteUser: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
         url: `users/${id}`,
@@ -89,6 +107,7 @@ export const {
   useGetUserByIdQuery,
   useUpdateUserMutation,
   useUpdateUserAccountMutation,
+  useUpdateUserAccountSessionMutation,
   useUpdateUserAccountActivateMutation,
   useUpdateUserStatusMutation,
   useCreateUserMutation,

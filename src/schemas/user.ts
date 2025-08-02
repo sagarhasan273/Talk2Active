@@ -57,6 +57,7 @@ export const UserSchema = zod
     status: zod.enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
+    sessionTimeOut: zod.number().int().nonnegative().optional(),
     followersCount: zod.number().int().nonnegative().optional(),
     followingCount: zod.number().int().nonnegative().optional(),
     postCount: zod.number().int().nonnegative().optional(),
@@ -131,7 +132,13 @@ export const UserAccountUpdateSchema = UserSchema.pick({
     message: 'Passwords do not match',
     path: ['confirmNewPassword'],
   });
+
 export const UserAccountActivateUpdateSchema = UserSchema.pick({
   id: true,
   accountActive: true,
+})
+
+export const UserAccountSessionUpdateSchema = UserSchema.pick({
+  id: true,
+  sessionTimeOut: true,
 })

@@ -6,6 +6,7 @@ import type {
   UserProfileFormSchema,
   UserAccountUpdateSchema,
   UserAccountActivateUpdateSchema,
+  UserAccountSessionUpdateSchema,
 } from 'src/schemas/user';
 
 // ----------------------------------------------------------------------
@@ -14,6 +15,7 @@ export type UserProfileFormType = zod.infer<typeof UserProfileFormSchema>;
 export type UserStatusType = zod.infer<typeof UserStatusSchema>;
 export type UserAccountUpdateType = zod.infer<typeof UserAccountUpdateSchema>;
 export type UserAccountActivateUpdateType = zod.infer<typeof UserAccountActivateUpdateSchema>;
+export type UserAccountSessionUpdateType = zod.infer<typeof UserAccountSessionUpdateSchema>;
 
 // ----------------------------------------------------------------------
 
