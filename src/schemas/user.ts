@@ -60,6 +60,11 @@ export const UserSchema = zod
     sessionTimeOut: zod.number().int().nonnegative().optional(),
     followersCount: zod.number().int().nonnegative().optional(),
     followingCount: zod.number().int().nonnegative().optional(),
+    profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
+    allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
+    showActivityStatus: zod.boolean().default(true),
+    showReadReceipts: zod.boolean().default(true),
+    showLastSeen: zod.boolean().default(true),
     postCount: zod.number().int().nonnegative().optional(),
     location: zod
       .string()
