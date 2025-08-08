@@ -95,6 +95,25 @@ export const UserSchema = zod
           .optional(),
       })
       .optional(),
+
+    // Notification types
+    pushNotification: zod.boolean(),
+    smsNotification: zod.boolean(),
+    likesNotification: zod.boolean(),
+    repostNotification: zod.boolean(),
+    commentsNotification: zod.boolean(),
+    newFollowersNotification: zod.boolean(),
+
+    directMessage: zod.boolean(),
+    roomInvitations: zod.boolean(),
+    liveEvents: zod.boolean(),
+
+    soundNotification: zod.boolean(),
+    vibrationForNotification: zod.boolean(),
+
+    // Appearance types
+    primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']),
+    themeMode: zod.boolean()
   })
   .strict(); // Using strict() to prevent unknown fields
 

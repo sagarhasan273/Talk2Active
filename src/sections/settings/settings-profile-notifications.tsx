@@ -16,18 +16,21 @@ import { useUpdateUserMutation } from 'src/services/slices/user-api';
 
 import { Form } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
+import { useUpdateUserNotificationMutation } from 'src/services/slices';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',
-  userId: user?.userId || '',
-  name: user?.name || '',
-  username: user?.username || '',
-  email: user?.email || '',
-  profilePhoto: user?.profilePhoto || '',
-  coverPhoto: user?.coverPhoto || '',
-  bio: user?.bio || '',
-  location: user?.location || '',
-  website: user?.website || '',
+  pushNotification: user?.pushNotification || false,
+  smsNotification: user?.smsNotification || false,
+  likesNotification: user?.likesNotification || false,
+  repostNotification: user?.repostNotification || false,
+  commentsNotification: user?.commentsNotification || false,
+  newFollowersNotification: user?.newFollowersNotification || false,
+  directMessage: user?.directMessage || false,
+  roomInvitations: user?.roomInvitations || false,
+  liveEvents: user?.liveEvents || false,
+  soundNotification: user?.soundNotification || false,
+  vibrationForNotification: user?.vibrationForNotification || false,
 });
 
 const notificationCategories = [
@@ -35,18 +38,17 @@ const notificationCategories = [
     title: 'Social Interactions',
     description: 'Notifications about your social activity',
     items: [
-      { key: 'likes', label: 'Likes', description: 'When someone likes your posts' },
-      { key: 'reposts', label: 'Reposts', description: 'When someone reposts your content' },
-      { key: 'comments', label: 'Comments', description: 'When someone comments on your posts' },
-      { key: 'follows', label: 'New Followers', description: 'When someone follows you' },
-      { key: 'mentions', label: 'Mentions', description: 'When someone mentions you' },
+      { key: 'likesNotification', label: 'Likes', description: 'When someone likes your posts' },
+      { key: 'repostNotification', label: 'Reposts', description: 'When someone reposts your content' },
+      { key: 'commentsNotification', label: 'Comments', description: 'When someone comments on your posts' },
+      { key: 'newFollowersNotification', label: 'New Followers', description: 'When someone follows you' },
     ],
   },
   {
     title: 'Messages & Communication',
     description: 'Direct communication notifications',
     items: [
-      { key: 'directMessages', label: 'Direct Messages', description: 'New private messages' },
+      { key: 'directMessage', label: 'Direct Messages', description: 'New private messages' },
       {
         key: 'roomInvitations',
         label: 'Room Invitations',
@@ -54,117 +56,42 @@ const notificationCategories = [
       },
       { key: 'liveEvents', label: 'Live Events', description: 'Live sessions and events' },
     ],
-  },
-  {
-    title: 'Content & Discovery',
-    description: 'Content recommendations and updates',
-    items: [
-      {
-        key: 'trendingContent',
-        label: 'Trending Content',
-        description: 'Popular posts and topics',
-      },
-      {
-        key: 'aiSuggestions',
-        label: 'AI Suggestions',
-        description: 'Personalized content recommendations',
-      },
-      {
-        key: 'communityHighlights',
-        label: 'Community Highlights',
-        description: 'Featured community content',
-      },
-    ],
-  },
-  {
-    title: 'Reports & Updates',
-    description: 'Periodic summaries and updates',
-    items: [
-      { key: 'weeklyReport', label: 'Weekly Report', description: 'Your weekly activity summary' },
-      { key: 'emailDigest', label: 'Email Digest', description: 'Daily email summaries' },
-      {
-        key: 'productUpdates',
-        label: 'Product Updates',
-        description: 'New features and improvements',
-      },
-    ],
-  },
-  {
-    title: 'Security & Marketing',
-    description: 'Security alerts and promotional content',
-    items: [
-      {
-        key: 'securityAlerts',
-        label: 'Security Alerts',
-        description: 'Important security notifications',
-      },
-      {
-        key: 'marketingEmails',
-        label: 'Marketing Emails',
-        description: 'Promotional content and offers',
-      },
-    ],
-  },
+  }
 ];
 
 const deliveryMethods = [
-  { key: 'pushNotifications', label: 'Push Notifications', icon: Smartphone },
-  { key: 'smsNotifications', label: 'SMS Notifications', icon: MessageSquare },
+  { key: 'pushNotification', label: 'Push Notifications', icon: Smartphone },
+  { key: 'smsNotification', label: 'SMS Notifications', icon: MessageSquare },
 ];
 
 function SettingsProfileNotifications() {
   const { user, loading } = useUserContext();
 
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
-
-  const [notifications, setNotifications] = useState({
-    likes: true,
-    reposts: true,
-    comments: true,
-    follows: true,
-    mentions: true,
-    directMessages: true,
-    emailDigest: false,
-    pushNotifications: true,
-    smsNotifications: false,
-    weeklyReport: true,
-    securityAlerts: true,
-    marketingEmails: false,
-    productUpdates: true,
-    communityHighlights: true,
-    trendingContent: false,
-    liveEvents: true,
-    roomInvitations: true,
-    aiSuggestions: true,
-  });
-
-  const [updateUser] = useUpdateUserMutation();
+  const [updateUser] = useUpdateUserNotificationMutation();
 
   const methods = useForm<UserType>({
     resolver: zodResolver(UserSchema),
     defaultValues: getFormData(user),
   });
 
-  const { watch, reset, handleSubmit } = methods;
+  const { watch, reset, handleSubmit, setValue } = methods;
 
   const values = watch();
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: any) => {
     try {
       if (!user?.id) {
-        toast.error('User ID is required for updating profile');
+        toast.error('User ID is required for updating privacy settings');
         return;
       }
-      const response = await updateUser({ ...data, id: user.id, });
-      const updatedUser = getFormData(data);
-      reset(updatedUser);
-      console.info('DATA', response);
-      toast.success('Profile updated successfully');
+      const response = await updateUser({ ...values, ...data, id: user.id });
+      if (response.data?.status) {
+        toast.success(response.data?.message || 'Privacy setting updated successfully');
+      }
     } catch (err) {
       console.error(err);
     }
-  });
+  };
 
   useEffect(() => {
     if (!loading && user) {
@@ -176,7 +103,7 @@ function SettingsProfileNotifications() {
 
   return (
     <Card sx={{ p: { xs: 1, sm: 2 }, borderRadius: 1, backgroundColor: 'background.neutral' }}>
-      <Form methods={methods} onSubmit={onSubmit}>
+      <Form methods={methods}>
         <Box>
           <Box sx={{ mb: 2 }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
@@ -220,12 +147,12 @@ function SettingsProfileNotifications() {
                           <Typography fontWeight="medium">{method.label}</Typography>
                         </Box>
                         <Switch
-                          checked={!!notifications[method.key as keyof typeof notifications]}
-                          onChange={() =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              [method.key]: !prev[method.key as keyof typeof prev],
-                            }))
+                          checked={!!values[method.key as keyof typeof values]}
+                          onChange={() => {
+                            setValue(method.key as keyof typeof values, !values[method.key as keyof typeof values]
+                            );
+                            onSubmit({ [method.key]: !values[method.key as keyof typeof values] });
+                          }
                           }
                           color="primary"
                         />
@@ -275,12 +202,12 @@ function SettingsProfileNotifications() {
                         </Typography>
                       </Box>
                       <Switch
-                        checked={!!notifications[item.key as keyof typeof notifications]}
-                        onChange={() =>
-                          setNotifications((prev) => ({
-                            ...prev,
-                            [item.key]: !prev[item.key as keyof typeof prev],
-                          }))
+                        checked={!!values[item.key as keyof typeof values]}
+                        onChange={() => {
+                          setValue(item.key as keyof typeof values, !values[item.key as keyof typeof values]
+                          )
+                          onSubmit({ [item.key]: !values[item.key as keyof typeof values] });
+                        }
                         }
                         color="primary"
                       />
@@ -326,8 +253,11 @@ function SettingsProfileNotifications() {
                     </Box>
                   </Box>
                   <Switch
-                    checked={soundEnabled}
-                    onChange={() => setSoundEnabled(!soundEnabled)}
+                    checked={values.soundNotification}
+                    onChange={() => {
+                      setValue('soundNotification', !values.soundNotification)
+                      onSubmit({ soundNotification: !values.soundNotification });
+                    }}
                     color="primary"
                   />
                 </Paper>
@@ -343,6 +273,7 @@ function SettingsProfileNotifications() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    opacity: 0.5
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -355,9 +286,13 @@ function SettingsProfileNotifications() {
                     </Box>
                   </Box>
                   <Switch
-                    checked={vibrationEnabled}
-                    onChange={() => setVibrationEnabled(!vibrationEnabled)}
+                    checked={values.vibrationForNotification}
+                    onChange={() => {
+                      setValue('vibrationForNotification', !values.vibrationForNotification);
+                      onSubmit({ vibrationForNotification: !values.vibrationForNotification });
+                    }}
                     color="primary"
+                    disabled
                   />
                 </Paper>
               </Stack>

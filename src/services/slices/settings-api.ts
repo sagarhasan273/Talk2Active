@@ -1,4 +1,4 @@
-import type { UserPrivacySettingUpdateType } from 'src/types/settings';
+import type { UpdateUserAppearanceType, UpdateUserNotificationType, UserPrivacySettingUpdateType } from 'src/types/settings';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -32,10 +32,34 @@ export const settingsApi = createApi({
             invalidatesTags: ['user-recall'],
         }),
 
+        updateUserNotification: builder.mutation<
+            { message: string; status: boolean },
+            Partial<UpdateUserNotificationType>
+        >({
+            query: (body) => ({
+                url: `settings/notification`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['user-recall'],
+        }),
 
+        updateUserAppearance: builder.mutation<
+            { message: string; status: boolean },
+            Partial<UpdateUserAppearanceType>
+        >({
+            query: (body) => ({
+                url: `settings/appearance`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['user-recall'],
+        }),
     }),
 });
 
 export const {
     useUpdateUserPrivacyMutation,
+    useUpdateUserNotificationMutation,
+    useUpdateUserAppearanceMutation,
 } = settingsApi;

@@ -17,18 +17,12 @@ import { Form } from 'src/components/hook-form';
 import { useSettingsContext } from 'src/components/settings';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
+import { useUpdateUserAppearanceMutation } from 'src/services/slices';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',
-  userId: user?.userId || '',
-  name: user?.name || '',
-  username: user?.username || '',
-  email: user?.email || '',
-  profilePhoto: user?.profilePhoto || '',
-  coverPhoto: user?.coverPhoto || '',
-  bio: user?.bio || '',
-  location: user?.location || '',
-  website: user?.website || '',
+  primaryColor: user?.primaryColor,
+  themeMode: user?.themeMode,
 });
 
 function SettingsProfileAppearance() {
@@ -37,7 +31,7 @@ function SettingsProfileAppearance() {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const [updateUser] = useUpdateUserMutation();
+  const [updateUser] = useUpdateUserAppearanceMutation();
 
   const methods = useForm<UserType>({
     resolver: zodResolver(UserSchema),
@@ -48,17 +42,20 @@ function SettingsProfileAppearance() {
 
   const values = watch();
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data: any) => {
     try {
-      const response = await updateUser({ ...data });
-      const updatedUser = getFormData(data);
-      reset(updatedUser);
-      console.info('DATA', response);
-      toast.success('Profile updated successfully');
+      if (!user?.id) {
+        toast.error('User ID is required for updating privacy settings');
+        return;
+      }
+      const response = await updateUser({ ...values, ...data, id: user.id });
+      if (response.data?.status) {
+        toast.success(response.data?.message || 'Privacy setting updated successfully');
+      }
     } catch (err) {
       console.error(err);
     }
-  });
+  };
 
   useEffect(() => {
     if (!loading && user) {
@@ -72,7 +69,10 @@ function SettingsProfileAppearance() {
         color: settings.primaryColor,
       }}
       onClickOption={{
-        color: (newValue) => settings.onUpdateField('primaryColor', newValue),
+        color: (newValue) => {
+          settings.onUpdateField('primaryColor', newValue);
+          onSubmit({ primaryColor: newValue });
+        },
       }}
       options={{
         colors: ['blue', 'cyan', 'orange', 'purple', 'red'],
@@ -84,7 +84,7 @@ function SettingsProfileAppearance() {
 
   return (
     <Card sx={{ p: { xs: 1, sm: 2 }, borderRadius: 1, backgroundColor: 'background.neutral' }}>
-      <Form methods={methods} onSubmit={onSubmit}>
+      <Form methods={methods}>
         <Box mb={4}>
           <Typography variant="h5" fontWeight="bold" gutterBottom>
             Appearance
@@ -110,7 +110,10 @@ function SettingsProfileAppearance() {
               </Stack>
               <Switch
                 checked={isDarkMode}
-                onChange={() => setIsDarkMode(!isDarkMode)}
+                onChange={() => {
+                  setIsDarkMode(!isDarkMode);
+                  onSubmit({ themeMode: !isDarkMode });
+                }}
                 color="primary"
               />
             </Stack>
