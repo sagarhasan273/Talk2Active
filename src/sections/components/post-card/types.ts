@@ -1,8 +1,7 @@
-import type { Post as PostType } from 'src/types/post';
+import type { PostResponseType, Post as PostType } from 'src/types/post';
 
 export interface PostCardProps {
-  post: PostType;
+  post: PostResponseType;
   onLike: (postId: string) => void;
   onRepost: (postId: string) => void;
-  onComment: (postId: string, comment: string) => void;
 }

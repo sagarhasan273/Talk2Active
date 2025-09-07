@@ -11,7 +11,7 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onComment }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
 
@@ -28,7 +28,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      onComment(post.id, newComment.trim());
       setNewComment('');
     }
   };
@@ -41,30 +40,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
         border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
         boxShadow: (theme) =>
           `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
+        transition: 'box-shadow 0.3s ease-in-out',
       }}
     >
-      {/* Repost Header */}
-      {post.repostedBy && (
-        <Box px={3} pt={2} pb={1}>
-          <Box display="flex" alignItems="center" gap={1} fontSize={13} color="text.secondary">
-            <Repeat2 size={16} color="#22c55e" />
-            <Typography variant="body2" fontWeight={500} color="success.main">
-              {post.repostedBy.name}
-            </Typography>
-            <Typography variant="body2">
-              reposted · {formatTime(post.repostedBy.timestamp)}
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
       <Box px={2} py={1}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center" gap={2}>
             <Avatar
-              src={post.author.avatar}
-              alt={post.author.name}
+              src={post.authorDetails?.profilePhoto}
+              alt={post.authorDetails?.name}
               sx={{
                 width: 48,
                 height: 48,
@@ -73,9 +58,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
               }}
             />
             <Box>
-              <Typography fontWeight={600}>{post.author.name}</Typography>
+              <Typography fontWeight={600}>{post.authorDetails?.name}</Typography>
               <Typography variant="body2" color="text.secondary">
-                @{post.author.username} · {formatTime(post.timestamp)}
+                @{post.authorDetails?.username} · {formatTime(new Date(post.createdAt))}
               </Typography>
             </Box>
           </Box>
@@ -104,7 +89,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
           color="text.primary"
           sx={{ mb: 2, fontSize: '1.125rem', lineHeight: 1.6 }}
         >
-          “{post.content}”
+          “{post.media.content}”
         </Typography>
 
         {/* Interactions */}
@@ -119,7 +104,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
         >
           <InteractionButton
             icon={Heart}
-            count={post.likes}
+            count={post.engagement.likes}
             isActive={post.isLiked}
             onClick={() => onLike(post.id)}
             activeColor="error"
@@ -127,22 +112,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
             label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
           />
           <InteractionButton
-            icon={MessageCircle}
-            count={post.comments.length}
-            isActive={showComments}
-            onClick={() => setShowComments(!showComments)}
-            activeColor="secondary"
-            hoverColor="secondary"
-            label="View comments"
-          />
-          <InteractionButton
             icon={Repeat2}
-            count={post.reposts}
-            isActive={post.isReposted}
+            count={post.engagement.dislikes}
+            isActive={post.isDisliked}
             onClick={() => onRepost(post.id)}
             activeColor="success"
             hoverColor="success"
-            label={`${post.isReposted ? 'Unrepost' : 'Repost'} post`}
+            label={`${post.isDisliked ? 'Undo dislike' : 'Dislike'} post`}
           />
         </Box>
 
@@ -188,53 +164,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onCo
                   },
                 }}
               />
-            </Box>
-
-            {/* Comment List */}
-            <Box display="flex" flexDirection="column" gap={2}>
-              {post.comments.map((comment: PostType['comments'][number]) => (
-                <Box key={comment.id} display="flex" gap={2}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(to bottom right, #a78bfa, #f472b6)',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      fontSize: 14,
-                    }}
-                  >
-                    {comment.author.name[0]}
-                  </Box>
-                  <Box flex={1}>
-                    <Box
-                      sx={{
-                        backgroundColor: 'background.neutral',
-                        borderRadius: 3,
-                        px: 2,
-                        py: 1.5,
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                        <Typography variant="body2" fontWeight={600}>
-                          {comment.author.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          @{comment.author.username}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">
-                          · {formatTime(comment.timestamp)}
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2">{comment.content}</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              ))}
             </Box>
           </Box>
         )}

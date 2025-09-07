@@ -1,28 +1,30 @@
-import type { Post as PostType } from 'src/types/post';
+import type { PostResponseType, Post as PostType } from 'src/types/post';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Quote } from 'lucide-react';
 
-import { Box, Fab, Stack, useTheme, Container, Typography, IconButton } from '@mui/material';
+import { Box, Stack, useTheme, Container, Typography, IconButton } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { useGetPostsQuery } from 'src/services/slices/post-api';
+
 import { PostCard } from '../components/post-card';
-import { initialPosts } from '../../_mock/data/posts';
 import { CreatePost } from '../components/create-post';
 import { DiscoveryPanel } from './feed-discovery-panal';
 import { CategorySidebarView } from './feed-catagory-sidebar';
-import { currentUserProfile } from '../../_mock/data/userProfile';
+
 import { DiscoveryPanalDrawer } from './feed-discovery-panal/discovery-panal-drawer';
 import { CategorySidebarDrawer } from './feed-catagory-sidebar/catagory-sidebar-drawer';
 
 export const FeedPosts: React.FC = () => {
   const theme = useTheme();
 
-  const [posts, setPosts] = useState<PostType[]>(initialPosts);
+  const [posts, setPosts] = useState<PostResponseType[]>([]);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [userProfile] = useState(currentUserProfile);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const { data, isLoading, isError } = useGetPostsQuery();
 
   const handleLike = (postId: string) => {
     setPosts((prevPosts) =>
@@ -31,7 +33,11 @@ export const FeedPosts: React.FC = () => {
           ? {
             ...post,
             isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+
+            engagement: {
+              ...post.engagement,
+              likes: post.isLiked ? post.engagement.likes - 1 : post.engagement.likes + 1,
+            }
           }
           : post
       )
@@ -47,69 +53,31 @@ export const FeedPosts: React.FC = () => {
         post.id === postId
           ? {
             ...post,
-            isReposted: !post.isReposted,
-            reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
+            isDisliked: !post.isDisliked,
+            engagement: {
+              ...post.engagement,
+              dislikes: post.isDisliked ? post.engagement.dislikes - 1 : post.engagement.dislikes + 1,
+            }
           }
           : post
       );
-
-      // If reposting, create a new repost entry
-      if (!postToRepost.isReposted) {
-        const repost: PostType = {
-          ...postToRepost,
-          id: `repost-${Date.now()}`,
-          repostedBy: {
-            name: 'You',
-            username: 'youruser',
-            timestamp: new Date(),
-          },
-          isLiked: false,
-          isReposted: false,
-        };
-        return [repost, ...updatedPosts];
-      }
 
       return updatedPosts;
     });
   };
 
-  const handleComment = (postId: string, commentContent: string) => {
-    const newComment = {
-      id: `c${Date.now()}`,
-      content: commentContent,
-      author: { name: 'You', username: 'youruser' },
-      timestamp: new Date(),
-    };
-
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
-      )
-    );
-  };
-
   const handleCreatePost = (content: string) => {
-    const newPost: PostType = {
-      id: `${Date.now()}`,
-      content,
-      author: {
-        name: userProfile.name,
-        username: userProfile.username,
-        avatar: userProfile.avatar,
-      },
-      timestamp: new Date(),
-      likes: 0,
-      reposts: 0,
-      comments: [],
-      isLiked: false,
-      isReposted: false,
-    };
-
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
+    setPosts((prevPosts) => [...prevPosts]);
   };
 
   const mid = useResponsive('down', 'lg');
   const small = useResponsive('down', 'md');
+
+  useEffect(() => {
+    if (data && !isLoading && !isError) {
+      setPosts(data.data);
+    }
+  }, [data, isLoading, isError]);
 
   return (
     <>
@@ -149,7 +117,7 @@ export const FeedPosts: React.FC = () => {
               />
             </Box>
           )}
-          <Box sx={{ py: 2, ml: 'auto', height: '100%', overflowY: 'auto' }}>
+          <Box sx={{ py: 2, ml: 'auto', height: '100%', overflowY: 'auto', width: 1 }}>
             <Box
               sx={{
                 m: 'auto',
@@ -159,6 +127,7 @@ export const FeedPosts: React.FC = () => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 1,
+                width: "100%"
               }}
             >
               <Box
@@ -169,6 +138,7 @@ export const FeedPosts: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+
                 }}
               >
                 <Quote size={24} color="white" />
@@ -226,7 +196,6 @@ export const FeedPosts: React.FC = () => {
                   post={post}
                   onLike={handleLike}
                   onRepost={handleRepost}
-                  onComment={handleComment}
                 />
               ))}
             </Box>

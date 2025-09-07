@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-import { CreatePostInput } from 'src/types/post';
+import { CreatePostInput, PostResponseType } from 'src/types/post';
 
 export const postApi = createApi({
     reducerPath: 'postApi',
@@ -19,6 +19,11 @@ export const postApi = createApi({
     }), // your REST API base
     tagTypes: ['post-recall'],
     endpoints: (builder) => ({
+        getPosts: builder.query<{ data: PostResponseType[]; status: boolean }, void>({
+            query: () => 'post/all',
+            providesTags: ['post-recall'],
+        }),
+
         createPost: builder.mutation<
             { message: string; status: boolean },
             Partial<CreatePostInput>
@@ -34,5 +39,6 @@ export const postApi = createApi({
 });
 
 export const {
+    useGetPostsQuery,
     useCreatePostMutation,
 } = postApi;

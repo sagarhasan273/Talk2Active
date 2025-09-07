@@ -39,7 +39,7 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
           }}
           fill={isActive ? theme.palette[activeColor].main : 'none'}
         />
-        {count > 0 && (
+        {count >= 0 && (
           <Typography
             variant="body2"
             sx={{
