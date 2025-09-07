@@ -3,7 +3,7 @@ import type { Post as PostType } from 'src/types/post';
 import React, { useState } from 'react';
 import { Plus, Quote } from 'lucide-react';
 
-import { Box, Fab, Stack, useTheme, Container, Typography } from '@mui/material';
+import { Box, Fab, Stack, useTheme, Container, Typography, IconButton } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -29,10 +29,10 @@ export const FeedPosts: React.FC = () => {
       prevPosts.map((post) =>
         post.id === postId
           ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
+            ...post,
+            isLiked: !post.isLiked,
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+          }
           : post
       )
     );
@@ -46,10 +46,10 @@ export const FeedPosts: React.FC = () => {
       const updatedPosts = prevPosts.map((post) =>
         post.id === postId
           ? {
-              ...post,
-              isReposted: !post.isReposted,
-              reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
-            }
+            ...post,
+            isReposted: !post.isReposted,
+            reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
+          }
           : post
       );
 
@@ -199,21 +199,24 @@ export const FeedPosts: React.FC = () => {
                   </CategorySidebarDrawer>
                 )}
                 {/* Floating Action Button */}
-                <Fab
-                  color="secondary"
+                <IconButton
                   onClick={() => setIsCreatePostOpen(true)}
                   sx={{
-                    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                    p: 1,
+                    borderRadius: '50%',
                     color: 'white',
+                    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     '&:hover': {
                       background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
                     },
                   }}
-                  size="small"
-                  aria-label="Create new post"
+
                 >
                   <Plus size={24} />
-                </Fab>
+                </IconButton>
               </Stack>
             </Box>
             <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={3}>

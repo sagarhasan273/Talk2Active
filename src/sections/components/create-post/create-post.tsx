@@ -1,9 +1,7 @@
 import React from 'react';
-import { z as zod } from 'zod';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { X, Sparkles } from 'lucide-react';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   Box,
@@ -13,38 +11,63 @@ import {
   Typography,
   IconButton,
   CircularProgress,
+  Chip,
+  capitalize,
 } from '@mui/material';
 
 import { Form, Field } from 'src/components/hook-form';
 
+import { PostTagsEnum } from 'src/enums/post';
+import { useUserContext } from 'src/routes/components';
+import { useCreatePostMutation } from 'src/services/slices/post-api';
+
 import type { CreatePostProps } from './types';
 
-export const SignUpSchema = zod.object({
-  content: zod.string().min(1, { message: 'First name is required!' }),
-});
-
-export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose }) => {
+export function CreatePost({ isOpen, onClose }: CreatePostProps) {
   const theme = useTheme();
+
+  const { user } = useUserContext();
 
   const defaultValues = {
     content: '',
+    tags: [] as string[],
   };
 
+  const [createPost] = useCreatePostMutation();
+
   const methods = useForm({
-    resolver: zodResolver(SignUpSchema),
     defaultValues,
   });
 
   const {
+    watch,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
+  const values = watch();
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (!isSubmitting) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+      const authorId = user?.id;
+      if (!authorId) {
+        toast.error('User not authenticated. Please log in.');
+        return;
+      }
+      const formData = {
+        media: {
+          type: "none" as "none",
+          content: data?.content || ""
+        },
+        tags: data?.tags || [],
+        author: authorId
+      }
+      const response = await createPost(formData).unwrap();
+      if (response.status) {
         onClose();
+        toast.success(response.message || 'Post created successfully!');
+        methods.reset();
+      } else {
+        toast.error(response.message || 'Failed to create post. Please try again.');
       }
     } catch (error) {
       console.error(error);
@@ -132,9 +155,37 @@ export const CreatePost: React.FC<CreatePostProps> = ({ isOpen, onClose }) => {
                 Share something meaningful
               </Typography>
               <Typography variant="body2" color="text.disabled">
-                {1}/280
+                {values.content.length}/280
               </Typography>
             </Box>
+
+            <Field.Autocomplete
+              name="tags"
+              placeholder="+ tags"
+              multiple
+              disableCloseOnSelect
+              options={Object.values(PostTagsEnum).map((option) => option)}
+              getOptionLabel={(option) => option}
+              renderOption={(props, option) => (
+                <li {...props} key={option}>
+                  {capitalize(option)}
+                </li>
+              )}
+              size="small"
+              renderTags={(selected, getTagProps) =>
+                selected.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option}
+                    label={capitalize(option)}
+                    size="small"
+                    color="info"
+                    variant="soft"
+                  />
+                ))
+              }
+              sx={{ my: 2 }}
+            />
 
             {/* Actions */}
             <Box sx={{ display: 'flex', gap: 2 }}>
