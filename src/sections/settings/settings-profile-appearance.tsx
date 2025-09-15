@@ -11,13 +11,13 @@ import { Box, Card, Stack, Paper, Switch, Typography } from '@mui/material';
 import { useUserContext } from 'src/routes/components';
 
 import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserMutation } from 'src/services/slices/user-api';
+import { useUpdateUserMutation } from 'src/core/apis/api-user';
 
 import { Form } from 'src/components/hook-form';
 import { useSettingsContext } from 'src/components/settings';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
-import { useUpdateUserAppearanceMutation } from 'src/services/slices';
+import { useUpdateUserAppearanceMutation } from 'src/core/apis';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',

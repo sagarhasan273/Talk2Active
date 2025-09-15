@@ -5,7 +5,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useUserContext } from 'src/routes/components';
 
 import { CONFIG } from 'src/config-global';
-import { useGetUserByIdQuery } from 'src/services/slices/user-api';
+import { useGetUserByIdQuery } from 'src/core/apis/api-user';
 import { currentUserProfile } from 'src/_mock/data/userProfile';
 
 import { SettingsView } from 'src/sections/settings';

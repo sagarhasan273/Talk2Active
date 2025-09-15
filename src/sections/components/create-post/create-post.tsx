@@ -19,7 +19,7 @@ import { Form, Field } from 'src/components/hook-form';
 
 import { PostTagsEnum } from 'src/enums/post';
 import { useUserContext } from 'src/routes/components';
-import { useCreatePostMutation } from 'src/services/slices/post-api';
+import { useCreatePostMutation } from 'src/core/apis/api-post';
 
 import type { CreatePostProps } from './types';
 
@@ -77,28 +77,28 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
 
   return (
     <Modal open={isOpen} onClose={onClose}>
-      <Form methods={methods} onSubmit={onSubmit}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          mx: 2,
+        }}
+      >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100vh',
-            mx: 2,
+            position: 'relative',
+            width: '100%',
+            maxWidth: 600,
+            bgcolor: 'background.paper',
+            border: `1px solid ${theme.palette.primary.main}`,
+            borderRadius: 4,
+            boxShadow: 24,
+            p: 3,
           }}
         >
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 600,
-              bgcolor: 'background.paper',
-              border: `1px solid ${theme.palette.primary.main}`,
-              borderRadius: 4,
-              boxShadow: 24,
-              p: 3,
-            }}
-          >
+          <Form methods={methods} onSubmit={onSubmit}>
             {/* Header */}
             <Box
               sx={{
@@ -231,9 +231,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                 )}
               </Button>
             </Box>
-          </Box>
+          </Form>
         </Box>
-      </Form>
+      </Box>
     </Modal>
   );
 };

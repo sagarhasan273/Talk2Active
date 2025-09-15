@@ -18,7 +18,7 @@ import { useUserContext } from 'src/routes/components';
 import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { varAlpha } from 'src/theme/styles';
-import { useUpdateUserStatusMutation } from 'src/services/slices/user-api';
+import { useUpdateUserStatusMutation } from 'src/core/apis/api-user';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';

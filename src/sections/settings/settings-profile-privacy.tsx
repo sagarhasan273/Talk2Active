@@ -31,7 +31,7 @@ import { UserSchema } from 'src/schemas/user';
 import { Form } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useUpdateUserPrivacyMutation } from 'src/services/slices';
+import { useUpdateUserPrivacyMutation } from 'src/core/apis';
 import { UserPrivacySettingUpdateType } from 'src/types/settings';
 
 const getFormData = (user: UserType | null) => ({

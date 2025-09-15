@@ -121,52 +121,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) =>
             label={`${post.isDisliked ? 'Undo dislike' : 'Dislike'} post`}
           />
         </Box>
-
-        {/* Comments */}
-        {showComments && (
-          <Box
-            mt={1}
-            pt={2}
-            sx={{
-              borderTop: (theme) =>
-                `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-            }}
-          >
-            {/* Comment Form */}
-            <Box
-              component="form"
-              onSubmit={handleCommentSubmit}
-              display="flex"
-              gap={2}
-              alignItems="center"
-              mb={3}
-            >
-              <Avatar
-                src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop"
-                sx={{
-                  width: 32,
-                  height: 32,
-                  border: (theme) =>
-                    `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-                }}
-              />
-              <TextField
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                fullWidth
-                size="small"
-                variant="outlined"
-                sx={{
-                  borderRadius: 999,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 999,
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-        )}
       </Box>
     </Card>
   );

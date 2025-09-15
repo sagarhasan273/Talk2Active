@@ -7,7 +7,7 @@ import { Box, Stack, useTheme, Container, Typography, IconButton } from '@mui/ma
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { useGetPostsQuery } from 'src/services/slices/post-api';
+import { useGetPostsQuery } from 'src/core/apis/api-post';
 
 import { PostCard } from '../components/post-card';
 import { CreatePost } from '../components/create-post';

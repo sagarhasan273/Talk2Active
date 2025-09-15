@@ -17,7 +17,7 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
-import { store } from './services/store';
+import { store } from './core/store';
 import { I18nProvider, LocalizationProvider } from './locales';
 import { UserProvider } from './routes/components';
 

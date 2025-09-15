@@ -21,7 +21,7 @@ import {
 
 import { useUserContext } from 'src/routes/components';
 
-import { useUpdateUserAccountMutation, useUpdateUserAccountSessionMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
+import { useUpdateUserAccountMutation, useUpdateUserAccountSessionMutation, useUpdateUserMutation } from 'src/core/apis/api-user';
 import { UserAccountUpdateSchema } from 'src/schemas/user';
 
 import { Form, Field } from 'src/components/hook-form';

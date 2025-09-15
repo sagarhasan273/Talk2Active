@@ -120,6 +120,7 @@ export const UserSchema = zod
 // Then create a subset schema for the form
 export const UserProfileFormSchema = UserSchema.pick({
   id: true,
+  userId: true,
   name: true,
   username: true,
   email: true,

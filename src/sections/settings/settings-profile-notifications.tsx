@@ -12,11 +12,11 @@ import { Box, Card, Grid, Paper, Stack, Switch, Typography } from '@mui/material
 import { useUserContext } from 'src/routes/components';
 
 import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserMutation } from 'src/services/slices/user-api';
+import { useUpdateUserMutation } from 'src/core/apis/api-user';
 
 import { Form } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useUpdateUserNotificationMutation } from 'src/services/slices';
+import { useUpdateUserNotificationMutation } from 'src/core/apis';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',

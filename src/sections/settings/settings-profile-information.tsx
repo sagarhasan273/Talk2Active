@@ -22,8 +22,8 @@ import { useUserContext } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { UserSchema } from 'src/schemas/user';
-import { useUpdateUserAccountActivateMutation, useUpdateUserMutation } from 'src/services/slices/user-api';
+import { UserProfileFormSchema, UserSchema } from 'src/schemas/user';
+import { useUpdateUserAccountActivateMutation, useUpdateUserMutation } from 'src/core/apis/api-user';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -103,7 +103,7 @@ function SettingsProfileInformation() {
   const [updateUserAccountActivate] = useUpdateUserAccountActivateMutation();
 
   const methods = useForm<UserType>({
-    resolver: zodResolver(UserSchema),
+    resolver: zodResolver(UserProfileFormSchema),
     defaultValues: getFormData(user),
   });
 

@@ -253,6 +253,7 @@ export const DiscoveryPanel: React.FC = () => {
                     </Stack>
                   }
                   primaryTypographyProps={{ fontWeight: 'medium' }}
+                  secondaryTypographyProps={{ component: "div" }}
                 />
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
