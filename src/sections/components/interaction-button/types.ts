@@ -1,7 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
 
 export interface InteractionButtonProps {
-  icon: LucideIcon;
+  icon: string;
+  activeIcon?: string;
   count: number;
   isActive: boolean;
   onClick: () => void;

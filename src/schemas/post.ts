@@ -15,7 +15,7 @@ export const MediaSchema = z.object({
 export const EngagementSchema = z.object({
     likes: z.number().int().nonnegative().default(0),
     dislikes: z.number().int().nonnegative().default(0),
-    repost: z.number().int().nonnegative().default(0),
+    reposts: z.number().int().nonnegative().default(0),
 });
 
 // Main Post Schema
@@ -25,7 +25,7 @@ export const PostSchema = z.object({
     tags: z.array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
         .max(30, "Cannot have more than 30 tags")
         .default([]),
-    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, repost: 0 }),
+    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, reposts: 0 }),
     isDeleted: z.boolean().default(false),
     deletedAt: z.date().optional(),
     createdAt: z.date().default(() => new Date()),
@@ -42,7 +42,11 @@ export const CreatePostSchema = PostSchema.omit({
 });
 
 // Schema for updating a post
-export const UpdatePostSchema = CreatePostSchema.partial();
+export const UpdatePostSchema = PostSchema.partial().extend(
+    {
+        postId: z.string()
+    }
+);;
 
 // Schema for API response (transformed data)
 export const PostResponseSchema = PostSchema.omit({
@@ -54,6 +58,7 @@ export const PostResponseSchema = PostSchema.omit({
     id: z.string(),
     isLiked: z.boolean().default(false),
     isDisliked: z.boolean().default(false),
+    isReposted: z.boolean().default(false),
     authorDetails: z.object({
         _id: z.string(),
         username: z.string(),

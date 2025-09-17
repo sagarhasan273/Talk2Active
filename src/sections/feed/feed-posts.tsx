@@ -7,7 +7,7 @@ import { Box, Stack, useTheme, Container, Typography, IconButton } from '@mui/ma
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { useGetPostsQuery } from 'src/core/apis/api-post';
+import { useGetPostsQuery, useUpdatePostMutation } from 'src/core/apis/api-post';
 
 import { PostCard } from '../components/post-card';
 import { CreatePost } from '../components/create-post';
@@ -25,8 +25,10 @@ export const FeedPosts: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const { data, isLoading, isError } = useGetPostsQuery();
+  const [updatePost] = useUpdatePostMutation();
 
-  const handleLike = (postId: string) => {
+  const handleLike = async (postId: string) => {
+
     setPosts((prevPosts) =>
       prevPosts.map((post) =>
         post.id === postId
@@ -37,6 +39,32 @@ export const FeedPosts: React.FC = () => {
             engagement: {
               ...post.engagement,
               likes: post.isLiked ? post.engagement.likes - 1 : post.engagement.likes + 1,
+            }
+          }
+          : post
+      )
+    );
+    try {
+      await updatePost({
+        postId,
+
+      }).unwrap();
+    } catch (error) {
+      console.error('Failed to update like status:', error);
+    }
+  };
+
+  const handleDislike = (postId: string) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === postId
+          ? {
+            ...post,
+            isDisliked: !post.isDisliked,
+
+            engagement: {
+              ...post.engagement,
+              dislikes: post.isDisliked ? post.engagement.dislikes - 1 : post.engagement.dislikes + 1,
             }
           }
           : post
@@ -53,10 +81,10 @@ export const FeedPosts: React.FC = () => {
         post.id === postId
           ? {
             ...post,
-            isDisliked: !post.isDisliked,
+            isReposted: !post.isReposted,
             engagement: {
               ...post.engagement,
-              dislikes: post.isDisliked ? post.engagement.dislikes - 1 : post.engagement.dislikes + 1,
+              reposts: post.isReposted ? post.engagement.reposts - 1 : post.engagement.reposts + 1,
             }
           }
           : post
@@ -195,6 +223,7 @@ export const FeedPosts: React.FC = () => {
                   key={post.id}
                   post={post}
                   onLike={handleLike}
+                  onDislike={handleDislike}
                   onRepost={handleRepost}
                 />
               ))}

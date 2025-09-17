@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-import { CreatePostInput, PostResponseType } from 'src/types/post';
+import { CreatePostInput, PostResponseType, UpdatePostInput } from 'src/types/post';
 
 export const postApi = createApi({
     reducerPath: 'postApi',
@@ -35,10 +35,23 @@ export const postApi = createApi({
             }),
             invalidatesTags: ['post-recall'],
         }),
+
+        updatePost: builder.mutation<
+            { message: string; status: boolean },
+            Partial<UpdatePostInput>
+        >({
+            query: (body) => ({
+                url: `post/update`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['post-recall'],
+        }),
     }),
 });
 
 export const {
     useGetPostsQuery,
     useCreatePostMutation,
+    useUpdatePostMutation,
 } = postApi;

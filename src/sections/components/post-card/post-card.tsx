@@ -1,9 +1,9 @@
 import type { Post as PostType } from 'src/types/post';
 
 import React, { useState } from 'react';
-import { Heart, Repeat2, MessageCircle } from 'lucide-react';
+import { Heart, Repeat2, MessageCircle, HeartOff, HeartCrack } from 'lucide-react';
 
-import { Box, Card, Avatar, Button, TextField, Typography } from '@mui/material';
+import { Box, Card, Avatar, Button, TextField, Typography, Stack, useTheme } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -11,9 +11,8 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) => {
-  const [showComments, setShowComments] = useState(false);
-  const [newComment, setNewComment] = useState('');
+export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepost }) => {
+  const theme = useTheme();
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -25,20 +24,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) =>
     return `${Math.floor(hours / 24)}d`;
   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newComment.trim()) {
-      setNewComment('');
-    }
-  };
-
   return (
     <Card
       sx={{
         borderRadius: 2,
         backgroundColor: 'background.neutral',
-        border: (theme) => `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-        boxShadow: (theme) =>
+        border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+        boxShadow:
           `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
         transition: 'box-shadow 0.3s ease-in-out',
       }}
@@ -53,7 +45,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) =>
               sx={{
                 width: 48,
                 height: 48,
-                border: (theme) =>
+                border:
                   `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
               }}
             />
@@ -68,12 +60,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) =>
             variant="contained"
             size="small"
             sx={{
-              background: (theme) =>
+              background:
                 `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               color: 'common.white',
               borderRadius: 6,
               '&:hover': {
-                background: (theme) =>
+                background:
                   `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
               },
             }}
@@ -98,27 +90,40 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost }) =>
           justifyContent="space-between"
           pt={1}
           sx={{
-            borderTop: (theme) =>
+            borderTop:
               `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
           }}
         >
+          <Stack direction="row" spacing={1}>
+            <InteractionButton
+              icon='fluent:heart-24-regular'
+              activeIcon='fluent:heart-24-filled'
+              count={post.engagement.likes}
+              isActive={post.isLiked}
+              onClick={() => onLike(post.id)}
+              activeColor="primary"
+              hoverColor="primary"
+              label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
+            />
+            <InteractionButton
+              icon='fluent:heart-broken-24-regular'
+              activeIcon='fluent:heart-broken-24-filled'
+              count={post.engagement.dislikes}
+              isActive={post.isDisliked}
+              onClick={() => onDislike(post.id)}
+              activeColor="error"
+              hoverColor="error"
+              label={`${post.isDisliked ? 'Unlike' : 'Like'} post`}
+            />
+          </Stack>
           <InteractionButton
-            icon={Heart}
-            count={post.engagement.likes}
-            isActive={post.isLiked}
-            onClick={() => onLike(post.id)}
-            activeColor="error"
-            hoverColor="error"
-            label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
-          />
-          <InteractionButton
-            icon={Repeat2}
-            count={post.engagement.dislikes}
-            isActive={post.isDisliked}
+            icon='mdi:repost'
+            count={post.engagement.reposts}
+            isActive={post.isReposted}
             onClick={() => onRepost(post.id)}
             activeColor="success"
             hoverColor="success"
-            label={`${post.isDisliked ? 'Undo dislike' : 'Dislike'} post`}
+            label={`${post.isReposted ? 'Undo dislike' : 'Dislike'} post`}
           />
         </Box>
       </Box>
