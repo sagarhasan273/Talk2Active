@@ -12,8 +12,6 @@ export * from './input-select';
 
 export * from './input-rating';
 
-export * from './input-editor';
-
 export * from './schema-helper';
 
 export * from './form-provider';

@@ -18,7 +18,7 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { store } from './core/store';
-import { I18nProvider, LocalizationProvider } from './locales';
+import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/components';
 
 // ----------------------------------------------------------------------
@@ -27,25 +27,23 @@ export default function App() {
   useScrollToTop();
 
   return (
-    <I18nProvider>
-      <LocalizationProvider>
-        <Provider store={store}>
-          <UserProvider>
-            <AuthProvider>
-              <SettingsProvider settings={defaultSettings}>
-                <ThemeProvider>
-                  <MotionLazy>
-                    <Snackbar />
-                    <ProgressBar />
-                    <SettingsDrawer />
-                    <Router />
-                  </MotionLazy>
-                </ThemeProvider>
-              </SettingsProvider>
-            </AuthProvider>
-          </UserProvider>
-        </Provider>
-      </LocalizationProvider>
-    </I18nProvider>
+    <LocalizationProvider>
+      <Provider store={store}>
+        <UserProvider>
+          <AuthProvider>
+            <SettingsProvider settings={defaultSettings}>
+              <ThemeProvider>
+                <MotionLazy>
+                  <Snackbar />
+                  <ProgressBar />
+                  <SettingsDrawer />
+                  <Router />
+                </MotionLazy>
+              </ThemeProvider>
+            </SettingsProvider>
+          </AuthProvider>
+        </UserProvider>
+      </Provider>
+    </LocalizationProvider>
   );
 }

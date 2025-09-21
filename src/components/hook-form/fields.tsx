@@ -1,6 +1,5 @@
 import { RHFCode } from './input-code';
 import { RHFRating } from './input-rating';
-import { RHFEditor } from './input-editor';
 import { RHFSlider } from './input-slider';
 import { RHFTextField } from './input-text-field';
 import { RHFRadioGroup } from './input-radio-group';
@@ -17,7 +16,6 @@ import { RHFDatePicker, RHFMobileDateTimePicker } from './input-date-picker';
 
 export const Field = {
   Code: RHFCode,
-  Editor: RHFEditor,
   Select: RHFSelect,
   Upload: RHFUpload,
   Switch: RHFSwitch,
