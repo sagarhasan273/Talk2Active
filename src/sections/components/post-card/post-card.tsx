@@ -1,9 +1,6 @@
-import type { Post as PostType } from 'src/types/post';
+import React from 'react';
 
-import React, { useState } from 'react';
-import { Heart, Repeat2, MessageCircle, HeartOff, HeartCrack } from 'lucide-react';
-
-import { Box, Card, Avatar, Button, TextField, Typography, Stack, useTheme } from '@mui/material';
+import { Box, Card, Stack, Avatar, Button, useTheme, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -11,7 +8,7 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepost }) => {
+const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepost }) => {
   const theme = useTheme();
 
   const formatTime = (date: Date) => {
@@ -30,8 +27,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
         borderRadius: 2,
         backgroundColor: 'background.neutral',
         border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-        boxShadow:
-          `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
+        boxShadow: `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
         transition: 'box-shadow 0.3s ease-in-out',
       }}
     >
@@ -45,8 +41,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
               sx={{
                 width: 48,
                 height: 48,
-                border:
-                  `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+                border: `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
               }}
             />
             <Box>
@@ -60,13 +55,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
             variant="contained"
             size="small"
             sx={{
-              background:
-                `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               color: 'common.white',
               borderRadius: 6,
               '&:hover': {
-                background:
-                  `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
               },
             }}
           >
@@ -90,14 +83,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
           justifyContent="space-between"
           pt={1}
           sx={{
-            borderTop:
-              `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
+            borderTop: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
           }}
         >
           <Stack direction="row" spacing={1}>
             <InteractionButton
-              icon='fluent:heart-24-regular'
-              activeIcon='fluent:heart-24-filled'
+              icon="fluent:heart-24-regular"
+              activeIcon="fluent:heart-24-filled"
               count={post.engagement.likes}
               isActive={post.isLiked}
               onClick={() => onLike(post.id)}
@@ -106,8 +98,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
               label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
             />
             <InteractionButton
-              icon='fluent:heart-broken-24-regular'
-              activeIcon='fluent:heart-broken-24-filled'
+              icon="fluent:heart-broken-24-regular"
+              activeIcon="fluent:heart-broken-24-filled"
               count={post.engagement.dislikes}
               isActive={post.isDisliked}
               onClick={() => onDislike(post.id)}
@@ -117,7 +109,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
             />
           </Stack>
           <InteractionButton
-            icon='mdi:repost'
+            icon="mdi:repost"
             count={post.engagement.reposts}
             isActive={post.isReposted}
             onClick={() => onRepost(post.id)}
@@ -130,3 +122,5 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDislike, onR
     </Card>
   );
 };
+
+export const PostCard = React.memo(PostCardTemp);

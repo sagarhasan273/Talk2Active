@@ -19,8 +19,11 @@ export const postApi = createApi({
     }), // your REST API base
     tagTypes: ['post-recall'],
     endpoints: (builder) => ({
-        getPosts: builder.query<{ data: PostResponseType[]; status: boolean }, void>({
-            query: () => 'post/all',
+        getPosts: builder.query<{ data: PostResponseType[]; status: boolean }, { userId: string }>({
+            query: ({ userId }) => {
+                const input = JSON.stringify({ userId });
+                return `post/list?input=${encodeURIComponent(input)}`;
+            },
             providesTags: ['post-recall'],
         }),
 
@@ -36,16 +39,28 @@ export const postApi = createApi({
             invalidatesTags: ['post-recall'],
         }),
 
-        updatePost: builder.mutation<
+        updatePostEngagementLike: builder.mutation<
             { message: string; status: boolean },
-            Partial<UpdatePostInput>
+            Partial<any>
         >({
             query: (body) => ({
-                url: `post/update`,
+                url: `post-engagement/like`,
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: ['post-recall'],
+            invalidatesTags: [],
+        }),
+
+        updatePostEngagementDisike: builder.mutation<
+            { message: string; status: boolean },
+            Partial<any>
+        >({
+            query: (body) => ({
+                url: `post-engagement/dislike`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: [],
         }),
     }),
 });
@@ -53,5 +68,6 @@ export const postApi = createApi({
 export const {
     useGetPostsQuery,
     useCreatePostMutation,
-    useUpdatePostMutation,
+    useUpdatePostEngagementLikeMutation,
+    useUpdatePostEngagementDisikeMutation,
 } = postApi;

@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import { varAlpha } from 'src/theme/styles';
 import { UserContent } from 'src/layouts/user';
 
-import { FeedPosts } from '../feed-posts';
+import { FeedPostsView } from '../feed-posts';
 
 // ----------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ export function FeedView() {
           flexDirection: 'column',
         }}
       >
-        <FeedPosts />
+        <FeedPostsView />
       </Box>
     </UserContent>
   );
