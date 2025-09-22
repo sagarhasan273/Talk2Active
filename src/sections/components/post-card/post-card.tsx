@@ -33,7 +33,7 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
       <Box px={2} py={1}>
         {/* Header */}
         <Box display="flex" justifyContent="space-between" mb={2}>
-          <Box display="flex" alignItems="center" gap={2}>
+          <Box display="flex" alignItems="center" gap={1}>
             <Avatar
               src={post.authorDetails?.profilePhoto}
               alt={post.authorDetails?.name}
@@ -71,10 +71,22 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
           variant="h6"
           fontWeight={500}
           color="text.primary"
-          sx={{ mb: 2, fontSize: '1.125rem', lineHeight: 1.6 }}
+          sx={{ mb: 1, fontSize: '1.125rem', lineHeight: 1.6 }}
         >
           “{post.media.content}”
         </Typography>
+
+        {/* Author Name */}
+        {post.media.authorName && (
+          <Typography
+            variant="subtitle2"
+            fontWeight={500}
+            color="text.primary"
+            sx={{ mb: 2, fontStyle: 'italic', textAlign: 'right' }}
+          >
+            -{post.media.authorName}
+          </Typography>
+        )}
 
         {/* Interactions */}
         <Box
@@ -86,8 +98,8 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
         >
           <Stack direction="row">
             <InteractionButton
-              icon="fluent:heart-24-regular"
-              activeIcon="fluent:heart-24-filled"
+              icon="mynaui:like"
+              activeIcon="mynaui:like-solid"
               count={post.engagement.likes}
               isActive={post.isLiked}
               onClick={() => onLike(post.id)}

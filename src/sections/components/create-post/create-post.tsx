@@ -5,21 +5,22 @@ import { X, Sparkles } from 'lucide-react';
 
 import {
   Box,
+  Chip,
   Modal,
   Button,
   useTheme,
   Typography,
   IconButton,
-  CircularProgress,
-  Chip,
   capitalize,
+  CircularProgress,
 } from '@mui/material';
 
-import { Form, Field } from 'src/components/hook-form';
+import { useUserContext } from 'src/routes/components';
 
 import { PostTagsEnum } from 'src/enums/post';
-import { useUserContext } from 'src/routes/components';
 import { useCreatePostMutation } from 'src/core/apis/api-post';
+
+import { Form, Field } from 'src/components/hook-form';
 
 import type { CreatePostProps } from './types';
 
@@ -30,6 +31,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
 
   const defaultValues = {
     content: '',
+    authorName: '',
     tags: [] as string[],
   };
 
@@ -55,23 +57,24 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
       }
       const formData = {
         media: {
-          type: "none" as "none",
-          content: data?.content || ""
+          type: 'none' as 'none',
+          content: data?.content || '',
+          authorName: data?.authorName || '',
         },
         tags: data?.tags || [],
-        author: authorId
-      }
+        author: authorId,
+      };
       const response = await createPost(formData).unwrap();
-      if (response.status) {
+
+      if (response.status === true) {
         onClose();
         toast.success(response.message || 'Post created successfully!');
         methods.reset();
       } else {
-        toast.error(response.message || 'Failed to create post. Please try again.');
+        toast.error(response.data.message || 'Failed to create post. Please try again.');
       }
     } catch (error) {
       console.error(error);
-      toast(typeof error === 'string' ? error : error.message);
     }
   });
 
@@ -93,9 +96,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
             maxWidth: 600,
             bgcolor: 'background.paper',
             border: `1px solid ${theme.palette.primary.main}`,
-            borderRadius: 4,
+            borderRadius: 3,
             boxShadow: 24,
-            p: 3,
+            p: 2,
           }}
         >
           <Form methods={methods} onSubmit={onSubmit}>
@@ -150,12 +153,25 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
             />
 
             {/* Word count + helper */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pt: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
                 Share something meaningful
               </Typography>
-              <Typography variant="body2" color="text.disabled">
+              <Typography variant="caption" color="text.disabled">
                 {values.content.length}/280
+              </Typography>
+            </Box>
+
+            <Field.Text
+              name="authorName"
+              placeholder="Author Name..."
+              fullWidth
+              inputProps={{ maxLength: 280 }}
+              size="small"
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pt: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                you can skip if unknown
               </Typography>
             </Box>
 
@@ -204,7 +220,6 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
               <Button
                 fullWidth
                 type="submit"
-                disabled={isSubmitting}
                 sx={{
                   borderRadius: 3,
                   py: 1.5,
@@ -220,6 +235,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                       : '#e5e7eb',
                   },
                 }}
+                disabled={isSubmitting || values.content.length === 0}
               >
                 {isSubmitting ? (
                   <>
@@ -236,4 +252,4 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
       </Box>
     </Modal>
   );
-};
+}

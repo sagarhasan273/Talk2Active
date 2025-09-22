@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { Box, useTheme, IconButton, Typography } from '@mui/material';
 
@@ -17,7 +17,10 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
 }) => {
   const theme = useTheme();
 
-  const renderIcon = isActive && activeIcon ? activeIcon : icon;
+  const renderIcon = useMemo(
+    () => (isActive && activeIcon ? activeIcon : icon),
+    [isActive, activeIcon, icon]
+  );
 
   return (
     <IconButton

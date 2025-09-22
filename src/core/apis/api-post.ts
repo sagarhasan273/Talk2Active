@@ -1,3 +1,4 @@
+import type { ResponseType } from 'src/types/common';
 import type { CreatePostInput, PostResponseType } from 'src/types/post';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
@@ -28,7 +29,7 @@ export const postApi = createApi({
       providesTags: ['post-recall'],
     }),
 
-    createPost: builder.mutation<{ message: string; status: boolean }, Partial<CreatePostInput>>({
+    createPost: builder.mutation<ResponseType, Partial<CreatePostInput>>({
       query: (body) => ({
         url: `post/create`,
         method: 'POST',
@@ -37,7 +38,7 @@ export const postApi = createApi({
       invalidatesTags: ['post-recall'],
     }),
 
-    updatePostEngagementLike: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
+    updatePostEngagementLike: builder.mutation<ResponseType, Partial<any>>({
       query: (body) => ({
         url: `post-engagement/like`,
         method: 'POST',
@@ -46,10 +47,7 @@ export const postApi = createApi({
       invalidatesTags: [],
     }),
 
-    updatePostEngagementDisike: builder.mutation<
-      { message: string; status: boolean },
-      Partial<any>
-    >({
+    updatePostEngagementDisike: builder.mutation<ResponseType, Partial<any>>({
       query: (body) => ({
         url: `post-engagement/dislike`,
         method: 'POST',
@@ -58,7 +56,7 @@ export const postApi = createApi({
       invalidatesTags: [],
     }),
 
-    updatePostEngagementPin: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
+    updatePostEngagementPin: builder.mutation<ResponseType, Partial<any>>({
       query: (body) => ({
         url: `post-engagement/pinpost`,
         method: 'POST',

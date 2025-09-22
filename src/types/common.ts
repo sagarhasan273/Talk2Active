@@ -29,3 +29,16 @@ export type ISocialLink = {
   linkedin: string;
   twitter: string;
 };
+
+export type ResponseSuccess = {
+  status: boolean;
+  message: string;
+  data?: any;
+};
+export type ResponseError = {
+  status: boolean;
+  message: string;
+  data?: any;
+};
+
+export type ResponseType = ResponseSuccess | ResponseError;

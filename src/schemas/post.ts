@@ -12,6 +12,7 @@ export const MediaSchema = z.object({
     .max(500, 'Content cannot exceed 500 characters')
     .trim()
     .optional(),
+  authorName: z.string().optional().default(''),
 });
 
 // Engagement Schema
