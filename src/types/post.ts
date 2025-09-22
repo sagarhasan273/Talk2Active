@@ -1,5 +1,11 @@
-import { CreatePostSchema, MediaSchema, PostResponseSchema, PostSchema, UpdatePostSchema } from "src/schemas/post";
-import { z } from "zod";
+import type { z } from 'zod';
+import type {
+  PostSchema,
+  MediaSchema,
+  CreatePostSchema,
+  UpdatePostSchema,
+  PostResponseSchema,
+} from 'src/schemas/post';
 
 export interface Post {
   id: string;

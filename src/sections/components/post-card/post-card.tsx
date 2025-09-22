@@ -27,7 +27,6 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
         borderRadius: 2,
         backgroundColor: 'background.neutral',
         border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-        boxShadow: `0px 2px 8px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.28)}`,
         transition: 'box-shadow 0.3s ease-in-out',
       }}
     >
@@ -81,12 +80,11 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
         <Box
           display="flex"
           justifyContent="space-between"
-          pt={1}
           sx={{
             borderTop: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
           }}
         >
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row">
             <InteractionButton
               icon="fluent:heart-24-regular"
               activeIcon="fluent:heart-24-filled"
@@ -98,8 +96,8 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
               label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
             />
             <InteractionButton
-              icon="fluent:heart-broken-24-regular"
-              activeIcon="fluent:heart-broken-24-filled"
+              icon="mynaui:dislike"
+              activeIcon="mynaui:dislike-solid"
               count={post.engagement.dislikes}
               isActive={post.isDisliked}
               onClick={() => onDislike(post.id)}
@@ -109,13 +107,14 @@ const PostCardTemp: React.FC<PostCardProps> = ({ post, onLike, onDislike, onRepo
             />
           </Stack>
           <InteractionButton
-            icon="mdi:repost"
-            count={post.engagement.reposts}
-            isActive={post.isReposted}
+            icon="mynaui:pin"
+            activeIcon="mynaui:pin-solid"
+            count={post.engagement.pins}
+            isActive={post.isPinned}
             onClick={() => onRepost(post.id)}
-            activeColor="success"
-            hoverColor="success"
-            label={`${post.isReposted ? 'Undo dislike' : 'Dislike'} post`}
+            activeColor="info"
+            hoverColor="info"
+            label={`${post.isPinned ? 'Undo pin' : 'Pin'} post`}
           />
         </Box>
       </Box>

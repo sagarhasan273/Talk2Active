@@ -57,6 +57,15 @@ export const postApi = createApi({
       }),
       invalidatesTags: [],
     }),
+
+    updatePostEngagementPin: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
+      query: (body) => ({
+        url: `post-engagement/pinpost`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [],
+    }),
   }),
 });
 
@@ -65,4 +74,5 @@ export const {
   useCreatePostMutation,
   useUpdatePostEngagementLikeMutation,
   useUpdatePostEngagementDisikeMutation,
+  useUpdatePostEngagementPinMutation,
 } = postApi;

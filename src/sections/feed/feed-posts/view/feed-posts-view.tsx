@@ -10,6 +10,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 
 import {
   useGetPostsQuery,
+  useUpdatePostEngagementPinMutation,
   useUpdatePostEngagementLikeMutation,
   useUpdatePostEngagementDisikeMutation,
 } from 'src/core/apis/api-post';
@@ -35,6 +36,7 @@ export function FeedPostsView() {
 
   const [updatePostLike] = useUpdatePostEngagementLikeMutation();
   const [updatePostDislike] = useUpdatePostEngagementDisikeMutation();
+  const [updatePinpost] = useUpdatePostEngagementPinMutation();
 
   const handleLike = async (postId: string) => {
     setPosts((prevPosts) =>
@@ -94,7 +96,7 @@ export function FeedPostsView() {
     }
   };
 
-  const handleRepost = (postId: string) => {
+  const handlePinpost = async (postId: string) => {
     setPosts((prevPosts) => {
       const postToRepost = prevPosts.find((p) => p.id === postId);
       if (!postToRepost) return prevPosts;
@@ -103,12 +105,10 @@ export function FeedPostsView() {
         post.id === postId
           ? {
               ...post,
-              isReposted: !post.isReposted,
+              isPinned: !post.isPinned,
               engagement: {
                 ...post.engagement,
-                reposts: post.isReposted
-                  ? post.engagement.reposts - 1
-                  : post.engagement.reposts + 1,
+                pins: post.isPinned ? post.engagement.pins - 1 : post.engagement.pins + 1,
               },
             }
           : post
@@ -116,6 +116,15 @@ export function FeedPostsView() {
 
       return updatedPosts;
     });
+
+    try {
+      await updatePinpost({
+        postId,
+        userId: user?.id,
+      }).unwrap();
+    } catch (error) {
+      console.error('Failed to update Pin status:', error);
+    }
   };
 
   const handleCreatePost = (content: string) => {
@@ -172,14 +181,14 @@ export function FeedPostsView() {
               setSelectedCategory={setSelectedCategory}
               setIsCreatePostOpen={setIsCreatePostOpen}
             />
-            <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={3}>
+            <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={2}>
               {posts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={post}
                   onLike={handleLike}
                   onDislike={handleDislike}
-                  onRepost={handleRepost}
+                  onRepost={handlePinpost}
                 />
               ))}
             </Box>

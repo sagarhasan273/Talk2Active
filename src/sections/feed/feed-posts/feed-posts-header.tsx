@@ -1,8 +1,10 @@
-import { Plus, Quote } from 'lucide-react';
+import { Quote } from 'lucide-react';
 
 import { Box, Stack, useTheme, IconButton, Typography } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
+
+import { Iconify } from 'src/components/iconify';
 
 import { DiscoveryPanel } from '../feed-discovery-panal';
 import { CategorySidebarView } from '../feed-catagory-sidebar';
@@ -89,7 +91,7 @@ export function FeedPostsHeader({
             },
           }}
         >
-          <Plus size={24} />
+          <Iconify icon="gridicons:create" width={24} height={24} />
         </IconButton>
       </Stack>
     </Box>

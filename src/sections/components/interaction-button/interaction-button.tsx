@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, useTheme, IconButton, Typography } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
+
 import type { InteractionButtonProps } from './types';
 
 export const InteractionButton: React.FC<InteractionButtonProps> = ({
@@ -37,7 +38,7 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'inherit' }}>
-        <Iconify icon={renderIcon} width={20} height={20} sx={{ color: 'inherit' }} />
+        <Iconify icon={renderIcon} width={16} height={16} sx={{ color: 'inherit' }} />
         {count >= 0 && (
           <Typography
             variant="body2"
