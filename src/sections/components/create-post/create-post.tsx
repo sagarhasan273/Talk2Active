@@ -57,7 +57,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
       }
       const formData = {
         media: {
-          type: 'none' as 'none',
+          type: 'quote' as 'quote',
           content: data?.content || '',
           authorName: data?.authorName || '',
         },

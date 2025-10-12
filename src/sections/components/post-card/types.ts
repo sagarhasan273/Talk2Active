@@ -1,4 +1,4 @@
-import type { PostResponseType, Post as PostType } from 'src/types/post';
+import type { PostResponseType } from 'src/types/post';
 
 export interface PostCardProps {
   post: PostResponseType;

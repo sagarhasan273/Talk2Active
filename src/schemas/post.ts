@@ -4,7 +4,7 @@ import { PostTagsEnum } from 'src/enums/post';
 
 // Media Schema
 export const MediaSchema = z.object({
-  type: z.enum(['image', 'video', 'gif', 'none']).default('none'),
+  type: z.enum(['image', 'images', 'video', 'gif', 'caption', 'quote']).default('quote'),
   urls: z.array(z.string().url()).default([]).optional(),
   content: z
     .string()
@@ -12,7 +12,8 @@ export const MediaSchema = z.object({
     .max(500, 'Content cannot exceed 500 characters')
     .trim()
     .optional(),
-  authorName: z.string().optional().default(''),
+  authorName: z.string().default('').optional(),
+  videoUrl: z.string().url().default('').optional(),
 });
 
 // Engagement Schema
@@ -25,7 +26,7 @@ export const EngagementSchema = z.object({
 // Main Post Schema
 export const PostSchema = z.object({
   author: z.string(),
-  media: MediaSchema.default({ type: 'none', urls: [], content: '' }),
+  media: MediaSchema.default({ type: 'quote', urls: [], content: '' }),
   tags: z
     .array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
     .max(30, 'Cannot have more than 30 tags')
