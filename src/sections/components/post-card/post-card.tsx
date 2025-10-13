@@ -194,8 +194,8 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               <Iconify
                 icon="fontisto:quote-left"
                 sx={{
-                  width: 32,
-                  height: 32,
+                  width: 28,
+                  height: 28,
                   color: 'grey.500',
                   mb: 2,
                 }}
@@ -206,7 +206,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
                 sx={{
                   fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
                   lineHeight: 1.6,
-                  fontSize: 24,
+                  fontSize: 28,
                   mb: 2,
                 }}
               >
@@ -276,8 +276,8 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           </>
         }
         title={
-          <Typography variant="subtitle1" fontWeight="600">
-            <Typography fontWeight={600}>{post.authorDetails?.name}</Typography>
+          <Typography variant="subtitle1" fontWeight={600}>
+            {post.authorDetails?.name}
           </Typography>
         }
         subheader={

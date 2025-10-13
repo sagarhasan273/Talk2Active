@@ -155,7 +155,7 @@ export function FeedPostsView() {
               md: '1fr 300px',
               lg: '1fr 550px 1fr',
             },
-            px: { xs: 2, sm: 2 },
+            px: { xs: 0, sm: 2 },
             gridTemplateRows: 'auto',
             gap: 2,
             overflowY: 'hidden',

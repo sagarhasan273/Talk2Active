@@ -59,7 +59,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
         media: {
           type: 'quote' as 'quote',
           content: data?.content || '',
-          authorName: data?.authorName || '',
+          authorName: data?.authorName || 'Unknown',
         },
         tags: data?.tags || [],
         author: authorId,

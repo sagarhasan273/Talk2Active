@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { Box, useTheme, IconButton, Typography } from '@mui/material';
+import { Button, useTheme, Typography } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -17,15 +17,16 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
 }) => {
   const theme = useTheme();
 
-  const renderIcon = useMemo(
-    () => (isActive && activeIcon ? activeIcon : icon),
-    [isActive, activeIcon, icon]
-  );
-
   return (
-    <IconButton
+    <Button
       onClick={onClick}
-      aria-label={label}
+      startIcon={
+        isActive && activeIcon ? (
+          <Iconify icon={activeIcon} width={16} height={16} sx={{ color: 'inherit' }} />
+        ) : (
+          <Iconify icon={icon} width={16} height={16} sx={{ color: 'inherit' }} />
+        )
+      }
       disableRipple
       sx={{
         display: 'flex',
@@ -37,24 +38,22 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
         color: isActive ? theme.palette[activeColor].main : theme.palette.text.secondary,
         '&:hover': {
           color: `${theme.palette[activeColor].main} !important`,
+          background: 'transparent',
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'inherit' }}>
-        <Iconify icon={renderIcon} width={16} height={16} sx={{ color: 'inherit' }} />
-        {count >= 0 && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'inherit',
-              fontWeight: 500,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {count}
-          </Typography>
-        )}
-      </Box>
-    </IconButton>
+      {count >= 0 && (
+        <Typography
+          variant="body2"
+          sx={{
+            color: 'inherit',
+            fontWeight: 500,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {count}
+        </Typography>
+      )}
+    </Button>
   );
 };

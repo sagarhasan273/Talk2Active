@@ -40,7 +40,7 @@ body,
   min-height: 100vh;
   flex-direction: column;
   position: relative;
-} 
+}
 img {
   max-width: 100%;
   vertical-align: middle;
@@ -71,4 +71,3 @@ input[type='number']::-webkit-inner-spin-button {
 * {
   scrollbar-width: none;
 }
-
