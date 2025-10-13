@@ -416,7 +416,6 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
         <CardContent sx={{ py: 1, px: 2 }}>
           <Typography
             variant="body2"
-            color="grey.800"
             sx={{
               lineHeight: 1.6,
               whiteSpace: 'pre-wrap',

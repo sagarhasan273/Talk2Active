@@ -23,12 +23,14 @@ export default function PostTypeButtons({ onSelectType, selectedType }: PostType
       direction="row"
       spacing={2}
       sx={{
+        mb: 2,
         p: 2,
         border: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',
-        borderRadius: 2,
+        borderRadius: 1,
         boxShadow: 1,
+        flexWrap: 'wrap',
       }}
     >
       {buttons.map(({ type, icon: Icon, label, disabled }) => (
@@ -41,6 +43,7 @@ export default function PostTypeButtons({ onSelectType, selectedType }: PostType
           disabled={disabled}
           disableRipple
           sx={{
+            // mx: 'auto',
             textTransform: 'none',
             fontWeight: 500,
             borderRadius: 1,

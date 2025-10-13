@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { Search, PlayArrow } from '@mui/icons-material';
 import {
   Box,
   Dialog,
   Button,
-  TextField,
   Typography,
   DialogTitle,
   DialogContent,
   DialogActions,
   CircularProgress,
 } from '@mui/material';
+
+import { Field } from 'src/components/hook-form';
 
 interface YouTubeSelectorProps {
   open: boolean;
@@ -20,7 +22,9 @@ interface YouTubeSelectorProps {
 }
 
 export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProps) {
-  const [url, setUrl] = useState('');
+  const { watch, setValue } = useFormContext();
+  const values = watch();
+
   const [error, setError] = useState('');
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,15 +43,6 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
     return matched ? matched[1] : null;
   };
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value;
-    setUrl(newUrl);
-    setError('');
-
-    const videoId = extractYouTubeId(newUrl);
-    setPreviewId(videoId);
-  };
-
   const handlePreview = () => {
     if (!previewId) {
       setError('Please enter a valid YouTube URL');
@@ -62,13 +57,19 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
 
   const handleSelect = () => {
     if (previewId) {
-      onSelect(url);
-      setUrl('');
+      onSelect(values.videoUrl);
+      setValue('videoUrl', values.videoUrl);
       setPreviewId(null);
       onClose();
     }
   };
 
+  useEffect(() => {
+    setError('');
+    const videoId = extractYouTubeId(values.videoUrl);
+    setPreviewId(videoId);
+  }, [values.videoUrl]);
+  console.log('previewId', previewId);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -80,14 +81,25 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
 
       <DialogContent>
         <Box sx={{ mt: 2 }}>
-          <TextField
+          <Field.Text
             fullWidth
+            name="videoUrl"
             label="YouTube URL"
             placeholder="Paste YouTube link here..."
-            value={url}
-            onChange={handleUrlChange}
             error={!!error}
             helperText={error || 'Supports: youtube.com/watch?v=..., youtu.be/..., etc.'}
+            inputProps={{ maxLength: 280 }}
+            size="small"
+            sx={{
+              borderRadius: 1,
+              '& .MuiOutlinedInput-input': {
+                fontSize: {
+                  xs: '0.775rem',
+                  sm: '1rem',
+                },
+                borderRadius: 1,
+              },
+            }}
           />
         </Box>
 
@@ -135,7 +147,7 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handlePreview} disabled={!url} startIcon={<Search />}>
+        <Button onClick={handlePreview} disabled={!values.videoUrl} startIcon={<Search />}>
           Preview
         </Button>
         <Button onClick={handleSelect} variant="contained" disabled={!previewId || loading}>

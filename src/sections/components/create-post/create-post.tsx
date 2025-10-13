@@ -5,25 +5,23 @@ import { X, Sparkles } from 'lucide-react';
 
 import {
   Box,
-  Chip,
   Modal,
   Button,
   useTheme,
   Typography,
   IconButton,
-  capitalize,
   CircularProgress,
 } from '@mui/material';
 
 import { useUserContext } from 'src/routes/components';
 
-import { PostTagsEnum } from 'src/enums/post';
 import { useCreatePostMutation } from 'src/core/apis/api-post';
 
-import { Form, Field } from 'src/components/hook-form';
+import { Form } from 'src/components/hook-form';
 
 import PostTypeButtons from './post-type-buttons';
-import { PostCreator } from './youtube-video-create';
+import { PostQuoteCreate } from './post-quote-create';
+import { PostCreator } from './post-youtube-video-create';
 
 import type { PostTypeProps, CreatePostProps } from './types';
 
@@ -34,13 +32,20 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
 
   const [postType, setPostType] = useState<PostTypeProps>('quote');
 
+  const [createPost] = useCreatePostMutation();
+
+  const currentUser = {
+    name: user?.name || 'Anonymous',
+    avatar: user?.profilePhoto || 'No profile',
+    username: user?.username || 'anonymous',
+  };
+
   const defaultValues = {
     content: '',
     authorName: '',
     tags: [] as string[],
+    videoUrl: '',
   };
-
-  const [createPost] = useCreatePostMutation();
 
   const methods = useForm({
     defaultValues,
@@ -62,9 +67,10 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
       }
       const formData = {
         media: {
-          type: 'quote' as 'quote',
+          type: postType as PostTypeProps,
           content: data?.content || '',
-          authorName: data?.authorName || 'Unknown',
+          ...(postType === 'quote' && { authorName: data?.authorName || 'Unknown' }),
+          ...(postType === 'youtube' && { videoUrl: data?.videoUrl || '' }),
         },
         tags: data?.tags || [],
         author: authorId,
@@ -83,18 +89,6 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
     }
   });
 
-  const [posts, setPosts] = useState<any[]>([]);
-
-  const currentUser = {
-    name: 'John Doe',
-    avatar: '/avatars/john.jpg',
-    username: 'johndoe',
-  };
-
-  const handlePostCreate = (newPost: any) => {
-    setPosts((prev) => [newPost, ...prev]);
-  };
-
   return (
     <Modal open={isOpen} onClose={onClose}>
       <Box
@@ -111,9 +105,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
             position: 'relative',
             width: '100%',
             maxWidth: 600,
-            bgcolor: 'background.paper',
-            border: `1px solid ${theme.palette.primary.main}`,
-            borderRadius: 3,
+            bgcolor: 'background.neutral',
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
             boxShadow: 24,
             p: 2,
           }}
@@ -150,80 +144,12 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
 
             <PostTypeButtons onSelectType={(type) => setPostType(type)} selectedType={postType} />
 
-            {/* Textarea */}
-            <Field.Text
-              name="content"
-              placeholder="What's inspiring you today? Share a quote, thought, or wisdom..."
-              multiline
-              rows={5}
-              fullWidth
-              autoFocus
-              inputProps={{ maxLength: 280 }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  p: 0,
-                  borderRadius: 2,
-                },
-                '& .MuiOutlinedInput-input': {
-                  padding: 2,
-                  borderRadius: 2,
-                },
-              }}
-            />
-
-            {/* Word count + helper */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pt: 0.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                Share something meaningful
-              </Typography>
-              <Typography variant="caption" color="text.disabled">
-                {values.content.length}/280
-              </Typography>
-            </Box>
-
-            <Field.Text
-              name="authorName"
-              placeholder="Author Name..."
-              fullWidth
-              inputProps={{ maxLength: 280 }}
-              size="small"
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pt: 0.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                you can skip if unknown
-              </Typography>
-            </Box>
-
-            <Field.Autocomplete
-              name="tags"
-              placeholder="+ tags"
-              multiple
-              disableCloseOnSelect
-              options={Object.values(PostTagsEnum).map((option) => option)}
-              getOptionLabel={(option) => option}
-              renderOption={(props, option) => (
-                <li {...props} key={option}>
-                  {capitalize(option)}
-                </li>
-              )}
-              size="small"
-              renderTags={(selected, getTagProps) =>
-                selected.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={capitalize(option)}
-                    size="small"
-                    color="info"
-                    variant="soft"
-                  />
-                ))
-              }
-              sx={{ my: 2 }}
-            />
+            {/* Quote selector */}
+            {postType === 'quote' && <PostQuoteCreate currentUser={currentUser} />}
 
             {/* youtube video selector */}
-            <PostCreator onPostCreate={handlePostCreate} currentUser={currentUser} />
+            {postType === 'youtube' && <PostCreator currentUser={currentUser} />}
+
             {/* Actions */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
@@ -256,7 +182,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                       : '#e5e7eb',
                   },
                 }}
-                disabled={isSubmitting || values.content.length === 0}
+                disabled={isSubmitting || values.content.length === 0 || !values.videoUrl}
               >
                 {isSubmitting ? (
                   <>

@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { Close, PlayArrow } from '@mui/icons-material';
-import { Box, Card, Button, Avatar, TextField, IconButton, CardContent } from '@mui/material';
+import { Box, Card, Button, Avatar, IconButton, CardContent } from '@mui/material';
 
-import { YouTubeSelector } from './youtube-video-selector';
+import { Field } from 'src/components/hook-form';
+
+import { YouTubeSelector } from './post-youtube-video-selector';
 
 interface PostCreatorProps {
-  onPostCreate: (post: any) => void;
   currentUser: {
     name: string;
     avatar: string;
@@ -14,40 +16,19 @@ interface PostCreatorProps {
   };
 }
 
-export function PostCreator({ onPostCreate, currentUser }: PostCreatorProps) {
-  const [caption, setCaption] = useState('');
-  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+export function PostCreator({ currentUser }: PostCreatorProps) {
+  const { setValue, watch } = useFormContext();
+
+  const values = watch();
+
   const [youtubeSelectorOpen, setYoutubeSelectorOpen] = useState(false);
 
   const handleYouTubeSelect = (youtubeUrl: string) => {
-    setSelectedVideo(youtubeUrl);
+    setValue('videoUrl', youtubeUrl);
   };
 
   const handleRemoveVideo = () => {
-    setSelectedVideo(null);
-  };
-
-  const handleCreatePost = () => {
-    if (!caption.trim() && !selectedVideo) return;
-
-    const newPost = {
-      id: Date.now().toString(),
-      type: 'youtube',
-      author: currentUser,
-      timestamp: 'Just now',
-      content: {
-        caption: caption.trim(),
-        youtubeUrl: selectedVideo,
-      },
-      likes: 0,
-      comments: 0,
-      isLiked: false,
-      isBookmarked: false,
-    };
-
-    onPostCreate(newPost);
-    setCaption('');
-    setSelectedVideo(null);
+    setValue('videoUrl', '');
   };
 
   const extractVideoId = (url: string) => {
@@ -60,23 +41,57 @@ export function PostCreator({ onPostCreate, currentUser }: PostCreatorProps) {
   return (
     <>
       <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box display="flex" gap={2} alignItems="flex-start">
+        <CardContent
+          sx={{
+            p: {
+              xs: 1.5,
+              sm: 2,
+            },
+          }}
+        >
+          <Box
+            display="flex"
+            sx={{
+              gap: {
+                xs: 1,
+                sm: 2,
+              },
+            }}
+            alignItems="flex-start"
+          >
             <Avatar src={currentUser.avatar} alt={currentUser.name} />
 
             <Box flex={1}>
-              <TextField
-                fullWidth
+              <Field.Text
+                name="content"
+                placeholder="What's on your mind?"
                 multiline
                 rows={3}
-                placeholder="What's on your mind?"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                variant="outlined"
-                sx={{ mb: 2 }}
+                fullWidth
+                autoFocus
+                inputProps={{ maxLength: 280 }}
+                sx={{
+                  borderRadius: 1,
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    p: 0,
+                    borderRadius: 1,
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    padding: {
+                      xs: 1,
+                      sm: 2,
+                    },
+                    fontSize: {
+                      xs: '0.775rem',
+                      sm: '1rem',
+                    },
+                    borderRadius: 1,
+                  },
+                }}
               />
 
-              {selectedVideo && (
+              {values.videoUrl && (
                 <Box sx={{ position: 'relative', mb: 2 }}>
                   <Box
                     sx={{
@@ -91,7 +106,7 @@ export function PostCreator({ onPostCreate, currentUser }: PostCreatorProps) {
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${extractVideoId(selectedVideo)}`}
+                      src={`https://www.youtube.com/embed/${extractVideoId(values.videoUrl)}`}
                       title="Selected YouTube video"
                       frameBorder="0"
                       allowFullScreen
@@ -129,14 +144,6 @@ export function PostCreator({ onPostCreate, currentUser }: PostCreatorProps) {
                   variant="outlined"
                 >
                   Add YouTube Video
-                </Button>
-
-                <Button
-                  variant="contained"
-                  onClick={handleCreatePost}
-                  disabled={!caption.trim() && !selectedVideo}
-                >
-                  Post
                 </Button>
               </Box>
             </Box>

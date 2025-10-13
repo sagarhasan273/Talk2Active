@@ -5,3 +5,9 @@ export interface CreatePostProps {
 }
 
 export type PostTypeProps = 'quote' | 'youtube' | 'image' | 'video';
+
+export type PostContentProps = {
+  content: string;
+  authorName: string;
+  tags: string[];
+};
