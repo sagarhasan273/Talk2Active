@@ -154,7 +154,7 @@ export const text = {
 
 // Background
 export const background = {
-  light: createPaletteChannel({ paper: '#FFFFFF', default: '#FFFFFF', neutral: grey[200] }),
+  light: createPaletteChannel({ paper: '#FFFFFF', default: '#FFFFFF', neutral: '#f2f2f2' }),
   dark: createPaletteChannel({ paper: grey[800], default: grey[900], neutral: '#28323D' }),
 };
 

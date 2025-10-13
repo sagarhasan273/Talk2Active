@@ -3,3 +3,5 @@ export interface CreatePostProps {
   onClose: () => void;
   onSubmit: (content: string) => void;
 }
+
+export type PostTypeProps = 'quote' | 'youtube' | 'image' | 'video';

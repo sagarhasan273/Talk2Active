@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import YouTube from 'react-youtube';
 
-import { MoreHoriz, NavigateNext, NavigateBefore } from '@mui/icons-material';
+import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import {
   Box,
   Card,
   Menu,
   Stack,
+  Alert,
   Avatar,
   Button,
   MenuItem,
@@ -25,11 +27,32 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote';
+export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'youtube';
+// YouTube ID extraction utility
+const extractYouTubeId = (url: string): string | null => {
+  if (!url) return null;
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/,
+    /youtube\.com\/watch\?.*v=([^&?#]+)/,
+    /youtu\.be\/([^&?#]+)/,
+    /youtube\.com\/embed\/([^&?#]+)/,
+  ];
+
+  const found = patterns.map((pattern) => url.match(pattern)).find((match) => match && match[1]);
+  if (found && found[1]) {
+    return found[1];
+  }
+
+  return null;
+};
 
 export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoPlayer, setVideoPlayer] = useState<any>(null);
+
   const theme = useTheme();
 
   const formatTime = (date: Date) => {
@@ -59,6 +82,48 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  // Extract YouTube ID from URL
+  const youtubeId = post.media.videoUrl ? extractYouTubeId(post.media.videoUrl) : null;
+
+  // YouTube player options
+  const youtubeOpts = {
+    height: '390',
+    width: '100%',
+    playerVars: {
+      autoplay: 0,
+      controls: 1,
+      rel: 0,
+      showinfo: 0,
+      modestbranding: 1,
+    },
+  };
+
+  const onYouTubeReady = (event: any) => {
+    setVideoPlayer(event.target);
+  };
+
+  const onYouTubePlay = () => {
+    setIsPlaying(true);
+  };
+
+  const onYouTubePause = () => {
+    setIsPlaying(false);
+  };
+
+  const onYouTubeEnd = () => {
+    setIsPlaying(false);
+  };
+
+  const togglePlayPause = () => {
+    if (videoPlayer) {
+      if (isPlaying) {
+        videoPlayer.pauseVideo();
+      } else {
+        videoPlayer.playVideo();
+      }
+    }
   };
 
   const renderContent = () => {
@@ -187,7 +252,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               background:
                 theme.palette.mode === 'light'
                   ? `linear-gradient(135deg, ${theme.palette.grey[300]}, ${theme.palette.grey[200]})`
-                  : `linear-gradient(135deg, ${theme.palette.grey[900]}, ${theme.palette.grey[800]})`,
+                  : `linear-gradient(135deg, ${theme.palette.grey[900]}, ${theme.palette.grey[900]})`,
             }}
           >
             <Box sx={{ maxWidth: 'lg', mx: 'auto' }}>
@@ -226,6 +291,55 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           </Box>
         );
 
+      case 'youtube':
+        if (!youtubeId) {
+          return (
+            <Alert severity="error" sx={{ m: 2 }}>
+              Invalid YouTube URL
+            </Alert>
+          );
+        }
+
+        return (
+          <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'black' }}>
+            <YouTube
+              videoId={youtubeId}
+              opts={youtubeOpts}
+              onReady={onYouTubeReady}
+              onPlay={onYouTubePlay}
+              onPause={onYouTubePause}
+              onEnd={onYouTubeEnd}
+              style={{
+                width: '100%',
+                height: 'auto',
+              }}
+            />
+
+            {/* Custom play/pause button overlay */}
+            {videoPlayer && (
+              <IconButton
+                onClick={togglePlayPause}
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  },
+                  width: 64,
+                  height: 64,
+                }}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <Pause sx={{ fontSize: 32 }} /> : <PlayArrow sx={{ fontSize: 32 }} />}
+              </IconButton>
+            )}
+          </Box>
+        );
+
       case 'caption':
       default:
         return null;
@@ -240,7 +354,6 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
         '&:hover': {
           boxShadow: 4,
         },
-        border: `1px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
         transition: 'box-shadow 0.3s ease-in-out',
         overflow: 'hidden',
       }}
@@ -286,10 +399,15 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           </Typography>
         }
         sx={{
-          p: 1,
+          p: 1.5,
           '& .MuiCardHeader-action': {
             margin: 0,
             alignSelf: 'center',
+          },
+          '& .MuiCardHeader-content': {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.25,
           },
         }}
       />
@@ -316,7 +434,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
         display="flex"
         justifyContent="space-between"
         sx={{
-          py: 1,
+          py: 1.5,
         }}
       >
         <Stack direction="row">

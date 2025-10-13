@@ -1,5 +1,5 @@
-import React from 'react';
 import { toast } from 'sonner';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Sparkles } from 'lucide-react';
 
@@ -22,12 +22,17 @@ import { useCreatePostMutation } from 'src/core/apis/api-post';
 
 import { Form, Field } from 'src/components/hook-form';
 
-import type { CreatePostProps } from './types';
+import PostTypeButtons from './post-type-buttons';
+import { PostCreator } from './youtube-video-create';
+
+import type { PostTypeProps, CreatePostProps } from './types';
 
 export function CreatePost({ isOpen, onClose }: CreatePostProps) {
   const theme = useTheme();
 
   const { user } = useUserContext();
+
+  const [postType, setPostType] = useState<PostTypeProps>('quote');
 
   const defaultValues = {
     content: '',
@@ -77,6 +82,18 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
       console.error(error);
     }
   });
+
+  const [posts, setPosts] = useState<any[]>([]);
+
+  const currentUser = {
+    name: 'John Doe',
+    avatar: '/avatars/john.jpg',
+    username: 'johndoe',
+  };
+
+  const handlePostCreate = (newPost: any) => {
+    setPosts((prev) => [newPost, ...prev]);
+  };
 
   return (
     <Modal open={isOpen} onClose={onClose}>
@@ -130,6 +147,8 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                 <X size={20} color="#9ca3af" />
               </IconButton>
             </Box>
+
+            <PostTypeButtons onSelectType={(type) => setPostType(type)} selectedType={postType} />
 
             {/* Textarea */}
             <Field.Text
@@ -203,6 +222,8 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
               sx={{ my: 2 }}
             />
 
+            {/* youtube video selector */}
+            <PostCreator onPostCreate={handlePostCreate} currentUser={currentUser} />
             {/* Actions */}
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button

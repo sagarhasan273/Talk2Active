@@ -28,6 +28,7 @@ export function UserMain({ children, isNavHorizontal, sx, ...other }: MainProps)
         ...(isNavHorizontal && {
           '--layout-dashboard-content-pt': '40px',
         }),
+        backgroundColor: 'background.neutral',
         ...sx,
       }}
       {...other}

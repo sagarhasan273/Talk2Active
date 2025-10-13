@@ -4,7 +4,7 @@ import { PostTagsEnum } from 'src/enums/post';
 
 // Media Schema
 export const MediaSchema = z.object({
-  type: z.enum(['image', 'images', 'video', 'gif', 'caption', 'quote']).default('quote'),
+  type: z.enum(['image', 'images', 'gif', 'youtube', 'video', 'caption', 'quote']).default('quote'),
   urls: z.array(z.string().url()).default([]).optional(),
   content: z
     .string()
