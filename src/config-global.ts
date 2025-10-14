@@ -15,6 +15,7 @@ export type ConfigValue = {
     redirectPath: string;
   };
   mapboxApiKey: string;
+  youtubeApiKey: string;
 };
 
 // ----------------------------------------------------------------------
@@ -37,4 +38,5 @@ export const CONFIG: ConfigValue = {
    * Mapbox
    */
   mapboxApiKey: import.meta.env.VITE_MAPBOX_API_KEY ?? '',
+  youtubeApiKey: import.meta.env.VITE_YOUTUBE_API_KEY ?? 'YOUTUBE_API_KEY',
 };

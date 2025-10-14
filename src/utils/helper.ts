@@ -157,3 +157,45 @@ export const uploadImage = async (file: File): Promise<{ imageUrl: string } | un
     return undefined;
   }
 };
+
+export const extractYouTubeId = (inputUrl: string): string | null => {
+  // Remove any URL parameters that might interfere
+  const cleanUrl = inputUrl.split('&pp=')[0]; // Remove &pp parameter
+
+  const patterns = [
+    // Standard desktop URLs
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&?#]+)/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^&?#]+)/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([^&?#]+)/,
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/e\/([^&?#]+)/,
+
+    // Short URLs
+    /(?:https?:\/\/)?youtu\.be\/([^&?#]+)/,
+    /(?:https?:\/\/)?y2u\.be\/([^&?#]+)/,
+
+    // Mobile URLs
+    /(?:https?:\/\/)?m\.youtube\.com\/watch\?v=([^&?#]+)/,
+    /(?:https?:\/\/)?m\.youtube\.com\/embed\/([^&?#]+)/,
+
+    // Music URLs
+    /(?:https?:\/\/)?music\.youtube\.com\/watch\?v=([^&?#]+)/,
+    /(?:https?:\/\/)?music\.youtube\.com\/embed\/([^&?#]+)/,
+
+    // International domains
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\.[a-z]{2,3}\/watch\?v=([^&?#]+)/,
+    /(?:https?:\/\/)?youtu\.be\.[a-z]{2,3}\/([^&?#]+)/,
+  ];
+
+  const found = patterns.find((pattern) => {
+    const match = cleanUrl.match(pattern);
+    return match && match[1];
+  });
+  if (found) {
+    const match = cleanUrl.match(found);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+};

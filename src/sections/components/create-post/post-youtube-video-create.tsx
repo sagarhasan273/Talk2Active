@@ -4,6 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { Close, PlayArrow } from '@mui/icons-material';
 import { Box, Card, Button, Avatar, IconButton, CardContent } from '@mui/material';
 
+import { extractYouTubeId } from 'src/utils/helper';
+
 import { Field } from 'src/components/hook-form';
 
 import { YouTubeSelector } from './post-youtube-video-selector';
@@ -29,13 +31,6 @@ export function PostCreator({ currentUser }: PostCreatorProps) {
 
   const handleRemoveVideo = () => {
     setValue('videoUrl', '');
-  };
-
-  const extractVideoId = (url: string) => {
-    const match = url.match(
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/
-    );
-    return match ? match[1] : null;
   };
 
   return (
@@ -106,7 +101,7 @@ export function PostCreator({ currentUser }: PostCreatorProps) {
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${extractVideoId(values.videoUrl)}`}
+                      src={`https://www.youtube.com/embed/${extractYouTubeId(values.videoUrl)}`}
                       title="Selected YouTube video"
                       frameBorder="0"
                       allowFullScreen

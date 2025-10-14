@@ -19,6 +19,8 @@ import {
   CardContent,
 } from '@mui/material';
 
+import { extractYouTubeId } from 'src/utils/helper';
+
 import { varAlpha } from 'src/theme/styles';
 
 import { Iconify } from 'src/components/iconify';
@@ -29,23 +31,6 @@ import type { PostCardProps } from './types';
 
 export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'youtube';
 // YouTube ID extraction utility
-const extractYouTubeId = (url: string): string | null => {
-  if (!url) return null;
-
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/,
-    /youtube\.com\/watch\?.*v=([^&?#]+)/,
-    /youtu\.be\/([^&?#]+)/,
-    /youtube\.com\/embed\/([^&?#]+)/,
-  ];
-
-  const found = patterns.map((pattern) => url.match(pattern)).find((match) => match && match[1]);
-  if (found && found[1]) {
-    return found[1];
-  }
-
-  return null;
-};
 
 export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -85,7 +70,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   };
 
   // Extract YouTube ID from URL
-  const youtubeId = post.media.videoUrl ? extractYouTubeId(post.media.videoUrl) : null;
+  const youtubeId = post.media.videoUrl ? extractYouTubeId(post.media.videoUrl) : 'YQHsXMglC9A';
 
   // YouTube player options
   const youtubeOpts = {
@@ -97,6 +82,9 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
       rel: 0,
       showinfo: 0,
       modestbranding: 1,
+      playsinline: 1,
+      enablejsapi: 1,
+      origin: window.location.origin,
     },
   };
 

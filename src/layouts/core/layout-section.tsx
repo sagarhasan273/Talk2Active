@@ -3,6 +3,8 @@ import type { Theme, SxProps, CSSObject } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import GlobalStyles from '@mui/material/GlobalStyles';
 
+import { layoutClasses } from '../classes';
+
 // ----------------------------------------------------------------------
 
 export type LayoutSectionProps = {
@@ -40,7 +42,7 @@ export function LayoutSection({
     <>
       {inputGlobalStyles}
 
-      <Box sx={sx}>
+      <Box id="root__layout" className={layoutClasses.root} sx={sx}>
         {headerSection}
         {children}
         {footerSection}
