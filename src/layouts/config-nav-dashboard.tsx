@@ -1,4 +1,4 @@
-import { paths } from 'src/routes/paths';
+import { paths } from 'src/routes/route-paths';
 
 import { CONFIG } from 'src/config-global';
 

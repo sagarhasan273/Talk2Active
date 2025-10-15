@@ -5,7 +5,7 @@ import type {
   CreatePostSchema,
   UpdatePostSchema,
   PostResponseSchema,
-} from 'src/schemas/post';
+} from 'src/schemas/schema-post';
 
 export interface Post {
   id: string;

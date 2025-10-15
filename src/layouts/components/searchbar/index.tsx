@@ -13,8 +13,8 @@ import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Dialog, { dialogClasses } from '@mui/material/Dialog';
 
-import { useRouter } from 'src/routes/hooks';
-import { isExternalLink } from 'src/routes/utils';
+import { useRouter } from 'src/routes/route-hooks';
+import { isExternalLink } from 'src/routes/route-utils';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useEventListener } from 'src/hooks/use-event-listener';

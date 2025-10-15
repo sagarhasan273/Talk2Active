@@ -13,9 +13,9 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import { useTheme, useColorScheme } from '@mui/material/styles';
 
-import { paths } from 'src/routes/paths';
-import { useUserContext } from 'src/routes/components';
-import { useRouter, usePathname } from 'src/routes/hooks';
+import { paths } from 'src/routes/route-paths';
+import { useUserContext } from 'src/routes/route-components';
+import { useRouter, usePathname } from 'src/routes/route-hooks';
 
 import { varAlpha } from 'src/theme/styles';
 import { useUpdateUserStatusMutation } from 'src/core/apis/api-user';

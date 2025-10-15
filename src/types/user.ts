@@ -7,7 +7,7 @@ import type {
   UserAccountUpdateSchema,
   UserAccountActivateUpdateSchema,
   UserAccountSessionUpdateSchema,
-} from 'src/schemas/user';
+} from 'src/schemas/schema-user';
 
 // ----------------------------------------------------------------------
 export type UserType = zod.infer<typeof UserSchema>;

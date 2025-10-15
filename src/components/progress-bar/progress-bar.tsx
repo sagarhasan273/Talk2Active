@@ -3,7 +3,7 @@ import './styles.css';
 import NProgress from 'nprogress';
 import { useState, useEffect } from 'react';
 
-import { usePathname } from 'src/routes/hooks';
+import { usePathname } from 'src/routes/route-hooks';
 
 // ----------------------------------------------------------------------
 

@@ -10,9 +10,9 @@ import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/route-paths';
+import { useRouter } from 'src/routes/route-hooks';
+import { RouterLink } from 'src/routes/route-components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 

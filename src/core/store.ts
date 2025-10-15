@@ -1,8 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
+
 import { userApi } from './apis/api-user';
-import { settingsApi } from './apis/api-settings';
 import { postApi } from './apis/api-post';
 import { userSlice } from './slices/slice-user';
+import { settingsApi } from './apis/api-settings';
 
 const apis = [userApi, settingsApi, postApi];
 

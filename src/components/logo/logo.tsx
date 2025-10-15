@@ -4,7 +4,7 @@ import { forwardRef } from 'react';
 
 import Box from '@mui/material/Box';
 
-import { RouterLink } from 'src/routes/components';
+import { RouterLink } from 'src/routes/route-components';
 
 import { CONFIG } from 'src/config-global';
 

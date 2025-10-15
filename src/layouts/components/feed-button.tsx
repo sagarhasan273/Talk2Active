@@ -3,7 +3,7 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 import { SvgIcon } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 
-import { useRouter } from 'src/routes/hooks';
+import { useRouter } from 'src/routes/route-hooks';
 
 // ----------------------------------------------------------------------
 

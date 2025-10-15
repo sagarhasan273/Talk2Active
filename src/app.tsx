@@ -4,7 +4,7 @@ import 'src/global.css';
 
 import { Provider } from 'react-redux';
 
-import { Router } from 'src/routes/sections';
+import { Router } from 'src/routes/route-sections';
 
 import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
@@ -19,7 +19,7 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
-import { UserProvider } from './routes/components';
+import { UserProvider } from './routes/route-components';
 
 // ----------------------------------------------------------------------
 
