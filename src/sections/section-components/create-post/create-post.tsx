@@ -182,7 +182,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                       : '#e5e7eb',
                   },
                 }}
-                disabled={isSubmitting || values.content.length === 0 || !values.videoUrl}
+                disabled={isSubmitting || !(values.content.length !== 0 || values.videoUrl)}
               >
                 {isSubmitting ? (
                   <>

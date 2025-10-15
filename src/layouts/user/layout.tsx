@@ -62,11 +62,11 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* -- Language popover -- */}
                 <LanguageViewer language={user.secondaryLanguage} />
                 {/* -- Notifications popover -- */}
-                <NotificationsDrawer data={_notifications} />
+                <NotificationsDrawer data={_notifications} sx={{ mt: 0.5 }} />
                 {/* --Feed Page */}
-                <FeedButton />
+                <FeedButton sx={{ mt: 0.5 }} />
                 {/* --Voice Chat Page */}
-                <VoiceRoomButton />
+                <VoiceRoomButton sx={{ mt: 0.5 }} />
                 {/* -- Account drawer -- */}
                 <AccountDrawer data={_user_account} status={getUserStatus()} />
               </Box>

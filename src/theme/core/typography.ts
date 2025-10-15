@@ -36,12 +36,14 @@ export const typography: TypographyOptions = {
   fontWeightMedium: '500',
   fontWeightSemiBold: '600',
   fontWeightBold: '700',
+  userSelect: 'none',
   h1: {
     fontWeight: 800,
     lineHeight: 80 / 64,
     fontSize: pxToRem(40),
     fontFamily: secondaryFont,
     ...responsiveFontSizes({ sm: 52, md: 58, lg: 64 }),
+    userSelect: 'none',
   },
   h2: {
     fontWeight: 800,
@@ -49,6 +51,7 @@ export const typography: TypographyOptions = {
     fontSize: pxToRem(32),
     fontFamily: secondaryFont,
     ...responsiveFontSizes({ sm: 40, md: 44, lg: 48 }),
+    userSelect: 'none',
   },
   h3: {
     fontWeight: 700,
@@ -56,42 +59,50 @@ export const typography: TypographyOptions = {
     fontSize: pxToRem(24),
     fontFamily: secondaryFont,
     ...responsiveFontSizes({ sm: 26, md: 30, lg: 32 }),
+    userSelect: 'none',
   },
   h4: {
     fontWeight: 700,
     lineHeight: 1.5,
     fontSize: pxToRem(20),
     ...responsiveFontSizes({ sm: 20, md: 24, lg: 24 }),
+    userSelect: 'none',
   },
   h5: {
     fontWeight: 700,
     lineHeight: 1.5,
     fontSize: pxToRem(18),
     ...responsiveFontSizes({ sm: 19, md: 20, lg: 20 }),
+    userSelect: 'none',
   },
   h6: {
     fontWeight: 600,
     lineHeight: 24 / 15,
     fontSize: pxToRem(14),
     ...responsiveFontSizes({ sm: 18, md: 18, lg: 18 }),
+    userSelect: 'none',
   },
   subtitle1: {
     fontWeight: 600,
     lineHeight: 1.5,
     fontSize: pxToRem(16),
+    userSelect: 'none',
   },
   subtitle2: {
     fontWeight: 600,
     lineHeight: 22 / 14,
     fontSize: pxToRem(12),
+    userSelect: 'none',
   },
   body1: {
     lineHeight: 1.5,
     fontSize: pxToRem(14),
+    userSelect: 'none',
   },
   body2: {
     lineHeight: 20 / 12,
     fontSize: pxToRem(12),
+    userSelect: 'none',
   },
   caption: {
     lineHeight: 1.5,
@@ -102,11 +113,13 @@ export const typography: TypographyOptions = {
     lineHeight: 1.5,
     fontSize: pxToRem(10),
     textTransform: 'uppercase',
+    userSelect: 'none',
   },
   button: {
     fontWeight: 700,
     lineHeight: 22 / 12,
     fontSize: pxToRem(12),
     textTransform: 'unset',
+    userSelect: 'none',
   },
 };

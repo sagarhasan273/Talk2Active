@@ -30,7 +30,7 @@ export function FeedPostsView() {
 
   const [posts, setPosts] = useState<PostResponseType[]>([]);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string[]>(['all']);
 
   const { data, isLoading, isError } = useGetPostsQuery({ userId: user?.id || '' });
 

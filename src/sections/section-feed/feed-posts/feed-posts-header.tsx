@@ -16,8 +16,8 @@ export function FeedPostsHeader({
   setSelectedCategory,
   setIsCreatePostOpen,
 }: {
-  selectedCategory: string;
-  setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
+  selectedCategory: string[];
+  setSelectedCategory: React.Dispatch<React.SetStateAction<string[]>>;
   setIsCreatePostOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const theme = useTheme();
@@ -29,6 +29,10 @@ export function FeedPostsHeader({
     <Box
       sx={{
         m: 'auto',
+        px: {
+          xs: 2,
+          sm: 0,
+        },
         pb: 2,
         display: 'flex',
         flexGrow: 1,
@@ -80,18 +84,15 @@ export function FeedPostsHeader({
           onClick={() => setIsCreatePostOpen(true)}
           sx={{
             p: 1,
-            borderRadius: '50%',
-            color: 'white',
-            background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+            borderRadius: 1,
+            color: 'primary.main',
+            border: `2px solid`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            '&:hover': {
-              background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
-            },
           }}
         >
-          <Iconify icon="gridicons:create" width={24} height={24} />
+          <Iconify icon="ic:outline-post-add" width={24} height={24} />
         </IconButton>
       </Stack>
     </Box>

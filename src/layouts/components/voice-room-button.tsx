@@ -1,7 +1,7 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { SvgIcon } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
+import { SvgIcon, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/route-hooks';
 
@@ -17,15 +17,28 @@ export function VoiceRoomButton({ sx, ...other }: VoiceRoomButtonProps) {
   };
 
   return (
-    <IconButton onClick={handleClick} sx={{ color: 'primary.main', mr: 0.8, ...sx }} {...other}>
+    <IconButton
+      onClick={handleClick}
+      sx={{
+        color: 'primary.main',
+        mr: 0.8,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...sx,
+      }}
+      {...other}
+    >
       <SvgIcon>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 22">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
           <path
             fill="currentColor"
-            d="M9 5a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c2.67 0 8 1.34 8 4v2H1v-2c0-2.66 5.33-4 8-4m7.76-9.64c2.02 2.2 2.02 5.25 0 7.27l-1.68-1.69c.84-1.18.84-2.71 0-3.89zM20.07 2c3.93 4.05 3.9 10.11 0 14l-1.63-1.63c2.77-3.18 2.77-7.72 0-10.74z"
+            d="m20.713 8.128l-.246.566a.506.506 0 0 1-.934 0l-.246-.566a4.36 4.36 0 0 0-2.22-2.25l-.759-.339a.53.53 0 0 1 0-.963l.717-.319a4.37 4.37 0 0 0 2.251-2.326l.253-.611a.506.506 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.718.32a.53.53 0 0 1 0 .962l-.76.338a4.36 4.36 0 0 0-2.219 2.251M22 12q0-.668-.085-1.312A6 6 0 0 1 20 11a6 6 0 0 1-3-.803V15h-2V9h.528A5.98 5.98 0 0 1 14 5c0-.953.222-1.854.617-2.654A10 10 0 0 0 12 2C6.477 2 2 6.477 2 12a9.97 9.97 0 0 0 2.929 7.071L2 22h10c5.523 0 10-4.477 10-10M11 6h2v12h-2zm-4 9V9h2v6z"
           />
         </svg>
       </SvgIcon>
+      <Typography variant="caption">Chat</Typography>
     </IconButton>
   );
 }

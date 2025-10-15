@@ -382,7 +382,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           </Typography>
         }
         subheader={
-          <Typography variant="caption">
+          <Typography variant="caption" sx={{ userSelect: 'text' }}>
             @{post.authorDetails?.username} · {formatTime(new Date(post.createdAt))}
           </Typography>
         }
@@ -407,6 +407,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
             sx={{
               lineHeight: 1.6,
               whiteSpace: 'pre-wrap',
+              userSelect: 'text',
             }}
           >
             {post.media.content}

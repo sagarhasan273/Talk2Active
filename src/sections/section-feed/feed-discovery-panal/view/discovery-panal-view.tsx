@@ -1,20 +1,10 @@
 import React from 'react';
-import {
-  Users,
-  Award,
-  Clock,
-  Sparkles,
-  Calendar,
-  TrendingUp,
-  ArrowRight,
-  CheckCircle,
-} from 'lucide-react';
+import { Users, Award, Clock, Sparkles, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
 
 import {
   Box,
   Card,
   Chip,
-  Grid,
   List,
   Stack,
   Paper,
@@ -33,18 +23,13 @@ import {
   ListItemButton,
 } from '@mui/material';
 
+import EngagementProfileCard from '../engagement-profile-card';
+
 const GradientBox = styled(Box)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   color: theme.palette.common.white,
   borderRadius: theme.shape.borderRadius * 2,
   padding: theme.spacing(3),
-}));
-
-const StatCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  textAlign: 'center',
-  borderRadius: theme.shape.borderRadius * 2,
-  boxShadow: 'none',
 }));
 
 export const DiscoveryPanel: React.FC = () => {
@@ -88,13 +73,6 @@ export const DiscoveryPanel: React.FC = () => {
     },
   ];
 
-  const todaysStats = {
-    totalPosts: '1,247',
-    activeUsers: '892',
-    newQuotes: '156',
-    engagement: '94%',
-  };
-
   const upcomingEvents = [
     {
       title: 'Wisdom Wednesday Live',
@@ -120,85 +98,8 @@ export const DiscoveryPanel: React.FC = () => {
         gap: theme.spacing(3),
       }}
     >
-      {/* Today's Stats */}
-      <Card sx={{ backgroundColor: 'background.neutral' }}>
-        <CardHeader
-          avatar={
-            <IconButton
-              sx={{
-                background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
-                color: 'common.white',
-              }}
-            >
-              <TrendingUp size={20} />
-            </IconButton>
-          }
-          title="Today's Activity"
-          subheader="Live community stats"
-          titleTypographyProps={{ fontWeight: 'bold' }}
-        />
-        <Divider />
-        <CardContent sx={{ p: 3 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <StatCard
-                sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.secondary.main}, ${theme.palette.secondary.light})`,
-                }}
-              >
-                <Typography variant="h5" fontWeight="bold" color="secondary.darker">
-                  {todaysStats.totalPosts}
-                </Typography>
-                <Typography variant="caption" color="common.black">
-                  Posts Today
-                </Typography>
-              </StatCard>
-            </Grid>
-            <Grid item xs={6}>
-              <StatCard
-                sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.cyan.main}, ${theme.palette.cyan.light})`,
-                }}
-              >
-                <Typography variant="h5" fontWeight="bold" color="info.dark">
-                  {todaysStats.activeUsers}
-                </Typography>
-                <Typography variant="caption" color="common.black">
-                  Active Users
-                </Typography>
-              </StatCard>
-            </Grid>
-            <Grid item xs={6}>
-              <StatCard
-                sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.success.main}, ${theme.palette.success.light})`,
-                }}
-              >
-                <Typography variant="h5" fontWeight="bold" color="success.darker">
-                  {todaysStats.newQuotes}
-                </Typography>
-                <Typography variant="caption" color="common.black">
-                  New Quotes
-                </Typography>
-              </StatCard>
-            </Grid>
-            <Grid item xs={6}>
-              <StatCard
-                sx={{
-                  background: `linear-gradient(to bottom right, ${theme.palette.warning.light}, ${theme.palette.warning.lighter})`,
-                }}
-              >
-                <Typography variant="h5" fontWeight="bold" color="warning.dark">
-                  {todaysStats.engagement}
-                </Typography>
-                <Typography variant="caption" color="common.black">
-                  Engagement
-                </Typography>
-              </StatCard>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+      {/* Engagement Profile Card */}
+      <EngagementProfileCard />
 
       {/* Trending Topics */}
       <Card sx={{ backgroundColor: 'background.neutral' }}>
@@ -253,7 +154,7 @@ export const DiscoveryPanel: React.FC = () => {
                     </Stack>
                   }
                   primaryTypographyProps={{ fontWeight: 'medium' }}
-                  secondaryTypographyProps={{ component: "div" }}
+                  secondaryTypographyProps={{ component: 'div' }}
                 />
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

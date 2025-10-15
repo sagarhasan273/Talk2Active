@@ -123,18 +123,38 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
         component={m.button}
         whileTap="tap"
         onClick={drawer.onTrue}
-        sx={{ color: 'primary.main', ...sx }}
+        sx={{
+          color: 'primary.main',
+          display: 'flex',
+          flexDirection: 'column',
+          ustifyContent: 'center',
+          alignItems: 'center',
+          ...sx,
+        }}
         {...other}
       >
-        <Badge badgeContent={totalUnRead} color="error">
+        <Badge
+          badgeContent={totalUnRead}
+          color="error"
+          sx={{
+            '& .MuiBadge-badge': {
+              fontSize: '0.6rem',
+              height: '14px',
+              width: '14px',
+              minWidth: '14px',
+            },
+          }}
+        >
           <SvgIcon>
-            {/* https://icon-sets.iconify.design/solar/bell-bing-bold-duotone/ */}
-            <path
-              fill="primary"
-              d="M8.352 20.242A4.63 4.63 0 0 0 12 22a4.63 4.63 0 0 0 3.648-1.758a27.2 27.2 0 0 1-7.296 0M18.75 9v.704c0 .845.24 1.671.692 2.374l1.108 1.723c1.011 1.574.239 3.713-1.52 4.21a25.8 25.8 0 0 1-14.06 0c-1.759-.497-2.531-2.636-1.52-4.21l1.108-1.723a4.4 4.4 0 0 0 .693-2.374V9c0-3.866 3.022-7 6.749-7s6.75 3.134 6.75 7"
-            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M3 18a1 1 0 0 1-.894-1.447L4 12.763V10a8 8 0 1 1 16 0v2.764l1.894 3.789A1 1 0 0 1 21 18zm9 4a4 4 0 0 1-3.874-3h7.748A4 4 0 0 1 12 22"
+              />
+            </svg>
           </SvgIcon>
         </Badge>
+        <Typography variant="caption">Notifications</Typography>
       </IconButton>
 
       <Drawer

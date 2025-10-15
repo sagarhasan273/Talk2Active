@@ -22,72 +22,28 @@ import {
 
 import {
   Box,
+  Grid,
   Card,
   List,
+  alpha,
   Button,
-  styled,
   ListItem,
   useTheme,
   IconButton,
   Typography,
-  ListItemIcon,
-  ListItemText,
   ListItemButton,
 } from '@mui/material';
 
 interface CategorySidebarProps {
-  selectedCategory: string;
-  onCategorySelect: (category: string) => void;
+  selectedCategory: string[];
+  onCategorySelect: React.Dispatch<React.SetStateAction<string[]>>;
 }
-
-const CategoryButton = styled(Button)(({ theme }) => ({
-  justifyContent: 'flex-start',
-  padding: theme.spacing(1.5, 2),
-  borderRadius: theme.shape.borderRadius * 2,
-  textTransform: 'none',
-  width: '100%',
-  marginBottom: 1.5,
-  marginTop: 1.5,
-  transition: theme.transitions.create(['background', 'transform', 'box-shadow'], {
-    duration: theme.transitions.duration.standard,
-  }),
-  '&.selected': {
-    background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-    color: theme.palette.common.white,
-    boxShadow: theme.shadows[3],
-    '& .MuiListItemIcon-root': {
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    },
-    '& .MuiSvgIcon-root': {
-      color: theme.palette.common.white,
-    },
-  },
-  '&:not(.selected)': {
-    color: theme.palette.text.secondary,
-    '&:hover': {
-      backgroundColor: theme.palette.action.hover,
-      color: theme.palette.text.primary,
-    },
-  },
-}));
-
-const CategoryIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(1),
-  borderRadius: theme.shape.borderRadius,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  transition: theme.transitions.create(['background', 'transform'], {
-    duration: theme.transitions.duration.standard,
-  }),
-}));
 
 export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
   selectedCategory,
   onCategorySelect,
 }) => {
   const theme = useTheme();
-
   const categories = [
     {
       key: 'all',
@@ -153,18 +109,18 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.cyan.light,
     },
     {
-      key: 'health',
-      label: 'Health & Fitness',
-      icon: Dumbbell,
-      color: theme.palette.orange.main,
-      bgColor: theme.palette.orange.light,
-    },
-    {
       key: 'travel',
       label: 'Travel',
       icon: Plane,
       color: theme.palette.teal.main,
       bgColor: theme.palette.teal.light,
+    },
+    {
+      key: 'health',
+      label: 'Health & Fitness',
+      icon: Dumbbell,
+      color: theme.palette.orange.main,
+      bgColor: theme.palette.orange.light,
     },
     {
       key: 'music',
@@ -174,13 +130,6 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.violet.light,
     },
     {
-      key: 'photography',
-      label: 'Photography',
-      icon: Camera,
-      color: theme.palette.emerald.main,
-      bgColor: theme.palette.emerald.light,
-    },
-    {
       key: 'gaming',
       label: 'Gaming',
       icon: Gamepad2,
@@ -188,11 +137,11 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.rose.light,
     },
     {
-      key: 'books',
-      label: 'Books & Learning',
-      icon: BookOpen,
-      color: theme.palette.amber.main,
-      bgColor: theme.palette.amber.light,
+      key: 'photography',
+      label: 'Photography',
+      icon: Camera,
+      color: theme.palette.emerald.main,
+      bgColor: theme.palette.emerald.light,
     },
     {
       key: 'lifestyle',
@@ -201,10 +150,19 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       color: theme.palette.stone.main,
       bgColor: theme.palette.stone.light,
     },
+    {
+      key: 'books',
+      label: 'Books & Learning',
+      icon: BookOpen,
+      color: theme.palette.amber.main,
+      bgColor: theme.palette.amber.light,
+    },
   ];
 
   return (
-    <Card sx={{ flex: '1 1 auto', backgroundColor: 'background.neutral' }}>
+    <Card
+      sx={{ flex: '1 1 auto', borderRadius: { xs: 0, sm: 1 }, backgroundColor: 'background.paper' }}
+    >
       {/* Header */}
       <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -229,57 +187,53 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       </Box>
 
       {/* Categories */}
-      <Box sx={{ p: 2 }}>
-        <List disablePadding>
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isSelected = selectedCategory === category.key;
-
-            return (
-              <ListItem key={category.key} disablePadding>
-                <CategoryButton
-                  className={isSelected ? 'selected' : ''}
-                  onClick={() => onCategorySelect(category.key)}
-                  sx={{ p: 3 }}
-                >
-                  <ListItemIcon sx={{ minWidth: 'auto', mr: 2, borderRadius: 1 }}>
-                    <CategoryIconWrapper
-                      sx={{
-                        backgroundColor: isSelected
-                          ? 'rgba(155, 154, 154, 0.27)'
-                          : category.bgColor,
-                      }}
-                    >
-                      <Icon
-                        size={18}
-                        color={isSelected ? theme.palette.common.white : category.color}
-                      />
-                    </CategoryIconWrapper>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={category.label}
-                    primaryTypographyProps={{
-                      variant: 'body2',
-                      fontWeight: isSelected ? 'bold' : 'medium',
-                    }}
+      <Box sx={{ p: { xs: 1, sm: 2 }, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        {categories.map((category) => {
+          const Icon = category.icon;
+          const isSelected = selectedCategory.includes(category.key);
+          return (
+            <Grid key={category.key} item xs={6}>
+              <Button
+                startIcon={
+                  <Icon
+                    size={18}
+                    color={isSelected ? theme.palette.common.white : category.color}
                   />
-                  {isSelected && (
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        backgroundColor: 'common.white',
-                        borderRadius: '50%',
-                        ml: 1,
-                        animation: 'pulse 1.5s infinite',
-                      }}
-                    />
-                  )}
-                </CategoryButton>
-              </ListItem>
-            );
-          })}
-        </List>
+                }
+                variant="outlined"
+                sx={{
+                  width: 'fit-content',
+                  justifyContent: 'flex-start',
+                  color: isSelected ? theme.palette.common.white : 'primary',
+                  textTransform: 'none',
+                  fontWeight: isSelected ? 'bold' : 'normal',
+                  bgcolor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.1),
+                  borderColor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.3),
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    color: 'primary',
+                    bgcolor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.2),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+                onClick={() =>
+                  onCategorySelect((prev) => {
+                    if (category.key === 'all') {
+                      return ['all'];
+                    }
+                    if (prev.includes(category.key)) {
+                      return prev.filter((cat) => cat !== category.key && cat !== 'all');
+                    }
+                    // Add category if not present and not 'all'
+                    return [...prev.filter((cat) => cat !== 'all'), category.key];
+                  })
+                }
+              >
+                {category.label}
+              </Button>
+            </Grid>
+          );
+        })}
       </Box>
 
       {/* Trending Topics */}
