@@ -388,9 +388,9 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                     >
                       {room.participants
                         .slice(0, showAll ? room.participants.length : visibleCount)
-                        .map((participant) => (
+                        .map((participant, index) => (
                           <Badge
-                            key={participant.id}
+                            key={index}
                             overlap="circular"
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                             badgeContent={

@@ -1,5 +1,7 @@
 import type { NavSectionProps } from 'src/components/nav-section';
 
+import { useState } from 'react';
+
 import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
 
@@ -37,6 +39,8 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
 
   const { user } = useMockedUser();
 
+  const [active, setActive] = useState<string>('');
+
   const layoutQuery: Breakpoint = 'lg';
 
   return (
@@ -64,9 +68,17 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer data={_notifications} sx={{ mt: 0.5 }} />
                 {/* --Feed Page */}
-                <FeedButton sx={{ mt: 0.5 }} />
+                <FeedButton
+                  active={active}
+                  onClickActive={() => setActive('home')}
+                  sx={{ mt: 0.5 }}
+                />
                 {/* --Voice Chat Page */}
-                <VoiceRoomButton sx={{ mt: 0.5 }} />
+                <VoiceRoomButton
+                  active={active}
+                  onClickActive={() => setActive('voice-room')}
+                  sx={{ mt: 0.5 }}
+                />
                 {/* -- Account drawer -- */}
                 <AccountDrawer data={_user_account} status={getUserStatus()} />
               </Box>

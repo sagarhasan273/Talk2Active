@@ -1,16 +1,14 @@
 import React from 'react';
-import { Users, Award, Clock, Sparkles, Calendar, ArrowRight, CheckCircle } from 'lucide-react';
+import { Users, Clock, Calendar, CheckCircle } from 'lucide-react';
 
 import {
   Box,
   Card,
   Chip,
   List,
-  Stack,
   Paper,
   Button,
   Avatar,
-  styled,
   Divider,
   ListItem,
   useTheme,
@@ -18,30 +16,16 @@ import {
   IconButton,
   Typography,
   CardContent,
-  ListItemText,
   ListItemAvatar,
   ListItemButton,
 } from '@mui/material';
 
-import EngagementProfileCard from '../engagement-profile-card';
+import { Iconify } from 'src/components/iconify';
 
-const GradientBox = styled(Box)(({ theme }) => ({
-  background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-  color: theme.palette.common.white,
-  borderRadius: theme.shape.borderRadius * 2,
-  padding: theme.spacing(3),
-}));
+import EngagementProfileCard from '../engagement-profile-card';
 
 export const DiscoveryPanel: React.FC = () => {
   const theme = useTheme();
-
-  const trendingTopics = [
-    { tag: '#MondayMotivation', posts: '2.4K', growth: '+12%' },
-    { tag: '#WisdomWednesday', posts: '1.8K', growth: '+8%' },
-    { tag: '#ThoughtfulThursday', posts: '1.2K', growth: '+15%' },
-    { tag: '#SuccessStories', posts: '956', growth: '+5%' },
-    { tag: '#LifeLessons', posts: '743', growth: '+22%' },
-  ];
 
   const suggestedUsers = [
     {
@@ -101,84 +85,10 @@ export const DiscoveryPanel: React.FC = () => {
       {/* Engagement Profile Card */}
       <EngagementProfileCard />
 
-      {/* Trending Topics */}
-      <Card sx={{ backgroundColor: 'background.neutral' }}>
-        <CardHeader
-          avatar={
-            <IconButton
-              sx={{
-                background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                color: 'common.white',
-              }}
-            >
-              <Sparkles size={20} />
-            </IconButton>
-          }
-          action={
-            <Button color="primary" size="small">
-              View all
-            </Button>
-          }
-          title="Trending Now"
-          subheader="Popular topics"
-          titleTypographyProps={{ fontWeight: 'bold' }}
-        />
-        <Divider />
-        <CardContent sx={{ p: 1 }}>
-          <List disablePadding>
-            {trendingTopics.map((topic, index) => (
-              <ListItemButton key={topic.tag} sx={{ borderRadius: 2 }}>
-                <ListItemAvatar>
-                  <Avatar
-                    sx={{
-                      background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.darker})`,
-                      color: 'common.white',
-                      fontSize: theme.typography.body2.fontSize,
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    {index + 1}
-                  </Avatar>
-                </ListItemAvatar>
-
-                <ListItemText
-                  primary={topic.tag}
-                  secondary={
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="body2" color="text.secondary">
-                        {topic.posts} posts
-                      </Typography>
-                      <Typography variant="body2" color="success.main" fontWeight="medium">
-                        {topic.growth}
-                      </Typography>
-                    </Stack>
-                  }
-                  primaryTypographyProps={{ fontWeight: 'medium' }}
-                  secondaryTypographyProps={{ component: 'div' }}
-                />
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ArrowRight size={16} color={theme.palette.action.active} />
-                </Box>
-              </ListItemButton>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
-
       {/* Suggested Users */}
-      <Card sx={{ backgroundColor: 'background.neutral' }}>
+      <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
         <CardHeader
-          avatar={
-            <IconButton
-              sx={{
-                background: `linear-gradient(to right, ${theme.palette.success.main}, ${theme.palette.info.main})`,
-                color: 'common.white',
-              }}
-            >
-              <Users size={20} />
-            </IconButton>
-          }
+          avatar={<Iconify icon="foundation:social-myspace" width={24} height={24} />}
           title="Who to Follow"
           subheader="Discover new voices"
           titleTypographyProps={{ fontWeight: 'bold' }}
@@ -294,36 +204,6 @@ export const DiscoveryPanel: React.FC = () => {
           </List>
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <GradientBox>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Award size={24} color="inherit" />
-          <Box>
-            <Typography fontWeight="bold">Share Your Wisdom</Typography>
-            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-              Inspire others today
-            </Typography>
-          </Box>
-        </Box>
-        <Button
-          fullWidth
-          variant="contained"
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(10px)',
-            color: 'common.white',
-            py: 1.5,
-            borderRadius: 2,
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              transform: 'scale(1.05)',
-            },
-          }}
-        >
-          Create Post
-        </Button>
-      </GradientBox>
     </Box>
   );
 };

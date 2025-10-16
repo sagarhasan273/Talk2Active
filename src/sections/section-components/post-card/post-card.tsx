@@ -19,11 +19,14 @@ import {
   CardContent,
 } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 
 import { Iconify } from 'src/components/iconify';
+import { ImageViewer } from 'src/components/image';
 
 import { InteractionButton } from '../interaction-button';
 
@@ -33,6 +36,8 @@ export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'you
 // YouTube ID extraction utility
 
 export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
+  const imageOpen = useBoolean();
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -304,7 +309,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
             />
 
             {/* Custom play/pause button overlay */}
-            {videoPlayer && (
+            {!videoPlayer && (
               <IconButton
                 onClick={togglePlayPause}
                 sx={{
@@ -356,6 +361,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               height: 48,
               border: `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
             }}
+            onClick={imageOpen.onTrue}
           />
         }
         action={
@@ -458,6 +464,11 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           label={`${post.isPinned ? 'Undo pin' : 'Pin'} post`}
         />
       </Box>
+      <ImageViewer
+        open={imageOpen.value}
+        onClose={() => imageOpen.onFalse()}
+        imageUrl={post.authorDetails?.profilePhoto}
+      />
     </Card>
   );
 }

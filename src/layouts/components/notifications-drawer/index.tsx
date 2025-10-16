@@ -129,8 +129,10 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
           flexDirection: 'column',
           ustifyContent: 'center',
           alignItems: 'center',
+          ...(drawer.value && { color: 'primary.dark' }),
           ...sx,
         }}
+        disableRipple
         {...other}
       >
         <Badge

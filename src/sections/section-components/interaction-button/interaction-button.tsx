@@ -22,9 +22,9 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
       onClick={onClick}
       startIcon={
         isActive && activeIcon ? (
-          <Iconify icon={activeIcon} width={16} height={16} sx={{ color: 'inherit' }} />
+          <Iconify icon={activeIcon} width={20} height={20} sx={{ color: 'inherit' }} />
         ) : (
-          <Iconify icon={icon} width={16} height={16} sx={{ color: 'inherit' }} />
+          <Iconify icon={icon} width={20} height={20} sx={{ color: 'inherit' }} />
         )
       }
       disableRipple

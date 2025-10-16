@@ -11,7 +11,8 @@ export interface Profile {
   id: string;
   name: string;
   username: string;
-  avatar: string;
+  profilePhoto: string;
+  coverPhoto: string;
   bio?: string;
   followers: number;
   following: number;
@@ -28,7 +29,10 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
     id: 'user123',
     name: 'John Doe',
     username: 'johndoe',
-    avatar: '/static/mock-images/avatars/avatar_1.jpg',
+    profilePhoto:
+      'https://res.cloudinary.com/dsuefoemt/image/upload/v1753577855/user_profile/tpewo4h8dzcbdvgyzqm9.jpg',
+    coverPhoto:
+      'https://res.cloudinary.com/dsuefoemt/image/upload/v1753578050/user_profile/piwpps7rifd9u1vfjcal.jpg',
     bio: 'Passionate about sharing wisdom and inspiring others.',
     followers: 1200,
     following: 300,
@@ -56,8 +60,22 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
     >
       <Box
         sx={{
-          height: 96,
-          background: 'linear-gradient(to right, #e2e8f0, #cbd5e1)',
+          height: 100,
+          background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
+          backgroundImage: `url(${profile.coverPhoto})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.2), transparent)',
+          },
         }}
       />
 
@@ -72,7 +90,7 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
           }}
         >
           <Avatar
-            src={profile.avatar}
+            src={profile.profilePhoto}
             alt={profile.name}
             sx={{
               width: 96,
@@ -156,7 +174,6 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
           </Box>
         </Box>
       </CardContent>
-
       <EngagementProfileShift counter={counter} />
     </Card>
   );

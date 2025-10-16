@@ -7,13 +7,14 @@ import { useRouter } from 'src/routes/route-hooks';
 
 // ----------------------------------------------------------------------
 
-type FeedButtonProps = IconButtonProps;
+type FeedButtonProps = IconButtonProps & { active: string; onClickActive: () => void };
 
-export function FeedButton({ sx, ...other }: FeedButtonProps) {
+export function FeedButton({ sx, active, onClickActive, ...other }: FeedButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
     router.push('');
+    onClickActive();
   };
 
   return (
@@ -25,6 +26,7 @@ export function FeedButton({ sx, ...other }: FeedButtonProps) {
         flexDirection: 'column',
         ustifyContent: 'center',
         alignItems: 'center',
+        ...(active === 'home' && { color: 'primary.dark' }),
         ...sx,
       }}
       disableRipple

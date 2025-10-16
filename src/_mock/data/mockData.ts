@@ -81,7 +81,7 @@ export const mockUsers: User[] = [
 
 export const mockRooms: Room[] = [
   {
-    id: '1',
+    id: 'asdfasd1',
     name: 'Spanish Conversation Circle',
     description:
       'Practice Spanish with native speakers and learners. We focus on everyday conversations and cultural exchange.',
@@ -132,7 +132,7 @@ export const mockRooms: Room[] = [
     lastActivity: new Date(Date.now() - 300000),
   },
   {
-    id: '2',
+    id: 'asdfasdf2',
     name: 'English Grammar Workshop',
     description:
       'Intensive grammar practice with AI assistance. Perfect for intermediate to advanced learners.',
@@ -169,7 +169,7 @@ export const mockRooms: Room[] = [
     lastActivity: new Date(Date.now() - 600000),
   },
   {
-    id: '3',
+    id: 'adfadsf3',
     name: 'French Pronunciation Lab',
     description:
       'Focus on French pronunciation with native speakers. Voice practice and phonetic exercises.',
@@ -206,7 +206,7 @@ export const mockRooms: Room[] = [
     lastActivity: new Date(Date.now() - 180000),
   },
   {
-    id: '4',
+    id: 'adfads4',
     name: 'French Pronunciation Lab',
     description:
       'Focus on French pronunciation with native speakers. Voice practice and phonetic exercises.',

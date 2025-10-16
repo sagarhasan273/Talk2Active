@@ -7,13 +7,14 @@ import { useRouter } from 'src/routes/route-hooks';
 
 // ----------------------------------------------------------------------
 
-type VoiceRoomButtonProps = IconButtonProps;
+type VoiceRoomButtonProps = IconButtonProps & { active: string; onClickActive: () => void };
 
-export function VoiceRoomButton({ sx, ...other }: VoiceRoomButtonProps) {
+export function VoiceRoomButton({ sx, active, onClickActive, ...other }: VoiceRoomButtonProps) {
   const router = useRouter();
 
   const handleClick = () => {
     router.push('voice-room');
+    onClickActive();
   };
 
   return (
@@ -26,8 +27,10 @@ export function VoiceRoomButton({ sx, ...other }: VoiceRoomButtonProps) {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
+        ...(active === 'voice-room' && { color: 'primary.dark' }),
         ...sx,
       }}
+      disableRipple
       {...other}
     >
       <SvgIcon>
