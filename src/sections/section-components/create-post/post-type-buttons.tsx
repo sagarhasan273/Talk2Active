@@ -3,19 +3,24 @@ import { Image, Video, Quote, Youtube } from 'lucide-react';
 
 import { Stack, Button } from '@mui/material';
 
-export type PostType = 'image' | 'youtube' | 'video' | 'quote';
+import type { PostTypeProps } from './types';
 
-interface PostTypeButtonsProps {
-  onSelectType?: (type: PostType) => void;
-  selectedType?: PostType;
+interface PostTypePropsButtonsProps {
+  onSelectType?: (type: PostTypeProps) => void;
+  selectedType?: PostTypeProps;
+  enableList: PostTypeProps[];
 }
 
-export default function PostTypeButtons({ onSelectType, selectedType }: PostTypeButtonsProps) {
+export default function PostTypePropsButtons({
+  onSelectType,
+  selectedType,
+  enableList,
+}: PostTypePropsButtonsProps) {
   const buttons = [
-    { type: 'quote' as PostType, icon: Quote, label: 'Quote', disabled: false },
-    { type: 'youtube' as PostType, icon: Youtube, label: 'YouTube', disabled: false },
-    { type: 'image' as PostType, icon: Image, label: 'Image', disabled: true },
-    { type: 'video' as PostType, icon: Video, label: 'Video', disabled: true },
+    { type: 'quote' as PostTypeProps, icon: Quote, label: 'Quote', disabled: false },
+    { type: 'youtube' as PostTypeProps, icon: Youtube, label: 'YouTube', disabled: false },
+    { type: 'image' as PostTypeProps, icon: Image, label: 'Image', disabled: true },
+    { type: 'video' as PostTypeProps, icon: Video, label: 'Video', disabled: true },
   ];
 
   return (
@@ -40,7 +45,7 @@ export default function PostTypeButtons({ onSelectType, selectedType }: PostType
           variant={selectedType === type ? 'contained' : 'outlined'}
           color={selectedType === type ? 'primary' : 'inherit'}
           startIcon={<Icon size={18} />}
-          disabled={disabled}
+          disabled={!enableList.includes(type)}
           disableRipple
           sx={{
             // mx: 'auto',

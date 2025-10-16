@@ -127,10 +127,6 @@ export function FeedPostsView() {
     }
   };
 
-  const handleCreatePost = (content: string) => {
-    setPosts((prevPosts) => [...prevPosts]);
-  };
-
   useEffect(() => {
     if (data && !isLoading && !isError) {
       setPosts(data.data);
@@ -204,11 +200,7 @@ export function FeedPostsView() {
       </Container>
 
       {/* Create Post Modal */}
-      <CreatePost
-        isOpen={isCreatePostOpen}
-        onClose={() => setIsCreatePostOpen(false)}
-        onSubmit={handleCreatePost}
-      />
+      <CreatePost isOpen={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
     </>
   );
 }

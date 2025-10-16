@@ -1,10 +1,12 @@
+import type { PostResponseType } from 'src/types/post';
+
+export type PostTypeProps = 'image' | 'images' | 'gif' | 'youtube' | 'video' | 'caption' | 'quote';
+
 export interface CreatePostProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (content: string) => void;
+  editData?: PostResponseType;
 }
-
-export type PostTypeProps = 'quote' | 'youtube' | 'image' | 'video';
 
 export type PostContentProps = {
   content: string;

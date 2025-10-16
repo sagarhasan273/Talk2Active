@@ -7,28 +7,6 @@ import type {
   PostResponseSchema,
 } from 'src/schemas/schema-post';
 
-export interface Post {
-  id: string;
-  content: string;
-  author: {
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  timestamp: Date;
-  likes: number;
-  reposts: number;
-  comments: Comment[];
-  isLiked: boolean;
-  isReposted: boolean;
-  repostedBy?: {
-    name: string;
-    username: string;
-    timestamp: Date;
-  };
-  originalPost?: Post;
-}
-
 export interface Comment {
   id: string;
   content: string;
@@ -55,7 +33,7 @@ export interface UserProfile {
 }
 
 // Type definitions
-export type PostType = z.infer<typeof PostSchema>;
+export type Post = z.infer<typeof PostSchema>;
 export type CreatePostInput = z.infer<typeof CreatePostSchema>;
 export type UpdatePostInput = z.infer<typeof UpdatePostSchema>;
 export type PostResponseType = z.infer<typeof PostResponseSchema>;

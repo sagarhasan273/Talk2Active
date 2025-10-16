@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
-import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Box,
@@ -15,7 +15,7 @@ import {
 
 import { useUserContext } from 'src/routes/route-components';
 
-import { useCreatePostMutation } from 'src/core/apis/api-post';
+import { useCreatePostMutation, useUpdatePostMutation } from 'src/core/apis/api-post';
 
 import { Form } from 'src/components/hook-form';
 
@@ -25,7 +25,7 @@ import { PostCreator } from './post-youtube-video-create';
 
 import type { PostTypeProps, CreatePostProps } from './types';
 
-export function CreatePost({ isOpen, onClose }: CreatePostProps) {
+export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
   const theme = useTheme();
 
   const { user } = useUserContext();
@@ -33,6 +33,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
   const [postType, setPostType] = useState<PostTypeProps>('quote');
 
   const [createPost] = useCreatePostMutation();
+  const [updatePost] = useUpdatePostMutation();
+
+  const isEdit = !!editData?.id;
 
   const currentUser = {
     name: user?.name || 'Anonymous',
@@ -40,22 +43,25 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
     username: user?.username || 'anonymous',
   };
 
-  const defaultValues = {
-    content: '',
-    authorName: '',
-    tags: [] as string[],
-    videoUrl: '',
-  };
+  const getDefaultValues = (data?: any) => ({
+    type: data?.media?.type || '',
+    content: data?.media?.content || '',
+    authorName: data?.media?.authorName || '',
+    tags: (data?.tags as string[]) || [],
+    videoUrl: data?.media?.videoUrl || '',
+  });
 
   const methods = useForm({
-    defaultValues,
+    defaultValues: getDefaultValues(editData),
   });
 
   const {
     watch,
+    reset,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
+
   const values = watch();
 
   const onSubmit = handleSubmit(async (data) => {
@@ -65,7 +71,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
         toast.error('User not authenticated. Please log in.');
         return;
       }
+
       const formData = {
+        ...(isEdit && { postId: editData.id }), // Include ID for updates
         media: {
           type: postType as PostTypeProps,
           content: data?.content || '',
@@ -75,19 +83,37 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
         tags: data?.tags || [],
         author: authorId,
       };
-      const response = await createPost(formData).unwrap();
+
+      // Use update or create based on editData
+      const response = isEdit
+        ? await updatePost(formData).unwrap()
+        : await createPost(formData).unwrap();
 
       if (response.status === true) {
         onClose();
-        toast.success(response.message || 'Post created successfully!');
+        toast.success(
+          response.message || (isEdit ? 'Post updated successfully!' : 'Post created successfully!')
+        );
         methods.reset();
       } else {
-        toast.error(response.data.message || 'Failed to create post. Please try again.');
+        toast.error(
+          response.data.message ||
+            `Failed to ${isEdit ? 'update' : 'create'} post. Please try again.`
+        );
       }
     } catch (error) {
       console.error(error);
     }
   });
+
+  // Update form when editData changes
+  useEffect(() => {
+    if (isEdit) {
+      reset(getDefaultValues(editData));
+      const rawType = editData?.media?.type;
+      setPostType((rawType || 'quote') as PostTypeProps);
+    }
+  }, [editData, reset, isEdit]);
 
   return (
     <Modal open={isOpen} onClose={onClose}>
@@ -142,7 +168,11 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
               </IconButton>
             </Box>
 
-            <PostTypeButtons onSelectType={(type) => setPostType(type)} selectedType={postType} />
+            <PostTypeButtons
+              onSelectType={(type) => setPostType(type)}
+              selectedType={postType}
+              enableList={isEdit ? [] : ['quote', 'youtube']}
+            />
 
             {/* Quote selector */}
             {postType === 'quote' && <PostQuoteCreate currentUser={currentUser} />}

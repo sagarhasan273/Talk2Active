@@ -24,10 +24,12 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
+import { useDeletePostMutation } from 'src/core/apis';
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
 
+import { CreatePost } from '../create-post';
 import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
@@ -37,11 +39,14 @@ export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'you
 
 export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   const imageOpen = useBoolean();
+  const createOpen = useBoolean();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoPlayer, setVideoPlayer] = useState<any>(null);
+
+  const [deletePost] = useDeletePostMutation();
 
   const theme = useTheme();
 
@@ -376,10 +381,21 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-              <MenuItem onClick={handleMenuClose}>Report</MenuItem>
-              <MenuItem onClick={handleMenuClose}>Hide</MenuItem>
+              <MenuItem onClick={createOpen.onTrue}>Edit</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  deletePost({ postId: post?.id });
+                }}
+              >
+                Delete
+              </MenuItem>
               <MenuItem onClick={handleMenuClose}>Copy link</MenuItem>
             </Menu>
+            <CreatePost
+              isOpen={createOpen.value}
+              onClose={() => createOpen.onFalse()}
+              editData={post}
+            />
           </>
         }
         title={

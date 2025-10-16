@@ -1,5 +1,5 @@
 import type { ResponseType } from 'src/types/common';
-import type { CreatePostInput, PostResponseType } from 'src/types/post';
+import type { CreatePostInput, UpdatePostInput, PostResponseType } from 'src/types/post';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -38,6 +38,24 @@ export const postApi = createApi({
       invalidatesTags: ['post-recall'],
     }),
 
+    updatePost: builder.mutation<ResponseType, Partial<UpdatePostInput>>({
+      query: (body) => ({
+        url: `post/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['post-recall'],
+    }),
+
+    deletePost: builder.mutation<ResponseType, Partial<UpdatePostInput>>({
+      query: (body) => ({
+        url: `post/delete`,
+        method: 'DELETE',
+        body,
+      }),
+      invalidatesTags: ['post-recall'],
+    }),
+
     updatePostEngagementLike: builder.mutation<ResponseType, Partial<any>>({
       query: (body) => ({
         url: `post-engagement/like`,
@@ -70,6 +88,8 @@ export const postApi = createApi({
 export const {
   useGetPostsQuery,
   useCreatePostMutation,
+  useUpdatePostMutation,
+  useDeletePostMutation,
   useUpdatePostEngagementLikeMutation,
   useUpdatePostEngagementDisikeMutation,
   useUpdatePostEngagementPinMutation,
