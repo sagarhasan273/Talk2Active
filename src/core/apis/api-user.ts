@@ -1,5 +1,12 @@
 // services/userApi.ts
-import type { UserType, UserStatusType, UserProfileFormType, UserAccountUpdateType, UserAccountActivateUpdateType, UserAccountSessionUpdateType } from 'src/types/user';
+import type {
+  UserType,
+  UserStatusType,
+  UserProfileFormType,
+  UserAccountUpdateType,
+  UserAccountSessionUpdateType,
+  UserAccountActivateUpdateType,
+} from 'src/types/user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

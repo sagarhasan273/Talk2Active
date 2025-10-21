@@ -69,13 +69,19 @@ export const PostResponseSchema = PostSchema.omit({
   isLiked: z.boolean().default(false),
   isDisliked: z.boolean().default(false),
   isPinned: z.boolean().default(false),
-  authorDetails: z
-    .object({
-      _id: z.string(),
-      username: z.string(),
-      name: z.string().optional(),
-      profilePhoto: z.string().url().optional(),
-      verified: z.boolean().default(false),
-    })
-    .optional(),
+  authorDetails: z.object({
+    id: z.string(),
+    username: z.string(),
+    name: z.string(),
+    profilePhoto: z.string().url(),
+    verified: z.boolean().default(false),
+  }),
+  authorRelationship: z.object({
+    relationship: z.enum(['following', 'followers', 'friends', 'blocked', 'pending', 'none']),
+    following: z.boolean(),
+    followers: z.boolean(),
+    friends: z.boolean(),
+    blocked: z.boolean(),
+    pending: z.boolean(),
+  }),
 });

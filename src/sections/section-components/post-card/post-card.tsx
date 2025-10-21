@@ -19,12 +19,16 @@ import {
   CardContent,
 } from '@mui/material';
 
+import { useUserContext } from 'src/routes/route-components';
+
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 import { useDeletePostMutation } from 'src/core/apis';
+import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
@@ -38,6 +42,8 @@ export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'you
 // YouTube ID extraction utility
 
 export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
+  const { user } = useUserContext();
+
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
 
@@ -46,9 +52,16 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoPlayer, setVideoPlayer] = useState<any>(null);
 
+  const [isFollowing, setIsFollowing] = useState(post.authorRelationship.following || false);
+
   const [deletePost] = useDeletePostMutation();
+  const [followMutate] = useFollowMutation();
+  const [unfollowMutate] = useUnfollowMutation();
 
   const theme = useTheme();
+
+  const images = post.media.urls || [];
+  const hasMultipleImages = images.length > 1;
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -68,8 +81,22 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
     setAnchorEl(null);
   };
 
-  const images = post.media.urls || [];
-  const hasMultipleImages = images.length > 1;
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    if (isFollowing) {
+      unfollowMutate({
+        requester: user?.id,
+        recipient: post?.authorDetails?.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    } else {
+      followMutate({
+        requester: user?.id,
+        recipient: post?.authorDetails?.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    }
+  };
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -370,33 +397,71 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           />
         }
         action={
-          <>
-            <IconButton onClick={handleMenuOpen} aria-label="More options" size="small">
-              <MoreHoriz />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          post.authorDetails.id !== user?.id ? (
+            <Button
+              variant={isFollowing ? 'outlined' : 'contained'}
+              size="small"
+              onClick={handleFollow}
+              sx={{
+                // mt: 7,
+                borderRadius: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2,
+                ...(isFollowing
+                  ? {
+                      color: 'text.secondary',
+                      borderColor: 'divider',
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        backgroundColor: 'background.neutral',
+                        borderColor: 'divider',
+                      },
+                    }
+                  : {
+                      color: 'white !important',
+                      backgroundColor: 'primary.main',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                      },
+                    }),
+              }}
             >
-              <MenuItem onClick={createOpen.onTrue}>Edit</MenuItem>
-              <MenuItem
-                onClick={() => {
-                  deletePost({ postId: post?.id });
-                }}
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          ) : (
+            <>
+              <IconButton onClick={handleMenuOpen} aria-label="More options" size="small">
+                <MoreHoriz />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               >
-                Delete
-              </MenuItem>
-              <MenuItem onClick={handleMenuClose}>Copy link</MenuItem>
-            </Menu>
-            <CreatePost
-              isOpen={createOpen.value}
-              onClose={() => createOpen.onFalse()}
-              editData={post}
-            />
-          </>
+                <MenuItem onClick={createOpen.onTrue} sx={{ gap: 1 }}>
+                  <Iconify icon="ri:edit-2-line" />
+                  <Typography variant="subtitle2">Edit</Typography>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    deletePost({ postId: post?.id, author: user?.id });
+                  }}
+                  sx={{ gap: 1, color: 'error.main' }}
+                >
+                  <Iconify icon="material-symbols:delete-rounded" />
+                  <Typography variant="subtitle2">Delete</Typography>
+                </MenuItem>
+              </Menu>
+              <CreatePost
+                isOpen={createOpen.value}
+                onClose={() => createOpen.onFalse()}
+                editData={post}
+              />
+            </>
+          )
         }
         title={
           <Typography variant="subtitle1" fontWeight={600}>
