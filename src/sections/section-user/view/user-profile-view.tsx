@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 
-import { People, Settings, ArrowBack, ChatBubbleOutline } from '@mui/icons-material';
+import { Settings, ArrowBack, ChatBubbleOutline } from '@mui/icons-material';
 import {
   Box,
   Tab,
-  Grid,
   Tabs,
   Paper,
   alpha,
@@ -18,7 +17,7 @@ import {
 import { useUserContext } from 'src/routes/route-components';
 
 import UserProfileInfo from '../user-profile-info';
-import UserProfileRightDisplay from '../user-profile-right-display';
+import { UserPostContainer } from '../user-post-container';
 
 interface UserProfileViewProps {
   onBack?: () => void;
@@ -58,7 +57,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'background.paper',
       }}
     >
       {/* Header */}
@@ -66,12 +64,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: alpha(theme.palette.background.neutral, 0.5),
           backdropFilter: 'blur(20px)',
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         }}
       >
-        <Container maxWidth="lg" sx={{ py: 1, display: 'flex', flexDirection: 'row' }}>
+        <Container
+          maxWidth="md"
+          sx={{ py: 1, display: 'flex', flexDirection: 'row', backgroundColor: 'background.paper' }}
+        >
           <IconButton onClick={onBack} sx={{ mr: 2, color: 'text.primary' }}>
             <ArrowBack />
           </IconButton>
@@ -92,146 +92,126 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
       </AppBar>
 
       {/* Profile Content */}
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Grid container spacing={2}>
-          {/* Main Profile Section */}
-          <Grid item xs={12} lg={8}>
-            {/* Cover Image */}
-            <Paper
-              sx={{
-                height: 200,
-                background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
-                backgroundImage: `url(${user?.coverPhoto})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                borderRadius: 3,
-                mb: 3,
-                position: 'relative',
-                overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.2), transparent)',
-                },
-              }}
-            />
+      <Container maxWidth="md" sx={{ py: 3, backgroundColor: 'background.paper' }}>
+        {/* Main Profile Section */}
+        {/* Cover Image */}
+        <Paper
+          sx={{
+            height: 200,
+            background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
+            backgroundImage: `url(${user?.coverPhoto})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: 1,
+            mb: 1,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.2), transparent)',
+            },
+          }}
+        />
 
-            {/* Profile Info */}
-            <UserProfileInfo />
+        {/* Profile Info */}
+        <UserProfileInfo />
 
-            {/* Tabs */}
-            <Paper
-              sx={{ borderRadius: 3, backgroundColor: 'background.neutral', overflow: 'hidden' }}
-            >
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                variant="fullWidth"
+        {/* Tabs */}
+        <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                textTransform: 'none',
+                fontWeight: 'bold',
+              },
+              '& .Mui-selected': {
+                color: 'primary.main',
+              },
+            }}
+          >
+            <Tab label="Posts" />
+            <Tab label="Pins" />
+            <Tab label="Social" />
+          </Tabs>
+
+          <TabPanel value={activeTab} index={0}>
+            <UserPostContainer />
+          </TabPanel>
+
+          <TabPanel value={activeTab} index={1}>
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <ChatBubbleOutline sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
+                No replies yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Replies will appear here.
+              </Typography>
+            </Box>
+          </TabPanel>
+
+          <TabPanel value={activeTab} index={2}>
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box
                 sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  '& .MuiTab-root': {
-                    textTransform: 'none',
-                    fontWeight: 'bold',
-                  },
-                  '& .Mui-selected': {
-                    color: 'primary.main',
-                  },
+                  width: 48,
+                  height: 48,
+                  bgcolor: 'text.disabled',
+                  borderRadius: 2,
+                  mx: 'auto',
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <Tab label="Posts" />
-                <Tab label="Replies" />
-                <Tab label="Media" />
-                <Tab label="Likes" />
-              </Tabs>
+                <Typography sx={{ color: 'white' }}>📷</Typography>
+              </Box>
+              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
+                No media yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Photos and videos will show up here.
+              </Typography>
+            </Box>
+          </TabPanel>
 
-              <TabPanel value={activeTab} index={0}>
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <People sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                    No posts yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    When {user?.name} posts, theyll show up here.
-                  </Typography>
-                </Box>
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={1}>
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <ChatBubbleOutline sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                    No replies yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Replies will appear here.
-                  </Typography>
-                </Box>
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={2}>
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      bgcolor: 'text.disabled',
-                      borderRadius: 2,
-                      mx: 'auto',
-                      mb: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography sx={{ color: 'white' }}>📷</Typography>
-                  </Box>
-                  <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                    No media yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Photos and videos will show up here.
-                  </Typography>
-                </Box>
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={3}>
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      bgcolor: 'error.light',
-                      borderRadius: '50%',
-                      mx: 'auto',
-                      mb: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 20 }}>❤️</Typography>
-                  </Box>
-                  <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                    No likes yet
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Liked posts will appear here.
-                  </Typography>
-                </Box>
-              </TabPanel>
-            </Paper>
-          </Grid>
-
-          {/* Right Sidebar */}
-          <Grid item xs={12} lg={4}>
-            <UserProfileRightDisplay />
-          </Grid>
-        </Grid>
+          <TabPanel value={activeTab} index={3}>
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: 'error.light',
+                  borderRadius: '50%',
+                  mx: 'auto',
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography sx={{ fontSize: 20 }}>❤️</Typography>
+              </Box>
+              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
+                No likes yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Liked posts will appear here.
+              </Typography>
+            </Box>
+          </TabPanel>
+        </Paper>
       </Container>
     </Box>
   );

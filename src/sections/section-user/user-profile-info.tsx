@@ -7,7 +7,6 @@ import {
   Stack,
   Avatar,
   Tooltip,
-  useTheme,
   Typography,
   IconButton,
   Link as MuiLink,
@@ -15,66 +14,63 @@ import {
 
 import { useUserContext } from 'src/routes/route-components';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { fDate } from 'src/utils/format-time';
 
+import { varAlpha } from 'src/theme/styles';
+
 import { Iconify } from 'src/components/iconify';
+import { ImageViewer } from 'src/components/image';
 
 function UserProfileInfo() {
   const { user } = useUserContext();
 
-  const theme = useTheme();
+  const openImage = useBoolean(false);
 
   const [isFollowing, setIsFollowing] = useState(false);
 
   return (
-    <Paper sx={{ p: 3, backgroundColor: 'background.neutral', borderRadius: 3, mb: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 1, mb: 3 }}>
       {/* Avatar and Actions */}
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          mt: -10,
-          mb: 3,
+          mt: -12,
         }}
       >
-        <Box sx={{ position: 'relative', width: 128, height: 128 }}>
-          <Avatar
-            src={user?.profilePhoto ? user.profilePhoto.toString() : undefined}
-            alt={user?.name ? user.name.toString() : undefined}
-            sx={{
-              width: 128,
-              height: 128,
-              border: '4px solid white',
-              boxShadow: theme.shadows[4],
-            }}
-          />
-          {user?.verified && (
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 8,
-                right: 8,
-                bgcolor: 'background.paper',
-                borderRadius: '50%',
-                p: 0.5,
-                height: 20,
-                widht: 20,
-              }}
-            >
-              <CheckCircle sx={{ color: 'primary.main', fontSize: 20 }} />
-            </Box>
-          )}
-        </Box>
+        <Avatar
+          src={user?.profilePhoto}
+          alt={user?.name}
+          onClick={openImage.onTrue}
+          sx={{
+            width: 140,
+            height: 140,
+            border: '6px solid white',
+            bgcolor: '#0066cc',
+            fontSize: '3rem',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            cursor: 'pointer',
+          }}
+        >
+          {user?.name}
+        </Avatar>
 
-        <Stack direction="row" sx={{ mt: 8, gap: { xs: 0.8, md: 1 } }}>
+        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
           <IconButton
             sx={{
               border: 1,
               height: 40,
               width: 40,
-              borderColor: 'primary.dark',
-              color: 'primary.main',
+              borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
+              color: 'grey.500',
+              backgroundColor: 'background.paper',
+              '&:hover': {
+                color: 'grey.500',
+                backgroundColor: 'background.neutral',
+              },
             }}
           >
             <Share />
@@ -84,8 +80,13 @@ function UserProfileInfo() {
               border: 1,
               height: 40,
               width: 40,
-              borderColor: 'primary.dark',
-              color: 'primary.main',
+              borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
+              color: 'grey.500',
+              backgroundColor: 'background.paper',
+              '&:hover': {
+                color: 'grey.500',
+                backgroundColor: 'background.neutral',
+              },
             }}
           >
             <Iconify icon="ant-design:message-filled" />
@@ -98,12 +99,19 @@ function UserProfileInfo() {
               width: 40,
               ...(isFollowing
                 ? { borderColor: 'error.dark', color: 'error.main' }
-                : { borderColor: 'primary.dark', color: 'primary.main' }),
+                : {
+                    borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
+                    color: 'grey.500',
+                    backgroundColor: 'background.paper',
+                  }),
 
               '&:hover': {
-                borderColor: 'inherit',
-                color: 'inherit',
-                backgroundColor: 'transparent',
+                ...(isFollowing
+                  ? { borderColor: 'error.dark', color: 'error.main' }
+                  : {
+                      color: 'grey.500',
+                      backgroundColor: 'background.neutral',
+                    }),
               },
             }}
           >
@@ -115,11 +123,11 @@ function UserProfileInfo() {
               )}
             </Tooltip>
           </IconButton>
-        </Stack>
+        </Box>
       </Box>
 
       {/* User Info */}
-      <Stack spacing={2}>
+      <Stack spacing={1}>
         <Box>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="h4" fontWeight="bold">
@@ -163,19 +171,27 @@ function UserProfileInfo() {
           <Stack direction="row" alignItems="center" spacing={0.5}>
             <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
             <Typography variant="body2" color="text.secondary">
-              Joined {user?.joinDate ? fDate(user.joinDate) : ''}
+              Joined {user?.createdAt ? fDate(user.createdAt) : ''}
             </Typography>
           </Stack>
         </Stack>
 
         {/* Stats */}
-        <Stack direction="row" spacing={3}>
+        <Stack direction="row" sx={{ gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
           <Box>
             <Typography component="span" fontWeight="bold" color="text.primary">
-              {user?.followersCount}
+              {user?.followerCount}
             </Typography>
             <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
-              Following
+              Followers
+            </Typography>
+          </Box>
+          <Box>
+            <Typography component="span" fontWeight="bold" color="text.primary">
+              {user?.friendCount}
+            </Typography>
+            <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
+              Friends
             </Typography>
           </Box>
           <Box>
@@ -183,11 +199,16 @@ function UserProfileInfo() {
               {user?.followingCount}
             </Typography>
             <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
-              Followers
+              Following
             </Typography>
           </Box>
         </Stack>
       </Stack>
+      <ImageViewer
+        open={openImage.value}
+        onClose={() => openImage.onFalse()}
+        imageUrl={user?.profilePhoto}
+      />
     </Paper>
   );
 }

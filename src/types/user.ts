@@ -5,8 +5,8 @@ import type {
   UserStatusSchema,
   UserProfileFormSchema,
   UserAccountUpdateSchema,
-  UserAccountActivateUpdateSchema,
   UserAccountSessionUpdateSchema,
+  UserAccountActivateUpdateSchema,
 } from 'src/schemas/schema-user';
 
 // ----------------------------------------------------------------------

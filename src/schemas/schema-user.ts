@@ -58,7 +58,8 @@ export const UserSchema = zod
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
     sessionTimeOut: zod.number().int().nonnegative().optional(),
-    followersCount: zod.number().int().nonnegative().optional(),
+    followerCount: zod.number().int().nonnegative().optional(),
+    friendCount: zod.number().int().nonnegative().optional(),
     followingCount: zod.number().int().nonnegative().optional(),
     profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
     allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
@@ -113,7 +114,7 @@ export const UserSchema = zod
 
     // Appearance types
     primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']),
-    themeMode: zod.boolean()
+    themeMode: zod.boolean(),
   })
   .strict(); // Using strict() to prevent unknown fields
 
@@ -161,9 +162,9 @@ export const UserAccountUpdateSchema = UserSchema.pick({
 export const UserAccountActivateUpdateSchema = UserSchema.pick({
   id: true,
   accountActive: true,
-})
+});
 
 export const UserAccountSessionUpdateSchema = UserSchema.pick({
   id: true,
   sessionTimeOut: true,
-})
+});
