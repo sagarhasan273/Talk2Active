@@ -13,7 +13,6 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
   isActive,
   onClick,
   activeColor,
-  label,
 }) => {
   const theme = useTheme();
 
@@ -22,9 +21,9 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
       onClick={onClick}
       startIcon={
         isActive && activeIcon ? (
-          <Iconify icon={activeIcon} width={20} height={20} sx={{ color: 'inherit' }} />
+          <Iconify icon={activeIcon} width={18} height={18} sx={{ color: 'inherit' }} />
         ) : (
-          <Iconify icon={icon} width={20} height={20} sx={{ color: 'inherit' }} />
+          <Iconify icon={icon} width={18} height={18} sx={{ color: 'inherit' }} />
         )
       }
       disableRipple
@@ -44,7 +43,7 @@ export const InteractionButton: React.FC<InteractionButtonProps> = ({
     >
       {count >= 0 && (
         <Typography
-          variant="body2"
+          variant="body1"
           sx={{
             color: 'inherit',
             fontWeight: 500,

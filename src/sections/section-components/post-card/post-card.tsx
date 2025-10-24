@@ -1,3 +1,5 @@
+import type { PostResponseType } from 'src/types/post';
+
 import { useState } from 'react';
 import YouTube from 'react-youtube';
 
@@ -26,9 +28,14 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
-import { useDeletePostMutation } from 'src/core/apis';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
+import {
+  useDeletePostMutation,
+  useUpdatePostEngagementPinMutation,
+  useUpdatePostEngagementLikeMutation,
+  useUpdatePostEngagementDisikeMutation,
+} from 'src/core/apis';
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
@@ -41,12 +48,13 @@ import type { PostCardProps } from './types';
 export type PostType = 'image' | 'images' | 'video' | 'caption' | 'quote' | 'youtube';
 // YouTube ID extraction utility
 
-export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
+export function PostCard({ post }: PostCardProps) {
   const { user } = useUserContext();
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
 
+  const [data, setData] = useState<PostResponseType>(post);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -60,7 +68,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
 
   const theme = useTheme();
 
-  const images = post.media.urls || [];
+  const images = data.media.urls || [];
   const hasMultipleImages = images.length > 1;
 
   const formatTime = (date: Date) => {
@@ -80,19 +88,19 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
+  console.log('remder');
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
     if (isFollowing) {
       unfollowMutate({
         requester: user?.id,
-        recipient: post?.authorDetails?.id,
+        recipient: data?.authorDetails?.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     } else {
       followMutate({
         requester: user?.id,
-        recipient: post?.authorDetails?.id,
+        recipient: data?.authorDetails?.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     }
@@ -107,7 +115,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
   };
 
   // Extract YouTube ID from URL
-  const youtubeId = post.media.videoUrl ? extractYouTubeId(post.media.videoUrl) : 'YQHsXMglC9A';
+  const youtubeId = data.media.videoUrl ? extractYouTubeId(data.media.videoUrl) : '';
 
   // YouTube player options
   const youtubeOpts = {
@@ -151,8 +159,76 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
     }
   };
 
+  const [updatePostLike] = useUpdatePostEngagementLikeMutation();
+  const [updatePostDislike] = useUpdatePostEngagementDisikeMutation();
+  const [updatePinpost] = useUpdatePostEngagementPinMutation();
+
+  const handleLike = async (postId: string) => {
+    setData((prev) => ({
+      ...prev,
+      isLiked: !prev.isLiked,
+      isDisliked: false,
+      engagement: {
+        ...prev.engagement,
+        likes: prev.isLiked ? prev.engagement.likes - 1 : prev.engagement.likes + 1,
+        dislikes: prev.isDisliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes,
+      },
+    }));
+
+    try {
+      await updatePostLike({
+        postId,
+        userId: user?.id,
+      }).unwrap();
+    } catch (error) {
+      console.error('Failed to update like status:', error);
+    }
+  };
+
+  const handleDislike = async (postId: string) => {
+    setData((prev) => ({
+      ...prev,
+      isLiked: false,
+      isDisliked: !prev.isDisliked,
+      engagement: {
+        ...prev.engagement,
+        likes: prev.isLiked ? prev.engagement.likes - 1 : prev.engagement.likes,
+        dislikes: prev.isDisliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes + 1,
+      },
+    }));
+
+    try {
+      await updatePostDislike({
+        postId,
+        userId: user?.id,
+      }).unwrap();
+    } catch (error) {
+      console.error('Failed to update like status:', error);
+    }
+  };
+
+  const handlePinpost = async (postId: string) => {
+    setData((prev) => ({
+      ...prev,
+      isPinned: !prev.isPinned,
+      engagement: {
+        ...prev.engagement,
+        pins: prev.isPinned ? prev.engagement.pins - 1 : prev.engagement.pins + 1,
+      },
+    }));
+
+    try {
+      await updatePinpost({
+        postId,
+        userId: user?.id,
+      }).unwrap();
+    } catch (error) {
+      console.error('Failed to update Pin status:', error);
+    }
+  };
+
   const renderContent = () => {
-    switch (post.media.type) {
+    switch (data.media.type) {
       case 'image':
         return (
           <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'grey.50' }}>
@@ -300,16 +376,16 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
                   mb: 2,
                 }}
               >
-                {post.media.content}
+                {data.media.content}
               </Typography>
-              {post.media.authorName && (
+              {data.media.authorName && (
                 <Typography
                   variant="body1"
                   sx={{
                     fontWeight: 500,
                   }}
                 >
-                  — {post.media.authorName}
+                  — {data.media.authorName}
                 </Typography>
               )}
             </Box>
@@ -386,8 +462,8 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
       <CardHeader
         avatar={
           <Avatar
-            src={post.authorDetails?.profilePhoto}
-            alt={post.authorDetails?.name}
+            src={data.authorDetails?.profilePhoto}
+            alt={data.authorDetails?.name}
             sx={{
               width: 48,
               height: 48,
@@ -397,7 +473,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           />
         }
         action={
-          post.authorDetails.id !== user?.id ? (
+          data.authorDetails.id !== user?.id ? (
             <Button
               variant={isFollowing ? 'outlined' : 'contained'}
               size="small"
@@ -458,19 +534,19 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               <CreatePost
                 isOpen={createOpen.value}
                 onClose={() => createOpen.onFalse()}
-                editData={post}
+                editData={data}
               />
             </>
           )
         }
         title={
           <Typography variant="subtitle1" fontWeight={600}>
-            {post.authorDetails?.name}
+            {data.authorDetails?.name}
           </Typography>
         }
         subheader={
           <Typography variant="caption" sx={{ userSelect: 'text' }}>
-            @{post.authorDetails?.username} · {formatTime(new Date(post.createdAt))}
+            @{data.authorDetails?.username} · {formatTime(new Date(data.createdAt))}
           </Typography>
         }
         sx={{
@@ -487,7 +563,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
         }}
       />
 
-      {post.media.content && post.media.type !== 'quote' && (
+      {data.media.content && data.media.type !== 'quote' && (
         <CardContent sx={{ py: 1, px: 2 }}>
           <Typography
             variant="body2"
@@ -497,7 +573,7 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
               userSelect: 'text',
             }}
           >
-            {post.media.content}
+            {data.media.content}
           </Typography>
         </CardContent>
       )}
@@ -516,39 +592,39 @@ export function PostCard({ post, onLike, onDislike, onRepost }: PostCardProps) {
           <InteractionButton
             icon="mynaui:like"
             activeIcon="mynaui:like-solid"
-            count={post.engagement.likes}
-            isActive={post.isLiked}
-            onClick={() => onLike(post.id)}
+            count={data.engagement.likes}
+            isActive={data.isLiked}
+            onClick={() => handleLike(data.id)}
             activeColor="primary"
             hoverColor="primary"
-            label={`${post.isLiked ? 'Unlike' : 'Like'} post`}
+            label={`${data.isLiked ? 'Unlike' : 'Like'} post`}
           />
           <InteractionButton
             icon="mynaui:dislike"
             activeIcon="mynaui:dislike-solid"
-            count={post.engagement.dislikes}
-            isActive={post.isDisliked}
-            onClick={() => onDislike(post.id)}
+            count={data.engagement.dislikes}
+            isActive={data.isDisliked}
+            onClick={() => handleDislike(data.id)}
             activeColor="error"
             hoverColor="error"
-            label={`${post.isDisliked ? 'Unlike' : 'Like'} post`}
+            label={`${data.isDisliked ? 'Unlike' : 'Like'} post`}
           />
         </Stack>
         <InteractionButton
           icon="mynaui:pin"
           activeIcon="mynaui:pin-solid"
-          count={post.engagement.pins}
-          isActive={post.isPinned}
-          onClick={() => onRepost(post.id)}
+          count={data.engagement.pins}
+          isActive={data.isPinned}
+          onClick={() => handlePinpost(data.id)}
           activeColor="info"
           hoverColor="info"
-          label={`${post.isPinned ? 'Undo pin' : 'Pin'} post`}
+          label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
         />
       </Box>
       <ImageViewer
         open={imageOpen.value}
         onClose={() => imageOpen.onFalse()}
-        imageUrl={post.authorDetails?.profilePhoto}
+        imageUrl={data.authorDetails?.profilePhoto}
       />
     </Card>
   );
