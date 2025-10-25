@@ -92,7 +92,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
       </AppBar>
 
       {/* Profile Content */}
-      <Container maxWidth="md" sx={{ py: 3, backgroundColor: 'background.paper' }}>
+      <Container
+        maxWidth="md"
+        sx={{ py: 3, px: { xs: 0, sm: 2 }, backgroundColor: 'background.paper' }}
+      >
         {/* Main Profile Section */}
         {/* Cover Image */}
         <Paper

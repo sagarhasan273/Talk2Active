@@ -8,7 +8,6 @@ import {
   Box,
   Card,
   Menu,
-  Stack,
   Alert,
   Avatar,
   Button,
@@ -28,8 +27,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
-import { RelationshipTypeEnum } from 'src/enums/enum-social';
-import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
 import {
   useDeletePostMutation,
   useUpdatePostEngagementPinMutation,
@@ -45,7 +42,9 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export function PostCard({ post }: PostCardProps) {
+// YouTube ID extraction utility
+
+export function PostCardProfile({ post }: PostCardProps) {
   const { user } = useUserContext();
 
   const imageOpen = useBoolean();
@@ -57,11 +56,7 @@ export function PostCard({ post }: PostCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoPlayer, setVideoPlayer] = useState<any>(null);
 
-  const [isFollowing, setIsFollowing] = useState(post.authorRelationship.following || false);
-
   const [deletePost] = useDeletePostMutation();
-  const [followMutate] = useFollowMutation();
-  const [unfollowMutate] = useUnfollowMutation();
 
   const theme = useTheme();
 
@@ -85,23 +80,8 @@ export function PostCard({ post }: PostCardProps) {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  console.log('remder');
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    if (isFollowing) {
-      unfollowMutate({
-        requester: user?.id,
-        recipient: data?.authorDetails?.id,
-        type: RelationshipTypeEnum.FOLLOW,
-      });
-    } else {
-      followMutate({
-        requester: user?.id,
-        recipient: data?.authorDetails?.id,
-        type: RelationshipTypeEnum.FOLLOW,
-      });
-    }
-  };
+
+  console.log('render');
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -447,13 +427,11 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <Card
       sx={{
-        borderRadius: 1,
-        boxShadow: 1,
-        '&:hover': {
-          boxShadow: 4,
-        },
-        transition: 'box-shadow 0.3s ease-in-out',
+        borderRadius: 0,
+        border: 'none',
+        borderBottom: `1px solid ${theme.palette.divider}`,
         overflow: 'hidden',
+        boxShadow: 'none',
       }}
     >
       <CardHeader
@@ -470,122 +448,91 @@ export function PostCard({ post }: PostCardProps) {
           />
         }
         action={
-          data.authorDetails.id !== user?.id ? (
-            <Button
-              variant={isFollowing ? 'outlined' : 'contained'}
-              size="small"
-              onClick={handleFollow}
-              sx={{
-                // mt: 7,
-                borderRadius: 1,
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 2,
-                ...(isFollowing
-                  ? {
-                      color: 'text.secondary',
-                      borderColor: 'divider',
-                      backgroundColor: 'background.paper',
-                      '&:hover': {
-                        backgroundColor: 'background.neutral',
-                        borderColor: 'divider',
-                      },
-                    }
-                  : {
-                      color: 'white !important',
-                      backgroundColor: 'primary.main',
-                      '&:hover': {
-                        backgroundColor: 'primary.dark',
-                      },
-                    }),
-              }}
+          <>
+            <IconButton onClick={handleMenuOpen} aria-label="More options" size="small">
+              <MoreHoriz />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
-          ) : (
-            <>
-              <IconButton onClick={handleMenuOpen} aria-label="More options" size="small">
-                <MoreHoriz />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              <MenuItem onClick={createOpen.onTrue} sx={{ gap: 1 }}>
+                <Iconify icon="ri:edit-2-line" />
+                <Typography variant="subtitle2">Edit</Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  deletePost({ postId: post?.id, author: user?.id });
+                }}
+                sx={{ gap: 1, color: 'error.main' }}
               >
-                <MenuItem onClick={createOpen.onTrue} sx={{ gap: 1 }}>
-                  <Iconify icon="ri:edit-2-line" />
-                  <Typography variant="subtitle2">Edit</Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    deletePost({ postId: post?.id, author: user?.id });
-                  }}
-                  sx={{ gap: 1, color: 'error.main' }}
-                >
-                  <Iconify icon="material-symbols:delete-rounded" />
-                  <Typography variant="subtitle2">Delete</Typography>
-                </MenuItem>
-              </Menu>
-              <CreatePost
-                isOpen={createOpen.value}
-                onClose={() => createOpen.onFalse()}
-                editData={data}
-              />
-            </>
-          )
+                <Iconify icon="material-symbols:delete-rounded" />
+                <Typography variant="subtitle2">Delete</Typography>
+              </MenuItem>
+            </Menu>
+            <CreatePost
+              isOpen={createOpen.value}
+              onClose={() => createOpen.onFalse()}
+              editData={data}
+            />
+          </>
         }
         title={
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography variant="body1" fontWeight={600} fontSize={16}>
             {data.authorDetails?.name}
           </Typography>
         }
         subheader={
-          <Typography variant="caption" sx={{ userSelect: 'text' }}>
+          <Typography variant="body2" sx={{ userSelect: 'text', fontSize: 14 }}>
             @{data.authorDetails?.username} · {formatTime(new Date(data.createdAt))}
           </Typography>
         }
         sx={{
-          p: 1.5,
+          px: { xs: 0.5, sm: 1.5 },
+          py: { xs: 1, sm: 1.5 },
           '& .MuiCardHeader-action': {
             margin: 0,
+            marginRight: { xs: 0, md: 7.5 },
             alignSelf: 'center',
           },
           '& .MuiCardHeader-content': {
             display: 'flex',
-            flexDirection: 'column',
-            gap: 0.25,
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 0, sm: 1 },
           },
         }}
       />
 
-      {data.media.content && data.media.type !== 'quote' && (
-        <CardContent sx={{ py: 1, px: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{
-              lineHeight: 1.6,
-              whiteSpace: 'pre-wrap',
-              userSelect: 'text',
-            }}
-          >
-            {data.media.content}
-          </Typography>
-        </CardContent>
-      )}
+      <Box sx={{ mx: { xs: 0, sx: 4, md: 9.5 } }}>
+        {data.media.content && data.media.type !== 'quote' && (
+          <CardContent sx={{ py: 1, px: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+                userSelect: 'text',
+              }}
+            >
+              {data.media.content}
+            </Typography>
+          </CardContent>
+        )}
 
-      {renderContent()}
+        {renderContent()}
 
-      {/* Interactions */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        sx={{
-          py: 1.5,
-        }}
-      >
-        <Stack direction="row">
+        {/* Interactions */}
+        <Box
+          display="flex"
+          justifyContent="left"
+          alignItems="center"
+          sx={{
+            py: 2,
+          }}
+        >
           <InteractionButton
             icon="mynaui:like"
             activeIcon="mynaui:like-solid"
@@ -606,17 +553,18 @@ export function PostCard({ post }: PostCardProps) {
             hoverColor="error"
             label={`${data.isDisliked ? 'Unlike' : 'Like'} post`}
           />
-        </Stack>
-        <InteractionButton
-          icon="mynaui:pin"
-          activeIcon="mynaui:pin-solid"
-          count={data.engagement.pins}
-          isActive={data.isPinned}
-          onClick={() => handlePinpost(data.id)}
-          activeColor="info"
-          hoverColor="info"
-          label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
-        />
+
+          <InteractionButton
+            icon="mynaui:pin"
+            activeIcon="mynaui:pin-solid"
+            count={data.engagement.pins}
+            isActive={data.isPinned}
+            onClick={() => handlePinpost(data.id)}
+            activeColor="info"
+            hoverColor="info"
+            label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
+          />
+        </Box>
       </Box>
       <ImageViewer
         open={imageOpen.value}

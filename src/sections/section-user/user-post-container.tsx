@@ -8,7 +8,7 @@ import { useUserContext } from 'src/routes/route-components';
 
 import { useGetPostsQuery } from 'src/core/apis';
 
-import { PostCard } from '../section-components/post-card';
+import { PostCardProfile } from '../section-components/post-card';
 
 export function UserPostContainer() {
   const { user } = useUserContext();
@@ -26,7 +26,7 @@ export function UserPostContainer() {
   return (
     <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={2}>
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCardProfile key={post.id} post={post} />
       ))}
     </Box>
   );
