@@ -1,5 +1,10 @@
 import type { ResponseType } from 'src/types/common';
-import type { CreatePostInput, UpdatePostInput, PostResponseType } from 'src/types/post';
+import type {
+  CreatePostInput,
+  UpdatePostInput,
+  PostResponseType,
+  GetPostsByUserIdInput,
+} from 'src/types/post';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -25,6 +30,17 @@ export const postApi = createApi({
       query: ({ userId }) => {
         const input = JSON.stringify({ userId });
         return `post/list?input=${encodeURIComponent(input)}`;
+      },
+      providesTags: ['post-recall'],
+    }),
+
+    getPostsByUserId: builder.query<
+      { data: PostResponseType[]; status: boolean },
+      GetPostsByUserIdInput
+    >({
+      query: ({ userId, type }) => {
+        const input = JSON.stringify({ userId, type });
+        return `post/list/profile?input=${input}`;
       },
       providesTags: ['post-recall'],
     }),
@@ -87,6 +103,7 @@ export const postApi = createApi({
 
 export const {
   useGetPostsQuery,
+  useGetPostsByUserIdQuery,
   useCreatePostMutation,
   useUpdatePostMutation,
   useDeletePostMutation,

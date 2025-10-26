@@ -85,3 +85,8 @@ export const PostResponseSchema = PostSchema.omit({
     pending: z.boolean(),
   }),
 });
+
+export const GetPostsByUserIdSchemaInput = z.object({
+  userId: z.string(),
+  type: z.enum(['posts', 'likes', 'dislikes', 'pins']),
+});
