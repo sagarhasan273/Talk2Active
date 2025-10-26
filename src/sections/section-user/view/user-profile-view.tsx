@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Settings, ArrowBack, ChatBubbleOutline } from '@mui/icons-material';
+import { Settings, ArrowBack } from '@mui/icons-material';
 import {
   Box,
   Tab,
@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 
 import { useUserContext } from 'src/routes/route-components';
+
+import { Iconify } from 'src/components/iconify';
 
 import UserProfileInfo from '../user-profile-info';
 import { UserPostContainer } from '../user-post-container';
@@ -129,8 +131,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            variant="fullWidth"
             sx={{
+              px: { xs: 0, sm: 2 },
               borderBottom: 1,
               borderColor: 'divider',
               '& .MuiTab-root': {
@@ -143,8 +145,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
             }}
           >
             <Tab label="Posts" />
+            <Tab label="Likes" />
+            <Tab label="Dislikes" />
             <Tab label="Pins" />
-            <Tab label="Social" />
           </Tabs>
 
           <TabPanel value={activeTab} index={0}>
@@ -153,64 +156,36 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
 
           <TabPanel value={activeTab} index={1}>
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <ChatBubbleOutline sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+              <Iconify icon="mdi:like-outline" width={48} color="text.secondary" />
               <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No replies yet
+                No likes yet
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Replies will appear here.
+                Likes will appear here.
               </Typography>
             </Box>
           </TabPanel>
 
           <TabPanel value={activeTab} index={2}>
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: 'text.disabled',
-                  borderRadius: 2,
-                  mx: 'auto',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography sx={{ color: 'white' }}>📷</Typography>
-              </Box>
+              <Iconify icon="mdi:dislike-outline" width={48} color="text.secondary" />
               <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No media yet
+                No dislikes yet
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Photos and videos will show up here.
+                Dislikes will appear here.
               </Typography>
             </Box>
           </TabPanel>
 
           <TabPanel value={activeTab} index={3}>
             <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: 'error.light',
-                  borderRadius: '50%',
-                  mx: 'auto',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography sx={{ fontSize: 20 }}>❤️</Typography>
-              </Box>
+              <Iconify icon="mynaui:pin" width={48} color="text.secondary" />
               <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No likes yet
+                No pins yet
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Liked posts will appear here.
+                Pins will appear here.
               </Typography>
             </Box>
           </TabPanel>

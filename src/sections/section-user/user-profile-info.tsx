@@ -31,7 +31,7 @@ function UserProfileInfo() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 1, mb: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 1 }}>
       {/* Avatar and Actions */}
       <Box
         sx={{
