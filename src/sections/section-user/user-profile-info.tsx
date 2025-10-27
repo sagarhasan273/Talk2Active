@@ -1,6 +1,7 @@
+import { Edit } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Link, Share, LocationOn, CheckCircle, CalendarToday } from '@mui/icons-material';
+import { Link, LocationOn, CheckCircle, CalendarToday } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -12,6 +13,7 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 
+import { useRouter } from 'src/routes/route-hooks';
 import { useUserContext } from 'src/routes/route-components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -24,11 +26,17 @@ import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
 
 function UserProfileInfo() {
+  const router = useRouter();
+
   const { user } = useUserContext();
 
   const openImage = useBoolean(false);
 
   const [isFollowing, setIsFollowing] = useState(false);
+
+  const handleEdit = () => {
+    router.push('/user/settings');
+  };
 
   return (
     <Paper sx={{ p: 3, borderRadius: 1 }}>
@@ -59,70 +67,73 @@ function UserProfileInfo() {
         </Avatar>
 
         <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-          <IconButton
-            sx={{
-              border: 1,
-              height: 40,
-              width: 40,
-              borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
-              color: 'grey.500',
-              backgroundColor: 'background.paper',
-              '&:hover': {
+          <Tooltip title="Edit Profile">
+            <IconButton
+              onClick={handleEdit}
+              sx={{
+                border: 1,
+                height: 40,
+                width: 40,
+                borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
                 color: 'grey.500',
-                backgroundColor: 'background.neutral',
-              },
-            }}
-          >
-            <Share />
-          </IconButton>
-          <IconButton
-            sx={{
-              border: 1,
-              height: 40,
-              width: 40,
-              borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
-              color: 'grey.500',
-              backgroundColor: 'background.paper',
-              '&:hover': {
+                backgroundColor: 'background.paper',
+                '&:hover': {
+                  color: 'grey.500',
+                  backgroundColor: 'background.neutral',
+                },
+              }}
+            >
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Message">
+            <IconButton
+              sx={{
+                border: 1,
+                height: 40,
+                width: 40,
+                borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
                 color: 'grey.500',
-                backgroundColor: 'background.neutral',
-              },
-            }}
-          >
-            <Iconify icon="ant-design:message-filled" />
-          </IconButton>
-          <IconButton
-            onClick={() => setIsFollowing(!isFollowing)}
-            sx={{
-              border: 1,
-              height: 40,
-              width: 40,
-              ...(isFollowing
-                ? { borderColor: 'error.dark', color: 'error.main' }
-                : {
-                    borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
-                    color: 'grey.500',
-                    backgroundColor: 'background.paper',
-                  }),
-
-              '&:hover': {
+                backgroundColor: 'background.paper',
+                '&:hover': {
+                  color: 'grey.500',
+                  backgroundColor: 'background.neutral',
+                },
+              }}
+            >
+              <Iconify icon="ant-design:message-filled" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'}>
+            <IconButton
+              onClick={() => setIsFollowing(!isFollowing)}
+              sx={{
+                border: 1,
+                height: 40,
+                width: 40,
                 ...(isFollowing
                   ? { borderColor: 'error.dark', color: 'error.main' }
                   : {
+                      borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
                       color: 'grey.500',
-                      backgroundColor: 'background.neutral',
                     }),
-              },
-            }}
-          >
-            <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'}>
-              {isFollowing ? (
-                <Iconify icon="ri:user-unfollow-fill" />
-              ) : (
-                <Iconify icon="ri:user-follow-fill" />
-              )}
-            </Tooltip>
-          </IconButton>
+                backgroundColor: 'background.paper',
+                '&:hover': {
+                  ...(isFollowing
+                    ? {
+                        borderColor: 'error.dark',
+                        color: 'error.main',
+                      }
+                    : {
+                        color: 'grey.500',
+                      }),
+                  backgroundColor: 'background.neutral',
+                },
+              }}
+            >
+              <Iconify icon={isFollowing ? 'ri:user-unfollow-fill' : 'ri:user-follow-fill'} />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
