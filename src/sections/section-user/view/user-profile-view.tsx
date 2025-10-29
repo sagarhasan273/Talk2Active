@@ -16,10 +16,11 @@ import {
 
 import { useUserContext } from 'src/routes/route-components';
 
-import { Iconify } from 'src/components/iconify';
-
 import UserProfileInfo from '../user-profile-info';
+import { UserPinContainer } from '../user-pin-container';
 import { UserPostContainer } from '../user-post-container';
+import { UserLikeContainer } from '../user-like-container';
+import { UserDislikeContainer } from '../user-dislike-container';
 
 interface UserProfileViewProps {
   onBack?: () => void;
@@ -155,39 +156,15 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
           </TabPanel>
 
           <TabPanel value={activeTab} index={1}>
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Iconify icon="mdi:like-outline" width={48} color="text.secondary" />
-              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No likes yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Likes will appear here.
-              </Typography>
-            </Box>
+            <UserLikeContainer />
           </TabPanel>
 
           <TabPanel value={activeTab} index={2}>
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Iconify icon="mdi:dislike-outline" width={48} color="text.secondary" />
-              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No dislikes yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Dislikes will appear here.
-              </Typography>
-            </Box>
+            <UserDislikeContainer />
           </TabPanel>
 
           <TabPanel value={activeTab} index={3}>
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Iconify icon="mynaui:pin" width={48} color="text.secondary" />
-              <Typography variant="h6" fontWeight="bold" color="text.secondary" gutterBottom>
-                No pins yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Pins will appear here.
-              </Typography>
-            </Box>
+            <UserPinContainer />
           </TabPanel>
         </Paper>
       </Container>
