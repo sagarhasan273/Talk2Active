@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
 
-import { Settings, ArrowBack } from '@mui/icons-material';
-import {
-  Box,
-  Tab,
-  Tabs,
-  Paper,
-  alpha,
-  AppBar,
-  useTheme,
-  Container,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Tab, Tabs, Paper, Container } from '@mui/material';
 
 import { useUserContext } from 'src/routes/route-components';
 
@@ -39,10 +27,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </Box>
 );
 
-export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSettings }) => {
+export const UserProfileView: React.FC<UserProfileViewProps> = () => {
   const { user } = useUserContext();
-
-  const theme = useTheme();
 
   const [activeTab, setActiveTab] = useState(0);
 
@@ -62,38 +48,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onBack, onSett
         minHeight: '100vh',
       }}
     >
-      {/* Header */}
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          backdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        }}
-      >
-        <Container
-          maxWidth="md"
-          sx={{ py: 1, display: 'flex', flexDirection: 'row', backgroundColor: 'background.paper' }}
-        >
-          <IconButton onClick={onBack} sx={{ mr: 2, color: 'text.primary' }}>
-            <ArrowBack />
-          </IconButton>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-              {user?.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {user?.postCount} posts
-            </Typography>
-          </Box>
-          {onSettings && (
-            <IconButton onClick={onSettings} sx={{ color: 'text.primary' }}>
-              <Settings />
-            </IconButton>
-          )}
-        </Container>
-      </AppBar>
-
       {/* Profile Content */}
       <Container
         maxWidth="md"

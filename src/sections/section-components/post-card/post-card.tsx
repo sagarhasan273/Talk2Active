@@ -25,6 +25,7 @@ import { useUserContext } from 'src/routes/route-components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fToNow } from 'src/utils/format-time';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
@@ -67,16 +68,6 @@ export function PostCard({ post }: PostCardProps) {
 
   const images = data.media.urls || [];
   const hasMultipleImages = images.length > 1;
-
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-
-    if (hours < 1) return 'now';
-    if (hours < 24) return `${hours}h`;
-    return `${Math.floor(hours / 24)}d`;
-  };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -543,7 +534,7 @@ export function PostCard({ post }: PostCardProps) {
         }
         subheader={
           <Typography variant="caption" sx={{ userSelect: 'text' }}>
-            @{data.authorDetails?.username} · {formatTime(new Date(data.createdAt))}
+            @{data.authorDetails?.username} · {fToNow(new Date(data.createdAt))} ago
           </Typography>
         }
         sx={{

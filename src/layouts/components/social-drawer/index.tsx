@@ -1,0 +1,242 @@
+import type { IconButtonProps } from '@mui/material/IconButton';
+
+import { m } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
+import Drawer from '@mui/material/Drawer';
+import Button from '@mui/material/Button';
+import { Avatar, Tooltip } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import {
+  useGetFriendsQuery,
+  useGetFollowingQuery,
+  useGetAllRelationsQuery,
+} from 'src/core/apis/api-social';
+
+import { Iconify } from 'src/components/iconify';
+import { Scrollbar } from 'src/components/scrollbar';
+import { CustomTabs } from 'src/components/custom-tabs';
+
+import { useAuthContext } from 'src/auth/hooks';
+
+import { SocialItem } from './social-item';
+
+// ----------------------------------------------------------------------
+
+const HEADER_TABS = [
+  { icon: <Iconify icon="foundation:social-myspace" />, value: 'social', label: 'People' },
+  { icon: <Iconify icon="tabler:message-filled" />, value: 'message', label: 'Message' },
+];
+
+const TABS = [
+  { label: 'All', value: 'all', icon: 'lsicon:user-all-filled' },
+  { label: 'Friends', value: 'friends', icon: 'fa-solid:user-friends' },
+  {
+    label: 'Following',
+    value: 'following',
+    icon: 'streamline-sharp:following-solid',
+  },
+];
+
+// ----------------------------------------------------------------------
+
+export type SocialDrawerProps = IconButtonProps;
+
+export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
+  const drawer = useBoolean();
+
+  const { authUser } = useAuthContext();
+
+  const [headerTab, setHeaderTab] = useState('social');
+  const [currentTab, setCurrentTab] = useState('all');
+  const [people, setPoeple] = useState([]);
+
+  const { data: allRelations } = useGetAllRelationsQuery(authUser?.id as string, {
+    skip: currentTab !== 'all',
+  });
+
+  const { data: friends } = useGetFriendsQuery(authUser?.id as string, {
+    skip: currentTab !== 'friends',
+  });
+
+  const { data: following } = useGetFollowingQuery(authUser?.id as string, {
+    skip: currentTab !== 'following',
+  });
+
+  const handleChangeHeaderTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
+    setHeaderTab(newValue);
+  }, []);
+
+  const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
+    setCurrentTab(newValue);
+  }, []);
+
+  const messagingWith = {
+    icon: <Avatar src={authUser?.profilePhoto} alt="sagar hasan" sx={{ width: 24, height: 24 }} />,
+    label: (
+      <Tooltip title="Sagar Hasan">
+        <Typography
+          sx={{
+            maxWidth: 100,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'block',
+          }}
+        >
+          Sagar Hasan Sagar Hasan Sagar Hasan Sagar Hasan
+        </Typography>
+      </Tooltip>
+    ),
+    value: '23jadfjasdjfa',
+  };
+
+  const renderHead = (
+    <CustomTabs value={headerTab} onChange={handleChangeHeaderTab}>
+      {[...HEADER_TABS].map((tab) => (
+        <Tab
+          key={tab.value}
+          iconPosition="start"
+          value={tab.value}
+          label={tab.label}
+          icon={tab.icon}
+          sx={{
+            minWidth: 100,
+            '&.MuiButtonBase-root': {
+              px: 1.5,
+            },
+          }}
+        />
+      ))}
+      <Tab
+        iconPosition="start"
+        value={messagingWith.value}
+        label={messagingWith.label}
+        icon={messagingWith.icon}
+        sx={{
+          minWidth: 160,
+          '&.MuiButtonBase-root': {
+            px: 1.5,
+          },
+        }}
+      />
+    </CustomTabs>
+  );
+
+  const renderTabs = (
+    <CustomTabs variant="fullWidth" value={currentTab} onChange={handleChangeTab}>
+      {TABS.map((tab) => (
+        <Tab
+          key={tab.value}
+          iconPosition="start"
+          value={tab.value}
+          label={tab.label}
+          icon={<Iconify icon={tab.icon} />}
+        />
+      ))}
+    </CustomTabs>
+  );
+
+  const renderList = (
+    <Scrollbar>
+      <Box component="ul">
+        {people?.map((relation, index) => (
+          <Box component="li" key={index} sx={{ display: 'flex' }}>
+            <SocialItem relation={relation} />
+          </Box>
+        ))}
+      </Box>
+    </Scrollbar>
+  );
+
+  useEffect(() => {
+    if (currentTab === 'all') {
+      setPoeple(allRelations?.data);
+    }
+    if (currentTab === 'friends') {
+      setPoeple(friends?.data);
+    }
+    if (currentTab === 'following') {
+      setPoeple(following?.data);
+    }
+  }, [currentTab, allRelations, friends, following, setPoeple]);
+
+  return (
+    <>
+      <IconButton
+        component={m.button}
+        whileTap="tap"
+        onClick={drawer.onTrue}
+        sx={{
+          color: 'primary.main',
+          display: 'flex',
+          flexDirection: 'column',
+          ustifyContent: 'center',
+          alignItems: 'center',
+          ...(drawer.value && { color: 'primary.dark' }),
+          ...sx,
+        }}
+        disableRipple
+        {...other}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48">
+          <path
+            fill="currentColor"
+            stroke="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M22.818 28.465c0 .694-.596 1.252-1.286 1.182c-6.358-.644-11.32-6.013-11.32-12.541s4.962-11.897 11.32-12.541c.69-.07 1.286.488 1.286 1.182zm2.364-8.93c0-.694.596-1.252 1.286-1.182c6.358.644 11.32 6.013 11.32 12.541s-4.962 11.897-11.32 12.541c-.69.07-1.286-.488-1.286-1.182z"
+            strokeWidth="1"
+          />
+          <circle
+            cx="16.515"
+            cy="37.197"
+            r="6.303"
+            fill="currentColor"
+            stroke="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1"
+          />
+          <circle
+            cx="31.485"
+            cy="10.803"
+            r="6.303"
+            fill="currentColor"
+            stroke="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1"
+          />
+        </svg>
+        <Typography variant="caption">Social</Typography>
+      </IconButton>
+
+      <Drawer
+        open={drawer.value}
+        onClose={drawer.onFalse}
+        anchor="right"
+        slotProps={{ backdrop: { invisible: true } }}
+        PaperProps={{ sx: { width: 1, maxWidth: 420 } }}
+      >
+        {renderHead}
+
+        {renderTabs}
+
+        {renderList}
+
+        <Box sx={{ p: 1 }}>
+          <Button fullWidth size="large">
+            View all
+          </Button>
+        </Box>
+      </Drawer>
+    </>
+  );
+}

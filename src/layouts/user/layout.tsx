@@ -18,6 +18,7 @@ import { _user_account } from '../config-nav-account';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { FeedButton } from '../components/feed-button';
+import { SocialDrawer } from '../components/social-drawer';
 import { AccountDrawer } from '../components/account-drawer';
 import { LanguageViewer } from '../components/language-viewer';
 import { VoiceRoomButton } from '../components/voice-room-button';
@@ -65,8 +66,10 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 {/* -- Language popover -- */}
                 <LanguageViewer language={user.secondaryLanguage} />
+
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer data={_notifications} sx={{ mt: 0.5 }} />
+
                 {/* --Feed Page */}
                 <FeedButton
                   active={active}
@@ -77,8 +80,12 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 <VoiceRoomButton
                   active={active}
                   onClickActive={() => setActive('voice-room')}
-                  sx={{ mt: 0.5 }}
+                  sx={{ mt: 0.5, mx: 0 }}
                 />
+
+                {/* -- Social popover -- */}
+                <SocialDrawer sx={{ mt: 0.5 }} />
+
                 {/* -- Account drawer -- */}
                 <AccountDrawer data={_user_account} status={getUserStatus()} />
               </Box>

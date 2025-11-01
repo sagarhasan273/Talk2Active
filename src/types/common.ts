@@ -33,7 +33,15 @@ export type ISocialLink = {
 export type ResponseSuccess = {
   status: boolean;
   message: string;
-  data?: any;
+  data: any;
+  metaData?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 };
 export type ResponseError = {
   status: boolean;

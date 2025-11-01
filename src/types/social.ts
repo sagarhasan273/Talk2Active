@@ -10,6 +10,8 @@ import type {
   BatchRelationshipStatusSchema,
 } from 'src/schemas/schema-social';
 
+import type { UserType } from './user';
+
 // Types for TypeScript
 export type RelationshipType = z.infer<typeof RelationshipSchema>;
 export type RelationshipInput = z.infer<typeof CreateRelationshipSchema>;
@@ -30,4 +32,10 @@ export type AuthorRelationship = {
   friends: boolean;
   blocked: boolean;
   pending: boolean;
+};
+export type AllRelationsType = {
+  accountDetails: UserType;
+  relation: 'friend' | 'following' | 'follower';
+  status: RelationshipStatusEnumProps;
+  type: RelationshipTypeEnumProps;
 };

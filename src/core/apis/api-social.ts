@@ -1,3 +1,4 @@
+import type { ResponseType } from 'src/types/common';
 import type { RelationshipInput } from 'src/types/social';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
@@ -37,7 +38,28 @@ export const socialApi = createApi({
       }),
       invalidatesTags: ['social-recall'],
     }),
+
+    getFriends: builder.query<ResponseType, string>({
+      query: (userId) => `social/friends/${userId}`,
+      providesTags: ['social-recall'],
+    }),
+
+    getFollowing: builder.query<ResponseType, string>({
+      query: (userId) => `social/following/${userId}`,
+      providesTags: ['social-recall'],
+    }),
+
+    getAllRelations: builder.query<ResponseType, string>({
+      query: (userId) => `social/all-relations/${userId}`,
+      providesTags: ['social-recall'],
+    }),
   }),
 });
 
-export const { useFollowMutation, useUnfollowMutation } = socialApi;
+export const {
+  useFollowMutation,
+  useUnfollowMutation,
+  useGetFriendsQuery,
+  useGetFollowingQuery,
+  useGetAllRelationsQuery,
+} = socialApi;
