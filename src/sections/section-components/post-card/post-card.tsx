@@ -76,7 +76,7 @@ export function PostCard({ post }: PostCardProps) {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  console.log('remder');
+
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
     if (isFollowing) {

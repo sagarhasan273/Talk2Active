@@ -7,7 +7,7 @@ import type { RootState } from '../store';
 
 // Define auth state interface
 interface UserState {
-  user: UserType | null;
+  user: UserType;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -15,7 +15,7 @@ interface UserState {
 
 // Initial state
 const initialState: UserState = {
-  user: null,
+  user: {} as UserType,
   isAuthenticated: false,
   loading: false,
   error: null,
@@ -31,7 +31,7 @@ export const userSlice = createSlice({
       state.error = null;
     },
     logout: (state) => {
-      state.user = null;
+      state.user = {} as UserType;
       state.isAuthenticated = false;
       state.error = null;
     },

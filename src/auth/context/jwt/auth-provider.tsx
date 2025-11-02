@@ -1,3 +1,4 @@
+import { useDispatch } from 'react-redux';
 import { useMemo, useEffect, useCallback } from 'react';
 
 import { useUserContext } from 'src/routes/route-components';
@@ -5,6 +6,8 @@ import { useUserContext } from 'src/routes/route-components';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
+
+import { setCredentials } from 'src/core/slices/slice-user';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -30,6 +33,7 @@ export function AuthProvider({ children }: Props) {
     authUser: null,
     loading: true,
   });
+  const dispatch = useDispatch();
 
   const checkUserSession = useCallback(async () => {
     try {
@@ -43,6 +47,7 @@ export function AuthProvider({ children }: Props) {
         const { user } = res.data;
         setState({ authUser: { ...user, accessToken }, loading: false });
         setUser(user);
+        dispatch(setCredentials(user));
       } else {
         setState({ authUser: null, loading: false });
       }
@@ -50,7 +55,7 @@ export function AuthProvider({ children }: Props) {
       console.error(error);
       setState({ authUser: null, loading: false });
     }
-  }, [setState, setUser]);
+  }, [setState, setUser, dispatch]);
 
   useEffect(() => {
     checkUserSession();

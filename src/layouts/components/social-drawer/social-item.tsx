@@ -1,17 +1,21 @@
 import type { AllRelationsType } from 'src/types/social';
 
-import Box from '@mui/material/Box';
+import { useSelector } from 'react-redux';
+
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import ListItemText from '@mui/material/ListItemText';
+import { SvgIcon, Typography } from '@mui/material';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
-import { SvgIcon, IconButton, Typography } from '@mui/material';
 
 import { fToNow } from 'src/utils/format-time';
 
-import { Iconify } from 'src/components/iconify';
+import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { useUnfollowMutation } from 'src/core/apis/api-social';
+import { selectCurrentUser } from 'src/core/slices/slice-user';
+
+import { UnfollowPopover } from './unfollow-popover';
 
 // ----------------------------------------------------------------------
 
@@ -25,7 +29,17 @@ export type SocialItemProps = {
   createdAt: string | number | null;
 };
 
-export function SocialItem({ relation }: { relation: AllRelationsType }) {
+export function SocialItem({
+  relation,
+  onClick,
+}: {
+  relation: AllRelationsType;
+  onClick: () => void;
+}) {
+  const user = useSelector(selectCurrentUser);
+
+  const [unfollowMutate] = useUnfollowMutation();
+
   const renderAvatar = (
     <ListItemAvatar
       sx={{
@@ -76,76 +90,60 @@ export function SocialItem({ relation }: { relation: AllRelationsType }) {
   );
 
   const renderText = (
-    <ListItemText
-      disableTypography
-      primary={
-        <Stack direction="row">
-          <Typography
-            variant="body1"
-            sx={{ color: relation.relation === 'friend' ? 'primary.main' : 'text.secondary' }}
-          >
-            {relation.accountDetails.name}
-          </Typography>
-          <IconButton
-            sx={{
-              p: '4px',
-              ml: 'auto',
-              borderRadius: 0.5,
-              color: 'error.dark',
-              border: (theme) => `1px solid ${theme.palette.error.dark}`,
-              '&:hover': {
-                color: 'error.main',
-                border: (theme) => `1px solid ${theme.palette.error.main}`,
-              },
-            }}
-            disableRipple
-          >
-            <Iconify icon="ri:user-unfollow-fill" sx={{ width: 14, height: 14 }} />
-          </IconButton>
-        </Stack>
-      }
-      secondary={
-        relation.relation === 'friend' ? (
-          friendAction
-        ) : (
-          <Typography variant="body2" sx={{ color: 'text.secondary', opacity: 0.5 }}>
+    <Stack>
+      <Stack direction="row">
+        <Typography
+          variant="body1"
+          sx={{ color: relation.relation === 'friend' ? 'primary.main' : 'text.secondary' }}
+        >
+          {relation.accountDetails.name}
+        </Typography>
+
+        <UnfollowPopover
+          title={`Are you sure to remove ${relation.accountDetails.name}?`}
+          onConfirm={() => {
+            unfollowMutate({
+              requester: user.id,
+              recipient: relation?.accountDetails?.id,
+              type: RelationshipTypeEnum.FOLLOW,
+            });
+          }}
+        />
+      </Stack>
+      {relation.relation !== 'friend' ? (
+        friendAction
+      ) : (
+        <>
+          <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.7, mt: -0.5 }}>
             last seen {fToNow(relation.accountDetails.lastActive)} ago
           </Typography>
-        )
-      }
-      sx={{}}
-    />
-  );
-
-  const renderUnReadBadge = (relation as any).isUnRead && (
-    <Box
-      sx={{
-        top: 26,
-        width: 8,
-        height: 8,
-        right: 20,
-        borderRadius: '50%',
-        bgcolor: 'error.main',
-        position: 'absolute',
-      }}
-    />
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {relation.accountDetails.bio}
+          </Typography>
+        </>
+      )}
+    </Stack>
   );
 
   return (
     <ListItemButton
       disableRipple
       sx={{
-        px: 2.5,
-        py: 1.5,
+        px: 2,
+        py: 1,
         alignItems: 'flex-start',
         borderBottom: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
       }}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (relation.relation === 'friend') {
+          onClick();
+        }
+      }}
     >
-      {renderUnReadBadge}
-
       {renderAvatar}
 
-      <Stack sx={{ flexGrow: 1 }}>{renderText}</Stack>
+      <Stack sx={{ flexGrow: 1, justifyContent: 'center', height: 1 }}>{renderText}</Stack>
     </ListItemButton>
   );
 }

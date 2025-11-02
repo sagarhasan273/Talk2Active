@@ -1,3 +1,5 @@
+import type { UserType } from 'src/types/user';
+import type { AllRelationsType } from 'src/types/social';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { m } from 'framer-motion';
@@ -7,12 +9,13 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
-import { Avatar, Tooltip } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import { Stack, Avatar, Tooltip } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { MessageTypingIllustration } from 'src/assets/illustrations';
 import {
   useGetFriendsQuery,
   useGetFollowingQuery,
@@ -55,7 +58,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
 
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('all');
-  const [people, setPoeple] = useState([]);
+  const [selectedForMessage, setSelectedForMessage] = useState<Partial<UserType>>({});
+  const [people, setPoeple] = useState<AllRelationsType[]>([]);
 
   const { data: allRelations } = useGetAllRelationsQuery(authUser?.id as string, {
     skip: currentTab !== 'all',
@@ -78,23 +82,33 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   }, []);
 
   const messagingWith = {
-    icon: <Avatar src={authUser?.profilePhoto} alt="sagar hasan" sx={{ width: 24, height: 24 }} />,
+    icon: (
+      <Avatar
+        src={selectedForMessage.profilePhoto}
+        alt={selectedForMessage.name}
+        sx={{ width: 24, height: 24 }}
+      />
+    ),
     label: (
       <Tooltip title="Sagar Hasan">
-        <Typography
-          sx={{
-            maxWidth: 100,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            display: 'block',
-          }}
-        >
-          Sagar Hasan Sagar Hasan Sagar Hasan Sagar Hasan
-        </Typography>
+        <Stack sx={{ position: 'relative' }}>
+          <Typography
+            sx={{
+              maxWidth: 100,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'block',
+            }}
+          >
+            {selectedForMessage.name}
+          </Typography>
+
+          <MessageTypingIllustration sx={{ position: 'absolute', top: 12, left: -5 }} />
+        </Stack>
       </Tooltip>
     ),
-    value: '23jadfjasdjfa',
+    value: 'messaging-with',
   };
 
   const renderHead = (
@@ -114,18 +128,21 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           }}
         />
       ))}
-      <Tab
-        iconPosition="start"
-        value={messagingWith.value}
-        label={messagingWith.label}
-        icon={messagingWith.icon}
-        sx={{
-          minWidth: 160,
-          '&.MuiButtonBase-root': {
-            px: 1.5,
-          },
-        }}
-      />
+      {selectedForMessage.name && (
+        <Tab
+          iconPosition="start"
+          value={messagingWith.value}
+          label={messagingWith.label}
+          icon={messagingWith.icon}
+          sx={{
+            minWidth: 120,
+            maxWidth: 160,
+            '&.MuiButtonBase-root': {
+              px: 1.5,
+            },
+          }}
+        />
+      )}
     </CustomTabs>
   );
 
@@ -146,9 +163,12 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const renderList = (
     <Scrollbar>
       <Box component="ul">
-        {people?.map((relation, index) => (
+        {people.map((relation, index) => (
           <Box component="li" key={index} sx={{ display: 'flex' }}>
-            <SocialItem relation={relation} />
+            <SocialItem
+              relation={relation}
+              onClick={() => setSelectedForMessage(relation.accountDetails)}
+            />
           </Box>
         ))}
       </Box>
@@ -156,14 +176,14 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   );
 
   useEffect(() => {
-    if (currentTab === 'all') {
-      setPoeple(allRelations?.data);
+    if (currentTab === 'all' && allRelations?.data) {
+      setPoeple(allRelations.data);
     }
-    if (currentTab === 'friends') {
-      setPoeple(friends?.data);
+    if (currentTab === 'friends' && friends?.data) {
+      setPoeple(friends.data);
     }
-    if (currentTab === 'following') {
-      setPoeple(following?.data);
+    if (currentTab === 'following' && following?.data) {
+      setPoeple(following.data);
     }
   }, [currentTab, allRelations, friends, following, setPoeple]);
 
@@ -227,15 +247,17 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       >
         {renderHead}
 
-        {renderTabs}
+        {headerTab === 'social' && renderTabs}
 
-        {renderList}
+        {headerTab === 'social' && renderList}
 
-        <Box sx={{ p: 1 }}>
-          <Button fullWidth size="large">
-            View all
-          </Button>
-        </Box>
+        {headerTab === 'social' && (
+          <Box sx={{ p: 1 }}>
+            <Button fullWidth size="large">
+              View all
+            </Button>
+          </Box>
+        )}
       </Drawer>
     </>
   );
