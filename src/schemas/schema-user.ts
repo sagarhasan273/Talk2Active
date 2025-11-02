@@ -1,5 +1,7 @@
 import { z as zod } from 'zod';
 
+import { PostTagsEnum } from 'src/enums/enum-post';
+
 export const UserSchema = zod
   .object({
     id: zod.string(),
@@ -115,6 +117,12 @@ export const UserSchema = zod
     // Appearance types
     primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']),
     themeMode: zod.boolean(),
+
+    // categories
+    tags: zod
+      .array(zod.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
+      .max(30, 'Cannot have more than 30 tags')
+      .default([]),
   })
   .strict(); // Using strict() to prevent unknown fields
 
@@ -134,9 +142,14 @@ export const UserProfileFormSchema = UserSchema.pick({
   status: true,
 });
 
-export const UserStatusSchema = UserSchema.required({
+export const UserStatusSchema = UserSchema.pick({ id: true, status: true }).required({
   id: true,
   status: true,
+});
+
+export const UserTagsSchema = UserSchema.pick({ id: true, tags: true }).required({
+  id: true,
+  tags: true,
 });
 
 export const UserAccountUpdateSchema = UserSchema.pick({

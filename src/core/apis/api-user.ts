@@ -1,6 +1,8 @@
 // services/userApi.ts
+import type { ResponseType } from 'src/types/common';
 import type {
   UserType,
+  UserTagsType,
   UserStatusType,
   UserProfileFormType,
   UserAccountUpdateType,
@@ -33,10 +35,7 @@ export const userApi = createApi({
       providesTags: ['user-recall'],
     }),
 
-    updateUser: builder.mutation<
-      { message: string; status: boolean },
-      Partial<UserProfileFormType>
-    >({
+    updateUser: builder.mutation<ResponseType, Partial<UserProfileFormType>>({
       query: (body) => ({
         url: `user/profile/update`,
         method: 'POST',
@@ -45,10 +44,16 @@ export const userApi = createApi({
       invalidatesTags: ['user-recall'],
     }),
 
-    updateUserStatus: builder.mutation<
-      { message: string; status: boolean },
-      Partial<UserStatusType>
-    >({
+    updateUserStatus: builder.mutation<ResponseType, Partial<UserStatusType>>({
+      query: (body) => ({
+        url: `user/profile/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['user-recall'],
+    }),
+
+    updateUserTags: builder.mutation<ResponseType, Partial<UserTagsType>>({
       query: (body) => ({
         url: `user/profile/update`,
         method: 'POST',
@@ -66,7 +71,7 @@ export const userApi = createApi({
     }),
 
     updateUserAccount: builder.mutation<
-      { message: string; status: boolean },
+      ResponseType,
       Omit<UserAccountUpdateType, 'confirmNewPassword'>
     >({
       query: (body) => ({
@@ -77,10 +82,7 @@ export const userApi = createApi({
       invalidatesTags: ['user-recall'],
     }),
 
-    updateUserAccountActivate: builder.mutation<
-      { message: string; status: boolean },
-      UserAccountActivateUpdateType
-    >({
+    updateUserAccountActivate: builder.mutation<ResponseType, UserAccountActivateUpdateType>({
       query: (body) => ({
         url: `user/profile/update/activate`,
         method: 'POST',
@@ -89,10 +91,7 @@ export const userApi = createApi({
       invalidatesTags: ['user-recall'],
     }),
 
-    updateUserAccountSession: builder.mutation<
-      { message: string; status: boolean },
-      UserAccountSessionUpdateType
-    >({
+    updateUserAccountSession: builder.mutation<ResponseType, UserAccountSessionUpdateType>({
       query: (body) => ({
         url: `user/profile/update/session`,
         method: 'POST',
@@ -117,6 +116,7 @@ export const {
   useUpdateUserAccountSessionMutation,
   useUpdateUserAccountActivateMutation,
   useUpdateUserStatusMutation,
+  useUpdateUserTagsMutation,
   useCreateUserMutation,
   useDeleteUserMutation,
 } = userApi;

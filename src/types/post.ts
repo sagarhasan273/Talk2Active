@@ -18,21 +18,6 @@ export interface Comment {
   timestamp: Date;
 }
 
-export interface UserProfile {
-  name: string;
-  username: string;
-  avatar: string;
-  bio: string;
-  location: string;
-  website: string;
-  joinDate: Date;
-  followers: number;
-  following: number;
-  posts: number;
-  verified: boolean;
-  coverImage: string;
-}
-
 // Type definitions
 export type Post = z.infer<typeof PostSchema>;
 export type CreatePostInput = z.infer<typeof CreatePostSchema>;

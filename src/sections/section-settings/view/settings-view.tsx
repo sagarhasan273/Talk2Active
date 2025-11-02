@@ -1,5 +1,3 @@
-import type { UserProfile } from 'src/types/post';
-
 import React, { useState } from 'react';
 import { Eye, User, Bell, Shield, Palette } from 'lucide-react';
 
@@ -12,8 +10,8 @@ import SettingsProfileInformation from '../settings-profile-information';
 import SettingsProfileNotifications from '../settings-profile-notifications';
 
 interface SettingsProps {
-  profile: UserProfile;
-  onUpdateProfile: (updatedProfile: UserProfile) => void;
+  profile: any;
+  onUpdateProfile: (updatedProfile: any) => void;
 }
 
 const StyledTabs = styled(Tabs)(({ theme }) => ({

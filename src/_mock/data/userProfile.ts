@@ -1,6 +1,4 @@
-import type { UserProfile } from 'src/types/post';
-
-export const currentUserProfile: UserProfile = {
+export const currentUserProfile: any = {
   name: 'Alex Rivera',
   username: 'alexr',
   avatar:

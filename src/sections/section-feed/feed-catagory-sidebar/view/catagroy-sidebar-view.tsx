@@ -33,6 +33,10 @@ import {
   Typography,
 } from '@mui/material';
 
+import { useUserContext } from 'src/routes/route-components';
+
+import { useUpdateUserTagsMutation } from 'src/core/apis';
+
 interface CategorySidebarProps {
   selectedCategory: string[];
   onCategorySelect: React.Dispatch<React.SetStateAction<string[]>>;
@@ -50,6 +54,11 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
   onCategorySelect,
 }) => {
   const theme = useTheme();
+
+  const { user } = useUserContext();
+
+  const [updateTags] = useUpdateUserTagsMutation();
+
   const categories = [
     {
       key: 'all',
@@ -80,7 +89,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.blue.light,
     },
     {
-      key: 'love',
+      key: 'love&life',
       label: 'Love & Life',
       icon: Heart,
       color: theme.palette.red.main,
@@ -122,14 +131,14 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.teal.light,
     },
     {
-      key: 'health',
+      key: 'health&fitness',
       label: 'Health & Fitness',
       icon: Dumbbell,
       color: theme.palette.orange.main,
       bgColor: theme.palette.orange.light,
     },
     {
-      key: 'music',
+      key: 'music&arts',
       label: 'Music & Arts',
       icon: Music,
       color: theme.palette.violet.main,
@@ -157,7 +166,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
       bgColor: theme.palette.stone.light,
     },
     {
-      key: 'books',
+      key: 'books&learning',
       label: 'Books & Learning',
       icon: BookOpen,
       color: theme.palette.amber.main,
@@ -230,12 +239,16 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
                   onClick={() =>
                     onCategorySelect((prev) => {
                       if (category.key === 'all') {
+                        updateTags({ id: user?.id, tags: ['all'] });
                         return ['all'];
                       }
                       if (prev.includes(category.key)) {
-                        return prev.filter((cat) => cat !== category.key && cat !== 'all');
+                        const data = prev.filter((cat) => cat !== category.key && cat !== 'all');
+                        updateTags({ id: user?.id, tags: data });
+                        return data;
                       }
-                      // Add category if not present and not 'all'
+                      const data = [...prev.filter((cat) => cat !== 'all'), category.key];
+                      updateTags({ id: user?.id, tags: data });
                       return [...prev.filter((cat) => cat !== 'all'), category.key];
                     })
                   }
