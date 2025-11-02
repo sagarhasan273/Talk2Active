@@ -1,13 +1,13 @@
 import type { PostResponseType } from 'src/types/post';
 
+import { useSelector } from 'react-redux';
 import React, { useState, useEffect } from 'react';
 
 import { Box, Container } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { selectAccount } from 'src/core/slices';
 import { useGetPostsQuery } from 'src/core/apis/api-post';
 
 import { PostCard } from 'src/sections/section-components/post-card';
@@ -18,7 +18,7 @@ import { DiscoveryPanel } from '../../feed-discovery-panal';
 import { CategorySidebarView } from '../../feed-catagory-sidebar';
 
 export function FeedPostsView() {
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const mid = useResponsive('down', 'lg');
   const small = useResponsive('down', 'md');

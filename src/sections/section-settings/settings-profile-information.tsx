@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useDispatch, useSelector } from 'react-redux';
 import { User, Mail, Link, MapPin, FileText } from 'lucide-react';
 
 import {
@@ -18,14 +19,13 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { UserProfileFormSchema, UserSchema } from 'src/schemas/schema-user';
+import { UserProfileFormSchema } from 'src/schemas/schema-user';
+import { setAccount, selectAccount, selectAuthLoading } from 'src/core/slices';
 import {
-  useUpdateUserAccountActivateMutation,
   useUpdateUserMutation,
+  useUpdateUserAccountActivateMutation,
 } from 'src/core/apis/api-user';
 
 import { Iconify } from 'src/components/iconify';
@@ -79,7 +79,7 @@ const AnimatedIcon = styled(Box)(() => ({
   },
 }));
 
-const getFormData = (user: UserType | null) => ({
+const getFormData = (user: UserType) => ({
   id: user?.id || '',
   userId: user?.userId || '',
   name: user?.name || '',
@@ -93,7 +93,9 @@ const getFormData = (user: UserType | null) => ({
 });
 
 function SettingsProfileInformation() {
-  const { user, setUser, loading } = useUserContext();
+  const dispatch = useDispatch();
+  const user = useSelector(selectAccount);
+  const loading = useSelector(selectAuthLoading);
 
   const theme = useTheme();
 
@@ -134,7 +136,7 @@ function SettingsProfileInformation() {
 
       if (response?.data?.status) {
         toast.success(`Profile ${!user?.accountActive ? 'Activated' : 'Deactivated'}`);
-        setUser((prev) => (prev ? { ...prev, accountActive: !user.accountActive } : prev));
+        dispatch(setAccount({ ...user, accountActive: !user.accountActive }));
       }
     } catch (error) {
       toast.error('Failed to update status');

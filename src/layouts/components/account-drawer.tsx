@@ -3,6 +3,7 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { toast } from 'sonner';
 import { useState, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
 import { Button } from '@mui/material';
@@ -14,10 +15,10 @@ import IconButton from '@mui/material/IconButton';
 import { useTheme, useColorScheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/route-paths';
-import { useUserContext } from 'src/routes/route-components';
 import { useRouter, usePathname } from 'src/routes/route-hooks';
 
 import { varAlpha } from 'src/theme/styles';
+import { setAccount, selectAccount } from 'src/core/slices';
 import { useUpdateUserStatusMutation } from 'src/core/apis/api-user';
 
 import { Label } from 'src/components/label';
@@ -51,6 +52,9 @@ export type AccountDrawerProps = IconButtonProps & {
 export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountDrawerProps) {
   const theme = useTheme();
 
+  const dispatch = useDispatch();
+  const user = useSelector(selectAccount);
+
   const settings = useSettingsContext();
 
   const { mode, setMode } = useColorScheme();
@@ -58,8 +62,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
   const router = useRouter();
 
   const pathname = usePathname();
-
-  const { user, setUser } = useUserContext();
 
   const [open, setOpen] = useState(false);
 
@@ -164,15 +166,13 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 variant={option.value === user?.status ? 'contained' : 'outlined'}
                 onClick={async () => {
                   try {
-                    setUser((prev) =>
-                      prev ? { ...prev, status: option.value as UserType['status'] } : prev
-                    );
+                    dispatch(setAccount({ ...user, status: option.value as UserType['status'] }));
                     const response = await updateUser({
-                      id: user?.id,
+                      id: user.id,
                       status: option.value as UserType['status'],
                     });
 
-                    if (response?.data?.status) {
+                    if (response.data?.status) {
                       toast.success(`Profile status ${option.label}`);
                     }
                   } catch (error) {

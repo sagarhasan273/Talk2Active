@@ -3,6 +3,7 @@ import type { AllRelationsType } from 'src/types/social';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { m } from 'framer-motion';
+import { useSelector } from 'react-redux';
 import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
@@ -15,6 +16,7 @@ import { Stack, Avatar, Tooltip } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { selectAccount } from 'src/core/slices';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import {
   useGetFriendsQuery,
@@ -25,8 +27,6 @@ import {
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
-
-import { useAuthContext } from 'src/auth/hooks';
 
 import { SocialItem } from './social-item';
 
@@ -54,22 +54,22 @@ export type SocialDrawerProps = IconButtonProps;
 export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
 
-  const { authUser } = useAuthContext();
+  const user = useSelector(selectAccount);
 
   const [headerTab, setHeaderTab] = useState('social');
-  const [currentTab, setCurrentTab] = useState('all');
+  const [currentTab, setCurrentTab] = useState('');
   const [selectedForMessage, setSelectedForMessage] = useState<Partial<UserType>>({});
   const [people, setPoeple] = useState<AllRelationsType[]>([]);
 
-  const { data: allRelations } = useGetAllRelationsQuery(authUser?.id as string, {
+  const { data: allRelations } = useGetAllRelationsQuery(user.id, {
     skip: currentTab !== 'all',
   });
 
-  const { data: friends } = useGetFriendsQuery(authUser?.id as string, {
+  const { data: friends } = useGetFriendsQuery(user.id, {
     skip: currentTab !== 'friends',
   });
 
-  const { data: following } = useGetFollowingQuery(authUser?.id as string, {
+  const { data: following } = useGetFollowingQuery(user.id, {
     skip: currentTab !== 'following',
   });
 
@@ -192,7 +192,10 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       <IconButton
         component={m.button}
         whileTap="tap"
-        onClick={drawer.onTrue}
+        onClick={() => {
+          drawer.onTrue();
+          setCurrentTab((prev) => (prev === '' ? 'all' : prev));
+        }}
         sx={{
           color: 'primary.main',
           display: 'flex',

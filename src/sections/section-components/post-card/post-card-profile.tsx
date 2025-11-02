@@ -2,6 +2,7 @@ import type { PostResponseType } from 'src/types/post';
 
 import { useState } from 'react';
 import YouTube from 'react-youtube';
+import { useSelector } from 'react-redux';
 
 import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import {
@@ -20,13 +21,12 @@ import {
   CardContent,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
+import { selectAccount } from 'src/core/slices';
 import {
   useDeletePostMutation,
   useUpdatePostEngagementPinMutation,
@@ -45,7 +45,7 @@ import type { PostCardProps } from './types';
 // YouTube ID extraction utility
 
 export function PostCardProfile({ post }: PostCardProps) {
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();

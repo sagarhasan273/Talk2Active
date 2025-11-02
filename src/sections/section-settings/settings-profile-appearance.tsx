@@ -3,21 +3,20 @@ import type { UserType } from 'src/types/user';
 import { toast } from 'sonner';
 import { Sun, Moon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Box, Card, Stack, Paper, Switch, Typography } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { UserSchema } from 'src/schemas/schema-user';
-import { useUpdateUserMutation } from 'src/core/apis/api-user';
+import { useUpdateUserAppearanceMutation } from 'src/core/apis';
+import { selectAccount, selectAuthLoading } from 'src/core/slices';
 
 import { Form } from 'src/components/hook-form';
 import { useSettingsContext } from 'src/components/settings';
 import { LoadingScreen } from 'src/components/loading-screen';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
-import { useUpdateUserAppearanceMutation } from 'src/core/apis';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',
@@ -26,7 +25,8 @@ const getFormData = (user: UserType | null) => ({
 });
 
 function SettingsProfileAppearance() {
-  const { user, loading } = useUserContext();
+  const user = useSelector(selectAccount);
+  const loading = useSelector(selectAuthLoading);
   const settings = useSettingsContext();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -38,13 +38,13 @@ function SettingsProfileAppearance() {
     defaultValues: getFormData(user),
   });
 
-  const { watch, reset, handleSubmit } = methods;
+  const { watch, reset } = methods;
 
   const values = watch();
 
   const onSubmit = async (data: any) => {
     try {
-      if (!user?.id) {
+      if (!user.id) {
         toast.error('User ID is required for updating privacy settings');
         return;
       }

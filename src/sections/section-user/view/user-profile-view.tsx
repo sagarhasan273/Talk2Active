@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Box, Tab, Tabs, Paper, Container } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
+import { selectAccount } from 'src/core/slices';
 
 import UserProfileInfo from '../user-profile-info';
 import { UserPinContainer } from '../user-pin-container';
@@ -28,7 +29,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 );
 
 export const UserProfileView: React.FC<UserProfileViewProps> = () => {
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const [activeTab, setActiveTab] = useState(0);
 

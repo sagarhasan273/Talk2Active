@@ -1,5 +1,6 @@
 import { Edit } from 'lucide-react';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Link, LocationOn, CheckCircle, CalendarToday } from '@mui/icons-material';
 import {
@@ -14,13 +15,13 @@ import {
 } from '@mui/material';
 
 import { useRouter } from 'src/routes/route-hooks';
-import { useUserContext } from 'src/routes/route-components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
+import { selectAccount } from 'src/core/slices';
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
@@ -28,7 +29,7 @@ import { ImageViewer } from 'src/components/image';
 function UserProfileInfo() {
   const router = useRouter();
 
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const openImage = useBoolean(false);
 

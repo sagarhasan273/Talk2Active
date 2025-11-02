@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
+import { useSelector } from 'react-redux';
 import { X, Sparkles } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
@@ -13,8 +14,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
+import { selectAccount } from 'src/core/slices';
 import { useCreatePostMutation, useUpdatePostMutation } from 'src/core/apis/api-post';
 
 import { Form } from 'src/components/hook-form';
@@ -28,7 +28,7 @@ import type { PostTypeProps, CreatePostProps } from './types';
 export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
   const theme = useTheme();
 
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const [postType, setPostType] = useState<PostTypeProps>('quote');
 

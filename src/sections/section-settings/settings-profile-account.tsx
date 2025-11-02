@@ -2,9 +2,10 @@ import type { UserAccountUpdateType } from 'src/types/user';
 
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, LogOut, Wifi } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useDispatch, useSelector } from 'react-redux';
 
 import {
   Box,
@@ -12,25 +13,24 @@ import {
   Stack,
   Button,
   styled,
+  MenuItem,
+  TextField,
   Typography,
   IconButton,
   InputAdornment,
-  MenuItem,
-  TextField,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
+import { toastErrorResponse, toastSuccessResponse } from 'src/utils/response';
 
+import { UserAccountUpdateSchema } from 'src/schemas/schema-user';
+import { setAccount, selectAccount, selectAuthLoading } from 'src/core/slices';
 import {
   useUpdateUserAccountMutation,
   useUpdateUserAccountSessionMutation,
-  useUpdateUserMutation,
 } from 'src/core/apis/api-user';
-import { UserAccountUpdateSchema } from 'src/schemas/schema-user';
 
 import { Form, Field } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { toastErrorResponse, toastSuccessResponse } from 'src/utils/response';
 
 const GradientButton = styled(Button)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -50,7 +50,9 @@ const getFormData = (user: Partial<UserAccountUpdateType> | null) => ({
 });
 
 function SettingsProfileAccount() {
-  const { user, setUser, loading } = useUserContext();
+  const dispatch = useDispatch();
+  const user = useSelector(selectAccount);
+  const loading = useSelector(selectAuthLoading);
 
   const [showPassword, setShowPassword] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState('10');
@@ -68,7 +70,7 @@ function SettingsProfileAccount() {
     reset,
 
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = methods;
 
   const values = watch();
@@ -89,8 +91,8 @@ function SettingsProfileAccount() {
       };
 
       const response = await updateUser(formData);
-      if (response?.data?.status) {
-        setUser({ ...user, ...formData });
+      if (response.data?.status) {
+        dispatch(setAccount({ ...user, ...formData }));
         toastSuccessResponse(response || 'Account updated successfully');
       } else {
         toastErrorResponse(response);
@@ -273,7 +275,9 @@ function SettingsProfileAccount() {
                       sessionTimeOut: parseInt(sessionTimeout, 10),
                     });
                     if (response?.data?.status) {
-                      setUser({ ...user, sessionTimeOut: parseInt(sessionTimeout, 10) });
+                      dispatch(
+                        setAccount({ ...user, sessionTimeOut: parseInt(sessionTimeout, 10) })
+                      );
                       toastSuccessResponse(response || 'Session timeout updated successfully');
                     } else {
                       toastErrorResponse(response);

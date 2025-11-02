@@ -1,13 +1,11 @@
 import { useDispatch } from 'react-redux';
 import { useMemo, useEffect, useCallback } from 'react';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
-import { setCredentials } from 'src/core/slices/slice-user';
+import { setAccount } from 'src/core/slices/slice-account';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -28,12 +26,12 @@ type Props = {
 };
 
 export function AuthProvider({ children }: Props) {
-  const { setUser } = useUserContext();
+  const dispatch = useDispatch();
+
   const { state, setState } = useSetState<AuthState>({
     authUser: null,
     loading: true,
   });
-  const dispatch = useDispatch();
 
   const checkUserSession = useCallback(async () => {
     try {
@@ -44,10 +42,10 @@ export function AuthProvider({ children }: Props) {
 
         const res = await axios.get(endpoints.auth.me);
 
-        const { user } = res.data;
-        setState({ authUser: { ...user, accessToken }, loading: false });
-        setUser(user);
-        dispatch(setCredentials(user));
+        const { data } = res.data;
+        setState({ authUser: { ...data, accessToken }, loading: false });
+
+        dispatch(setAccount(data));
       } else {
         setState({ authUser: null, loading: false });
       }
@@ -55,12 +53,11 @@ export function AuthProvider({ children }: Props) {
       console.error(error);
       setState({ authUser: null, loading: false });
     }
-  }, [setState, setUser, dispatch]);
+  }, [setState, dispatch]);
 
   useEffect(() => {
     checkUserSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [checkUserSession]);
 
   // ----------------------------------------------------------------------
 
@@ -73,7 +70,6 @@ export function AuthProvider({ children }: Props) {
       authUser: state.authUser
         ? {
             ...state.authUser,
-            role: state.authUser?.role ?? 'admin',
           }
         : null,
       checkUserSession,

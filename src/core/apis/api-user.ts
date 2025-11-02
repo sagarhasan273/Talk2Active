@@ -14,7 +14,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { CONFIG } from 'src/config-global';
 
-import { STORAGE_KEY } from 'src/auth/context/jwt';
+import { STORAGE_KEY } from 'src/auth/context/jwt/constant';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
@@ -30,6 +30,11 @@ export const userApi = createApi({
   }), // your REST API base
   tagTypes: ['user-recall'],
   endpoints: (builder) => ({
+    getUser: builder.query<ResponseType, null>({
+      query: () => `user/u/me`,
+      providesTags: ['user-recall'],
+    }),
+
     getUserById: builder.query<{ user: UserType; status: boolean }, string>({
       query: (id) => `user/profile/${id}`,
       providesTags: ['user-recall'],
@@ -50,6 +55,7 @@ export const userApi = createApi({
         method: 'POST',
         body,
       }),
+      transformResponse: (response: ResponseType) => response,
       invalidatesTags: ['user-recall'],
     }),
 
@@ -110,6 +116,7 @@ export const userApi = createApi({
 });
 
 export const {
+  useGetUserQuery,
   useGetUserByIdQuery,
   useUpdateUserMutation,
   useUpdateUserAccountMutation,

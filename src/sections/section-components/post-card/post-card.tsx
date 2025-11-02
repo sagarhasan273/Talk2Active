@@ -2,6 +2,7 @@ import type { PostResponseType } from 'src/types/post';
 
 import { useState } from 'react';
 import YouTube from 'react-youtube';
+import { useSelector } from 'react-redux';
 
 import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import {
@@ -21,14 +22,13 @@ import {
   CardContent,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fToNow } from 'src/utils/format-time';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
+import { selectAccount } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
 import {
@@ -47,7 +47,7 @@ import { InteractionButton } from '../interaction-button';
 import type { PostCardProps } from './types';
 
 export function PostCard({ post }: PostCardProps) {
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();

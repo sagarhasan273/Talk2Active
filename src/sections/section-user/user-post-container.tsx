@@ -1,11 +1,11 @@
 import type { PostResponseType } from 'src/types/post';
 
+import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';
 
 import { Box, Typography } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
+import { selectAccount } from 'src/core/slices';
 import { useGetPostsByUserIdQuery } from 'src/core/apis';
 
 import { Iconify } from 'src/components/iconify';
@@ -13,7 +13,7 @@ import { Iconify } from 'src/components/iconify';
 import { PostCardProfile } from '../section-components/post-card';
 
 export function UserPostContainer() {
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const [posts, setPosts] = useState<PostResponseType[]>([]);
 

@@ -12,8 +12,8 @@ import ListItemButton from '@mui/material/ListItemButton';
 import { fToNow } from 'src/utils/format-time';
 
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { selectAccount } from 'src/core/slices/slice-account';
 import { useUnfollowMutation } from 'src/core/apis/api-social';
-import { selectCurrentUser } from 'src/core/slices/slice-user';
 
 import { UnfollowPopover } from './unfollow-popover';
 
@@ -36,7 +36,7 @@ export function SocialItem({
   relation: AllRelationsType;
   onClick: () => void;
 }) {
-  const user = useSelector(selectCurrentUser);
+  const user = useSelector(selectAccount);
 
   const [unfollowMutate] = useUnfollowMutation();
 

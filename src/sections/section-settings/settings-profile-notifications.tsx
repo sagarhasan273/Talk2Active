@@ -1,22 +1,21 @@
 import type { UserType } from 'src/types/user';
 
 import { toast } from 'sonner';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Smartphone, MessageSquare } from 'lucide-react';
 
 import { VolumeUp, Vibration } from '@mui/icons-material';
 import { Box, Card, Grid, Paper, Stack, Switch, Typography } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
 import { UserSchema } from 'src/schemas/schema-user';
-import { useUpdateUserMutation } from 'src/core/apis/api-user';
+import { useUpdateUserNotificationMutation } from 'src/core/apis';
+import { selectAccount, selectAuthLoading } from 'src/core/slices';
 
 import { Form } from 'src/components/hook-form';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useUpdateUserNotificationMutation } from 'src/core/apis';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',
@@ -77,7 +76,8 @@ const deliveryMethods = [
 ];
 
 function SettingsProfileNotifications() {
-  const { user, loading } = useUserContext();
+  const user = useSelector(selectAccount);
+  const loading = useSelector(selectAuthLoading);
 
   const [updateUser] = useUpdateUserNotificationMutation();
 
@@ -86,7 +86,7 @@ function SettingsProfileNotifications() {
     defaultValues: getFormData(user),
   });
 
-  const { watch, reset, handleSubmit, setValue } = methods;
+  const { watch, reset, setValue } = methods;
 
   const values = watch();
 

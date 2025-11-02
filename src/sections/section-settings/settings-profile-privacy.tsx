@@ -1,9 +1,9 @@
 import type { UserType } from 'src/types/user';
+import type { UserPrivacySettingUpdateType } from 'src/types/settings';
 
 import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Block, Public } from '@mui/icons-material';
 import {
@@ -24,15 +24,11 @@ import {
   FormControlLabel,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
+import { useUpdateUserPrivacyMutation } from 'src/core/apis';
+import { selectAccount, selectAuthLoading } from 'src/core/slices';
 
-import { UserSchema } from 'src/schemas/schema-user';
-
-import { Form } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';
 import { LoadingScreen } from 'src/components/loading-screen';
-import { useUpdateUserPrivacyMutation } from 'src/core/apis';
-import { UserPrivacySettingUpdateType } from 'src/types/settings';
 
 const getFormData = (user: UserType | null) => ({
   id: user?.id || '',
@@ -44,7 +40,8 @@ const getFormData = (user: UserType | null) => ({
 });
 
 function SettingsProfilePrivacy() {
-  const { user, loading } = useUserContext();
+  const user = useSelector(selectAccount);
+  const loading = useSelector(selectAuthLoading);
 
   const [privacy, setPrivacy] = useState<UserPrivacySettingUpdateType>(getFormData(user));
 

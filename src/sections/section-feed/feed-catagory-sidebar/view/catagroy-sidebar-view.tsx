@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import {
   Zap,
   Star,
@@ -33,8 +34,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useUserContext } from 'src/routes/route-components';
-
+import { selectAccount } from 'src/core/slices';
 import { useUpdateUserTagsMutation } from 'src/core/apis';
 
 interface CategorySidebarProps {
@@ -55,7 +55,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
 }) => {
   const theme = useTheme();
 
-  const { user } = useUserContext();
+  const user = useSelector(selectAccount);
 
   const [updateTags] = useUpdateUserTagsMutation();
 
