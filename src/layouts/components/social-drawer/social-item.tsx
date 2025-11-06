@@ -15,7 +15,7 @@ import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { selectAccount } from 'src/core/slices/slice-account';
 import { useUnfollowMutation } from 'src/core/apis/api-social';
 
-import { UnfollowPopover } from './unfollow-popover';
+import { ButtonUnfollowIcon } from 'src/components/buttons';
 
 // ----------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ export function SocialItem({
           {relation.accountDetails.name}
         </Typography>
 
-        <UnfollowPopover
+        <ButtonUnfollowIcon
           title={`Are you sure to remove ${relation.accountDetails.name}?`}
           onConfirm={() => {
             unfollowMutate({

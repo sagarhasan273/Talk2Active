@@ -1,4 +1,7 @@
-import React from 'react';
+import type { UserType } from 'src/types/user';
+
+import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 import { Users, Clock, Calendar, CheckCircle } from 'lucide-react';
 
 import {
@@ -7,7 +10,6 @@ import {
   Chip,
   List,
   Paper,
-  Button,
   Avatar,
   Divider,
   ListItem,
@@ -20,42 +22,23 @@ import {
   ListItemButton,
 } from '@mui/material';
 
+import { selectAccount } from 'src/core/slices';
+import { useGetNewUsersQuery } from 'src/core/apis';
+
 import { Iconify } from 'src/components/iconify';
+import { ButtonRelationshipToggle } from 'src/components/buttons';
 
 import EngagementProfileCard from '../engagement-profile-card';
 
 export const DiscoveryPanel: React.FC = () => {
   const theme = useTheme();
 
-  const suggestedUsers = [
-    {
-      name: 'Maya Chen',
-      username: 'mayachen',
-      avatar:
-        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      bio: 'Life coach & motivational speaker',
-      followers: '12.5K',
-      verified: true,
-    },
-    {
-      name: 'David Rodriguez',
-      username: 'davidr',
-      avatar:
-        'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      bio: 'Entrepreneur & thought leader',
-      followers: '8.9K',
-      verified: false,
-    },
-    {
-      name: 'Sarah Kim',
-      username: 'sarahkim',
-      avatar:
-        'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      bio: 'Author & wisdom curator',
-      followers: '15.2K',
-      verified: true,
-    },
-  ];
+  const user = useSelector(selectAccount);
+
+  const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
+
+  const { data } = useGetNewUsersQuery(user.id);
+  console.log(data);
 
   const upcomingEvents = [
     {
@@ -71,6 +54,12 @@ export const DiscoveryPanel: React.FC = () => {
       type: 'contest',
     },
   ];
+
+  useEffect(() => {
+    if (data?.data) {
+      setSuggestedUsers(data?.data || []);
+    }
+  }, [data]);
 
   return (
     <Box
@@ -96,43 +85,43 @@ export const DiscoveryPanel: React.FC = () => {
         <Divider />
         <CardContent sx={{ p: 1 }}>
           <List disablePadding>
-            {suggestedUsers.map((user) => (
-              <ListItem key={user.username} disablePadding sx={{ p: 0 }}>
-                <ListItemButton sx={{ borderRadius: 2, p: 1 }}>
+            {suggestedUsers.map((userDetails: any) => (
+              <ListItem key={userDetails.username} disablePadding sx={{ p: 0 }}>
+                <ListItemButton
+                  sx={{ borderRadius: 2, p: 1 }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    console.log('list');
+                  }}
+                  disableRipple
+                >
                   <ListItemAvatar>
-                    <Avatar src={user.avatar} alt={user.name}>
-                      {!user.avatar && user.name.charAt(0)}
+                    <Avatar src={userDetails.profilePhoto} alt={userDetails.name}>
+                      {!userDetails.profilePhoto && userDetails.name.charAt(0)}
                     </Avatar>
                   </ListItemAvatar>
                   <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography fontWeight="medium">{user.name}</Typography>
-                      {user.verified && (
+                      <Typography fontWeight="medium">{userDetails.name}</Typography>
+                      {userDetails.verified && (
                         <CheckCircle size={14} color={theme.palette.primary.main} />
                       )}
                     </Box>
                     <Typography variant="body2" color="text.secondary">
-                      @{user.username}
+                      @{userDetails.username}
                     </Typography>
                     <Typography variant="caption" display="block" color="text.secondary">
-                      {user.followers} followers
+                      {userDetails.followerCount} followers
                     </Typography>
                   </Box>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      color: 'common.white',
-                      borderRadius: 6,
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        background: `linear-gradient(to right, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-                      },
+
+                  <ButtonRelationshipToggle
+                    targetUser={{
+                      name: userDetails.name,
+                      id: userDetails._id,
                     }}
-                  >
-                    Follow
-                  </Button>
+                  />
                 </ListItemButton>
               </ListItem>
             ))}

@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import { accountSlice } from './slices';
-import { userApi, postApi, socialApi, settingsApi } from './apis';
+import { userApi, postApi, socialApi, settingsApi, suggestionApi } from './apis';
 
-const apis = [userApi, settingsApi, postApi, socialApi];
+const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi];
 
 // Combine reducers
 const rootReducer = {
@@ -12,6 +12,7 @@ const rootReducer = {
   [settingsApi.reducerPath]: settingsApi.reducer,
   [postApi.reducerPath]: postApi.reducer,
   [socialApi.reducerPath]: socialApi.reducer,
+  [suggestionApi.reducerPath]: suggestionApi.reducer,
 };
 
 export const store = configureStore({

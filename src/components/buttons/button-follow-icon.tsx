@@ -3,15 +3,17 @@ import { Stack, Button, Popover, Typography, IconButton } from '@mui/material';
 import { Iconify } from 'src/components/iconify';
 import { usePopover } from 'src/components/custom-popover';
 
-type UnfollowPopoverProps = {
+type ButtonFollowIconProps = {
   title: string;
   onConfirm: React.MouseEventHandler<HTMLButtonElement>;
+  onPopover?: boolean;
 };
 
-export function UnfollowPopover({
+export function ButtonFollowIcon({
   title = 'Do you want to unfollow?',
   onConfirm,
-}: UnfollowPopoverProps) {
+  onPopover = true,
+}: ButtonFollowIconProps) {
   const popover = usePopover();
 
   return (
@@ -21,20 +23,24 @@ export function UnfollowPopover({
           p: '4px',
           ml: 'auto',
           borderRadius: 0.5,
-          color: 'error.main',
-          border: (theme) => `1px solid ${theme.palette.error.main}`,
+          color: 'primary.main',
+          border: (theme) => `1px solid ${theme.palette.primary.main}`,
           '&:hover': {
-            color: (theme) => `${theme.palette.error.dark} !important`,
-            border: (theme) => `1px solid ${theme.palette.error.dark}`,
+            color: (theme) => `${theme.palette.primary.dark} !important`,
+            border: (theme) => `1px solid ${theme.palette.primary.dark}`,
           },
         }}
         onClick={(event) => {
           event.stopPropagation();
-          popover.onOpen(event);
+          if (onPopover) {
+            popover.onOpen(event);
+          } else {
+            onConfirm(event);
+          }
         }}
         disableRipple
       >
-        <Iconify icon="ri:user-unfollow-fill" sx={{ width: 14, height: 14 }} />
+        <Iconify icon="mingcute:user-follow-fill" sx={{ width: 14, height: 14 }} />
       </IconButton>
       <Popover
         disableRestoreFocus
