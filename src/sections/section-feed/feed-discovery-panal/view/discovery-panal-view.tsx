@@ -1,21 +1,18 @@
 import type { UserType } from 'src/types/user';
 
 import { useSelector } from 'react-redux';
+import { CheckCircle } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { Users, Clock, Calendar, CheckCircle } from 'lucide-react';
 
 import {
   Box,
   Card,
-  Chip,
   List,
-  Paper,
   Avatar,
   Divider,
   ListItem,
   useTheme,
   CardHeader,
-  IconButton,
   Typography,
   CardContent,
   ListItemAvatar,
@@ -38,22 +35,21 @@ export const DiscoveryPanel: React.FC = () => {
   const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
 
   const { data } = useGetNewUsersQuery(user.id);
-  console.log(data);
 
-  const upcomingEvents = [
-    {
-      title: 'Wisdom Wednesday Live',
-      time: 'Today, 3:00 PM',
-      participants: 234,
-      type: 'live',
-    },
-    {
-      title: 'Quote of the Week Contest',
-      time: 'Ends in 2 days',
-      participants: 89,
-      type: 'contest',
-    },
-  ];
+  // const upcomingEvents = [
+  //   {
+  //     title: 'Wisdom Wednesday Live',
+  //     time: 'Today, 3:00 PM',
+  //     participants: 234,
+  //     type: 'live',
+  //   },
+  //   {
+  //     title: 'Quote of the Week Contest',
+  //     time: 'Ends in 2 days',
+  //     participants: 89,
+  //     type: 'contest',
+  //   },
+  // ];
 
   useEffect(() => {
     if (data?.data) {
@@ -65,7 +61,7 @@ export const DiscoveryPanel: React.FC = () => {
     <Box
       sx={{
         position: 'sticky',
-        top: '80px',
+        top: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: theme.spacing(3),
@@ -81,6 +77,7 @@ export const DiscoveryPanel: React.FC = () => {
           title="Who to Follow"
           subheader="Discover new voices"
           titleTypographyProps={{ fontWeight: 'bold' }}
+          sx={{ p: '16px 16px 0px' }}
         />
         <Divider />
         <CardContent sx={{ p: 1 }}>
@@ -130,7 +127,7 @@ export const DiscoveryPanel: React.FC = () => {
       </Card>
 
       {/* Upcoming Events */}
-      <Card sx={{ backgroundColor: 'background.neutral' }}>
+      {/* <Card sx={{ backgroundColor: 'background.neutral' }}>
         <CardHeader
           avatar={
             <IconButton
@@ -192,7 +189,7 @@ export const DiscoveryPanel: React.FC = () => {
             ))}
           </List>
         </CardContent>
-      </Card>
+      </Card> */}
     </Box>
   );
 };

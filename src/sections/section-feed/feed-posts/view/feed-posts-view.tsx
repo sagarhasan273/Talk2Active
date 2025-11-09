@@ -1,14 +1,12 @@
-import type { PostResponseType } from 'src/types/post';
-
-import { useSelector } from 'react-redux';
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Box, Container } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { selectAccount } from 'src/core/slices';
 import { useGetPostsQuery } from 'src/core/apis/api-post';
+import { setPosts, selectPosts, selectAccount } from 'src/core/slices';
 
 import { PostCard } from 'src/sections/section-components/post-card';
 import { CreatePost } from 'src/sections/section-components/create-post';
@@ -18,22 +16,24 @@ import { DiscoveryPanel } from '../../feed-discovery-panal';
 import { CategorySidebarView } from '../../feed-catagory-sidebar';
 
 export function FeedPostsView() {
+  const dispatch = useDispatch();
+
   const user = useSelector(selectAccount);
+  const posts = useSelector(selectPosts);
 
   const mid = useResponsive('down', 'lg');
   const small = useResponsive('down', 'md');
 
-  const [posts, setPosts] = useState<PostResponseType[]>([]);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string[]>(['all']);
+  const [selectedCategory, setSelectedCategory] = useState<string[]>(user.tags || ['all']);
 
   const { data, isLoading, isError } = useGetPostsQuery({ userId: user?.id || '' });
 
   useEffect(() => {
     if (data && !isLoading && !isError) {
-      setPosts(data.data);
+      dispatch(setPosts(data.data));
     }
-  }, [data, isLoading, isError]);
+  }, [data, isLoading, isError, dispatch]);
 
   return (
     <>

@@ -1,7 +1,7 @@
 import type { PostResponseType } from 'src/types/post';
 
-import { useState } from 'react';
 import YouTube from 'react-youtube';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
@@ -46,11 +46,13 @@ import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
-export function PostCard({ post }: PostCardProps) {
+function RegularPostCard({ post }: PostCardProps) {
   const user = useSelector(selectAccount);
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
+
+  // console.log('Rendering PostCard for post ID:', post.id);
 
   const [data, setData] = useState<PostResponseType>(post);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -81,14 +83,14 @@ export function PostCard({ post }: PostCardProps) {
     setIsFollowing(!isFollowing);
     if (isFollowing) {
       unfollowMutate({
-        requester: user?.id,
-        recipient: data?.authorDetails?.id,
+        requester: user.id,
+        recipient: data.authorDetails.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     } else {
       followMutate({
-        requester: user?.id,
-        recipient: data?.authorDetails?.id,
+        requester: user.id,
+        recipient: data.authorDetails.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     }
@@ -533,7 +535,7 @@ export function PostCard({ post }: PostCardProps) {
           </Typography>
         }
         subheader={
-          <Typography variant="caption" sx={{ userSelect: 'text' }}>
+          <Typography variant="caption">
             @{data.authorDetails?.username} · {fToNow(new Date(data.createdAt))} ago
           </Typography>
         }
@@ -617,3 +619,5 @@ export function PostCard({ post }: PostCardProps) {
     </Card>
   );
 }
+
+export const PostCard = React.memo(RegularPostCard);

@@ -31,13 +31,13 @@ export const accountSlice = createSlice({
       state.user = {} as UserType;
       state.isAuthenticated = false;
     },
-    setLoading: (state, action: PayloadAction<boolean>) => {
+    setAccountLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
   },
 });
 
-export const { setAccount, logout, setLoading } = accountSlice.actions;
+export const { setAccount, logout, setAccountLoading } = accountSlice.actions;
 
 // Selectors with proper typing
 export const selectAccount = (state: RootState) => state.account.user;

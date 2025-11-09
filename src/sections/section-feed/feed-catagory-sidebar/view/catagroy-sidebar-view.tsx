@@ -37,6 +37,8 @@ import {
 import { selectAccount } from 'src/core/slices';
 import { useUpdateUserTagsMutation } from 'src/core/apis';
 
+import { CreatePost } from 'src/sections/section-components/create-post';
+
 interface CategorySidebarProps {
   selectedCategory: string[];
   onCategorySelect: React.Dispatch<React.SetStateAction<string[]>>;
@@ -56,6 +58,8 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
   const theme = useTheme();
 
   const user = useSelector(selectAccount);
+
+  const [isCreatePostOpen, setIsCreatePostOpen] = React.useState(false);
 
   const [updateTags] = useUpdateUserTagsMutation();
 
@@ -285,10 +289,13 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
               transform: 'scale(1.05)',
             },
           }}
+          onClick={() => setIsCreatePostOpen(true)}
         >
           Create Post
         </Button>
       </GradientBox>
+
+      <CreatePost isOpen={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
     </Stack>
   );
 };
