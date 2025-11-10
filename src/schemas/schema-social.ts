@@ -85,6 +85,15 @@ export const RelationshipListSchema = z.object({
   type: z.enum(['followers', 'following', 'friends', 'pending']),
 });
 
+export const RelationshipWithUserSchema = z.object({
+  relationship: z.enum(['following', 'followers', 'friends', 'blocked', 'pending', 'none']),
+  following: z.boolean(),
+  followers: z.boolean(),
+  friends: z.boolean(),
+  blocked: z.boolean(),
+  pending: z.boolean(),
+});
+
 // Batch Relationship Status Schema
 export const BatchRelationshipStatusSchema = z.object({
   userId: z.string(),
@@ -92,12 +101,7 @@ export const BatchRelationshipStatusSchema = z.object({
   statuses: z.array(
     z.object({
       targetUserId: z.string(),
-      relationship: z.enum(['following', 'friends', 'blocked', 'pending', 'none']),
-      following: z.boolean(),
-      followers: z.boolean(),
-      friends: z.boolean(),
-      blocked: z.boolean(),
-      pending: z.boolean(),
+      ...RelationshipWithUserSchema.shape,
     })
   ),
 });

@@ -2,6 +2,7 @@ import type { z as zod } from 'zod';
 import type { Dispatch, SetStateAction } from 'react';
 import type {
   UserSchema,
+  UsersSchema,
   UserTagsSchema,
   UserStatusSchema,
   UserProfileFormSchema,
@@ -12,6 +13,7 @@ import type {
 
 // ----------------------------------------------------------------------
 export type UserType = zod.infer<typeof UserSchema>;
+export type UsersType = zod.infer<typeof UsersSchema>;
 export type UserProfileFormType = zod.infer<typeof UserProfileFormSchema>;
 export type UserStatusType = zod.infer<typeof UserStatusSchema>;
 export type UserTagsType = zod.infer<typeof UserTagsSchema>;

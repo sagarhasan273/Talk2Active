@@ -5,6 +5,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+import { setUsers } from 'src/core/slices';
 import { setAccount } from 'src/core/slices/slice-account';
 
 import { STORAGE_KEY } from './constant';
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: Props) {
   const dispatch = useDispatch();
 
   const { state, setState } = useSetState<AuthState>({
-    authUser: null,
+    authUser: {} as AuthState['authUser'],
     loading: true,
   });
 
@@ -46,12 +47,27 @@ export function AuthProvider({ children }: Props) {
         setState({ authUser: { ...data, accessToken }, loading: false });
 
         dispatch(setAccount(data));
+        dispatch(
+          setUsers([
+            {
+              ...data,
+              relationShip: {
+                relationship: 'none',
+                following: false,
+                followers: false,
+                friends: false,
+                blocked: false,
+                pending: false,
+              },
+            },
+          ])
+        );
       } else {
-        setState({ authUser: null, loading: false });
+        setState({ authUser: {} as AuthState['authUser'], loading: false });
       }
     } catch (error) {
       console.error(error);
-      setState({ authUser: null, loading: false });
+      setState({ authUser: {} as AuthState['authUser'], loading: false });
     }
   }, [setState, dispatch]);
 
@@ -71,7 +87,7 @@ export function AuthProvider({ children }: Props) {
         ? {
             ...state.authUser,
           }
-        : null,
+        : ({} as AuthState['authUser']),
       checkUserSession,
       loading: status === 'loading',
       authenticated: status === 'authenticated',

@@ -1,19 +1,19 @@
+import type { UsersType } from 'src/types/user';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { PostResponseType } from 'src/types/post';
 
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { RootState } from '../store';
+import type { RootState } from '../types';
 
 // Define auth state interface
 interface UsersState {
-  users: PostResponseType[];
+  users: UsersType[];
   loading: boolean;
 }
 
 // Initial state
 const initialState: UsersState = {
-  users: [] as PostResponseType[],
+  users: [] as UsersType[],
   loading: false,
 };
 

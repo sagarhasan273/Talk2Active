@@ -22,6 +22,10 @@ interface EngagementProfileShiftProps {
 export default function EngagementProfileShift({ counter }: EngagementProfileShiftProps) {
   const theme = useTheme();
 
+  if (counter.value <= 0 && counter.value >= counter.maxValue) {
+    return null;
+  }
+
   return (
     <Box
       sx={{

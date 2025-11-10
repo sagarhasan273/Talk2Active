@@ -1,51 +1,48 @@
-import { useState } from 'react';
+import type { UsersType } from 'src/types/user';
+
+import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
 
 import { PersonAdd, PersonAddDisabled } from '@mui/icons-material';
 import { Box, Card, Avatar, Button, Typography, CardContent } from '@mui/material';
 
 import { useCounter } from 'src/hooks/use-counter';
 
-import EngagementProfileShift from './engagement-profile-shift';
+import { selectUsers, selectAccount } from 'src/core/slices';
 
-export interface Profile {
-  id: string;
-  name: string;
-  username: string;
-  profilePhoto: string;
-  coverPhoto: string;
-  bio?: string;
-  followers: number;
-  following: number;
-  isFollowing?: boolean;
-}
+import EngagementProfileShift from './engagement-profile-shift';
 
 interface ProfileCardProps {
   onFollow?: (profileId: string) => void;
 }
 
 export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
-  const counter = useCounter();
-  const profile: Profile = {
-    id: 'user123',
-    name: 'John Doe',
-    username: 'johndoe',
-    profilePhoto:
-      'https://res.cloudinary.com/dsuefoemt/image/upload/v1753577855/user_profile/tpewo4h8dzcbdvgyzqm9.jpg',
-    coverPhoto:
-      'https://res.cloudinary.com/dsuefoemt/image/upload/v1753578050/user_profile/piwpps7rifd9u1vfjcal.jpg',
-    bio: 'Passionate about sharing wisdom and inspiring others.',
-    followers: 1200,
-    following: 300,
-    isFollowing: false,
-  };
-  const [isFollowing, setIsFollowing] = useState(profile.isFollowing || false);
-  const [followersCount, setFollowersCount] = useState(profile.followers);
+  const user = useSelector(selectAccount);
+  const users = useSelector(selectUsers);
+
+  const counter = useCounter(users.length > 0 ? users.length - 1 : 0);
+
+  const [profile, setProfile] = useState<UsersType>(users[0] as UsersType);
 
   const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    setFollowersCount(isFollowing ? followersCount - 1 : followersCount + 1);
+    const newFollowing = !profile.relationShip?.following;
+    setProfile((prev) => ({
+      ...prev,
+      relationShip: { ...prev.relationShip, following: newFollowing },
+      followerCount: prev.followerCount + (newFollowing ? 1 : -1),
+    }));
     onFollow?.(profile.id);
   };
+
+  const isFollowing = profile.relationShip.following ?? false;
+  const followersCount = profile.followerCount ?? 0;
+  const isSelfProfile = profile.id === user.id;
+  useEffect(() => {
+    if (users.length === 0) return;
+    if (counter.value < users.length) {
+      setProfile(users[counter.value % users.length]);
+    }
+  }, [counter.value, users]);
 
   return (
     <Card
@@ -53,32 +50,28 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         borderRadius: { xs: 0, sm: 1 },
         boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
         transition: 'box-shadow 0.2s',
-        '&:hover': {
-          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-        },
+        '&:hover': { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' },
       }}
     >
+      {/* Cover Image */}
       <Box
         sx={{
           height: 100,
-          background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
-          backgroundImage: `url(${profile.coverPhoto})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          background: profile.coverPhoto
+            ? `url(${profile.coverPhoto}) center/cover no-repeat`
+            : 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
           position: 'relative',
           overflow: 'hidden',
           '&::after': {
             content: '""',
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             background: 'linear-gradient(to top, rgba(0,0,0,0.2), transparent)',
           },
         }}
       />
 
+      {/* Card Content */}
       <CardContent sx={{ px: 2.5, pb: 2.5 }}>
         <Box
           sx={{
@@ -100,39 +93,40 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
             }}
           />
 
-          <Button
-            variant={isFollowing ? 'outlined' : 'contained'}
-            startIcon={isFollowing ? <PersonAddDisabled /> : <PersonAdd />}
-            onClick={handleFollow}
-            sx={{
-              mt: 7,
-              borderRadius: 1,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2,
-              ...(isFollowing
-                ? {
-                    color: 'text.secondary',
-                    borderColor: 'divider',
-                    backgroundColor: 'background.paper',
-                    '&:hover': {
-                      backgroundColor: 'background.neutral',
+          {!isSelfProfile && (
+            <Button
+              variant={isFollowing ? 'outlined' : 'contained'}
+              startIcon={isFollowing ? <PersonAddDisabled /> : <PersonAdd />}
+              onClick={handleFollow}
+              sx={{
+                mt: 7,
+                borderRadius: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2,
+                ...(isFollowing
+                  ? {
+                      color: 'text.secondary',
                       borderColor: 'divider',
-                    },
-                  }
-                : {
-                    color: 'white !important',
-                    backgroundColor: 'primary.main',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
-                  }),
-            }}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </Button>
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        backgroundColor: 'background.neutral',
+                        borderColor: 'divider',
+                      },
+                    }
+                  : {
+                      color: 'white !important',
+                      backgroundColor: 'primary.main',
+                      '&:hover': { backgroundColor: 'primary.dark' },
+                    }),
+              }}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          )}
         </Box>
 
+        {/* Profile Info */}
         <Box sx={{ mb: 1.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'grey.900' }}>
             {profile.name}
@@ -143,18 +137,12 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         </Box>
 
         {profile.bio && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'grey.700',
-              lineHeight: 1.6,
-              mb: 1.5,
-            }}
-          >
+          <Typography variant="body2" sx={{ color: 'grey.700', lineHeight: 1.6, mb: 1.5 }}>
             {profile.bio}
           </Typography>
         )}
 
+        {/* Follower Counts */}
         <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'grey.900' }}>
@@ -166,7 +154,7 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'grey.900' }}>
-              {profile.following}
+              {profile.followingCount}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Following
@@ -174,6 +162,7 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
           </Box>
         </Box>
       </CardContent>
+
       <EngagementProfileShift counter={counter} />
     </Card>
   );

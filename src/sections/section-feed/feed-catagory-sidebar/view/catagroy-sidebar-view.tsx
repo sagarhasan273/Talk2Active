@@ -47,7 +47,7 @@ interface CategorySidebarProps {
 const GradientBox = styled(Box)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   color: theme.palette.common.white,
-  borderRadius: theme.shape.borderRadius * 2,
+  borderRadius: theme.shape.borderRadius * 1,
   padding: theme.spacing(3),
 }));
 
@@ -283,7 +283,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
             backdropFilter: 'blur(10px)',
             color: 'common.white',
             py: 1.5,
-            borderRadius: 2,
+            borderRadius: 1,
             '&:hover': {
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
               transform: 'scale(1.05)',

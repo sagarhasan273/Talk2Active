@@ -1,6 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { postsSlice, usersSlice, accountSlice } from './slices';
+import { postsSlice } from './slices/slice-posts';
+import { accountSlice } from './slices/slice-account';
+import { usersSlice } from './slices/slice-engaged-users';
 import { userApi, postApi, socialApi, settingsApi, suggestionApi } from './apis';
 
 const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi];
@@ -25,7 +27,3 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apis.map((api) => api.middleware)),
 });
-
-// These types will now be inferred correctly from the full state.
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;

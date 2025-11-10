@@ -2,6 +2,8 @@ import { z as zod } from 'zod';
 
 import { PostTagsEnum } from 'src/enums/enum-post';
 
+import { RelationshipWithUserSchema } from './schema-social';
+
 export const UserSchema = zod
   .object({
     id: zod.string(),
@@ -60,9 +62,9 @@ export const UserSchema = zod
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
     sessionTimeOut: zod.number().int().nonnegative().optional(),
-    followerCount: zod.number().int().nonnegative().optional(),
-    friendCount: zod.number().int().nonnegative().optional(),
-    followingCount: zod.number().int().nonnegative().optional(),
+    followerCount: zod.number().int().nonnegative(),
+    friendCount: zod.number().int().nonnegative(),
+    followingCount: zod.number().int().nonnegative(),
     profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
     allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
     showActivityStatus: zod.boolean().default(true),
@@ -180,4 +182,24 @@ export const UserAccountActivateUpdateSchema = UserSchema.pick({
 export const UserAccountSessionUpdateSchema = UserSchema.pick({
   id: true,
   sessionTimeOut: true,
+});
+
+export const UsersSchema = UserSchema.pick({
+  id: true,
+  userId: true,
+  name: true,
+  username: true,
+  email: true,
+  profilePhoto: true,
+  coverPhoto: true,
+  accountActive: true,
+  bio: true,
+  location: true,
+  website: true,
+  status: true,
+  followerCount: true,
+  followingCount: true,
+  friendCount: true,
+}).extend({
+  relationShip: RelationshipWithUserSchema,
 });

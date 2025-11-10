@@ -3,7 +3,7 @@ import type { PostResponseType } from 'src/types/post';
 
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { RootState } from '../store';
+import type { RootState } from '../types';
 
 // Define auth state interface
 interface PostsState {

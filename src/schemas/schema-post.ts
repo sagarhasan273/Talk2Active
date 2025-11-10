@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 import { PostTagsEnum } from 'src/enums/enum-post';
 
+import { UserSchema } from './schema-user';
+import { RelationshipWithUserSchema } from './schema-social';
+
 // Media Schema
 export const MediaSchema = z.object({
   type: z.enum(['image', 'images', 'gif', 'youtube', 'video', 'caption', 'quote']).default('quote'),
@@ -69,21 +72,8 @@ export const PostResponseSchema = PostSchema.omit({
   isLiked: z.boolean().default(false),
   isDisliked: z.boolean().default(false),
   isPinned: z.boolean().default(false),
-  authorDetails: z.object({
-    id: z.string(),
-    username: z.string(),
-    name: z.string(),
-    profilePhoto: z.string().url(),
-    verified: z.boolean().default(false),
-  }),
-  authorRelationship: z.object({
-    relationship: z.enum(['following', 'followers', 'friends', 'blocked', 'pending', 'none']),
-    following: z.boolean(),
-    followers: z.boolean(),
-    friends: z.boolean(),
-    blocked: z.boolean(),
-    pending: z.boolean(),
-  }),
+  authorDetails: UserSchema,
+  authorRelationship: RelationshipWithUserSchema,
 });
 
 export const GetPostsByUserIdSchemaInput = z.object({

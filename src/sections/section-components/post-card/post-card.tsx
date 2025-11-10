@@ -2,7 +2,7 @@ import type { PostResponseType } from 'src/types/post';
 
 import YouTube from 'react-youtube';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import {
@@ -28,7 +28,7 @@ import { fToNow } from 'src/utils/format-time';
 import { extractYouTubeId } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
-import { selectAccount } from 'src/core/slices';
+import { setUsers, selectAccount } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
 import {
@@ -47,12 +47,12 @@ import { InteractionButton } from '../interaction-button';
 import type { PostCardProps } from './types';
 
 function RegularPostCard({ post }: PostCardProps) {
+  const dispatch = useDispatch();
+
   const user = useSelector(selectAccount);
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
-
-  // console.log('Rendering PostCard for post ID:', post.id);
 
   const [data, setData] = useState<PostResponseType>(post);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -463,7 +463,7 @@ function RegularPostCard({ post }: PostCardProps) {
           />
         }
         action={
-          data.authorDetails.id !== user?.id ? (
+          data.authorDetails.id !== user.id ? (
             <Button
               variant={isFollowing ? 'outlined' : 'contained'}
               size="small"
@@ -530,13 +530,13 @@ function RegularPostCard({ post }: PostCardProps) {
           )
         }
         title={
-          <Typography variant="subtitle1" fontWeight={600}>
-            {data.authorDetails?.name}
+          <Typography variant="subtitle1" sx={{ cursor: 'pointer' }} fontWeight={600}>
+            {data.authorDetails.name}
           </Typography>
         }
         subheader={
           <Typography variant="caption">
-            @{data.authorDetails?.username} · {fToNow(new Date(data.createdAt))} ago
+            @{data.authorDetails.username} · {fToNow(new Date(data.createdAt))} ago
           </Typography>
         }
         sx={{
@@ -550,6 +550,11 @@ function RegularPostCard({ post }: PostCardProps) {
             flexDirection: 'column',
             gap: 0.25,
           },
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          dispatch(setUsers([{ ...data.authorDetails, relationShip: data.authorRelationship }]));
         }}
       />
 
