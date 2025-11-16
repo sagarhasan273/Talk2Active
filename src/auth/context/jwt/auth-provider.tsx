@@ -5,8 +5,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
-import { setUsers } from 'src/core/slices';
-import { setAccount } from 'src/core/slices/slice-account';
+import { setUsers, setAccount } from 'src/core/slices';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -77,7 +76,8 @@ export function AuthProvider({ children }: Props) {
 
   // ----------------------------------------------------------------------
 
-  const checkAuthenticated = state.authUser ? 'authenticated' : 'unauthenticated';
+  const checkAuthenticated =
+    state.authUser && state.authUser?.id ? 'authenticated' : 'unauthenticated';
 
   const status = state.loading ? 'loading' : checkAuthenticated;
 

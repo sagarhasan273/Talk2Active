@@ -2,7 +2,6 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { postsSlice } from './slices/slice-posts';
 import { accountSlice } from './slices/slice-account';
-import { usersSlice } from './slices/slice-engaged-users';
 import { userApi, postApi, socialApi, settingsApi, suggestionApi } from './apis';
 
 const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi];
@@ -11,7 +10,6 @@ const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi];
 const rootReducer = {
   account: accountSlice.reducer,
   posts: postsSlice.reducer,
-  users: usersSlice.reducer,
   [userApi.reducerPath]: userApi.reducer,
   [settingsApi.reducerPath]: settingsApi.reducer,
   [postApi.reducerPath]: postApi.reducer,

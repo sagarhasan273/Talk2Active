@@ -1,5 +1,5 @@
-import type { UserType } from 'src/types/user';
 import type { PayloadAction } from '@reduxjs/toolkit';
+import type { UserType, UsersType } from 'src/types/user';
 
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -8,6 +8,7 @@ import type { RootState } from '../types';
 // Define auth state interface
 interface UserState {
   user: UserType;
+  users: UsersType[];
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -15,6 +16,7 @@ interface UserState {
 // Initial state
 const initialState: UserState = {
   user: {} as UserType,
+  users: [] as UsersType[],
   isAuthenticated: false,
   loading: false,
 };
@@ -27,6 +29,9 @@ export const accountSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = true;
     },
+    setUsers: (state, action: PayloadAction<UserState['users']>) => {
+      state.users = action.payload;
+    },
     logout: (state) => {
       state.user = {} as UserType;
       state.isAuthenticated = false;
@@ -37,9 +42,10 @@ export const accountSlice = createSlice({
   },
 });
 
-export const { setAccount, logout, setAccountLoading } = accountSlice.actions;
+export const { setAccount, setUsers, logout, setAccountLoading } = accountSlice.actions;
 
 // Selectors with proper typing
 export const selectAccount = (state: RootState) => state.account.user;
+export const selectUsers = (state: RootState) => state.account.users;
 export const selectIsAuthenticated = (state: RootState) => state.account.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.account.loading;
