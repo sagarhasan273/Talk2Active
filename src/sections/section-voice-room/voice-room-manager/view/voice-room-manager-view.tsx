@@ -1,28 +1,33 @@
-import type { Room } from 'src/types/room';
+import type { RoomResponse } from 'src/types/type-chat';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { toast } from 'sonner';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { useRouter } from 'src/routes/route-hooks';
+
+import { selectAccount } from 'src/core/slices';
+import { useJoinRoomMutation } from 'src/core/apis';
+import { setRoom } from 'src/core/slices/slice-room';
 
 import { VoiceRoomList } from '../../voice-room-list';
-import { VoiceRoomChat } from '../../voice-room-chat';
 
 export const VoiceRoomManager: React.FC = () => {
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
-  const handleJoinRoom = (room: Room) => {
-    setCurrentRoom(room);
+  const user = useSelector(selectAccount);
+
+  const [joinRoom] = useJoinRoomMutation();
+
+  const handleJoinRoom = async (room: RoomResponse) => {
+    const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
+    if (response.status) {
+      dispatch(setRoom(room));
+      router.push(`/voice-room/${room.id}`);
+      toast.success('Joined the room successfully');
+    }
   };
 
-  const handleLeaveRoom = () => {
-    setCurrentRoom(null);
-  };
-
-  return (
-    <>
-      {currentRoom ? (
-        <VoiceRoomChat room={currentRoom} onLeaveRoom={handleLeaveRoom} />
-      ) : (
-        <VoiceRoomList onJoinRoom={handleJoinRoom} />
-      )}
-    </>
-  );
+  return <VoiceRoomList onJoinRoom={handleJoinRoom} />;
 };

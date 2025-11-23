@@ -1,4 +1,4 @@
-import type { User } from 'src/types/room';
+import type { User } from 'src/types/type-room';
 
 import React, { useState } from 'react';
 

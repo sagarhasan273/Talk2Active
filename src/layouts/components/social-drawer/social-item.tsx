@@ -1,4 +1,4 @@
-import type { AllRelationsType } from 'src/types/social';
+import type { AllRelationsType } from 'src/types/type-social';
 
 import { useSelector } from 'react-redux';
 

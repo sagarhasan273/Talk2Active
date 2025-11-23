@@ -1,10 +1,10 @@
-import type { ResponseType } from 'src/types/common';
+import type { ResponseType } from 'src/types/type-common';
 import type {
   CreatePostInput,
   UpdatePostInput,
   PostResponseType,
   GetPostsByUserIdInput,
-} from 'src/types/post';
+} from 'src/types/type-post';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

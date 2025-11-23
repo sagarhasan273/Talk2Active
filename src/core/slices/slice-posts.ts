@@ -1,5 +1,5 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { PostResponseType } from 'src/types/post';
+import type { PostResponseType } from 'src/types/type-post';
 
 import { createSlice } from '@reduxjs/toolkit';
 

@@ -1,5 +1,5 @@
 import type { UserType } from 'src/types/user';
-import type { UserPrivacySettingUpdateType } from 'src/types/settings';
+import type { UserPrivacySettingUpdateType } from 'src/types/type-settings';
 
 import { toast } from 'sonner';
 import React, { useState } from 'react';

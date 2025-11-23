@@ -1,4 +1,4 @@
-import type { PostResponseType } from 'src/types/post';
+import type { PostResponseType } from 'src/types/type-post';
 
 import { useState } from 'react';
 import YouTube from 'react-youtube';

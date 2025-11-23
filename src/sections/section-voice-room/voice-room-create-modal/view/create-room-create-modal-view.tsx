@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { Lock, Close, Public, SmartToy, RecordVoiceOver } from '@mui/icons-material';
+import { Lock, Close, Public, RecordVoiceOver } from '@mui/icons-material';
 import {
   Box,
   Chip,
@@ -25,6 +26,9 @@ import {
   FormControlLabel,
 } from '@mui/material';
 
+import { selectAccount } from 'src/core/slices';
+import { useCreateRoomMutation } from 'src/core/apis/api-chat';
+
 import { languages } from '../../../../_mock/data/languages';
 
 interface CreateRoomModalProps {
@@ -38,39 +42,37 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onClose,
   onCreateRoom,
 }) => {
+  const user = useSelector(selectAccount);
+
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
+    name: 'Basic Spanish Conversation',
+    description: "Let's practice basic Spanish conversation skills together!",
     language: 'en',
-    skillLevel: 'mixed',
+    level: 'mixed',
     maxParticipants: 8,
-    isPrivate: false,
+    public: true,
     password: '',
-    tags: [] as string[],
-    aiAssistant: {
-      personality: 'friendly',
-      specialization: 'general',
-      isActive: true,
-      responseFrequency: 'medium',
-      voiceEnabled: true,
-    },
-    voiceSettings: {
-      isVoiceEnabled: true,
-      pushToTalk: false,
-      noiseSupression: true,
-      echoCancellation: true,
-      autoGainControl: true,
-      maxSpeakers: 4,
-      moderationMode: 'moderated',
-    },
+    tags: ['helo'] as string[],
+    pushToTalk: false,
+    noiseSupression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+    maxSimutaneousSpeakers: 4,
+    moderationMode: 'open',
+    host: user.id,
   });
 
   const [tagInput, setTagInput] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [createRoom] = useCreateRoomMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     onCreateRoom(formData);
-    onClose();
+    const response = await createRoom(formData).unwrap();
+    if (response.status) {
+      onClose();
+    }
   };
 
   const addTag = () => {
@@ -172,12 +174,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControl fullWidth>
                     <InputLabel>Skill Level</InputLabel>
                     <Select
-                      value={formData.skillLevel}
+                      value={formData.level}
                       label="Skill Level"
                       size="small"
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, skillLevel: e.target.value }))
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, level: e.target.value }))}
                     >
                       <MenuItem value="beginner">Beginner</MenuItem>
                       <MenuItem value="intermediate">Intermediate</MenuItem>
@@ -223,24 +223,22 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   borderRadius: 2,
                 }}
               >
-                {formData.isPrivate ? <Lock color="warning" /> : <Public color="success" />}
+                {formData.public ? <Lock color="warning" /> : <Public color="success" />}
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    {formData.isPrivate ? 'Private Room' : 'Public Room'}
+                    {formData.public ? 'Private Room' : 'Public Room'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {formData.isPrivate ? 'Requires password to join' : 'Anyone can join'}
+                    {formData.public ? 'Requires password to join' : 'Anyone can join'}
                   </Typography>
                 </Box>
                 <Switch
-                  checked={formData.isPrivate}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, isPrivate: e.target.checked }))
-                  }
+                  checked={formData.public}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, public: e.target.checked }))}
                 />
               </Box>
 
-              {formData.isPrivate && (
+              {formData.public && (
                 <TextField
                   fullWidth
                   label="Room Password"
@@ -269,12 +267,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={formData.voiceSettings.pushToTalk}
+                        checked={formData.pushToTalk}
                         size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            voiceSettings: { ...prev.voiceSettings, pushToTalk: e.target.checked },
+                            voiceSettings: { ...prev, pushToTalk: e.target.checked },
                           }))
                         }
                       />
@@ -287,13 +285,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={formData.voiceSettings.noiseSupression}
+                        checked={formData.noiseSupression}
                         size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
                             voiceSettings: {
-                              ...prev.voiceSettings,
+                              ...prev,
                               noiseSupression: e.target.checked,
                             },
                           }))
@@ -308,13 +306,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={formData.voiceSettings.echoCancellation}
+                        checked={formData.echoCancellation}
                         size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
                             voiceSettings: {
-                              ...prev.voiceSettings,
+                              ...prev,
                               echoCancellation: e.target.checked,
                             },
                           }))
@@ -329,13 +327,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControlLabel
                     control={
                       <Switch
-                        checked={formData.voiceSettings.autoGainControl}
+                        checked={formData.autoGainControl}
                         size="small"
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
                             voiceSettings: {
-                              ...prev.voiceSettings,
+                              ...prev,
                               autoGainControl: e.target.checked,
                             },
                           }))
@@ -348,14 +346,14 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
                 <Grid item xs={12}>
                   <Typography gutterBottom>
-                    Max Simultaneous Speakers: {formData.voiceSettings.maxSpeakers}
+                    Max Simultaneous Speakers: {formData.maxSimutaneousSpeakers}
                   </Typography>
                   <Slider
-                    value={formData.voiceSettings.maxSpeakers}
+                    value={formData.maxSimutaneousSpeakers}
                     onChange={(e, value) =>
                       setFormData((prev) => ({
                         ...prev,
-                        voiceSettings: { ...prev.voiceSettings, maxSpeakers: value as number },
+                        voiceSettings: { ...prev, maxSimutaneousSpeakers: value as number },
                       }))
                     }
                     min={1}
@@ -369,14 +367,14 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   <FormControl fullWidth>
                     <InputLabel>Moderation Mode</InputLabel>
                     <Select
-                      value={formData.voiceSettings.moderationMode}
+                      value={formData.moderationMode}
                       label="Moderation Mode"
                       size="small"
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
                           voiceSettings: {
-                            ...prev.voiceSettings,
+                            ...prev,
                             moderationMode: e.target.value as any,
                           },
                         }))
@@ -389,108 +387,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   </FormControl>
                 </Grid>
               </Grid>
-            </CardContent>
-          </Card>
-
-          {/* AI Assistant */}
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <SmartToy color="primary" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  AI Assistant
-                </Typography>
-              </Box>
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.aiAssistant.isActive}
-                    size="small"
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        aiAssistant: { ...prev.aiAssistant, isActive: e.target.checked },
-                      }))
-                    }
-                  />
-                }
-                label="Enable AI Assistant"
-                sx={{ mb: 2 }}
-              />
-
-              {formData.aiAssistant.isActive && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Personality</InputLabel>
-                      <Select
-                        value={formData.aiAssistant.personality}
-                        label="Personality"
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            aiAssistant: {
-                              ...prev.aiAssistant,
-                              personality: e.target.value as any,
-                            },
-                          }))
-                        }
-                      >
-                        <MenuItem value="friendly">Friendly & Encouraging</MenuItem>
-                        <MenuItem value="professional">Professional</MenuItem>
-                        <MenuItem value="encouraging">Motivational</MenuItem>
-                        <MenuItem value="strict">Direct & Precise</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Specialization</InputLabel>
-                      <Select
-                        value={formData.aiAssistant.specialization}
-                        label="Specialization"
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            aiAssistant: {
-                              ...prev.aiAssistant,
-                              specialization: e.target.value as any,
-                            },
-                          }))
-                        }
-                      >
-                        <MenuItem value="general">General Language</MenuItem>
-                        <MenuItem value="grammar">Grammar Focus</MenuItem>
-                        <MenuItem value="vocabulary">Vocabulary Building</MenuItem>
-                        <MenuItem value="pronunciation">Pronunciation</MenuItem>
-                        <MenuItem value="culture">Cultural Context</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={formData.aiAssistant.voiceEnabled}
-                          size="small"
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              aiAssistant: { ...prev.aiAssistant, voiceEnabled: e.target.checked },
-                            }))
-                          }
-                        />
-                      }
-                      label="Enable AI Voice Responses"
-                    />
-                  </Grid>
-                </Grid>
-              )}
             </CardContent>
           </Card>
 

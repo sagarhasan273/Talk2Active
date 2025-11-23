@@ -6,6 +6,8 @@ import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
+import { VoiceRoomChat } from 'src/sections/section-voice-room/voice-room-chat';
+
 import { AuthGuard } from 'src/auth/guard';
 
 // ---------------------------------------------------------------
@@ -33,6 +35,7 @@ export const userRoutes = [
       { path: 'user/profile', element: <ProfilePage /> },
       { path: 'user/settings', element: <SettingsView /> },
       { path: 'voice-room', element: <VoiceRoomView /> },
+      { path: 'voice-room/:roomId', element: <VoiceRoomChat /> },
     ],
   },
 ];

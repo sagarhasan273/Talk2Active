@@ -1,5 +1,5 @@
 // services/userApi.ts
-import type { ResponseType } from 'src/types/common';
+import type { ResponseType } from 'src/types/type-common';
 import type {
   UserType,
   UserTagsType,

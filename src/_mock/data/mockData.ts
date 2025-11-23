@@ -1,4 +1,4 @@
-import type { Room, User, Message } from 'src/types/room';
+import type { Room, User, Message } from 'src/types/type-room';
 
 export const mockUsers: User[] = [
   {

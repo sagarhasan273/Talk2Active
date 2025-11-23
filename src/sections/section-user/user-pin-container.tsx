@@ -1,4 +1,4 @@
-import type { PostResponseType } from 'src/types/post';
+import type { PostResponseType } from 'src/types/type-post';
 
 import { useSelector } from 'react-redux';
 import { useState, useEffect } from 'react';

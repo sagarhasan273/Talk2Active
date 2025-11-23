@@ -2,7 +2,7 @@ import type {
   UpdateUserAppearanceType,
   UpdateUserNotificationType,
   UserPrivacySettingUpdateType,
-} from 'src/types/settings';
+} from 'src/types/type-settings';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

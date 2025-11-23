@@ -1,20 +1,8 @@
-import type { Room } from 'src/types/room';
+import type { RoomResponse } from 'src/types/type-chat';
 
 import React, { useRef, useState, useEffect } from 'react';
 
-import {
-  Add,
-  Mic,
-  Lock,
-  Search,
-  People,
-  Public,
-  MicOff,
-  SmartToy,
-  GraphicEq,
-  AccessTime,
-  RecordVoiceOver,
-} from '@mui/icons-material';
+import { Add, Lock, Search, Public, RecordVoiceOver } from '@mui/icons-material';
 import {
   Box,
   Grid,
@@ -36,7 +24,7 @@ import {
 } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
-import { mockRooms } from 'src/_mock/data/mockData';
+import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 import { getLanguageFlag } from 'src/_mock/data/languages';
 
 import { Iconify } from 'src/components/iconify';
@@ -44,13 +32,12 @@ import { Iconify } from 'src/components/iconify';
 import { CreateRoomModal } from '../../voice-room-create-modal';
 
 interface RoomListProps {
-  onJoinRoom: (room: Room) => void;
+  onJoinRoom: (room: RoomResponse) => void;
 }
 
 export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
   const theme = useTheme();
 
-  const [rooms] = useState<Room[]>(mockRooms);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
@@ -60,28 +47,20 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const filteredRooms = rooms.filter((room) => {
-    const matchesSearch =
-      room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      room.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLanguage = selectedLanguage === 'all' || room.language === selectedLanguage;
-    const matchesLevel = selectedLevel === 'all' || room.skillLevel === selectedLevel;
+  const { data: rooms } = useGetRoomsQuery(null);
 
-    return matchesSearch && matchesLanguage && matchesLevel;
-  });
+  // const formatLastActivity = (date: Date) => {
+  //   const now = new Date();
+  //   const diff = now.getTime() - date.getTime();
+  //   const minutes = Math.floor(diff / 60000);
 
-  const formatLastActivity = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
+  //   if (minutes < 1) return 'Just now';
+  //   if (minutes < 60) return `${minutes}m ago`;
+  //   const hours = Math.floor(minutes / 60);
+  //   if (hours < 24) return `${hours}h ago`;
+  //   const days = Math.floor(hours / 24);
+  //   return `${days}d ago`;
+  // };
 
   const getSkillLevelColor = (level: string) => {
     switch (level) {
@@ -209,8 +188,8 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
 
       {/* Room Grid */}
       <Grid container spacing={2}>
-        {filteredRooms.map((room) => {
-          const isFull = room.participants.length >= room.maxParticipants;
+        {rooms?.data.map((room) => {
+          const isFull = room.currentParticipants.length >= room.maxParticipants;
 
           return (
             <Grid item xs={12} md={6} lg={4} key={room.id}>
@@ -247,22 +226,14 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                           <Chip
-                            label={room.skillLevel}
+                            label={room.level}
                             size="small"
-                            color={getSkillLevelColor(room.skillLevel) as any}
+                            color={getSkillLevelColor(room.level) as any}
                             variant="outlined"
                           />
-                          {room.aiAssistant.isActive && (
-                            <Chip
-                              icon={<SmartToy />}
-                              label="AI"
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
-                          )}
+
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            {room.isPrivate ? (
+                            {room.public ? (
                               <Lock fontSize="small" color="warning" />
                             ) : (
                               <Public fontSize="small" color="success" />
@@ -289,7 +260,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                   </Typography>
 
                   {/* Tags */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                  {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
                     {room.tags.slice(0, 3).map((tag: string, index: number) => (
                       <Chip
                         key={index}
@@ -307,7 +278,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                         sx={{ fontSize: '0.7rem' }}
                       />
                     )}
-                  </Box>
+                  </Box> */}
 
                   {/* Host */}
                   <Card
@@ -320,7 +291,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Avatar
-                        src={room.host.avatar}
+                        src={room.host.profilePhoto}
                         alt={room.host.name}
                         sx={{ width: 40, height: 40 }}
                       />
@@ -343,7 +314,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                   </Card>
 
                   {/* Stats */}
-                  <Box
+                  {/* <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -355,7 +326,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <People fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                          {room.participants.length}/{room.maxParticipants}
+                          {room.currentParticipants.length}/{room.maxParticipants}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -365,7 +336,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                         </Typography>
                       </Box>
                     </Box>
-                  </Box>
+                  </Box> */}
 
                   {/* Participants Preview */}
                   <Box
@@ -386,28 +357,31 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                         width: 'max-content',
                       }}
                     >
-                      {room.participants
-                        .slice(0, showAll ? room.participants.length : visibleCount)
+                      {room.currentParticipants
+                        .slice(0, showAll ? room.currentParticipants.length : visibleCount)
                         .map((participant, index) => (
                           <Badge
                             key={index}
                             overlap="circular"
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                            badgeContent={
-                              participant.voiceStatus.isSpeaking ? (
-                                <GraphicEq sx={{ fontSize: 12, color: 'success.main' }} />
-                              ) : participant.voiceStatus.isMuted ? (
-                                <MicOff sx={{ fontSize: 12, color: 'error.main' }} />
-                              ) : (
-                                <Mic sx={{ fontSize: 12, color: 'primary.main' }} />
-                              )
-                            }
+                            // badgeContent={
+                            //   participant.voiceStatus.isSpeaking ? (
+                            //     <GraphicEq sx={{ fontSize: 12, color: 'success.main' }} />
+                            //   ) : participant.voiceStatus.isMuted ? (
+                            //     <MicOff sx={{ fontSize: 12, color: 'error.main' }} />
+                            //   ) : (
+                            //     <Mic sx={{ fontSize: 12, color: 'primary.main' }} />
+                            //   )
+                            // }
                           >
-                            <Avatar src={participant.avatar} alt={participant.name} />
+                            <Avatar
+                              src={participant.user.profilePhoto}
+                              alt={participant.user.name}
+                            />
                           </Badge>
                         ))}
 
-                      {!showAll && room.participants.length > visibleCount && (
+                      {!showAll && room.currentParticipants.length > visibleCount && (
                         <Button
                           variant="outlined"
                           size="small"
@@ -420,7 +394,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                             fontSize: '0.75rem',
                           }}
                         >
-                          +{room.participants.length - visibleCount}
+                          +{room.currentParticipants.length - visibleCount}
                         </Button>
                       )}
                     </Box>
@@ -449,7 +423,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
         })}
       </Grid>
 
-      {filteredRooms.length === 0 && (
+      {rooms?.data.length === 0 && (
         <Paper
           elevation={0}
           sx={{

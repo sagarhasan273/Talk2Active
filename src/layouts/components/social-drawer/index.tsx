@@ -1,5 +1,5 @@
 import type { UserType } from 'src/types/user';
-import type { AllRelationsType } from 'src/types/social';
+import type { AllRelationsType } from 'src/types/type-social';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { m } from 'framer-motion';

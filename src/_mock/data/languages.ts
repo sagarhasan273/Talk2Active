@@ -1,4 +1,4 @@
-import type { Language } from 'src/types/room';
+import type { Language } from 'src/types/type-room';
 
 export const languages: Language[] = [
   { code: 'en', name: 'English', flag: '🇺🇸', nativeSpeakers: 379000000 },

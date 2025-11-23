@@ -1,5 +1,5 @@
-import type { ResponseType } from 'src/types/common';
-import type { RelationshipInput } from 'src/types/social';
+import type { ResponseType } from 'src/types/type-common';
+import type { RelationshipInput } from 'src/types/type-social';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

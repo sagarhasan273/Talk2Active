@@ -1,4 +1,4 @@
-import type { ResponseType } from 'src/types/common';
+import type { ResponseType } from 'src/types/type-common';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

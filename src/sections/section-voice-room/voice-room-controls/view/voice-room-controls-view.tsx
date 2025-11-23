@@ -1,4 +1,4 @@
-import type { User, VoiceRoomSettings } from 'src/types/room';
+import type { User, VoiceRoomSettings } from 'src/types/type-room';
 
 import React, { useState, useEffect } from 'react';
 
