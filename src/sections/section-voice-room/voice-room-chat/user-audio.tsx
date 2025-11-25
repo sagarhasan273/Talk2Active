@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react'; // Added useState, useCallback
 import { Box, Typography } from '@mui/material';
-import { Speaker as SpeakerIcon } from '@mui/icons-material';
 
 interface UserAudioProps {
   stream: MediaStream | null;
@@ -154,7 +153,7 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
   };
 
   return (
-    <Box sx={{ minHeight: '30px', mb: 1 }}>
+    <Box>
       {/* Hidden audio element for WebRTC stream */}
       <audio
         ref={audioRef}
@@ -172,13 +171,6 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
           justifyContent="center"
           sx={speakingStyle} // Apply dynamic speaking style
         >
-          <SpeakerIcon
-            sx={{
-              fontSize: '1.2rem',
-              color: indicatorColor,
-              animation: isSpeaking ? 'pulse 0.8s infinite alternate' : 'none',
-            }}
-          />
           <Typography
             variant="caption"
             color={indicatorColor}

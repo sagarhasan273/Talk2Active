@@ -11,15 +11,15 @@ import {
   Mic as MicIcon,
   MicOff as MicOffIcon,
   CallEnd as CallEndIcon,
-  Headphones as HeadphonesIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import {
   Box,
   Chip,
   Card,
-  Grid,
   Paper,
   Stack,
+  Badge,
   Button,
   Avatar,
   Container,
@@ -43,9 +43,17 @@ import { useParams } from 'src/routes/route-hooks';
 import useWebRTC from 'src/hooks/use-web-rtc'; // Assumed actual use
 import { CONFIG } from 'src/config-global'; // Assumed actual use
 import { selectAccount } from 'src/core/slices'; // Assumed actual use
-import { useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
+import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
 import { selectRoom } from 'src/core/slices/slice-room'; // Assumed actual use
-import UserAudio from './user-audio'; // Assumed actual import
+import { toast } from 'sonner';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { fDateTime } from 'src/utils/format-time';
+
+import UserAudio from '../user-audio'; // Assumed actual import
+import { CreateRoomModal } from '../../voice-room-create-modal';
+import { JoinConversationCard } from '../join-conversation-card';
 
 // Define UserType structure for context
 interface UserType {
@@ -72,36 +80,45 @@ interface ExistingParticipantsData {
 
 // Styled components
 const RoomContainer = styled(Container)(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: '100vh',
+  padding: theme.spacing(1),
+  paddingBottom: theme.spacing(2),
+  height: '95vh',
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(3),
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(3),
+  },
 }));
 
 const HeaderPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
+  padding: theme.spacing(1),
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
   color: 'white',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(3),
+  },
 }));
 
 const ParticipantCard = styled(Card)(({ theme }) => ({
-  height: '220px', // Slightly larger to accommodate status
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   position: 'relative',
   overflow: 'hidden',
+  minWidth: 200,
+  maxWidth: 200,
+  padding: theme.spacing(2),
   background: theme.palette.background.default,
-  border: `2px solid ${theme.palette.primary.main}`,
+  border: `1px solid ${theme.palette.primary.main}`,
 }));
 
 const LocalParticipantCard = styled(ParticipantCard)(({ theme }) => ({
-  border: `2px solid ${theme.palette.secondary.main}`,
+  border: `1px solid ${theme.palette.secondary.main}`,
   background: theme.palette.background.paper,
 }));
 
@@ -112,17 +129,27 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
   gap: theme.spacing(2),
 }));
 
-const StatsPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  background: theme.palette.background.default,
+const ResponsiveTypography = styled(Typography)(({ theme }) => ({
+  // xs: caption styles
+  fontSize: theme.typography.caption.fontSize,
+  fontWeight: theme.typography.caption.fontWeight,
+  lineHeight: theme.typography.caption.lineHeight,
+
+  // sm: subtitle2 styles
+  [theme.breakpoints.up('sm')]: {
+    fontSize: theme.typography.subtitle2.fontSize,
+    fontWeight: theme.typography.subtitle2.fontWeight,
+    lineHeight: theme.typography.subtitle2.lineHeight,
+  },
 }));
 
 // Main Component
 export function VoiceRoomChat() {
   const room = useSelector(selectRoom);
   const roomId = useParams().roomId as string;
-  const user = useSelector(selectAccount); // Local user data
+  const user = useSelector(selectAccount);
+
+  const editRoomBoolean = useBoolean(false);
 
   // State to store remote participants, using a map for easy updates
   const [remoteParticipants, setRemoteParticipants] = useState<{ [socketId: string]: Participant }>(
@@ -147,7 +174,6 @@ export function VoiceRoomChat() {
 
   // Convert map to array for rendering
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
-  const totalParticipants = participantsArray.length + (isConnected ? 1 : 0);
 
   // Store socket globally for WebRTC hook access
   useEffect(() => {
@@ -279,10 +305,11 @@ export function VoiceRoomChat() {
     });
   };
 
+  const [joinRoomMutation] = useJoinRoomMutation();
   const [leaveRoomMutation] = useLeaveRoomMutation();
 
   // --- NEW: Synchronous cleanup for browser events ---
-  const performCleanup = useCallback(() => {
+  const performCleanup = useCallback(async () => {
     if (socketRef.current) {
       // 1. Send leave signal (best effort, may be blocked by browser)
       socketRef.current.emit('leave-voice-room', { roomId, userId: user.id });
@@ -290,10 +317,12 @@ export function VoiceRoomChat() {
       // 2. Immediate disconnect
       socketRef.current.disconnect();
       socketRef.current = null;
+      // Perform async backend mutation (can be unreliable on page close, but safe here)
+      await leaveRoomMutation({ roomId, userId: user.id });
     }
     // 3. WebRTC resource cleanup (must be synchronous)
     cleanup();
-  }, [roomId, user.id, cleanup]);
+  }, [roomId, user.id, cleanup, leaveRoomMutation]);
   // --- END NEW: Synchronous cleanup for browser events ---
 
   // Updated leaveRoom to use performCleanup
@@ -305,9 +334,6 @@ export function VoiceRoomChat() {
     setRemoteParticipants({});
     setIsConnected(false);
     setInitialize(true);
-
-    // Perform async backend mutation (can be unreliable on page close, but safe here)
-    await leaveRoomMutation({ roomId, userId: user.id });
   };
 
   const joinRoom = async () => {
@@ -317,6 +343,10 @@ export function VoiceRoomChat() {
       setInitialize(false); // Set initializing state
       console.log('Starting voice room initialization...');
       await initializeVoiceRoom();
+      const response = await joinRoomMutation({ roomId, userId: user.id }).unwrap();
+      if (response.status) {
+        toast.success('Joined the room successfully');
+      }
     } catch (error) {
       console.error('Initialization failed:', error);
       setInitialize(true); // Allow retry on failure
@@ -361,150 +391,184 @@ export function VoiceRoomChat() {
   return (
     <RoomContainer maxWidth="xl">
       {/* Header */}
-      <HeaderPaper elevation={3}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+      <HeaderPaper elevation={3} sx={{ p: { xs: 1, sm: 3 } }}>
+        <Stack direction="column" spacing={1} flex={1}>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
             {room?.name || `Voice Room ${roomId}`}
           </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Chip label={room?.language || 'English'} color="secondary" size="small" />
-            <Chip
-              label={room?.level || 'Intermediate'}
-              variant="outlined"
-              size="small"
-              sx={{ color: 'white', borderColor: 'white' }}
-            />
-            <Chip
-              icon={isConnected ? <HeadphonesIcon /> : <CallEndIcon />}
-              label={isConnected ? 'Connected' : 'Disconnected'}
-              color={isConnected ? 'success' : 'error'}
-              size="small"
-            />
+          <Stack direction="row" spacing={1} justifyContent="space-between">
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <Chip label={room?.language || 'English'} color="secondary" size="small" />
+              <Chip
+                label={room?.level || 'Intermediate'}
+                variant="outlined"
+                size="small"
+                sx={{ color: 'white', borderColor: 'white' }}
+              />
+              <Chip
+                label={isConnected ? 'Connected' : 'Disconnected'}
+                color={isConnected ? 'success' : 'error'}
+                size="small"
+              />
+            </Stack>
+            {/* Conditional Join/Leave Buttons */}
+            <Box>
+              {!isConnected ? (
+                <ResponsiveTypography>{fDateTime(room.updatedAt)}</ResponsiveTypography>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<SettingsIcon />}
+                  size="small"
+                  onClick={editRoomBoolean.onTrue}
+                  sx={{
+                    color: 'white !important',
+                    backgroundColor: 'primary.main',
+                    '&:hover': { backgroundColor: 'primary.main' },
+                  }}
+                >
+                  Room Settings
+                </Button>
+              )}
+            </Box>
           </Stack>
-        </Box>
-        {/* Conditional Join/Leave Buttons */}
-        {!isConnected ? (
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<HeadphonesIcon />}
-            onClick={joinRoom}
-            size="large"
-            disabled={!initialize}
-          >
-            {initialize ? 'Join Room' : 'Connecting...'}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<CallEndIcon />}
-            onClick={leaveRoom}
-            size="large"
-          >
-            Leave Room
-          </Button>
-        )}
+        </Stack>
       </HeaderPaper>
+
+      {!isConnected && <JoinConversationCard onJoinRoom={() => joinRoom()} />}
 
       {/* Participants Grid */}
       <Box flex={1} display="flex" flexDirection="column">
-        <Typography variant="h6" gutterBottom>
-          Participants ({totalParticipants})
-        </Typography>
-
         {!isConnected && !initialize && <LinearProgress color="warning" sx={{ mb: 2 }} />}
 
-        <Grid container spacing={3}>
+        <Stack direction="row" gap={2} flexWrap="wrap">
           {/* Local User - Only show if localStream is available */}
           {localStream && (
-            <Grid item xs={12} sm={6} md={4} lg={3}>
-              <LocalParticipantCard elevation={2}>
-                <CardContent sx={{ textAlign: 'center', width: '100%' }}>
+            <LocalParticipantCard elevation={0}>
+              <CardContent sx={{ padding: '0px !important', textAlign: 'center', width: '100%' }}>
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  badgeContent={
+                    isMicMuted ? (
+                      <MicOffIcon
+                        fontSize="small"
+                        sx={{
+                          color: 'error.main',
+                          bgcolor: 'background.paper',
+                          borderRadius: '50%',
+                          p: 0.25,
+                        }}
+                      />
+                    ) : (
+                      <MicIcon
+                        fontSize="small"
+                        sx={{
+                          color: 'success.main',
+                          bgcolor: 'background.paper',
+                          borderRadius: '50%',
+                          p: 0.25,
+                        }}
+                      />
+                    )
+                  }
+                >
                   <Avatar
+                    src={user.profilePhoto}
                     sx={{
                       width: 64,
                       height: 64,
                       bgcolor: 'secondary.main',
-                      mb: 2,
+
                       mx: 'auto',
                     }}
                   >
                     {user.username.charAt(0)}
                   </Avatar>
-                  <Typography variant="h6" gutterBottom noWrap>
-                    {user.username} (You)
-                  </Typography>
-                  <UserAudio
-                    stream={localStream} // USE LOCAL STREAM
-                    isLocal
-                    userName={user.username}
-                  />
-                  <Typography
-                    variant="body2"
-                    color={isMicMuted ? 'error' : 'success.main'}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    gap={0.5}
-                  >
-                    {isMicMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
-                    {isMicMuted ? 'Muted' : 'Speaking'}
-                  </Typography>
-                </CardContent>
-              </LocalParticipantCard>
-            </Grid>
+                </Badge>
+                <Typography variant="subtitle2" gutterBottom noWrap>
+                  {user.username} (u)
+                </Typography>
+                <UserAudio
+                  stream={localStream} // USE LOCAL STREAM
+                  isLocal
+                  userName={user.username}
+                />
+              </CardContent>
+            </LocalParticipantCard>
           )}
 
           {/* Remote Participants */}
           {participantsArray.map((participant) => (
-            <Grid key={participant.socketId} item xs={12} sm={6} md={4} lg={3}>
-              <ParticipantCard elevation={1}>
-                <CardContent sx={{ textAlign: 'center', width: '100%' }}>
+            <ParticipantCard elevation={0}>
+              <CardContent
+                sx={{
+                  padding: '0px !important',
+                  textAlign: 'center',
+                  width: '100%',
+                }}
+              >
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  badgeContent={
+                    participant.isMuted ? (
+                      <MicOffIcon
+                        fontSize="small"
+                        sx={{
+                          color: 'error.main',
+                          bgcolor: 'background.paper',
+                          borderRadius: '50%',
+                          p: 0.25,
+                        }}
+                      />
+                    ) : (
+                      <MicIcon
+                        fontSize="small"
+                        sx={{
+                          color: 'success.main',
+                          bgcolor: 'background.paper',
+                          borderRadius: '50%',
+                          p: 0.25,
+                        }}
+                      />
+                    )
+                  }
+                >
                   <Avatar
+                    src={participant.profilePhoto}
                     sx={{
                       width: 64,
                       height: 64,
                       bgcolor: 'primary.main',
-                      mb: 2,
+
                       mx: 'auto',
                     }}
                   >
                     {participant.name.charAt(0)}
                   </Avatar>
+                </Badge>
 
-                  <Typography variant="h6" gutterBottom noWrap>
-                    {participant.name}
-                  </Typography>
+                <Typography variant="subtitle2" gutterBottom noWrap>
+                  {participant.name}
+                </Typography>
 
-                  <UserAudio
-                    stream={remoteStreams[participant.socketId] || null}
-                    isLocal={false}
-                    userName={participant.name}
-                  />
-
-                  {/* Remote Participant Mute/Speaking Status */}
-                  <Typography
-                    variant="body2"
-                    // Use isMuted status from the participant object
-                    color={participant.isMuted ? 'error' : 'success.main'}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    gap={0.5}
-                  >
-                    {participant.isMuted ? (
-                      <MicOffIcon fontSize="small" />
-                    ) : (
-                      <MicIcon fontSize="small" />
-                    )}
-                    {participant.isMuted ? 'Muted' : 'Speaking'}
-                  </Typography>
-                </CardContent>
-              </ParticipantCard>
-            </Grid>
+                <UserAudio
+                  stream={remoteStreams[participant.socketId] || null}
+                  isLocal={false}
+                  userName={participant.name}
+                />
+              </CardContent>
+            </ParticipantCard>
           ))}
-        </Grid>
+        </Stack>
 
         {participantsArray.length === 0 && isConnected && (
           <Box textAlign="center" mt={4}>
@@ -517,13 +581,14 @@ export function VoiceRoomChat() {
 
       {/* Voice Controls - Only show if connected and localStream is ready */}
       {isConnected && localStream && (
-        <ControlsPaper elevation={3}>
+        <ControlsPaper elevation={0}>
           <IconButton
             color={isMicMuted ? 'error' : 'primary'}
             onClick={handleToggleMicrophone}
             sx={{
-              width: 80,
-              height: 80,
+              width: 40,
+              height: 40,
+              borderRadius: 1,
               backgroundColor: isMicMuted ? 'error.light' : 'primary.light',
               '&:hover': {
                 backgroundColor: isMicMuted ? 'error.main' : 'primary.main',
@@ -537,8 +602,9 @@ export function VoiceRoomChat() {
             color="error"
             onClick={leaveRoom}
             sx={{
-              width: 80,
-              height: 80,
+              width: 40,
+              height: 40,
+              borderRadius: 1,
               backgroundColor: 'error.light',
               '&:hover': {
                 backgroundColor: 'error.main',
@@ -550,14 +616,11 @@ export function VoiceRoomChat() {
         </ControlsPaper>
       )}
 
-      {/* Room Stats */}
-      <StatsPaper elevation={1}>
-        <Typography variant="body2" color="text.secondary">
-          Participants: {totalParticipants}
-          {!isConnected && localStream && ' • Disconnected'}
-          {!localStream && !isConnected && ' • Microphone Access Required'}
-        </Typography>
-      </StatsPaper>
+      <CreateRoomModal
+        open={editRoomBoolean.value}
+        onClose={editRoomBoolean.onFalse}
+        onCreateRoom={() => {}}
+      />
     </RoomContainer>
   );
 }

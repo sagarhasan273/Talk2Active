@@ -25,6 +25,11 @@ export const chatApi = createApi({
       providesTags: ['chat-recall'],
     }),
 
+    getRoomById: builder.query<{ data: RoomResponse; status: boolean }, string>({
+      query: (roomId) => `room/${roomId}`,
+      providesTags: ['chat-recall'],
+    }),
+
     createRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
       query: (body) => ({
         url: `room/create`,
@@ -62,6 +67,7 @@ export const chatApi = createApi({
 
 export const {
   useGetRoomsQuery,
+  useGetRoomByIdQuery,
   useCreateRoomMutation,
   useJoinRoomMutation,
   useLeaveRoomMutation,

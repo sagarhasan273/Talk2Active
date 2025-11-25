@@ -9,4 +9,8 @@ export const backgroundImages = {
   profile: {
     cover: `url("${CONFIG.assetsDir}/assets/background/darkmode.jpg")`,
   },
+  logo: {
+    light: `${CONFIG.assetsDir}/assets/background/talk2active.png`,
+    dark: `url("${CONFIG.assetsDir}/assets/background/talk2active.png")`,
+  },
 };
