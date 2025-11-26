@@ -10,7 +10,6 @@ import { styled } from '@mui/material/styles';
 import {
   Mic as MicIcon,
   MicOff as MicOffIcon,
-  CallEnd as CallEndIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import {
@@ -24,18 +23,9 @@ import {
   Avatar,
   Container,
   Typography,
-  IconButton,
   CardContent,
   LinearProgress,
 } from '@mui/material';
-
-// --- MOCK IMPORTS (Replace with actual imports in your environment) ---
-// const useParams = () => ({ roomId: 'mock-room-123' });
-// const selectAccount = () => ({ id: 'user-001', name: 'Local User', profilePhoto: '' });
-// const selectRoom = () => ({ name: 'Language Exchange', language: 'Japanese', level: 'Advanced' });
-// const useLeaveRoomMutation = () => [async () => console.log('Mock: Leaving room...')];
-// const CONFIG = { serverUrl: 'http://localhost:3000' };
-// --- END MOCK IMPORTS ---
 
 // NOTE: Replace the mocks above with your actual imports if using a real project structure
 import { useParams } from 'src/routes/route-hooks';
@@ -53,7 +43,8 @@ import { fDateTime } from 'src/utils/format-time';
 
 import UserAudio from '../user-audio'; // Assumed actual import
 import { CreateRoomModal } from '../../voice-room-create-modal';
-import { JoinConversationCard } from '../join-conversation-card';
+import { VoiceRoomControllerFooter } from '../voice-room-controller-footer';
+import { VoiceRoomJoinConversation } from '../voice-room-join-conversation-card';
 
 // Define UserType structure for context
 interface UserType {
@@ -120,13 +111,6 @@ const ParticipantCard = styled(Card)(({ theme }) => ({
 const LocalParticipantCard = styled(ParticipantCard)(({ theme }) => ({
   border: `1px solid ${theme.palette.secondary.main}`,
   background: theme.palette.background.paper,
-}));
-
-const ControlsPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  display: 'flex',
-  justifyContent: 'center',
-  gap: theme.spacing(2),
 }));
 
 const ResponsiveTypography = styled(Typography)(({ theme }) => ({
@@ -436,7 +420,7 @@ export function VoiceRoomChat() {
         </Stack>
       </HeaderPaper>
 
-      {!isConnected && <JoinConversationCard onJoinRoom={() => joinRoom()} />}
+      {!isConnected && <VoiceRoomJoinConversation onJoinRoom={() => joinRoom()} />}
 
       {/* Participants Grid */}
       <Box flex={1} display="flex" flexDirection="column">
@@ -581,39 +565,11 @@ export function VoiceRoomChat() {
 
       {/* Voice Controls - Only show if connected and localStream is ready */}
       {isConnected && localStream && (
-        <ControlsPaper elevation={0}>
-          <IconButton
-            color={isMicMuted ? 'error' : 'primary'}
-            onClick={handleToggleMicrophone}
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              backgroundColor: isMicMuted ? 'error.light' : 'primary.light',
-              '&:hover': {
-                backgroundColor: isMicMuted ? 'error.main' : 'primary.main',
-              },
-            }}
-          >
-            {isMicMuted ? <MicOffIcon fontSize="large" /> : <MicIcon fontSize="large" />}
-          </IconButton>
-
-          <IconButton
-            color="error"
-            onClick={leaveRoom}
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              backgroundColor: 'error.light',
-              '&:hover': {
-                backgroundColor: 'error.main',
-              },
-            }}
-          >
-            <CallEndIcon fontSize="large" />
-          </IconButton>
-        </ControlsPaper>
+        <VoiceRoomControllerFooter
+          isMicMuted={isMicMuted}
+          onClickMic={() => handleToggleMicrophone()}
+          onClickLeaveRoom={() => leaveRoom()}
+        />
       )}
 
       <CreateRoomModal

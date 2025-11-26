@@ -348,56 +348,71 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
                       py: 1,
                     }}
                   >
-                    <Box
-                      sx={{
-                        mb: 1,
-                        display: 'flex',
-                        gap: 1,
-                        alignItems: 'center',
-                        width: 'max-content',
-                      }}
-                    >
-                      {room.currentParticipants
-                        .slice(0, showAll ? room.currentParticipants.length : visibleCount)
-                        .map((participant, index) => (
-                          <Badge
-                            key={index}
-                            overlap="circular"
-                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                            // badgeContent={
-                            //   participant.voiceStatus.isSpeaking ? (
-                            //     <GraphicEq sx={{ fontSize: 12, color: 'success.main' }} />
-                            //   ) : participant.voiceStatus.isMuted ? (
-                            //     <MicOff sx={{ fontSize: 12, color: 'error.main' }} />
-                            //   ) : (
-                            //     <Mic sx={{ fontSize: 12, color: 'primary.main' }} />
-                            //   )
-                            // }
-                          >
-                            <Avatar
-                              src={participant.user.profilePhoto}
-                              alt={participant.user.name}
-                            />
-                          </Badge>
-                        ))}
+                    {!!room.currentParticipants.length && (
+                      <Box
+                        sx={{
+                          mb: 1,
+                          display: 'flex',
+                          gap: 1,
+                          alignItems: 'center',
+                          width: 'max-content',
+                        }}
+                      >
+                        {room.currentParticipants
+                          .slice(0, showAll ? room.currentParticipants.length : visibleCount)
+                          .map((participant, index) => (
+                            <Badge
+                              key={index}
+                              overlap="circular"
+                              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                              // badgeContent={
+                              //   participant.voiceStatus.isSpeaking ? (
+                              //     <GraphicEq sx={{ fontSize: 12, color: 'success.main' }} />
+                              //   ) : participant.voiceStatus.isMuted ? (
+                              //     <MicOff sx={{ fontSize: 12, color: 'error.main' }} />
+                              //   ) : (
+                              //     <Mic sx={{ fontSize: 12, color: 'primary.main' }} />
+                              //   )
+                              // }
+                            >
+                              <Avatar
+                                src={participant.user.profilePhoto}
+                                alt={participant.user.name}
+                              />
+                            </Badge>
+                          ))}
 
-                      {!showAll && room.currentParticipants.length > visibleCount && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setShowAll(true)}
-                          sx={{
-                            minWidth: 'auto',
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            fontSize: '0.75rem',
-                          }}
-                        >
-                          +{room.currentParticipants.length - visibleCount}
-                        </Button>
-                      )}
-                    </Box>
+                        {!showAll && room.currentParticipants.length > visibleCount && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => setShowAll(true)}
+                            sx={{
+                              minWidth: 'auto',
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              fontSize: '0.75rem',
+                            }}
+                          >
+                            +{room.currentParticipants.length - visibleCount}
+                          </Button>
+                        )}
+                      </Box>
+                    )}
+                    {room.currentParticipants.length === 0 && (
+                      <Box
+                        sx={{
+                          border: `1px dashed ${theme.palette.divider}`,
+                          borderRadius: 1,
+                          p: 1,
+                        }}
+                      >
+                        <Typography variant="body2" textAlign="center">
+                          No participants.
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </CardContent>
 
