@@ -18,12 +18,14 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
 type VoiceRoomControllerFooterProps = {
   isMicMuted: boolean;
   onClickMic: () => void;
+  onStatusChange: (status: string) => void;
   onClickLeaveRoom: () => void;
 };
 
 export function VoiceRoomControllerFooter({
   isMicMuted,
   onClickMic,
+  onStatusChange,
   onClickLeaveRoom,
 }: VoiceRoomControllerFooterProps) {
   return (
@@ -47,7 +49,7 @@ export function VoiceRoomControllerFooter({
         {isMicMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
       </IconButton>
 
-      <VoiceRoomStatusButton />
+      <VoiceRoomStatusButton onStatusChange={onStatusChange} />
 
       <IconButton
         onClick={() => {}}

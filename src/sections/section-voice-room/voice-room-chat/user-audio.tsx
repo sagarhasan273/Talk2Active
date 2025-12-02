@@ -1,23 +1,30 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react'; // Added useState, useCallback
+import React, { useRef, useEffect, useCallback } from 'react'; // Added useState, useCallback
 import { Box, Typography } from '@mui/material';
 
 interface UserAudioProps {
   stream: MediaStream | null;
   isLocal: boolean;
   userName: string;
+  isSpeaking: boolean;
+  setIsSpeaking: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
  * A component to handle attaching a MediaStream to an audio element.
  * It also displays a simple indicator for stream presence and audio activity.
  */
-export default function UserAudio({ stream, isLocal, userName }: UserAudioProps) {
+export default function UserAudio({
+  stream,
+  isLocal,
+  userName,
+  isSpeaking,
+  setIsSpeaking,
+}: UserAudioProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const VOLUME_THRESHOLD = 5; // Volume level threshold (0-255)
   const SMOOTHING_TIME = 200; // Time in ms to delay setting speaking state to false
 
@@ -58,7 +65,7 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
 
     // Loop the analysis
     rafRef.current = requestAnimationFrame(analyzeAudio);
-  }, [isSpeaking]);
+  }, [isSpeaking, setIsSpeaking]);
 
   useEffect(() => {
     if (audioRef.current && stream) {
@@ -125,32 +132,32 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [stream, isLocal, userName, analyzeAudio]);
+  }, [stream, isLocal, userName, analyzeAudio, setIsSpeaking]);
 
   // The audio element is hidden for the local user (since they hear themselves)
   // but necessary for remote users.
   const isStreamReady = !!stream;
 
-  const indicatorColor = isSpeaking
-    ? isLocal
-      ? 'warning.main'
-      : 'success.main'
-    : isLocal
-      ? 'secondary.main'
-      : 'text.secondary';
+  // const indicatorColor = isSpeaking
+  //   ? isLocal
+  //     ? 'warning.main'
+  //     : 'success.main'
+  //   : isLocal
+  //     ? 'secondary.main'
+  //     : 'text.secondary';
 
-  const speakingStyle = {
-    // Highlight container with border when speaking
-    border: isSpeaking ? `2px solid ${isLocal ? '#ff9800' : '#4caf50'}` : '2px solid transparent',
-    borderRadius: '8px',
-    padding: '4px 8px',
-    transition: 'all 0.2s ease-in-out',
-    // Dynamic pulsing animation for the icon when speaking
-    '@keyframes pulse': {
-      '0%': { transform: 'scale(1)' },
-      '100%': { transform: 'scale(1.1)' },
-    },
-  };
+  // const speakingStyle = {
+  //   // Highlight container with border when speaking
+  //   border: isSpeaking ? `2px solid ${isLocal ? '#ff9800' : '#4caf50'}` : '2px solid transparent',
+  //   borderRadius: '8px',
+  //   padding: '4px 8px',
+  //   transition: 'all 0.2s ease-in-out',
+  //   // Dynamic pulsing animation for the icon when speaking
+  //   '@keyframes pulse': {
+  //     '0%': { transform: 'scale(1)' },
+  //     '100%': { transform: 'scale(1.1)' },
+  //   },
+  // };
 
   return (
     <Box>
@@ -164,7 +171,7 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
         <track kind="captions" />
       </audio>
 
-      {isStreamReady && (
+      {/* {isStreamReady && (
         <Box
           display="flex"
           alignItems="center"
@@ -185,7 +192,7 @@ export default function UserAudio({ stream, isLocal, userName }: UserAudioProps)
                 : 'Stream Active'}
           </Typography>
         </Box>
-      )}
+      )} */}
 
       {!isStreamReady && !isLocal && (
         <Typography variant="caption" color="error.main">

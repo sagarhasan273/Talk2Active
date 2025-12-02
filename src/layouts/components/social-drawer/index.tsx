@@ -1,4 +1,4 @@
-import type { UserType } from 'src/types/user';
+import type { UserType } from 'src/types/type-user';
 import type { AllRelationsType } from 'src/types/type-social';
 import type { IconButtonProps } from '@mui/material/IconButton';
 

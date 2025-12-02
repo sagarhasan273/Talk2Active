@@ -1,3 +1,5 @@
+import type { SxProps } from '@mui/material';
+
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -13,9 +15,15 @@ type ButtonRelationshipToggleProps = {
     name: string;
     id: string;
   };
+  followSx?: SxProps;
+  unfollowSx?: SxProps;
 };
 
-export function ButtonRelationshipToggle({ targetUser }: ButtonRelationshipToggleProps) {
+export function ButtonRelationshipToggle({
+  targetUser,
+  followSx,
+  unfollowSx,
+}: ButtonRelationshipToggleProps) {
   const user = useSelector(selectAccount);
 
   const [follow, setFollow] = useState<boolean>(true);
@@ -37,6 +45,7 @@ export function ButtonRelationshipToggle({ targetUser }: ButtonRelationshipToggl
             setFollow(false);
           }}
           onPopover={false}
+          sx={unfollowSx}
         />
       ) : (
         <ButtonUnfollowIcon
@@ -49,6 +58,7 @@ export function ButtonRelationshipToggle({ targetUser }: ButtonRelationshipToggl
             });
             setFollow(true);
           }}
+          sx={followSx}
         />
       )}
     </>

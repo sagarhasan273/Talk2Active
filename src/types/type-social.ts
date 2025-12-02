@@ -10,7 +10,7 @@ import type {
   BatchRelationshipStatusSchema,
 } from 'src/schemas/schema-social';
 
-import type { UserType } from './user';
+import type { UserType } from './type-user';
 
 // Types for TypeScript
 export type RelationshipType = z.infer<typeof RelationshipSchema>;

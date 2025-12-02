@@ -1,4 +1,4 @@
-import type { UserType } from 'src/types/user';
+import type { UserType } from 'src/types/type-user';
 
 import { toast } from 'sonner';
 import React, { useEffect } from 'react';

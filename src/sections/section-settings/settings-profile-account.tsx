@@ -1,4 +1,4 @@
-import type { UserAccountUpdateType } from 'src/types/user';
+import type { UserAccountUpdateType } from 'src/types/type-user';
 
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';

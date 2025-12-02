@@ -7,23 +7,15 @@ import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react'; // Added useCallback
 
 import { styled } from '@mui/material/styles';
-import {
-  Mic as MicIcon,
-  MicOff as MicOffIcon,
-  Settings as SettingsIcon,
-} from '@mui/icons-material';
+import { Settings as SettingsIcon } from '@mui/icons-material';
 import {
   Box,
   Chip,
-  Card,
   Paper,
   Stack,
-  Badge,
   Button,
-  Avatar,
   Container,
   Typography,
-  CardContent,
   LinearProgress,
 } from '@mui/material';
 
@@ -41,8 +33,9 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDateTime } from 'src/utils/format-time';
 
-import UserAudio from '../user-audio'; // Assumed actual import
+// Assumed actual import
 import { CreateRoomModal } from '../../voice-room-create-modal';
+import { VoiceRoomUserAudioCard } from '../voice-room-user-audio-card';
 import { VoiceRoomControllerFooter } from '../voice-room-controller-footer';
 import { VoiceRoomJoinConversation } from '../voice-room-join-conversation-card';
 
@@ -54,7 +47,12 @@ interface UserType {
 }
 
 // Updated participant type
-type Participant = UserType & { socketId: string; isMuted?: boolean };
+type Participant = UserType & {
+  socketId: string;
+  status: string;
+  isMuted?: boolean;
+  isSpeaking: boolean;
+};
 
 interface WebRTCEventData {
   offer?: RTCSessionDescriptionInit;
@@ -92,25 +90,6 @@ const HeaderPaper = styled(Paper)(({ theme }) => ({
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(3),
   },
-}));
-
-const ParticipantCard = styled(Card)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  position: 'relative',
-  overflow: 'hidden',
-  minWidth: 200,
-  maxWidth: 200,
-  padding: theme.spacing(2),
-  background: theme.palette.background.default,
-  border: `1px solid ${theme.palette.primary.main}`,
-}));
-
-const LocalParticipantCard = styled(ParticipantCard)(({ theme }) => ({
-  border: `1px solid ${theme.palette.secondary.main}`,
-  background: theme.palette.background.paper,
 }));
 
 const ResponsiveTypography = styled(Typography)(({ theme }) => ({
@@ -280,18 +259,26 @@ export function VoiceRoomChat() {
     }
   };
 
+  const [joinRoomMutation] = useJoinRoomMutation();
+  const [leaveRoomMutation] = useLeaveRoomMutation();
+
   const handleToggleMicrophone = (): void => {
     const isNowMuted = toggleMicrophone();
     // Broadcast the new mute state to the signaling server
     socketRef.current?.emit('user-audio-toggle', {
       roomId,
       isMuted: isNowMuted,
+      name: user.name,
     });
   };
 
-  const [joinRoomMutation] = useJoinRoomMutation();
-  const [leaveRoomMutation] = useLeaveRoomMutation();
-
+  const handleToggleUserStatus = (status: string): void => {
+    socketRef.current?.emit('user-status-select', {
+      roomId,
+      status,
+      name: user.name,
+    });
+  };
   // --- NEW: Synchronous cleanup for browser events ---
   const performCleanup = useCallback(async () => {
     if (socketRef.current) {
@@ -427,131 +414,35 @@ export function VoiceRoomChat() {
         {!isConnected && !initialize && <LinearProgress color="warning" sx={{ mb: 2 }} />}
 
         <Stack direction="row" gap={2} flexWrap="wrap">
-          {/* Local User - Only show if localStream is available */}
-          {localStream && (
-            <LocalParticipantCard elevation={0}>
-              <CardContent sx={{ padding: '0px !important', textAlign: 'center', width: '100%' }}>
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                  }}
-                  badgeContent={
-                    isMicMuted ? (
-                      <MicOffIcon
-                        fontSize="small"
-                        sx={{
-                          color: 'error.main',
-                          bgcolor: 'background.paper',
-                          borderRadius: '50%',
-                          p: 0.25,
-                        }}
-                      />
-                    ) : (
-                      <MicIcon
-                        fontSize="small"
-                        sx={{
-                          color: 'success.main',
-                          bgcolor: 'background.paper',
-                          borderRadius: '50%',
-                          p: 0.25,
-                        }}
-                      />
-                    )
-                  }
-                >
-                  <Avatar
-                    src={user.profilePhoto}
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      bgcolor: 'secondary.main',
-
-                      mx: 'auto',
-                    }}
-                  >
-                    {user.username.charAt(0)}
-                  </Avatar>
-                </Badge>
-                <Typography variant="subtitle2" gutterBottom noWrap>
-                  {user.username} (u)
-                </Typography>
-                <UserAudio
-                  stream={localStream} // USE LOCAL STREAM
-                  isLocal
-                  userName={user.username}
-                />
-              </CardContent>
-            </LocalParticipantCard>
-          )}
-
-          {/* Remote Participants */}
           {participantsArray.map((participant) => (
-            <ParticipantCard elevation={0}>
-              <CardContent
-                sx={{
-                  padding: '0px !important',
-                  textAlign: 'center',
-                  width: '100%',
-                }}
-              >
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                  }}
-                  badgeContent={
-                    participant.isMuted ? (
-                      <MicOffIcon
-                        fontSize="small"
-                        sx={{
-                          color: 'error.main',
-                          bgcolor: 'background.paper',
-                          borderRadius: '50%',
-                          p: 0.25,
-                        }}
-                      />
-                    ) : (
-                      <MicIcon
-                        fontSize="small"
-                        sx={{
-                          color: 'success.main',
-                          bgcolor: 'background.paper',
-                          borderRadius: '50%',
-                          p: 0.25,
-                        }}
-                      />
-                    )
-                  }
-                >
-                  <Avatar
-                    src={participant.profilePhoto}
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      bgcolor: 'primary.main',
-
-                      mx: 'auto',
-                    }}
-                  >
-                    {participant.name.charAt(0)}
-                  </Avatar>
-                </Badge>
-
-                <Typography variant="subtitle2" gutterBottom noWrap>
-                  {participant.name}
-                </Typography>
-
-                <UserAudio
-                  stream={remoteStreams[participant.socketId] || null}
-                  isLocal={false}
-                  userName={participant.name}
-                />
-              </CardContent>
-            </ParticipantCard>
+            <VoiceRoomUserAudioCard
+              key={participant.id}
+              user={{
+                id: participant.id,
+                name: participant.name,
+                avatar: participant.profilePhoto,
+                status: participant.status as any,
+                isSpeaking: false,
+                isMuted: participant.isMuted as any,
+              }}
+              stream={remoteStreams[participant.socketId] || null}
+              isLocal={false}
+            />
           ))}
+          {localStream && (
+            <VoiceRoomUserAudioCard
+              user={{
+                id: user.id,
+                name: user.name as any,
+                avatar: user.profilePhoto as any,
+                status: user.status as any,
+                isSpeaking: false,
+                isMuted: isMicMuted,
+              }}
+              stream={localStream}
+              isLocal
+            />
+          )}
         </Stack>
 
         {participantsArray.length === 0 && isConnected && (
@@ -568,6 +459,7 @@ export function VoiceRoomChat() {
         <VoiceRoomControllerFooter
           isMicMuted={isMicMuted}
           onClickMic={() => handleToggleMicrophone()}
+          onStatusChange={handleToggleUserStatus}
           onClickLeaveRoom={() => leaveRoom()}
         />
       )}

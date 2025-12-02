@@ -1,4 +1,4 @@
-import type { UserType } from 'src/types/user';
+import type { UserType } from 'src/types/type-user';
 
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

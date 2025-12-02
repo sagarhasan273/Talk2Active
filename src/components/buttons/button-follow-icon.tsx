@@ -1,3 +1,5 @@
+import type { SxProps } from '@mui/material';
+
 import { Stack, Button, Popover, Typography, IconButton } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
@@ -7,12 +9,14 @@ type ButtonFollowIconProps = {
   title: string;
   onConfirm: React.MouseEventHandler<HTMLButtonElement>;
   onPopover?: boolean;
+  sx?: SxProps;
 };
 
 export function ButtonFollowIcon({
   title = 'Do you want to unfollow?',
   onConfirm,
   onPopover = true,
+  sx,
 }: ButtonFollowIconProps) {
   const popover = usePopover();
 
@@ -29,6 +33,7 @@ export function ButtonFollowIcon({
             color: (theme) => `${theme.palette.primary.dark} !important`,
             border: (theme) => `1px solid ${theme.palette.primary.dark}`,
           },
+          ...sx,
         }}
         onClick={(event) => {
           event.stopPropagation();

@@ -1,4 +1,4 @@
-import type { UserType } from 'src/types/user';
+import type { UserType } from 'src/types/type-user';
 
 import { useSelector } from 'react-redux';
 import { CheckCircle } from 'lucide-react';

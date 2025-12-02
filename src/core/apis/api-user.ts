@@ -8,7 +8,7 @@ import type {
   UserAccountUpdateType,
   UserAccountSessionUpdateType,
   UserAccountActivateUpdateType,
-} from 'src/types/user';
+} from 'src/types/type-user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

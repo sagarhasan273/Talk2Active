@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { UserType, UserContextTypes } from 'src/types/user';
+import type { UserType, UserContextTypes } from 'src/types/type-user';
 
 import { useMemo, useState, useContext, createContext } from 'react';
 

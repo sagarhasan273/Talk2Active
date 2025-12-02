@@ -13,59 +13,52 @@ interface Status {
   icon: LucideIcon;
   color: string;
   bgColor: string;
-  hoverBg: string;
 }
 
 // 2. Strongly Typed Status Options Array
-const STATUS_OPTIONS: Status[] = [
+export const STATUS_OPTIONS: Status[] = [
   {
     name: 'Online',
     icon: CheckCircle,
     color: 'success.main',
     bgColor: 'success.mainChannel',
-    hoverBg: 'hover:bg-green-200',
   },
   {
     name: 'Busy',
     icon: Clock,
     color: 'error.light',
     bgColor: 'error.lightChannel',
-    hoverBg: 'hover:bg-red-200',
   },
   {
     name: 'BRB',
     icon: Pause,
     color: 'yellow.main',
     bgColor: 'yellow.mainChannel',
-    hoverBg: 'hover:bg-yellow-200',
   },
   {
     name: 'AFK',
     icon: UserX,
     color: 'orange.main',
     bgColor: 'orange.mainChannel',
-    hoverBg: 'hover:bg-orange-200',
   },
   {
     name: 'Zzz',
     icon: Moon,
     color: 'stone.main',
     bgColor: 'stone.mainChannel',
-    hoverBg: 'hover:bg-indigo-200',
   },
   {
     name: 'Offline',
     icon: CircleOff,
     color: 'stone.dark',
     bgColor: 'stone.darkChannel',
-    hoverBg: 'hover:bg-slate-200',
   },
 ];
 
 const INITIAL_STATUS: Status = STATUS_OPTIONS[0];
 
 interface VoiceRoomStatusButtonProps {
-  onStatusChange?: (status: Status) => void;
+  onStatusChange: (status: string) => void;
 }
 
 export const VoiceRoomStatusButton: React.FC<VoiceRoomStatusButtonProps> = ({ onStatusChange }) => {
@@ -93,7 +86,7 @@ export const VoiceRoomStatusButton: React.FC<VoiceRoomStatusButtonProps> = ({ on
   const handleStatusChange = (status: Status) => {
     setCurrentStatus(status);
     setIsOpen(false);
-    onStatusChange?.(status);
+    onStatusChange?.(status.name);
   };
 
   const PrimaryIcon = currentStatus.icon;
