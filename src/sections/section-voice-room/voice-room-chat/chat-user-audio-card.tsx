@@ -30,12 +30,17 @@ import {
   CardContent,
   ListItemIcon,
   ListItemText,
+  useMediaQuery,
 } from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
 
 import { varAlpha } from 'src/theme/styles';
 
 import UserAudio from './user-audio';
-import { STATUS_OPTIONS } from './voice-room-status-button';
+import { STATUS_OPTIONS } from './chat-status-button';
+import { VoiceRoomIsSpeaking } from './chat-is-speaking';
+import { VoiceRoomMessageIndividual } from './chat-individual-message';
 
 // Types
 type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
@@ -71,6 +76,7 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
 }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [privateMessageEL, setPrivateMessageEL] = useState<null | HTMLElement>(null);
   const [audioSettings, setAudioSettings] = useState({
     noiseSuppression: true,
     echoCancellation: true,
@@ -78,6 +84,10 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
     volume: user.volume || 75,
     audioQuality: user.audioQuality || ('high' as AudioQuality),
   });
+
+  // In your component
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // or (max-width:600px)
 
   const { name, avatar, status = 'online', isMuted = false, id } = user;
 
@@ -98,11 +108,18 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
     high: '#00c853',
   };
 
+  const handleMessageClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setPrivateMessageEL(event.currentTarget);
+  };
   const handleSettingsClick = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
+  const handleMessageClose = () => {
+    setPrivateMessageEL(null);
+  };
   const handleSettingsClose = () => {
     setAnchorEl(null);
   };
@@ -147,8 +164,6 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
     onVolumeToggle?.(id);
   };
 
-  const theme = useTheme();
-
   // Safely resolve palette tokens like 'success.mainChannel' to a concrete value
   const palette = theme.vars.palette as unknown as Record<string, any>;
 
@@ -165,9 +180,16 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
 
   const statusColor = bgColorValue(statusConfig[status]?.color || 'primary.main');
 
+  const menuOpen = useBoolean(false);
+
   return (
     <Box sx={{ position: 'relative' }}>
       <Card
+        onClick={(event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          menuOpen.onToggle();
+        }}
         sx={{
           width: 160,
           height: 160,
@@ -177,7 +199,8 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
           backgroundColor: 'background.paper',
           boxShadow: isSpeaking ? `0 0 0 2px ${statusColor}40` : 'none',
           transition: 'all 0.2s ease',
-          '&:hover': {
+          cursor: 'pointer',
+          ...(menuOpen.value && {
             boxShadow: 2,
             '& .user-card-actions': {
               opacity: 1,
@@ -185,35 +208,11 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
             },
             '& .user-card-status': {
               opacity: 0,
-              transform: 'translateY(-50px)',
             },
-          },
+          }),
         }}
       >
-        {isSpeaking && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              border: `2px solid ${statusColor}`,
-              borderRadius: 1,
-              animation: 'ripple 2s infinite',
-              '@keyframes ripple': {
-                '0%': {
-                  opacity: 0.53,
-                  transform: 'scale(1)',
-                },
-                '100%': {
-                  opacity: 0,
-                  transform: 'scale(1.15)',
-                },
-              },
-            }}
-          />
-        )}
+        {isSpeaking && <VoiceRoomIsSpeaking statusColor={statusColor} />}
         <CardContent
           sx={{
             p: 2,
@@ -236,57 +235,83 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
               overlap="circular"
               anchorOrigin={{
                 vertical: 'bottom',
-                horizontal: 'right',
+                horizontal: 'left',
               }}
               badgeContent={
-                user.isMuted ? (
-                  <MicOffIcon
-                    fontSize="small"
-                    sx={{
-                      color: 'error.main',
-                      bgcolor: 'background.paper',
-                      borderRadius: '50%',
-                      p: 0.25,
-                    }}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      borderRadius: '50%',
-                      background: `${theme.palette.background.paper}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    {(() => {
-                      const Icon = statusConfig[status].icon;
-                      return (
-                        <Icon
-                          style={{
-                            color: statusColor,
-                            width: 18,
-                            height: 18,
-                          }}
-                        />
-                      );
-                    })()}
-                  </Box>
-                )
+                <Box
+                  sx={{
+                    borderRadius: 1,
+                    px: 1,
+                    background:
+                      theme.palette.mode === 'light'
+                        ? `${theme.palette.primary.main}`
+                        : theme.palette.primary.dark,
+                    color: 'common.white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant="caption">Host</Typography>
+                </Box>
               }
             >
-              <Avatar
-                src={avatar}
-                sx={{
-                  width: 92,
-                  height: 92,
-                  mb: 1,
-                  border: `2px solid ${statusColor}`,
-                  background: 'linear-gradient(135deg, #333, #555)',
+              <Badge
+                overlap="circular"
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
                 }}
+                badgeContent={
+                  user.isMuted ? (
+                    <MicOffIcon
+                      fontSize="small"
+                      sx={{
+                        color: 'error.main',
+                        bgcolor: 'background.paper',
+                        borderRadius: '50%',
+                        p: 0.25,
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        borderRadius: '50%',
+                        background: `${theme.palette.background.paper}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {(() => {
+                        const Icon = statusConfig[status].icon;
+                        return (
+                          <Icon
+                            style={{
+                              color: statusColor,
+                              width: 18,
+                              height: 18,
+                            }}
+                          />
+                        );
+                      })()}
+                    </Box>
+                  )
+                }
               >
-                {name.charAt(0).toUpperCase()}
-              </Avatar>
+                <Avatar
+                  src={avatar}
+                  sx={{
+                    width: 92,
+                    height: 92,
+                    mb: 1,
+                    border: `2px solid ${statusColor}`,
+                    background: 'linear-gradient(135deg, #333, #555)',
+                  }}
+                >
+                  {name.charAt(0).toUpperCase()}
+                </Avatar>
+              </Badge>
             </Badge>
 
             <Typography
@@ -323,7 +348,7 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
               right: 0,
               left: 0,
               opacity: 0,
-              transform: 'translateY(50px)',
+              transform: anchorEl || privateMessageEL ? 'translateY(0px)' : 'translateY(30px)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               display: 'flex',
               flexDirection: 'column',
@@ -389,10 +414,10 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
                 </IconButton>
               </Tooltip>
 
-              <Tooltip title="Audio Settings">
+              <Tooltip title="Private Message">
                 <IconButton
                   size="small"
-                  onClick={handleSettingsClick}
+                  onClick={handleMessageClick}
                   sx={{
                     borderRadius: 1,
                     backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
@@ -537,6 +562,36 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
             </ListItemText>
           </MenuItem>
         ))}
+      </Menu>
+
+      <Menu
+        anchorEl={privateMessageEL}
+        open={Boolean(privateMessageEL)}
+        onClose={handleMessageClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+        anchorOrigin={{
+          vertical: isMobile ? 'bottom' : 'top',
+          horizontal: isMobile ? 'center' : 'left',
+        }}
+        transformOrigin={{
+          vertical: isMobile ? 'bottom' : 'top',
+          horizontal: isMobile ? 'center' : 'left',
+        }}
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid',
+            borderColor: 'divider',
+            color: 'text.primary',
+            minWidth: 200,
+          },
+        }}
+      >
+        <VoiceRoomMessageIndividual onClose={handleMessageClose} />
       </Menu>
     </Box>
   );

@@ -7,17 +7,7 @@ import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react'; // Added useCallback
 
 import { styled } from '@mui/material/styles';
-import { Settings as SettingsIcon } from '@mui/icons-material';
-import {
-  Box,
-  Chip,
-  Paper,
-  Stack,
-  Button,
-  Container,
-  Typography,
-  LinearProgress,
-} from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
 
 // NOTE: Replace the mocks above with your actual imports if using a real project structure
 import { useParams } from 'src/routes/route-hooks';
@@ -26,33 +16,21 @@ import useWebRTC from 'src/hooks/use-web-rtc'; // Assumed actual use
 import { CONFIG } from 'src/config-global'; // Assumed actual use
 import { selectAccount } from 'src/core/slices'; // Assumed actual use
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
-import { selectRoom } from 'src/core/slices/slice-room'; // Assumed actual use
+import type { UserType } from 'src/types/type-user';
+
+// Assumed actual use
 import { toast } from 'sonner';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDateTime } from 'src/utils/format-time';
-
+import { VoiceRoomChatBody } from './voice-room-chat-body';
+import { VoiceRoomChatHeader } from './voice-room-chat-header';
+import { VoiceRoomChatFooter } from './voice-room-chat-footer';
 // Assumed actual import
 import { CreateRoomModal } from '../../voice-room-create-modal';
-import { VoiceRoomUserAudioCard } from '../voice-room-user-audio-card';
-import { VoiceRoomControllerFooter } from '../voice-room-controller-footer';
-import { VoiceRoomJoinConversation } from '../voice-room-join-conversation-card';
+import { VoiceRoomChatJoinNow } from './voice-room-chat-join-now';
 
-// Define UserType structure for context
-interface UserType {
-  id: string;
-  name: string;
-  profilePhoto: string;
-}
-
-// Updated participant type
-type Participant = UserType & {
-  socketId: string;
-  status: string;
-  isMuted?: boolean;
-  isSpeaking: boolean;
-};
+import type { Participant } from '../type';
 
 interface WebRTCEventData {
   offer?: RTCSessionDescriptionInit;
@@ -80,35 +58,8 @@ const RoomContainer = styled(Container)(({ theme }) => ({
   },
 }));
 
-const HeaderPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(1),
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-  color: 'white',
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(3),
-  },
-}));
-
-const ResponsiveTypography = styled(Typography)(({ theme }) => ({
-  // xs: caption styles
-  fontSize: theme.typography.caption.fontSize,
-  fontWeight: theme.typography.caption.fontWeight,
-  lineHeight: theme.typography.caption.lineHeight,
-
-  // sm: subtitle2 styles
-  [theme.breakpoints.up('sm')]: {
-    fontSize: theme.typography.subtitle2.fontSize,
-    fontWeight: theme.typography.subtitle2.fontWeight,
-    lineHeight: theme.typography.subtitle2.lineHeight,
-  },
-}));
-
 // Main Component
 export function VoiceRoomChat() {
-  const room = useSelector(selectRoom);
   const roomId = useParams().roomId as string;
   const user = useSelector(selectAccount);
 
@@ -120,7 +71,11 @@ export function VoiceRoomChat() {
   );
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
+
   const socketRef = useRef<Socket | null>(null);
+
+  const [joinRoomMutation] = useJoinRoomMutation();
+  const [leaveRoomMutation] = useLeaveRoomMutation();
 
   const {
     remoteStreams,
@@ -132,20 +87,11 @@ export function VoiceRoomChat() {
     handleAnswer,
     handleIceCandidate,
     toggleMicrophone,
-    cleanup, // WebRTC cleanup
+    cleanup,
   } = useWebRTC();
 
   // Convert map to array for rendering
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
-
-  // Store socket globally for WebRTC hook access
-  useEffect(() => {
-    (window as any).socket = socketRef.current;
-    return () => {
-      delete (window as any).socket;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socketRef.current]);
 
   const initializeVoiceRoom = async (): Promise<void> => {
     // ... (initializeVoiceRoom logic remains the same)
@@ -230,6 +176,27 @@ export function VoiceRoomChat() {
         });
       });
 
+      // Handle remote user's status update (NEW)
+      socketRef.current.on(
+        'user-status-select',
+        (data: { socketId: string; status: UserType['status'] }) => {
+          console.log('User audio toggled:', data);
+          setRemoteParticipants((prev) => {
+            const participant = prev[data.socketId];
+            if (participant) {
+              return {
+                ...prev,
+                [data.socketId]: {
+                  ...participant,
+                  status: data.status,
+                },
+              };
+            }
+            return prev;
+          });
+        }
+      );
+
       // WebRTC signaling events
       socketRef.current.on('webrtc-offer', (data: WebRTCEventData) => {
         handleOffer(data, socketRef.current!);
@@ -249,7 +216,8 @@ export function VoiceRoomChat() {
         setIsConnected(false);
       });
 
-      socketRef.current.on('disconnect', () => {
+      socketRef.current.on('disconnect', async () => {
+        await leaveRoomMutation({ roomId, userId: user.id });
         leaveRoom();
       });
     } catch (error) {
@@ -258,9 +226,6 @@ export function VoiceRoomChat() {
       console.error(`Failed to initialize voice chat: ${(error as Error).message}`);
     }
   };
-
-  const [joinRoomMutation] = useJoinRoomMutation();
-  const [leaveRoomMutation] = useLeaveRoomMutation();
 
   const handleToggleMicrophone = (): void => {
     const isNowMuted = toggleMicrophone();
@@ -278,33 +243,6 @@ export function VoiceRoomChat() {
       status,
       name: user.name,
     });
-  };
-  // --- NEW: Synchronous cleanup for browser events ---
-  const performCleanup = useCallback(async () => {
-    if (socketRef.current) {
-      // 1. Send leave signal (best effort, may be blocked by browser)
-      socketRef.current.emit('leave-voice-room', { roomId, userId: user.id });
-
-      // 2. Immediate disconnect
-      socketRef.current.disconnect();
-      socketRef.current = null;
-      // Perform async backend mutation (can be unreliable on page close, but safe here)
-      await leaveRoomMutation({ roomId, userId: user.id });
-    }
-    // 3. WebRTC resource cleanup (must be synchronous)
-    cleanup();
-  }, [roomId, user.id, cleanup, leaveRoomMutation]);
-  // --- END NEW: Synchronous cleanup for browser events ---
-
-  // Updated leaveRoom to use performCleanup
-  const leaveRoom = async () => {
-    console.log('Leaving voice room...');
-    performCleanup(); // Execute synchronous cleanup first
-
-    // Perform state updates and async mutation immediately after
-    setRemoteParticipants({});
-    setIsConnected(false);
-    setInitialize(true);
   };
 
   const joinRoom = async () => {
@@ -325,21 +263,52 @@ export function VoiceRoomChat() {
     }
   };
 
-  // 1. Cleanup on component unmount (for navigation away)
+  // --- NEW: Synchronous cleanup for browser events ---
+  const performCleanup = useCallback(async () => {
+    if (socketRef.current) {
+      // 1. Send leave signal (best effort, may be blocked by browser)
+      socketRef.current.emit('leave-voice-room', { roomId, userId: user.id });
+
+      // 2. Immediate disconnect
+      socketRef.current.disconnect();
+      socketRef.current = null;
+      // Perform async backend mutation (can be unreliable on page close, but safe here)
+    }
+    // 3. WebRTC resource cleanup (must be synchronous)
+    cleanup();
+  }, [roomId, user.id, cleanup]);
+  // --- END NEW: Synchronous cleanup for browser events ---
+
+  // Updated leaveRoom to use performCleanup
+  const leaveRoom = async () => {
+    console.log('Leaving voice room...');
+    performCleanup(); // Execute synchronous cleanup first
+
+    // Perform state updates and async mutation immediately after
+    setRemoteParticipants({});
+    setIsConnected(false);
+    setInitialize(true);
+  };
+
+  // Store socket globally for WebRTC hook access
+  useEffect(() => {
+    (window as any).socket = socketRef.current;
+    return () => {
+      delete (window as any).socket;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socketRef.current]);
+
   useEffect(
     () => () => {
-      // If the component unmounts normally, run the full cleanup
       performCleanup();
     },
     [performCleanup]
   );
 
-  // 2. NEW: Cleanup on browser window close or reload
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // Execute synchronous cleanup without state updates (React state is gone)
       performCleanup();
-      // Note: RTK mutation (async) is unreliable here, only signal is critical.
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -361,107 +330,32 @@ export function VoiceRoomChat() {
 
   return (
     <RoomContainer maxWidth="xl">
-      {/* Header */}
-      <HeaderPaper elevation={3} sx={{ p: { xs: 1, sm: 3 } }}>
-        <Stack direction="column" spacing={1} flex={1}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            {room?.name || `Voice Room ${roomId}`}
-          </Typography>
-          <Stack direction="row" spacing={1} justifyContent="space-between">
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <Chip label={room?.language || 'English'} color="secondary" size="small" />
-              <Chip
-                label={room?.level || 'Intermediate'}
-                variant="outlined"
-                size="small"
-                sx={{ color: 'white', borderColor: 'white' }}
-              />
-              <Chip
-                label={isConnected ? 'Connected' : 'Disconnected'}
-                color={isConnected ? 'success' : 'error'}
-                size="small"
-              />
-            </Stack>
-            {/* Conditional Join/Leave Buttons */}
-            <Box>
-              {!isConnected ? (
-                <ResponsiveTypography>{fDateTime(room.updatedAt)}</ResponsiveTypography>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<SettingsIcon />}
-                  size="small"
-                  onClick={editRoomBoolean.onTrue}
-                  sx={{
-                    color: 'white !important',
-                    backgroundColor: 'primary.main',
-                    '&:hover': { backgroundColor: 'primary.main' },
-                  }}
-                >
-                  Room Settings
-                </Button>
-              )}
-            </Box>
-          </Stack>
-        </Stack>
-      </HeaderPaper>
+      <VoiceRoomChatHeader isConnected={isConnected} editRoomBoolean={editRoomBoolean} />
 
-      {!isConnected && <VoiceRoomJoinConversation onJoinRoom={() => joinRoom()} />}
+      {!isConnected ? (
+        <VoiceRoomChatJoinNow onJoinRoom={() => joinRoom()} />
+      ) : (
+        <>
+          {/* Participants Grid */}
+          <VoiceRoomChatBody
+            isConnected={isConnected}
+            initialize={initialize}
+            isMicMuted={isMicMuted}
+            participants={participantsArray}
+            remoteStreams={remoteStreams}
+            localStream={localStream}
+          />
 
-      {/* Participants Grid */}
-      <Box flex={1} display="flex" flexDirection="column">
-        {!isConnected && !initialize && <LinearProgress color="warning" sx={{ mb: 2 }} />}
-
-        <Stack direction="row" gap={2} flexWrap="wrap">
-          {participantsArray.map((participant) => (
-            <VoiceRoomUserAudioCard
-              key={participant.id}
-              user={{
-                id: participant.id,
-                name: participant.name,
-                avatar: participant.profilePhoto,
-                status: participant.status as any,
-                isSpeaking: false,
-                isMuted: participant.isMuted as any,
-              }}
-              stream={remoteStreams[participant.socketId] || null}
-              isLocal={false}
-            />
-          ))}
-          {localStream && (
-            <VoiceRoomUserAudioCard
-              user={{
-                id: user.id,
-                name: user.name as any,
-                avatar: user.profilePhoto as any,
-                status: user.status as any,
-                isSpeaking: false,
-                isMuted: isMicMuted,
-              }}
-              stream={localStream}
-              isLocal
+          {/* Voice Controls - Only show if connected and localStream is ready */}
+          {isConnected && localStream && (
+            <VoiceRoomChatFooter
+              isMicMuted={isMicMuted}
+              onClickMic={() => handleToggleMicrophone()}
+              onStatusChange={handleToggleUserStatus}
+              onClickLeaveRoom={() => leaveRoom()}
             />
           )}
-        </Stack>
-
-        {participantsArray.length === 0 && isConnected && (
-          <Box textAlign="center" mt={4}>
-            <Typography variant="h6" color="text.secondary">
-              Waiting for other participants to join...
-            </Typography>
-          </Box>
-        )}
-      </Box>
-
-      {/* Voice Controls - Only show if connected and localStream is ready */}
-      {isConnected && localStream && (
-        <VoiceRoomControllerFooter
-          isMicMuted={isMicMuted}
-          onClickMic={() => handleToggleMicrophone()}
-          onStatusChange={handleToggleUserStatus}
-          onClickLeaveRoom={() => leaveRoom()}
-        />
+        </>
       )}
 
       <CreateRoomModal

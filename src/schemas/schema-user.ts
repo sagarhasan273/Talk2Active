@@ -21,14 +21,13 @@ export const UserSchema = zod
       .string()
       .email({ message: 'Invalid email address' })
       .min(1, { message: 'Email is required' }),
-    profilePhoto: zod.string().url({ message: 'Invalid URL for profile photo' }).optional(),
+    profilePhoto: zod.string().url({ message: 'Invalid URL for profile photo' }),
     coverPhoto: zod.string().url({ message: 'Invalid URL for cover photo' }).optional(),
     bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }).optional(),
     name: zod
       .string()
       .min(2, { message: 'Full name must be at least 2 characters' })
-      .max(100, { message: 'Full name cannot exceed 100 characters' })
-      .optional(),
+      .max(100, { message: 'Full name cannot exceed 100 characters' }),
     dateOfBirth: zod
       .date()
       .max(new Date(), { message: 'Date of birth cannot be in the future' })
@@ -58,7 +57,7 @@ export const UserSchema = zod
       .union([zod.string().datetime(), zod.date()])
       .transform((val) => new Date(val))
       .optional(),
-    status: zod.enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
+    status: zod.enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']),
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
     sessionTimeOut: zod.number().int().nonnegative().optional(),

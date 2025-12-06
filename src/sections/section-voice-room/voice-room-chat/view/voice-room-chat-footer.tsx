@@ -1,12 +1,9 @@
 import { Paper, styled, IconButton } from '@mui/material';
-import {
-  Mic as MicIcon,
-  MicOff as MicOffIcon,
-  Message as MessageIcon,
-  CallEnd as CallEndIcon,
-} from '@mui/icons-material';
+import { Mic as MicIcon, MicOff as MicOffIcon, CallEnd as CallEndIcon } from '@mui/icons-material';
 
-import { VoiceRoomStatusButton } from './voice-room-status-button';
+import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
+
+import { VoiceRoomStatusButton } from '../chat-status-button';
 
 const ControlsPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -15,19 +12,19 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
-type VoiceRoomControllerFooterProps = {
+type VoiceRoomChatFooterProps = {
   isMicMuted: boolean;
   onClickMic: () => void;
   onStatusChange: (status: string) => void;
   onClickLeaveRoom: () => void;
 };
 
-export function VoiceRoomControllerFooter({
+export function VoiceRoomChatFooter({
   isMicMuted,
   onClickMic,
   onStatusChange,
   onClickLeaveRoom,
-}: VoiceRoomControllerFooterProps) {
+}: VoiceRoomChatFooterProps) {
   return (
     <ControlsPaper elevation={0}>
       <IconButton
@@ -51,23 +48,8 @@ export function VoiceRoomControllerFooter({
 
       <VoiceRoomStatusButton onStatusChange={onStatusChange} />
 
-      <IconButton
-        onClick={() => {}}
-        sx={{
-          p: 1,
-          borderRadius: 1,
-          border: `2px solid`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'primary.main',
-          '&:hover': {
-            color: 'primary.dark',
-          },
-        }}
-      >
-        <MessageIcon fontSize="small" />
-      </IconButton>
+      <VoiceRoomMessageGroupDrawer>mainChatArea</VoiceRoomMessageGroupDrawer>
+
       <IconButton
         color="error"
         onClick={onClickLeaveRoom}

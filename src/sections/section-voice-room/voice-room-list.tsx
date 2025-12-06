@@ -29,7 +29,7 @@ import { getLanguageFlag } from 'src/_mock/data/languages';
 
 import { Iconify } from 'src/components/iconify';
 
-import { CreateRoomModal } from '../../voice-room-create-modal';
+import { CreateRoomModal } from './voice-room-create-modal';
 
 interface RoomListProps {
   onJoinRoom: (room: RoomResponse) => void;
