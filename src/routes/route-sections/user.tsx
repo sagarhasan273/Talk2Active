@@ -6,7 +6,7 @@ import { UserLayout } from 'src/layouts/user';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
-import { VoiceRoomChat } from 'src/sections/section-voice-room/voice-room-chat';
+import { VoiceRoomChat } from 'src/sections/section-chat-room';
 
 import { AuthGuard } from 'src/auth/guard';
 

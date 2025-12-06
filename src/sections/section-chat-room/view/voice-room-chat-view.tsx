@@ -26,9 +26,9 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomChatBody } from './voice-room-chat-body';
 import { VoiceRoomChatHeader } from './voice-room-chat-header';
 import { VoiceRoomChatFooter } from './voice-room-chat-footer';
-// Assumed actual import
-import { CreateRoomModal } from '../../voice-room-create-modal';
 import { VoiceRoomChatJoinNow } from './voice-room-chat-join-now';
+// Assumed actual import
+import { CreateRoomModal } from '../../section-voice-room/voice-room-create-modal';
 
 import type { Participant } from '../type';
 

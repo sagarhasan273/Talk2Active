@@ -37,7 +37,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { varAlpha } from 'src/theme/styles';
 
-import UserAudio from './user-audio';
+import UserAudio from './chat-user-audio';
 import { STATUS_OPTIONS } from './chat-status-button';
 import { VoiceRoomIsSpeaking } from './chat-is-speaking';
 import { VoiceRoomMessageIndividual } from './chat-individual-message';
