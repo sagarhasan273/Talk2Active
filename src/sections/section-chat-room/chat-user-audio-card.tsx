@@ -40,7 +40,7 @@ import { varAlpha } from 'src/theme/styles';
 import UserAudio from './chat-user-audio';
 import { STATUS_OPTIONS } from './chat-status-button';
 import { VoiceRoomIsSpeaking } from './chat-is-speaking';
-import { VoiceRoomMessageIndividual } from './chat-individual-message';
+import { VoiceRoomMessageIndividual } from './chat-message-individual';
 
 // Types
 type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';

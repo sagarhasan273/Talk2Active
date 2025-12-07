@@ -3,7 +3,7 @@ import { Mic as MicIcon, MicOff as MicOffIcon, CallEnd as CallEndIcon } from '@m
 
 import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
-import { VoiceRoomStatusButton } from '../chat-status-button';
+import { ChatStatusButton } from '../chat-status-button';
 
 const ControlsPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -12,19 +12,19 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
-type VoiceRoomChatFooterProps = {
+type ChatRoomFooterProps = {
   isMicMuted: boolean;
   onClickMic: () => void;
   onStatusChange: (status: string) => void;
   onClickLeaveRoom: () => void;
 };
 
-export function VoiceRoomChatFooter({
+export function ChatRoomFooter({
   isMicMuted,
   onClickMic,
   onStatusChange,
   onClickLeaveRoom,
-}: VoiceRoomChatFooterProps) {
+}: ChatRoomFooterProps) {
   return (
     <ControlsPaper elevation={0}>
       <IconButton
@@ -46,7 +46,7 @@ export function VoiceRoomChatFooter({
         {isMicMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
       </IconButton>
 
-      <VoiceRoomStatusButton onStatusChange={onStatusChange} />
+      <ChatStatusButton onStatusChange={onStatusChange} />
 
       <VoiceRoomMessageGroupDrawer>mainChatArea</VoiceRoomMessageGroupDrawer>
 

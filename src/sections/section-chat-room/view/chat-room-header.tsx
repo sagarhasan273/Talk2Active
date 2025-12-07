@@ -37,12 +37,12 @@ const ResponsiveTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
-type VoiceRoomChatHeaderProps = {
+type ChatRoomHeaderProps = {
   isConnected: boolean;
   editRoomBoolean: UseBooleanReturn;
 };
 
-export function VoiceRoomChatHeader({ isConnected, editRoomBoolean }: VoiceRoomChatHeaderProps) {
+export function ChatRoomHeader({ isConnected, editRoomBoolean }: ChatRoomHeaderProps) {
   const room = useSelector(selectRoom);
   const roomId = useParams().roomId as string;
 

@@ -27,7 +27,7 @@ interface Message {
   time: string;
 }
 
-export const VoiceRoomMessageIndividual = ({
+export const ChatMessageGroup = ({
   onClose,
 }: {
   onClose: (event: React.MouseEvent<HTMLButtonElement>) => void;

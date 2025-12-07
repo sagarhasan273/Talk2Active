@@ -9,7 +9,7 @@ import { VoiceRoomUserAudioCard } from '../chat-user-audio-card';
 
 import type { Participant } from '../type';
 
-export function VoiceRoomChatBody({
+export function ChatRoomChatBody({
   isConnected,
   initialize,
   isMicMuted,
@@ -33,7 +33,7 @@ export function VoiceRoomChatBody({
       <Stack direction="row" gap={2} flexWrap="wrap">
         {participants.map((participant) => (
           <VoiceRoomUserAudioCard
-            key={participant.id}
+            key={participant.socketId}
             user={{
               id: participant.id,
               name: participant.name,

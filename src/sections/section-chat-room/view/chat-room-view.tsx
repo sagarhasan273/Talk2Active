@@ -23,10 +23,10 @@ import { toast } from 'sonner';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { VoiceRoomChatBody } from './voice-room-chat-body';
-import { VoiceRoomChatHeader } from './voice-room-chat-header';
-import { VoiceRoomChatFooter } from './voice-room-chat-footer';
-import { VoiceRoomChatJoinNow } from './voice-room-chat-join-now';
+import { ChatRoomFooter } from './chat-room-footer';
+import { ChatRoomChatBody } from './chat-room-body';
+import { ChatRoomHeader } from './chat-room-header';
+import { ChatRoomChatJoinNow } from './chat-room-join-now';
 // Assumed actual import
 import { CreateRoomModal } from '../../section-voice-room/voice-room-create-modal';
 
@@ -330,14 +330,14 @@ export function VoiceRoomChat() {
 
   return (
     <RoomContainer maxWidth="xl">
-      <VoiceRoomChatHeader isConnected={isConnected} editRoomBoolean={editRoomBoolean} />
+      <ChatRoomHeader isConnected={isConnected} editRoomBoolean={editRoomBoolean} />
 
       {!isConnected ? (
-        <VoiceRoomChatJoinNow onJoinRoom={() => joinRoom()} />
+        <ChatRoomChatJoinNow onJoinRoom={() => joinRoom()} />
       ) : (
         <>
           {/* Participants Grid */}
-          <VoiceRoomChatBody
+          <ChatRoomChatBody
             isConnected={isConnected}
             initialize={initialize}
             isMicMuted={isMicMuted}
@@ -348,7 +348,7 @@ export function VoiceRoomChat() {
 
           {/* Voice Controls - Only show if connected and localStream is ready */}
           {isConnected && localStream && (
-            <VoiceRoomChatFooter
+            <ChatRoomFooter
               isMicMuted={isMicMuted}
               onClickMic={() => handleToggleMicrophone()}
               onStatusChange={handleToggleUserStatus}

@@ -5,7 +5,7 @@ export const getUserStatus = () => {
     { label: 'Busy', value: 'busy' },
     { label: 'BRB', value: 'brb' },
     { label: 'AFK', value: 'afk' },
-    { label: 'Zzz', value: 'sleeping' },
+    { label: 'Zzz', value: 'zzz' },
   ];
 
   return status_options;

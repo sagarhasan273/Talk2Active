@@ -1,1 +1,1 @@
-export * from './view/voice-room-chat-view';
+export * from './view/chat-room-view';

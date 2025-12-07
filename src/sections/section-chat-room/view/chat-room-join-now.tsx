@@ -29,7 +29,7 @@ import { setRoom, selectRoom } from 'src/core/slices/slice-room';
 
 type ParticipantsProps = { user: UserType; joinedAt: Date };
 
-export function VoiceRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) {
+export function ChatRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) {
   const theme = useTheme();
 
   const { roomId } = useParams();
