@@ -7,7 +7,6 @@ import { Box, Fade, Paper, Stack, Button, useTheme, Typography, IconButton } fro
 
 import { varAlpha } from 'src/theme/styles';
 import { setAccount, selectAccount } from 'src/core/slices';
-import { useUpdateUserStatusMutation } from 'src/core/apis';
 
 import type { ChatUserStatus } from './type';
 
@@ -73,22 +72,12 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
   const dispatch = useDispatch();
   const user = useSelector(selectAccount);
 
-  const [updateUser] = useUpdateUserStatusMutation();
-
   const handleStatusChange = async (status: ChatUserStatus) => {
     setCurrentStatus(status);
     setIsOpen(false);
     onStatusChange?.(status.name);
     try {
       dispatch(setAccount({ ...user, status: status.name }));
-      const response = await updateUser({
-        id: user.id,
-        status: status.name,
-      });
-
-      if (response.data?.status) {
-        toast.success(`Profile status ${status.label}`);
-      }
     } catch (error) {
       toast.error(error);
     }

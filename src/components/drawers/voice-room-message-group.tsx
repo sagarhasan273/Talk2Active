@@ -57,10 +57,7 @@ export function VoiceRoomMessageGroupDrawer({
         </Box>
       </Box>
 
-      <IconButton
-        onClick={drawer.onFalse}
-        sx={{ ml: 'auto', display: { xs: 'inline-flex', sm: 'none' } }}
-      >
+      <IconButton onClick={drawer.onFalse} sx={{ ml: 'auto', display: { xs: 'inline-flex' } }}>
         <Iconify icon="mingcute:close-line" />
       </IconButton>
     </Stack>

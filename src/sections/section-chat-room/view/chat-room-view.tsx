@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 // import type { UserType } from 'src/types/user';
 
 import { io } from 'socket.io-client';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react'; // Added useCallback
 
 import { styled } from '@mui/material/styles';
@@ -14,7 +14,7 @@ import { useParams } from 'src/routes/route-hooks';
 
 import useWebRTC from 'src/hooks/use-web-rtc'; // Assumed actual use
 import { CONFIG } from 'src/config-global'; // Assumed actual use
-import { selectAccount } from 'src/core/slices'; // Assumed actual use
+import { setAccount, selectAccount } from 'src/core/slices'; // Assumed actual use
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
 import type { UserType } from 'src/types/type-user';
 
@@ -22,6 +22,8 @@ import type { UserType } from 'src/types/type-user';
 import { toast } from 'sonner';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { selectRoom } from 'src/core/slices/slice-room';
 
 import { ChatRoomFooter } from './chat-room-footer';
 import { ChatRoomChatBody } from './chat-room-body';
@@ -60,8 +62,11 @@ const RoomContainer = styled(Container)(({ theme }) => ({
 
 // Main Component
 export function VoiceRoomChat() {
+  const dispatch = useDispatch();
+
   const roomId = useParams().roomId as string;
   const user = useSelector(selectAccount);
+  const room = useSelector(selectRoom);
 
   const editRoomBoolean = useBoolean(false);
 
@@ -94,9 +99,7 @@ export function VoiceRoomChat() {
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
 
   const initializeVoiceRoom = async (): Promise<void> => {
-    // ... (initializeVoiceRoom logic remains the same)
     try {
-      // 1. Get local audio stream
       await initializeMicrophone();
 
       // Ensure no double connection
@@ -104,33 +107,29 @@ export function VoiceRoomChat() {
         socketRef.current.disconnect();
       }
 
-      // 2. Connect to Socket.IO
       socketRef.current = io(CONFIG.serverUrl, {
         transports: ['websocket'],
       });
 
       socketRef.current.on('connect', () => {
         setIsConnected(true);
-        console.log('Connected to voice room with ID:', socketRef.current?.id);
-
-        // 3. Join room and send initial mute state
         socketRef.current?.emit('join-voice-room', {
           roomId,
           userId: user.id,
           name: user.name,
           profilePhoto: user.profilePhoto,
           isMuted: isMicMuted,
+          status: 'online',
+          userType: room.host.id === user.id ? 'Host' : 'Guest',
+          verified: user.verified,
         });
       });
 
       // Handle existing participants and start WebRTC handshake
       socketRef.current.on('existing-participants', (data: ExistingParticipantsData) => {
         const participantMap: { [key: string]: Participant } = {};
-        const otherParticipants = data.participants.filter(
-          (participant) => participant.socketId !== socketRef.current?.id
-        ) as Participant[];
 
-        otherParticipants.forEach((participant) => {
+        data.participants.forEach((participant) => {
           participantMap[participant.socketId] = participant;
           createOffer(participant.socketId, socketRef.current!);
         });
@@ -150,7 +149,6 @@ export function VoiceRoomChat() {
 
       // Handle user leaving
       socketRef.current.on('user-left', (data: { socketId: string }) => {
-        console.log('User left:', data);
         setRemoteParticipants((prev) => {
           const newState = { ...prev };
           delete newState[data.socketId];
@@ -160,7 +158,6 @@ export function VoiceRoomChat() {
 
       // Handle remote user's audio state update (NEW)
       socketRef.current.on('user-audio-toggled', (data: { socketId: string; isMuted: boolean }) => {
-        console.log('User audio toggled:', data);
         setRemoteParticipants((prev) => {
           const participant = prev[data.socketId];
           if (participant) {
@@ -266,15 +263,12 @@ export function VoiceRoomChat() {
   // --- NEW: Synchronous cleanup for browser events ---
   const performCleanup = useCallback(async () => {
     if (socketRef.current) {
-      // 1. Send leave signal (best effort, may be blocked by browser)
       socketRef.current.emit('leave-voice-room', { roomId, userId: user.id });
 
-      // 2. Immediate disconnect
       socketRef.current.disconnect();
       socketRef.current = null;
-      // Perform async backend mutation (can be unreliable on page close, but safe here)
     }
-    // 3. WebRTC resource cleanup (must be synchronous)
+
     cleanup();
   }, [roomId, user.id, cleanup]);
   // --- END NEW: Synchronous cleanup for browser events ---
@@ -282,12 +276,13 @@ export function VoiceRoomChat() {
   // Updated leaveRoom to use performCleanup
   const leaveRoom = async () => {
     console.log('Leaving voice room...');
-    performCleanup(); // Execute synchronous cleanup first
 
-    // Perform state updates and async mutation immediately after
+    performCleanup();
+
     setRemoteParticipants({});
     setIsConnected(false);
     setInitialize(true);
+    dispatch(setAccount({ ...user, status: 'online' }));
   };
 
   // Store socket globally for WebRTC hook access

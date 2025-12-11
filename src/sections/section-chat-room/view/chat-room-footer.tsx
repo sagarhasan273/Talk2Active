@@ -4,6 +4,7 @@ import { Mic as MicIcon, MicOff as MicOffIcon, CallEnd as CallEndIcon } from '@m
 import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { ChatStatusButton } from '../chat-status-button';
+import { ChatMessageGroup } from '../chat-message-group';
 
 const ControlsPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -48,7 +49,9 @@ export function ChatRoomFooter({
 
       <ChatStatusButton onStatusChange={onStatusChange} />
 
-      <VoiceRoomMessageGroupDrawer>mainChatArea</VoiceRoomMessageGroupDrawer>
+      <VoiceRoomMessageGroupDrawer>
+        <ChatMessageGroup />
+      </VoiceRoomMessageGroupDrawer>
 
       <IconButton
         color="error"

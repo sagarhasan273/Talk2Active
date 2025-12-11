@@ -199,3 +199,18 @@ export const extractYouTubeId = (inputUrl: string): string | null => {
 
   return null;
 };
+
+export function getAvatarText(fullName: string): string {
+  if (!fullName) return '';
+
+  const parts = fullName.trim().split(/\s+/);
+
+  if (parts.length >= 2) {
+    // Has first and last name
+    const first = parts[0].charAt(0).toUpperCase();
+    const last = parts[1].charAt(0).toUpperCase();
+    return first + last;
+  }
+  // Only first name → take first two chars
+  return fullName.substring(0, 2).toUpperCase();
+}

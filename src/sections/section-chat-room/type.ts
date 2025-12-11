@@ -28,6 +28,7 @@ export type Participant = UserType & {
   status: UserType['status'];
   isMuted: boolean;
   isSpeaking: boolean;
+  userType?: string;
 };
 
 export interface CreateRoomData {
@@ -68,3 +69,15 @@ export interface ChatUserStatus {
   color: string;
   bgColor: string;
 }
+
+// Types
+export type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
+export type AudioQuality = 'low' | 'medium' | 'high';
+
+export type ChatUserCardAudioSettings = {
+  noiseSuppression: boolean;
+  echoCancellation: boolean;
+  autoGainControl: boolean;
+  volume: number;
+  audioQuality: AudioQuality;
+};

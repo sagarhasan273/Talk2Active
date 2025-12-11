@@ -1,32 +1,15 @@
 import React, { useState } from 'react';
 
-import {
-  Mic,
-  MicOff,
-  Hearing,
-  Message,
-  VolumeUp,
-  Settings,
-  VolumeOff,
-  GraphicEq,
-  Headphones,
-  FiberManualRecord,
-  MicOff as MicOffIcon,
-} from '@mui/icons-material';
+import { Hearing, VolumeUp, GraphicEq, Headphones, FiberManualRecord } from '@mui/icons-material';
 import {
   Box,
   Card,
   Menu,
-  Badge,
-  Avatar,
   Switch,
-  Slider,
-  Tooltip,
   Divider,
   MenuItem,
   useTheme,
   Typography,
-  IconButton,
   CardContent,
   ListItemIcon,
   ListItemText,
@@ -40,13 +23,17 @@ import { varAlpha } from 'src/theme/styles';
 import UserAudio from './chat-user-audio';
 import { STATUS_OPTIONS } from './chat-status-button';
 import { VoiceRoomIsSpeaking } from './chat-is-speaking';
+import { ChatUserAvatarBadge } from './chat-user-avater-badge';
 import { VoiceRoomMessageIndividual } from './chat-message-individual';
+import { ChatUserCardQuickActions } from './chat-user-card-quick-actions';
+
+import type { ChatUserCardAudioSettings } from './type';
 
 // Types
 type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
 type AudioQuality = 'low' | 'medium' | 'high';
 
-interface VoiceRoomUserAudioCardProps {
+export type ChatUserCardProps = {
   user: {
     id: string;
     name: string;
@@ -56,6 +43,8 @@ interface VoiceRoomUserAudioCardProps {
     isMuted: boolean;
     volume?: number;
     audioQuality?: AudioQuality;
+    userType?: string;
+    verified?: boolean;
   };
   stream: MediaStream | null;
   isLocal: boolean;
@@ -63,9 +52,9 @@ interface VoiceRoomUserAudioCardProps {
   onSettingsChange?: (settings: any) => void;
   onToggleMute?: (userId: string) => void;
   onVolumeToggle?: (userId: string) => void;
-}
+};
 
-export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
+export const ChatUserCard: React.FC<ChatUserCardProps> = ({
   user,
   showSettings: externalShowSettings,
   onSettingsChange,
@@ -77,7 +66,7 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [privateMessageEL, setPrivateMessageEL] = useState<null | HTMLElement>(null);
-  const [audioSettings, setAudioSettings] = useState({
+  const [audioSettings, setAudioSettings] = useState<ChatUserCardAudioSettings>({
     noiseSuppression: true,
     echoCancellation: true,
     autoGainControl: true,
@@ -89,7 +78,7 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // or (max-width:600px)
 
-  const { name, avatar, status = 'online', isMuted = false, id } = user;
+  const { name, avatar, status = 'online', id, verified } = user;
 
   // Status configurations
   const statusConfig = {
@@ -213,6 +202,28 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
         }}
       >
         {isSpeaking && <VoiceRoomIsSpeaking statusColor={statusColor} />}
+
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -2,
+            left: -2,
+            backgroundColor: verified ? 'primary.main' : 'grey.500',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px solid',
+            borderColor: 'background.paper',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ px: '4px', fontWeight: 'bold', color: 'common.white' }}
+          >
+            {verified ? 'VERIFIED' : 'UNVERIFIED'}
+          </Typography>
+        </Box>
+
         <CardContent
           sx={{
             p: 2,
@@ -231,88 +242,7 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
               alignItems: 'center',
             }}
           >
-            <Badge
-              overlap="circular"
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'left',
-              }}
-              badgeContent={
-                <Box
-                  sx={{
-                    borderRadius: 1,
-                    px: 1,
-                    background:
-                      theme.palette.mode === 'light'
-                        ? `${theme.palette.primary.main}`
-                        : theme.palette.primary.dark,
-                    color: 'common.white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography variant="caption">Host</Typography>
-                </Box>
-              }
-            >
-              <Badge
-                overlap="circular"
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                badgeContent={
-                  user.isMuted ? (
-                    <MicOffIcon
-                      fontSize="small"
-                      sx={{
-                        color: 'error.main',
-                        bgcolor: 'background.paper',
-                        borderRadius: '50%',
-                        p: 0.25,
-                      }}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        borderRadius: '50%',
-                        background: `${theme.palette.background.paper}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {(() => {
-                        const Icon = statusConfig[status].icon;
-                        return (
-                          <Icon
-                            style={{
-                              color: statusColor,
-                              width: 18,
-                              height: 18,
-                            }}
-                          />
-                        );
-                      })()}
-                    </Box>
-                  )
-                }
-              >
-                <Avatar
-                  src={avatar}
-                  sx={{
-                    width: 92,
-                    height: 92,
-                    mb: 1,
-                    border: `2px solid ${statusColor}`,
-                    background: 'linear-gradient(135deg, #333, #555)',
-                  }}
-                >
-                  {name.charAt(0).toUpperCase()}
-                </Avatar>
-              </Badge>
-            </Badge>
+            <ChatUserAvatarBadge avatar={avatar} user={user} />
 
             <Typography
               variant="subtitle2"
@@ -340,136 +270,17 @@ export const VoiceRoomUserAudioCard: React.FC<VoiceRoomUserAudioCardProps> = ({
           />
 
           {/* Hidden Quick Actions (Visible on Hover) */}
-          <Box
-            className="user-card-actions"
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              left: 0,
-              opacity: 0,
-              transform: anchorEl || privateMessageEL ? 'translateY(0px)' : 'translateY(30px)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              display: 'flex',
-              flexDirection: 'column',
-              backgroundColor: 'background.neutral',
-              gap: 1,
-              p: 1,
-              zIndex: 2,
-            }}
-          >
-            {/* Quick Action Buttons */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: 1,
-              }}
-            >
-              <Tooltip title={isMuted ? 'Unmute' : 'Mute'}>
-                <IconButton
-                  size="small"
-                  onClick={handleMuteToggle}
-                  sx={{
-                    borderRadius: 1,
-                    backgroundColor: isMuted
-                      ? 'error.main'
-                      : varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
-                    color: isMuted ? 'error.contrastText' : 'primary.main',
-                    '&:hover': {
-                      backgroundColor: isMuted
-                        ? 'error.dark'
-                        : varAlpha(theme.vars.palette.primary.mainChannel, 0.24),
-                    },
-                  }}
-                >
-                  {isMuted ? <MicOff sx={{ fontSize: 18 }} /> : <Mic sx={{ fontSize: 18 }} />}
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title={audioSettings.volume === 0 ? 'Unmute volume' : 'Mute volume'}>
-                <IconButton
-                  size="small"
-                  onClick={handleVolumeToggle}
-                  sx={{
-                    borderRadius: 1,
-                    backgroundColor:
-                      audioSettings.volume === 0
-                        ? 'warning.main'
-                        : varAlpha(theme.vars.palette.success.mainChannel, 0.16),
-                    color: audioSettings.volume === 0 ? 'warning.contrastText' : 'success.main',
-                    '&:hover': {
-                      backgroundColor:
-                        audioSettings.volume === 0
-                          ? 'warning.dark'
-                          : varAlpha(theme.vars.palette.success.mainChannel, 0.24),
-                    },
-                  }}
-                >
-                  {audioSettings.volume === 0 ? (
-                    <VolumeOff sx={{ fontSize: 18 }} />
-                  ) : (
-                    <VolumeUp sx={{ fontSize: 18 }} />
-                  )}
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Private Message">
-                <IconButton
-                  size="small"
-                  onClick={handleMessageClick}
-                  sx={{
-                    borderRadius: 1,
-                    backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.16),
-                    color: 'primary.main',
-                    '&:hover': {
-                      color: 'primary.main',
-                      backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.24),
-                    },
-                  }}
-                >
-                  <Message sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Audio Settings">
-                <IconButton
-                  size="small"
-                  onClick={handleSettingsClick}
-                  sx={{
-                    borderRadius: 1,
-                    backgroundColor: varAlpha(theme.vars.palette.info.mainChannel, 0.16),
-                    color: 'info.main',
-                    '&:hover': {
-                      backgroundColor: varAlpha(theme.vars.palette.info.mainChannel, 0.24),
-                    },
-                  }}
-                >
-                  <Settings sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            {/* Volume Slider */}
-            <Box sx={{ px: 0.5 }}>
-              <Slider
-                size="small"
-                value={audioSettings.volume}
-                onChange={handleVolumeChange}
-                sx={{
-                  color: qualityColors[audioSettings.audioQuality],
-                  '& .MuiSlider-track': {
-                    background: `linear-gradient(90deg, #ff4444, #ffaa00, #00c853)`,
-                  },
-                  '& .MuiSlider-thumb': {
-                    backgroundColor: qualityColors[audioSettings.audioQuality],
-                    '&:hover': {
-                      boxShadow: `0 0 0 8px ${qualityColors[audioSettings.audioQuality]}20`,
-                    },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
+          <ChatUserCardQuickActions
+            user={user}
+            handleMuteToggle={handleMuteToggle}
+            audioSettings={audioSettings}
+            anchorEl={anchorEl}
+            privateMessageEL={privateMessageEL}
+            handleVolumeToggle={handleVolumeToggle}
+            handleMessageClick={handleMessageClick}
+            handleSettingsClick={handleSettingsClick}
+            handleVolumeChange={handleVolumeChange}
+          />
         </CardContent>
       </Card>
 

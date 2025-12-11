@@ -3,9 +3,10 @@ import { useSelector } from 'react-redux';
 import { Box, Stack, Typography, LinearProgress } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
+import { selectRoom } from 'src/core/slices/slice-room';
 
 // Assumed actual import
-import { VoiceRoomUserAudioCard } from '../chat-user-audio-card';
+import { ChatUserCard } from '../chat-user-card';
 
 import type { Participant } from '../type';
 
@@ -25,6 +26,7 @@ export function ChatRoomChatBody({
   localStream: MediaStream | null;
 }) {
   const user = useSelector(selectAccount);
+  const room = useSelector(selectRoom);
 
   return (
     <Box flex={1} display="flex" flexDirection="column">
@@ -32,7 +34,7 @@ export function ChatRoomChatBody({
 
       <Stack direction="row" gap={2} flexWrap="wrap">
         {participants.map((participant) => (
-          <VoiceRoomUserAudioCard
+          <ChatUserCard
             key={participant.socketId}
             user={{
               id: participant.id,
@@ -41,13 +43,15 @@ export function ChatRoomChatBody({
               status: participant.status,
               isSpeaking: false,
               isMuted: participant.isMuted,
+              userType: participant.userType,
+              verified: participant.verified,
             }}
             stream={remoteStreams[participant.socketId] || null}
             isLocal={false}
           />
         ))}
         {localStream && (
-          <VoiceRoomUserAudioCard
+          <ChatUserCard
             user={{
               id: user.id,
               name: user.name,
@@ -55,6 +59,8 @@ export function ChatRoomChatBody({
               status: user.status,
               isSpeaking: false,
               isMuted: isMicMuted,
+              userType: room.host.id === user.id ? 'Host' : 'Guest',
+              verified: user.verified,
             }}
             stream={localStream}
             isLocal

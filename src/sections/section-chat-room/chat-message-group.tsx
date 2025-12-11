@@ -1,10 +1,11 @@
 import type { EmojiClickData } from 'emoji-picker-react';
 
 import { SendIcon } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
 import React, { useRef, useState, useEffect } from 'react';
 
-import { Close, Mood as MoodIcon } from '@mui/icons-material';
+import { Mood as MoodIcon } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -18,7 +19,12 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 
+import { getAvatarText } from 'src/utils/helper';
+
 import { varAlpha } from 'src/theme/styles';
+import { selectAccount } from 'src/core/slices';
+
+import { Scrollbar } from 'src/components/scrollbar';
 
 interface Message {
   id: number;
@@ -30,18 +36,20 @@ interface Message {
 export const ChatMessageGroup = ({
   onClose,
 }: {
-  onClose: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
+  const user = useSelector(selectAccount);
+
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: 'Hello there! 👋', sender: 'them', time: '10:00 AM' },
-    { id: 2, text: 'Hi! How are you doing? 😊', sender: 'me', time: '10:01 AM' },
-    {
-      id: 3,
-      text: "I'm good! Working on this chat UI. What about you?",
-      sender: 'them',
-      time: '10:02 AM',
-    },
+    // { id: 1, text: 'Hello there! 👋', sender: 'them', time: '10:00 AM' },
+    // { id: 2, text: 'Hi! How are you doing? 😊', sender: 'me', time: '10:01 AM' },
+    // {
+    //   id: 3,
+    //   text: "I'm good! Working on this chat UI. What about you?",
+    //   sender: 'them',
+    //   time: '10:02 AM',
+    // },
     {
       id: 4,
       text: 'Same here! Just finished the design system. 🎨',
@@ -88,13 +96,7 @@ export const ChatMessageGroup = ({
   }, [messages]);
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '60vh',
-      }}
-    >
+    <>
       {/* Chat Header */}
       <Paper
         sx={{
@@ -108,250 +110,175 @@ export const ChatMessageGroup = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar sx={{ mr: 2, bgcolor: '#2e7d32' }}>C</Avatar>
-          <Box>
-            <Typography variant="subtitle2">John Doe</Typography>
-            <Typography variant="caption" color="success.main">
-              Online • Last seen 5 minutes ago
-            </Typography>
-          </Box>
-        </Box>
-        <Box>
-          <Tooltip title="Close">
-            <IconButton size="small" onClick={onClose}>
-              <Close />
-            </IconButton>
-          </Tooltip>
+          <Typography variant="caption" color="success.main">
+            Online • Last seen 5 minutes ago
+          </Typography>
         </Box>
       </Paper>
-
-      {/* Messages Display Area */}
-      <Box
+      <Scrollbar
         sx={{
-          flex: 1,
-          overflow: 'auto',
-          p: 1.5,
           backgroundColor: 'background.neutral',
-          //   backgroundImage:
-          //     'url(https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png)',
           backgroundRepeat: 'repeat',
           backgroundSize: 'contain',
-          position: 'relative',
         }}
       >
-        {/* Date Separator */}
+        {/* Messages Display Area */}
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            my: 2,
+            p: 1.5,
           }}
         >
-          <Paper
-            sx={{
-              px: 2,
-              py: 0.5,
-              backgroundColor: (theme) =>
-                varAlpha(theme.vars.palette.background.paperChannel, 0.28),
-              borderRadius: 2,
-            }}
-          >
-            <Typography variant="caption" color="text.primary">
-              Today, November 15
-            </Typography>
-          </Paper>
-        </Box>
-
-        {/* Messages */}
-        {messages.map((msg) => (
+          {/* Date Separator */}
           <Box
-            key={msg.id}
             sx={{
               display: 'flex',
-              justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
-              mb: 1.5,
-              '&:hover': {
-                '& .message-time': {
-                  opacity: 1,
-                },
-              },
+              justifyContent: 'center',
+              my: 2,
             }}
           >
-            <Box
+            <Paper
               sx={{
-                display: 'flex',
-                flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
-                alignItems: 'flex-end',
-                maxWidth: '75%',
+                px: 2,
+                py: 0.5,
+                backgroundColor: (theme) =>
+                  varAlpha(theme.vars.palette.background.paperChannel, 0.28),
+                borderRadius: 2,
               }}
             >
-              {msg.sender === 'them' && (
-                <Avatar
-                  sx={{
-                    mr: 1,
-                    mb: 0.5,
-                    width: 28,
-                    height: 28,
-                    bgcolor: '#2e7d32',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  J
-                </Avatar>
-              )}
+              <Typography variant="caption" color="text.primary">
+                Today, November 15
+              </Typography>
+            </Paper>
+          </Box>
 
-              <Paper
+          {/* Messages */}
+          {messages.map((msg) => (
+            <Box
+              key={msg.id}
+              sx={{
+                display: 'flex',
+                justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
+                ml: 'auto',
+                mb: 1.5,
+                '&:hover': {
+                  '& .message-time': {
+                    opacity: 1,
+                  },
+                },
+              }}
+            >
+              <Box
                 sx={{
-                  maxWidth: '100%',
-                  p: 2,
-
-                  backgroundColor: (theme) =>
-                    msg.sender === 'me'
-                      ? varAlpha(theme.vars.palette.background.paperChannel, 1)
-                      : varAlpha(theme.vars.palette.background.paperChannel, 0.6),
-                  borderRadius: msg.sender === 'me' ? '18px 18px 5px 18px' : '18px 18px 18px 5px',
-                  boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
-                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
+                  alignItems: 'flex-end',
+                  maxWidth: '75%',
                 }}
               >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    wordBreak: 'break-word',
-                    lineHeight: 1.4,
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {msg.text}
-                </Typography>
+                {msg.sender === 'them' && (
+                  <Avatar
+                    sx={{
+                      mr: 0.5,
+                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    {getAvatarText(user.name)}
+                  </Avatar>
+                )}
 
-                <Box
+                <Paper
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                    mt: 0.5,
-                    gap: 0.5,
+                    maxWidth: '100%',
+                    p: 1.25,
+                    pb: 0.75,
+                    backgroundColor: (theme) =>
+                      msg.sender === 'me'
+                        ? varAlpha(theme.vars.palette.background.paperChannel, 1)
+                        : varAlpha(theme.vars.palette.background.paperChannel, 0.6),
+                    borderRadius: msg.sender === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 8px',
+                    boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
+                    position: 'relative',
                   }}
                 >
                   <Typography
-                    variant="caption"
-                    className="message-time"
+                    variant="body1"
                     sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.5rem',
-                      opacity: 0.5,
-                      transition: 'opacity 0.2s',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.4,
+                      whiteSpace: 'pre-wrap',
                     }}
                   >
-                    {msg.time}
+                    {msg.text}
                   </Typography>
-                  {msg.sender === 'me' && (
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      mt: 1,
+                      mr: 1,
+                      gap: 0.5,
+                    }}
+                  >
+                    {msg.sender === 'them' && (
                       <Typography
-                        variant="caption"
+                        variant="subtitle2"
+                        className="message-time"
                         sx={{
-                          color: '#009688',
-                          fontSize: '0.6rem',
+                          color: 'primary.light',
+                          fontWeight: 'bold',
+                          mr: 'auto',
                         }}
                       >
-                        ✓✓
+                        {user.name}
                       </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Paper>
-            </Box>
-          </Box>
-        ))}
-
-        {/* Typing indicator */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'flex-start',
-            mb: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-            }}
-          >
-            <Avatar
-              sx={{
-                mr: 1,
-                mb: 0.5,
-                width: 28,
-                height: 28,
-                bgcolor: '#2e7d32',
-                fontSize: '0.875rem',
-              }}
-            >
-              J
-            </Avatar>
-            <Paper
-              sx={{
-                p: 1.5,
-                backgroundColor: 'background.neutral',
-                borderRadius: '18px 18px 18px 5px',
-              }}
-            >
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: '#9e9e9e',
-                    animation: 'typing 1.4s infinite ease-in-out',
-                    '&:nth-of-type(1)': { animationDelay: '0s' },
-                    '&:nth-of-type(2)': { animationDelay: '0.2s' },
-                    '&:nth-of-type(3)': { animationDelay: '0.4s' },
-                    '@keyframes typing': {
-                      '0%, 60%, 100%': { transform: 'translateY(0)' },
-                      '30%': { transform: 'translateY(-5px)' },
-                    },
-                  }}
-                />
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: '#9e9e9e',
-                    animation: 'typing 1.4s infinite ease-in-out',
-                    animationDelay: '0.2s',
-                  }}
-                />
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: '#9e9e9e',
-                    animation: 'typing 1.4s infinite ease-in-out',
-                    animationDelay: '0.4s',
-                  }}
-                />
+                    )}
+                    <Typography
+                      variant="caption"
+                      className="message-time"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '0.5rem',
+                        opacity: 0.5,
+                        transition: 'opacity 0.2s',
+                      }}
+                    >
+                      {msg.time}
+                    </Typography>
+                    {msg.sender === 'me' && (
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: '#009688',
+                            fontSize: '0.6rem',
+                          }}
+                        >
+                          ✓✓
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Paper>
               </Box>
-            </Paper>
-          </Box>
+            </Box>
+          ))}
+
+          <div ref={messagesEndRef} />
         </Box>
-
-        <div ref={messagesEndRef} />
-      </Box>
-
+      </Scrollbar>
       {/* Message Input Box */}
       <Paper
         sx={{
@@ -362,8 +289,6 @@ export const ChatMessageGroup = ({
           position: 'sticky',
           bottom: 0,
           backgroundColor: 'background.paper',
-          zIndex: 10,
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
@@ -387,7 +312,7 @@ export const ChatMessageGroup = ({
             open={emojiPickerOpen}
             anchorEl={emojiButtonRef.current}
             placement="top-start"
-            sx={{ zIndex: 99 }}
+            sx={{ zIndex: 9999 }}
           >
             <ClickAwayListener onClickAway={() => setEmojiPickerOpen(false)}>
               <Box sx={{ mt: -2 }}>
@@ -418,7 +343,7 @@ export const ChatMessageGroup = ({
               width: 'fit-content',
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'background.paper',
-                borderRadius: 1,
+                borderRadius: 0,
                 padding: '8px 8px',
                 '& fieldset': {
                   border: 'none',
@@ -453,6 +378,6 @@ export const ChatMessageGroup = ({
           Send
         </Button>
       </Paper>
-    </Box>
+    </>
   );
 };
