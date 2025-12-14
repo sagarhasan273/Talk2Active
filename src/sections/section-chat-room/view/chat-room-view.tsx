@@ -1,6 +1,4 @@
 import type { Socket } from 'socket.io-client';
-// NOTE: Assuming UserType is correctly defined and imported in the full project
-// import type { UserType } from 'src/types/user';
 
 import { io } from 'socket.io-client';
 import { useDispatch, useSelector } from 'react-redux';

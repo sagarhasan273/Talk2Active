@@ -49,7 +49,7 @@ export function ChatUserCardQuickActions({
         right: 0,
         left: 0,
         opacity: 0,
-        transform: anchorEl || privateMessageEL ? 'translateY(0px)' : 'translateY(30px)',
+        transform: anchorEl || privateMessageEL ? 'translateY(0px)' : 'translateY(100px)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex',
         flexDirection: 'column',

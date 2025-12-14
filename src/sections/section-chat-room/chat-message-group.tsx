@@ -1,3 +1,4 @@
+import type { Socket } from 'socket.io-client';
 import type { EmojiClickData } from 'emoji-picker-react';
 
 import { SendIcon } from 'lucide-react';
@@ -19,10 +20,12 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 
+import { fDate } from 'src/utils/format-time';
 import { getAvatarText } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
+import { selectRoom } from 'src/core/slices/slice-room';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -31,6 +34,9 @@ interface Message {
   text: string;
   sender: 'me' | 'them';
   time: string;
+  name: string;
+  avatar?: string;
+  userId: string;
 }
 
 export const ChatMessageGroup = ({
@@ -38,31 +44,16 @@ export const ChatMessageGroup = ({
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
+  const room = useSelector(selectRoom);
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([
-    // { id: 1, text: 'Hello there! 👋', sender: 'them', time: '10:00 AM' },
-    // { id: 2, text: 'Hi! How are you doing? 😊', sender: 'me', time: '10:01 AM' },
-    // {
-    //   id: 3,
-    //   text: "I'm good! Working on this chat UI. What about you?",
-    //   sender: 'them',
-    //   time: '10:02 AM',
-    // },
-    {
-      id: 4,
-      text: 'Same here! Just finished the design system. 🎨',
-      sender: 'me',
-      time: '10:03 AM',
-    },
-    { id: 5, text: 'Awesome! Want to grab coffee later? ☕', sender: 'them', time: '10:04 AM' },
-    { id: 6, text: 'Definitely! How about 3 PM? ⏰', sender: 'me', time: '10:05 AM' },
-    { id: 7, text: 'Perfect! See you then! 🚀', sender: 'them', time: '10:06 AM' },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const processedMessages = useRef(new Set());
 
   const handleSendMessage = (): void => {
     if (message.trim() === '') return;
@@ -72,9 +63,18 @@ export const ChatMessageGroup = ({
       text: message,
       sender: 'me',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      name: user.name,
+      avatar: user.profilePhoto,
+      userId: user.id,
     };
 
     setMessages((prev) => [...prev, newMessage]);
+    socketRef.current?.emit('send-group-message', {
+      roomId: room.id,
+      senderSocketId: socketRef.current?.id,
+      ...newMessage,
+    });
+
     setMessage('');
   };
 
@@ -92,6 +92,46 @@ export const ChatMessageGroup = ({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
+    const messageHandler = (data: any) => {
+      console.log('Received group message:', data);
+      if (processedMessages.current.has(data.id)) {
+        console.log('⚠️ Duplicate message ignored:', data.id);
+        return;
+      }
+
+      processedMessages.current.add(data.id);
+
+      // Clean up old messages (optional)
+      if (processedMessages.current.size > 100) {
+        const firstId = processedMessages.current.values().next().value;
+        processedMessages.current.delete(firstId);
+      }
+
+      const receiveMessage: Message = {
+        id: messages.length + 1,
+        text: data.text,
+        sender: 'them',
+        time: data.time,
+        name: data.name,
+        avatar: data.avatar,
+        userId: data.userId,
+      };
+
+      // Process message
+      setMessages((prev) => [...prev, receiveMessage]);
+    };
+
+    socketRef.current?.on('receive-group-message', messageHandler);
+
+    return () => {
+      socketRef.current?.off('receive-group-message', messageHandler);
+    };
+  }, [messages, socketRef]);
+
+  useEffect(() => {
+    if (!socketRef.current) {
+      socketRef.current = (window as any).socket;
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -146,7 +186,7 @@ export const ChatMessageGroup = ({
               }}
             >
               <Typography variant="caption" color="text.primary">
-                Today, November 15
+                {fDate(new Date(), 'dddd, MMMM DD, YYYY')}
               </Typography>
             </Paper>
           </Box>
@@ -177,6 +217,7 @@ export const ChatMessageGroup = ({
               >
                 {msg.sender === 'them' && (
                   <Avatar
+                    src={msg.avatar}
                     sx={{
                       mr: 0.5,
                       borderRadius: 1,
@@ -185,7 +226,7 @@ export const ChatMessageGroup = ({
                       fontSize: '0.875rem',
                     }}
                   >
-                    {getAvatarText(user.name)}
+                    {getAvatarText(msg.name)}
                   </Avatar>
                 )}
 
@@ -234,7 +275,7 @@ export const ChatMessageGroup = ({
                           mr: 'auto',
                         }}
                       >
-                        {user.name}
+                        {msg.name}
                       </Typography>
                     )}
                     <Typography
