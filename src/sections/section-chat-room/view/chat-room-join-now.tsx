@@ -1,7 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import {
   Box,
@@ -25,7 +24,7 @@ import { useParams } from 'src/routes/route-hooks';
 import { fDateTime } from 'src/utils/format-time';
 
 import { useGetRoomByIdQuery } from 'src/core/apis';
-import { setRoom, selectRoom } from 'src/core/slices/slice-room';
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 type ParticipantsProps = { user: UserType; joinedAt: Date };
 
@@ -34,9 +33,7 @@ export function ChatRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) 
 
   const { roomId } = useParams();
 
-  const dispatch = useDispatch();
-
-  const room = useSelector(selectRoom);
+  const { setRoom, room } = useRoomTools();
 
   const [participants, setParticipants] = useState<ParticipantsProps[]>([]);
 
@@ -45,11 +42,11 @@ export function ChatRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) 
   useEffect(() => {
     if (roomData?.status) {
       setParticipants(roomData.data.currentParticipants || []);
-      dispatch(setRoom(roomData.data));
+      setRoom(roomData.data);
     } else {
       setParticipants(room.currentParticipants || []);
     }
-  }, [roomData, room, dispatch]);
+  }, [roomData, room, setRoom]);
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, backgroundColor: 'transparent' }}>

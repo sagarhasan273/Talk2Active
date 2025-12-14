@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { selectRoom } from 'src/core/slices/slice-room';
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { ChatRoomFooter } from './chat-room-footer';
 import { ChatRoomChatBody } from './chat-room-body';
@@ -30,7 +30,7 @@ import { ChatRoomChatJoinNow } from './chat-room-join-now';
 // Assumed actual import
 import { CreateRoomModal } from '../../section-voice-room/voice-room-create-modal';
 
-import type { Participant } from '../type';
+import type { Participant, ChatRoomMessage } from '../type';
 
 interface WebRTCEventData {
   offer?: RTCSessionDescriptionInit;
@@ -64,14 +64,18 @@ export function VoiceRoomChat() {
 
   const roomId = useParams().roomId as string;
   const user = useSelector(selectAccount);
-  const room = useSelector(selectRoom);
+  const {
+    room,
+    remoteParticipants,
+    addRemoteParticipant,
+    removeRemoteParticipant,
+    updateRemoteParticipantAudio,
+    resetRemoteParticipants,
+    addChatRoomMessage,
+  } = useRoomTools();
 
   const editRoomBoolean = useBoolean(false);
 
-  // State to store remote participants, using a map for easy updates
-  const [remoteParticipants, setRemoteParticipants] = useState<{ [socketId: string]: Participant }>(
-    {}
-  );
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
 
@@ -125,72 +129,58 @@ export function VoiceRoomChat() {
 
       // Handle existing participants and start WebRTC handshake
       socketRef.current.on('existing-participants', (data: ExistingParticipantsData) => {
-        const participantMap: { [key: string]: Participant } = {};
-
         data.participants.forEach((participant) => {
-          participantMap[participant.socketId] = participant;
+          addRemoteParticipant(participant);
           createOffer(participant.socketId, socketRef.current!);
         });
-        setRemoteParticipants(participantMap);
       });
 
       // Handle new user joining
       socketRef.current.on('user-joined', (data: Participant) => {
         if (data.socketId !== socketRef.current?.id) {
-          setRemoteParticipants((prev) => ({
-            ...prev,
-            [data.socketId]: data,
-          }));
+          addRemoteParticipant(data);
           createOffer(data.socketId, socketRef.current!);
         }
       });
 
       // Handle user leaving
       socketRef.current.on('user-left', (data: { socketId: string }) => {
-        setRemoteParticipants((prev) => {
-          const newState = { ...prev };
-          delete newState[data.socketId];
-          return newState;
-        });
+        removeRemoteParticipant(data.socketId);
       });
 
       // Handle remote user's audio state update (NEW)
       socketRef.current.on('user-audio-toggled', (data: { socketId: string; isMuted: boolean }) => {
-        setRemoteParticipants((prev) => {
-          const participant = prev[data.socketId];
-          if (participant) {
-            return {
-              ...prev,
-              [data.socketId]: {
-                ...participant,
-                isMuted: data.isMuted,
-              },
-            };
-          }
-          return prev;
-        });
+        const participant = remoteParticipants[data.socketId];
+        if (participant) {
+          updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
+        }
       });
 
       // Handle remote user's status update (NEW)
       socketRef.current.on(
         'user-status-select',
         (data: { socketId: string; status: UserType['status'] }) => {
-          console.log('User audio toggled:', data);
-          setRemoteParticipants((prev) => {
-            const participant = prev[data.socketId];
-            if (participant) {
-              return {
-                ...prev,
-                [data.socketId]: {
-                  ...participant,
-                  status: data.status,
-                },
-              };
-            }
-            return prev;
-          });
+          const participant = remoteParticipants[data.socketId];
+          if (participant) {
+            updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: participant.isMuted });
+          }
         }
       );
+
+      // chat room message received
+      socketRef.current.on('receive-group-message', (data: any) => {
+        const receiveMessage: ChatRoomMessage = {
+          id: data.id,
+          text: data.text,
+          sender: 'them',
+          time: data.time,
+          name: data.name,
+          avatar: data.avatar,
+          userId: data.userId,
+          isUnread: true,
+        };
+        addChatRoomMessage(receiveMessage);
+      });
 
       // WebRTC signaling events
       socketRef.current.on('webrtc-offer', (data: WebRTCEventData) => {
@@ -277,7 +267,7 @@ export function VoiceRoomChat() {
 
     performCleanup();
 
-    setRemoteParticipants({});
+    resetRemoteParticipants();
     setIsConnected(false);
     setInitialize(true);
     dispatch(setAccount({ ...user, status: 'online' }));

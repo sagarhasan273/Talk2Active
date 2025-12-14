@@ -1,7 +1,5 @@
 import type { UseBooleanReturn } from 'src/hooks/use-boolean';
 
-import { useSelector } from 'react-redux';
-
 import { Settings as SettingsIcon } from '@mui/icons-material';
 import { Box, Chip, Paper, Stack, styled, Button, Typography } from '@mui/material';
 
@@ -9,7 +7,7 @@ import { useParams } from 'src/routes/route-hooks';
 
 import { fDateTime } from 'src/utils/format-time';
 
-import { selectRoom } from 'src/core/slices/slice-room';
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 const HeaderPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(1),
@@ -43,7 +41,7 @@ type ChatRoomHeaderProps = {
 };
 
 export function ChatRoomHeader({ isConnected, editRoomBoolean }: ChatRoomHeaderProps) {
-  const room = useSelector(selectRoom);
+  const { room } = useRoomTools();
   const roomId = useParams().roomId as string;
 
   return (

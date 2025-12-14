@@ -25,50 +25,42 @@ import { getAvatarText } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
-import { selectRoom } from 'src/core/slices/slice-room';
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
-interface Message {
-  id: number;
-  text: string;
-  sender: 'me' | 'them';
-  time: string;
-  name: string;
-  avatar?: string;
-  userId: string;
-}
+import type { ChatRoomMessage } from './type';
 
 export const ChatMessageGroup = ({
   onClose,
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const room = useSelector(selectRoom);
+  const { room, chatRoomMessages, addChatRoomMessage, clearUnreadChatRoomMessages } =
+    useRoomTools();
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
-  const [messages, setMessages] = useState<Message[]>([]);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
+
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
-  const processedMessages = useRef(new Set());
 
   const handleSendMessage = (): void => {
     if (message.trim() === '') return;
 
-    const newMessage: Message = {
-      id: messages.length + 1,
+    const newMessage: ChatRoomMessage = {
       text: message,
       sender: 'me',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       name: user.name,
       avatar: user.profilePhoto,
       userId: user.id,
+      isUnread: false,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    addChatRoomMessage(newMessage);
     socketRef.current?.emit('send-group-message', {
       roomId: room.id,
       senderSocketId: socketRef.current?.id,
@@ -90,50 +82,18 @@ export const ChatMessageGroup = ({
     setEmojiPickerOpen(false);
   };
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    const messageHandler = (data: any) => {
-      console.log('Received group message:', data);
-      if (processedMessages.current.has(data.id)) {
-        console.log('⚠️ Duplicate message ignored:', data.id);
-        return;
-      }
-
-      processedMessages.current.add(data.id);
-
-      // Clean up old messages (optional)
-      if (processedMessages.current.size > 100) {
-        const firstId = processedMessages.current.values().next().value;
-        processedMessages.current.delete(firstId);
-      }
-
-      const receiveMessage: Message = {
-        id: messages.length + 1,
-        text: data.text,
-        sender: 'them',
-        time: data.time,
-        name: data.name,
-        avatar: data.avatar,
-        userId: data.userId,
-      };
-
-      // Process message
-      setMessages((prev) => [...prev, receiveMessage]);
-    };
-
-    socketRef.current?.on('receive-group-message', messageHandler);
-
-    return () => {
-      socketRef.current?.off('receive-group-message', messageHandler);
-    };
-  }, [messages, socketRef]);
-
   useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = (window as any).socket;
     }
+
+    setTimeout(() => {
+      clearUnreadChatRoomMessages();
+    }, 1000);
+
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatRoomMessages]);
 
   return (
     <>
@@ -192,7 +152,7 @@ export const ChatMessageGroup = ({
           </Box>
 
           {/* Messages */}
-          {messages.map((msg) => (
+          {chatRoomMessages.map((msg) => (
             <Box
               key={msg.id}
               sx={{
@@ -213,6 +173,7 @@ export const ChatMessageGroup = ({
                   flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
                   alignItems: 'flex-end',
                   maxWidth: '75%',
+                  position: 'relative',
                 }}
               >
                 {msg.sender === 'them' && (
@@ -228,6 +189,23 @@ export const ChatMessageGroup = ({
                   >
                     {getAvatarText(msg.name)}
                   </Avatar>
+                )}
+
+                {/* UNREAD INDICATOR */}
+                {msg.isUnread && msg.sender === 'them' && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: -8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'primary.main',
+                      animation: 'pulse 1.5s infinite',
+                    }}
+                  />
                 )}
 
                 <Paper
@@ -270,8 +248,12 @@ export const ChatMessageGroup = ({
                         variant="subtitle2"
                         className="message-time"
                         sx={{
-                          color: 'primary.light',
-                          fontWeight: 'bold',
+                          color: (theme) =>
+                            varAlpha(
+                              theme.vars.palette.primary.mainChannel,
+                              msg.isUnread && msg.sender === 'them' ? 1 : 0.8
+                            ),
+                          fontWeight: msg.isUnread && msg.sender === 'them' ? 'bold' : 'normal',
                           mr: 'auto',
                         }}
                       >
@@ -282,9 +264,9 @@ export const ChatMessageGroup = ({
                       variant="caption"
                       className="message-time"
                       sx={{
-                        color: 'text.secondary',
+                        color: 'text.primary',
                         fontSize: '0.5rem',
-                        opacity: 0.5,
+                        opacity: msg.isUnread && msg.sender === 'them' ? 1 : 0.5,
                         transition: 'opacity 0.2s',
                       }}
                     >

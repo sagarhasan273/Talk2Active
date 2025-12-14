@@ -7,10 +7,12 @@ import { m } from 'framer-motion';
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Chip, Badge, Typography } from '@mui/material';
 import { SmartToy, Message as MessageIcon } from '@mui/icons-material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -24,6 +26,8 @@ export function VoiceRoomMessageGroupDrawer({
   ...other
 }: VoiceRoomMessageGroupDrawerProps) {
   const drawer = useBoolean();
+
+  const { isUnreadChatRoomMessage } = useRoomTools();
 
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
@@ -83,7 +87,23 @@ export function VoiceRoomMessageGroupDrawer({
         }}
         {...other}
       >
-        <MessageIcon fontSize="small" />
+        <Badge
+          badgeContent="!"
+          color="error"
+          invisible={!isUnreadChatRoomMessage}
+          sx={{
+            '& .MuiBadge-badge': {
+              fontSize: 12,
+              minWidth: 16,
+              height: 16,
+              borderRadius: '50%',
+              top: -6,
+              right: -6,
+            },
+          }}
+        >
+          <MessageIcon fontSize="small" />
+        </Badge>
       </IconButton>
 
       <Drawer

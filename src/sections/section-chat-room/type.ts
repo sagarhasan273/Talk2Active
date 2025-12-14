@@ -1,27 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { UserType } from 'src/types/type-user';
 
-export interface LearningLanguage {
-  language: string;
-  level: string;
-}
-
-export interface Room {
-  _id: string;
-  name: string;
-  language: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  description: string;
-  tags: string[];
-  host: UserType;
-  currentParticipants: Participant[];
-  maxParticipants: number;
-  isActive: boolean;
-  roomType: 'conversation' | 'pronunciation' | 'grammar';
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Updated participant type
 export type Participant = UserType & {
   socketId: string;
@@ -72,6 +51,7 @@ export interface ChatUserStatus {
 
 // Types
 export type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
+
 export type AudioQuality = 'low' | 'medium' | 'high';
 
 export type ChatUserCardAudioSettings = {
@@ -80,4 +60,15 @@ export type ChatUserCardAudioSettings = {
   autoGainControl: boolean;
   volume: number;
   audioQuality: AudioQuality;
+};
+
+export type ChatRoomMessage = {
+  id?: number;
+  text: string;
+  sender: 'me' | 'them';
+  time: string;
+  name: string;
+  avatar?: string;
+  userId: string;
+  isUnread: boolean;
 };

@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { Box, Stack, Typography, LinearProgress } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
-import { selectRoom } from 'src/core/slices/slice-room';
+import { useRoomTools } from 'src/core/slices/slice-room';
 
 // Assumed actual import
 import { ChatUserCard } from '../chat-user-card';
@@ -26,7 +26,7 @@ export function ChatRoomChatBody({
   localStream: MediaStream | null;
 }) {
   const user = useSelector(selectAccount);
-  const room = useSelector(selectRoom);
+  const { room } = useRoomTools();
 
   return (
     <Box flex={1} display="flex" flexDirection="column">
