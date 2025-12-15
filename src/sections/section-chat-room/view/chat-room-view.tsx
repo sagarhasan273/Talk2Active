@@ -178,6 +178,24 @@ export function VoiceRoomChat() {
           avatar: data.avatar,
           userId: data.userId,
           isUnread: true,
+          isPrivate: false,
+          mentions: data.mentions || [],
+        };
+        addChatRoomMessage(receiveMessage);
+      });
+
+      socketRef.current.on('receive-private-message', (data: any) => {
+        const receiveMessage: ChatRoomMessage = {
+          id: data.id,
+          text: data.text,
+          sender: 'them',
+          time: data.time,
+          name: data.name,
+          avatar: data.avatar,
+          userId: data.userId,
+          isUnread: true,
+          isPrivate: true,
+          mentions: data.mentions || [],
         };
         addChatRoomMessage(receiveMessage);
       });

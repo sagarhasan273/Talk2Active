@@ -71,4 +71,11 @@ export type ChatRoomMessage = {
   avatar?: string;
   userId: string;
   isUnread: boolean;
+  isPrivate: boolean;
+  senderSocketId?: string;
+  targetSocketId?: string;
+  mentions: {
+    userId: string;
+    name: string;
+  }[];
 };

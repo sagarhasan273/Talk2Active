@@ -1,24 +1,9 @@
 import type { Socket } from 'socket.io-client';
-import type { EmojiClickData } from 'emoji-picker-react';
 
-import { SendIcon } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import EmojiPicker from 'emoji-picker-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 
-import { Mood as MoodIcon } from '@mui/icons-material';
-import {
-  Box,
-  Paper,
-  Avatar,
-  Popper,
-  Button,
-  Tooltip,
-  TextField,
-  IconButton,
-  Typography,
-  ClickAwayListener,
-} from '@mui/material';
+import { Box, Chip, Paper, Avatar, Typography } from '@mui/material';
 
 import { fDate } from 'src/utils/format-time';
 import { getAvatarText } from 'src/utils/helper';
@@ -29,6 +14,8 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
+import { ChatMessageInput } from './chat-message-input';
+
 import type { ChatRoomMessage } from './type';
 
 export const ChatMessageGroup = ({
@@ -36,18 +23,30 @@ export const ChatMessageGroup = ({
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const { room, chatRoomMessages, addChatRoomMessage, clearUnreadChatRoomMessages } =
-    useRoomTools();
+  const {
+    room,
+    chatRoomMessages,
+    remoteParticipants,
+    addChatRoomMessage,
+    clearUnreadChatRoomMessages,
+  } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
 
-  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
-  const handleSendMessage = (): void => {
+  const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
+
+  const handleSendMessage = (
+    isPrivateMessage: boolean,
+    targetUser: { socketId: string; name?: string } | null = null,
+    mentions: {
+      userId: string;
+      name: string;
+    }[] = []
+  ): void => {
     if (message.trim() === '') return;
 
     const newMessage: ChatRoomMessage = {
@@ -58,28 +57,29 @@ export const ChatMessageGroup = ({
       avatar: user.profilePhoto,
       userId: user.id,
       isUnread: false,
+      isPrivate: isPrivateMessage,
+      senderSocketId: socketRef.current?.id,
+      targetSocketId: targetUser?.socketId,
+      mentions,
     };
 
     addChatRoomMessage(newMessage);
-    socketRef.current?.emit('send-group-message', {
-      roomId: room.id,
-      senderSocketId: socketRef.current?.id,
-      ...newMessage,
-    });
+    if (isPrivateMessage && targetUser) {
+      socketRef.current?.emit('send-private-message', {
+        roomId: room.id,
+        senderSocketId: socketRef.current?.id,
+        targetSocketId: targetUser.socketId,
+        ...newMessage,
+      });
+    } else {
+      socketRef.current?.emit('send-group-message', {
+        roomId: room.id,
+        senderSocketId: socketRef.current?.id,
+        ...newMessage,
+      });
+    }
 
     setMessage('');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleEmojiClick = (emojiObject: EmojiClickData): void => {
-    setMessage((prev) => prev + emojiObject.emoji);
-    setEmojiPickerOpen(false);
   };
 
   useEffect(() => {
@@ -126,6 +126,7 @@ export const ChatMessageGroup = ({
         <Box
           sx={{
             p: 1.5,
+            pb: 3,
           }}
         >
           {/* Date Separator */}
@@ -191,6 +192,23 @@ export const ChatMessageGroup = ({
                   </Avatar>
                 )}
 
+                {msg.sender === 'me' && msg.isPrivate && (
+                  <Avatar
+                    src={remoteParticipants[msg.targetSocketId || '']?.profilePhoto || ''}
+                    sx={{
+                      ml: 0.5,
+                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      fontSize: '0.875rem',
+                      border: (theme) =>
+                        `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`,
+                    }}
+                  >
+                    {getAvatarText(remoteParticipants[msg.targetSocketId || '']?.name || '')}
+                  </Avatar>
+                )}
+
                 {/* UNREAD INDICATOR */}
                 {msg.isUnread && msg.sender === 'them' && (
                   <Box
@@ -208,6 +226,53 @@ export const ChatMessageGroup = ({
                   />
                 )}
 
+                {/* PRIVATE MESSAGE INDICATOR */}
+                {msg.isPrivate && msg.sender === 'them' && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 4,
+                      top: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        borderRadius: 0.5,
+                        px: 0.5,
+                        py: 0.1,
+                        border: msg.isPrivate
+                          ? (theme) =>
+                              `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
+                          : 'none',
+                        color: 'error.main',
+                      }}
+                    >
+                      PM
+                    </Typography>
+                  </Box>
+                )}
+
+                {msg.isPrivate && msg.sender === 'me' && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      right: 4,
+                      top: -1,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        py: 0.1,
+                        color: 'error.main',
+                      }}
+                    >
+                      PM to
+                    </Typography>
+                  </Box>
+                )}
+
                 <Paper
                   sx={{
                     maxWidth: '100%',
@@ -216,10 +281,13 @@ export const ChatMessageGroup = ({
                     backgroundColor: (theme) =>
                       msg.sender === 'me'
                         ? varAlpha(theme.vars.palette.background.paperChannel, 1)
-                        : varAlpha(theme.vars.palette.background.paperChannel, 0.6),
+                        : varAlpha(theme.vars.palette.background.paperChannel, 0.5),
                     borderRadius: msg.sender === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 8px',
                     boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
                     position: 'relative',
+                    border: msg.isPrivate
+                      ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
+                      : 'none',
                   }}
                 >
                   <Typography
@@ -233,12 +301,57 @@ export const ChatMessageGroup = ({
                     {msg.text}
                   </Typography>
 
+                  {(() => {
+                    if (!msg.mentions.length) return null;
+
+                    const parts: React.ReactNode[] = [];
+
+                    msg.mentions.forEach((m, i) => {
+                      parts.push(
+                        <Chip
+                          key={m.userId + i}
+                          label={`@${m.name}`}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            typography: 'caption',
+                            border: 'none',
+                            fontWeight: 'bold',
+                            color: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? theme.vars.palette.info.light
+                                : theme.vars.palette.info.main,
+                            backgroundColor: (theme) =>
+                              varAlpha(theme.vars.palette.info.mainChannel, 0.05),
+                          }}
+                        />
+                      );
+                    });
+
+                    return (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          color: 'transparent',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          mt: 0.5,
+                          gap: 0.5,
+                        }}
+                      >
+                        {parts}
+                      </Box>
+                    );
+                  })()}
+
                   <Box
                     sx={{
                       display: 'flex',
                       justifyContent: 'flex-end',
                       alignItems: 'center',
-                      mt: 1,
+                      mt: 0.25,
                       mr: 1,
                       gap: 0.5,
                     }}
@@ -250,7 +363,9 @@ export const ChatMessageGroup = ({
                         sx={{
                           color: (theme) =>
                             varAlpha(
-                              theme.vars.palette.primary.mainChannel,
+                              theme.vars.palette.primary[
+                                theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
+                              ],
                               msg.isUnread && msg.sender === 'them' ? 1 : 0.8
                             ),
                           fontWeight: msg.isUnread && msg.sender === 'them' ? 'bold' : 'normal',
@@ -285,7 +400,7 @@ export const ChatMessageGroup = ({
                         <Typography
                           variant="caption"
                           sx={{
-                            color: '#009688',
+                            color: 'info.main',
                             fontSize: '0.6rem',
                           }}
                         >
@@ -303,104 +418,12 @@ export const ChatMessageGroup = ({
         </Box>
       </Scrollbar>
       {/* Message Input Box */}
-      <Paper
-        sx={{
-          p: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          position: 'sticky',
-          bottom: 0,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          {/* Emoji Button */}
-          <Tooltip title="Emoji">
-            <IconButton
-              ref={emojiButtonRef}
-              onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
-              sx={{
-                color: 'text.secondary',
-                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
-              }}
-              size="medium"
-            >
-              <MoodIcon />
-            </IconButton>
-          </Tooltip>
-
-          {/* Emoji Picker Popper */}
-          <Popper
-            open={emojiPickerOpen}
-            anchorEl={emojiButtonRef.current}
-            placement="top-start"
-            sx={{ zIndex: 9999 }}
-          >
-            <ClickAwayListener onClickAway={() => setEmojiPickerOpen(false)}>
-              <Box sx={{ mt: -2 }}>
-                <EmojiPicker
-                  onEmojiClick={handleEmojiClick}
-                  height={400}
-                  width={350}
-                  searchDisabled={false}
-                  previewConfig={{ showPreview: false }}
-                />
-              </Box>
-            </ClickAwayListener>
-          </Popper>
-
-          {/* Message Input */}
-          <TextField
-            placeholder="Write a message..."
-            variant="outlined"
-            size="small"
-            multiline
-            maxRows={4}
-            value={message}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            fullWidth
-            sx={{
-              flex: 1,
-              width: 'fit-content',
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'background.paper',
-                borderRadius: 0,
-                padding: '8px 8px',
-                '& fieldset': {
-                  border: 'none',
-                },
-                '&:hover fieldset': {
-                  border: 'none',
-                },
-                '&.Mui-focused fieldset': {
-                  border: 'none',
-                  borderColor: 'primary.main',
-                },
-              },
-              '& .MuiOutlinedInput-input': {
-                padding: '8px 0',
-              },
-            }}
-          />
-        </Box>
-
-        {/* Send Button */}
-        <Button
-          variant="contained"
-          endIcon={<SendIcon size={18} />}
-          onClick={handleSendMessage}
-          sx={{
-            color: 'white',
-            fontWeight: 'bold',
-            textTransform: 'none',
-            borderRadius: 1,
-          }}
-        >
-          Send
-        </Button>
-      </Paper>
+      <ChatMessageInput
+        participants={participantsArray}
+        onSendMessage={handleSendMessage}
+        message={message}
+        setMessage={setMessage}
+      />
     </>
   );
 };
