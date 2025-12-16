@@ -1,3 +1,5 @@
+import type { UserType } from 'src/types/type-user';
+
 import React, { useState } from 'react';
 
 import { Hearing, VolumeUp, GraphicEq, Headphones, FiberManualRecord } from '@mui/icons-material';
@@ -27,18 +29,14 @@ import { ChatUserAvatarBadge } from './chat-user-avater-badge';
 import { VoiceRoomMessageIndividual } from './chat-message-individual';
 import { ChatUserCardQuickActions } from './chat-user-card-quick-actions';
 
-import type { ChatUserCardAudioSettings } from './type';
-
-// Types
-type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
-type AudioQuality = 'low' | 'medium' | 'high';
+import type { AudioQuality, ChatUserCardAudioSettings } from './type';
 
 export type ChatUserCardProps = {
   user: {
     id: string;
     name: string;
     avatar: string;
-    status: UserStatus;
+    status: UserType['status'];
     isSpeaking: boolean;
     isMuted: boolean;
     volume?: number;

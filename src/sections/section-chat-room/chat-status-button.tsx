@@ -1,12 +1,11 @@
-import { toast } from 'sonner';
-import { useDispatch, useSelector } from 'react-redux';
+import type { UserType } from 'src/types/type-user';
+
 import React, { useRef, useState, useEffect } from 'react';
 import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
 
 import { Box, Fade, Paper, Stack, Button, useTheme, Typography, IconButton } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
-import { setAccount, selectAccount } from 'src/core/slices';
 
 import type { ChatUserStatus } from './type';
 
@@ -59,28 +58,22 @@ export const STATUS_OPTIONS: ChatUserStatus[] = [
 const INITIAL_STATUS: ChatUserStatus = STATUS_OPTIONS[0];
 
 interface ChatStatusButtonProps {
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: UserType['status']) => void;
 }
 
 export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
-  const [currentStatus, setCurrentStatus] = useState<ChatUserStatus>(INITIAL_STATUS);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
 
-  const dispatch = useDispatch();
-  const user = useSelector(selectAccount);
+  const [currentStatus, setCurrentStatus] = useState<ChatUserStatus>(INITIAL_STATUS);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleStatusChange = async (status: ChatUserStatus) => {
     setCurrentStatus(status);
     setIsOpen(false);
     onStatusChange?.(status.name);
-    try {
-      dispatch(setAccount({ ...user, status: status.name }));
-    } catch (error) {
-      toast.error(error);
-    }
   };
 
   const PrimaryIcon = currentStatus.icon;

@@ -50,8 +50,6 @@ export interface ChatUserStatus {
 }
 
 // Types
-export type UserStatus = 'online' | 'offline' | 'busy' | 'brb' | 'afk' | 'zzz';
-
 export type AudioQuality = 'low' | 'medium' | 'high';
 
 export type ChatUserCardAudioSettings = {

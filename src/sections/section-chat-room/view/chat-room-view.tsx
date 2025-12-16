@@ -70,6 +70,7 @@ export function VoiceRoomChat() {
     addRemoteParticipant,
     removeRemoteParticipant,
     updateRemoteParticipantAudio,
+    updateRemoteParticipantStatus,
     resetRemoteParticipants,
     addChatRoomMessage,
   } = useRoomTools();
@@ -78,6 +79,7 @@ export function VoiceRoomChat() {
 
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
+  const [status, setStatus] = useState<UserType['status']>('online');
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -150,20 +152,14 @@ export function VoiceRoomChat() {
 
       // Handle remote user's audio state update (NEW)
       socketRef.current.on('user-audio-toggled', (data: { socketId: string; isMuted: boolean }) => {
-        const participant = remoteParticipants[data.socketId];
-        if (participant) {
-          updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
-        }
+        updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
       });
 
       // Handle remote user's status update (NEW)
       socketRef.current.on(
-        'user-status-select',
+        'user-status-selected',
         (data: { socketId: string; status: UserType['status'] }) => {
-          const participant = remoteParticipants[data.socketId];
-          if (participant) {
-            updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: participant.isMuted });
-          }
+          updateRemoteParticipantStatus({ socketId: data.socketId, status: data.status });
         }
       );
 
@@ -235,17 +231,20 @@ export function VoiceRoomChat() {
     // Broadcast the new mute state to the signaling server
     socketRef.current?.emit('user-audio-toggle', {
       roomId,
+      socketId: socketRef.current?.id,
       isMuted: isNowMuted,
       name: user.name,
     });
   };
 
-  const handleToggleUserStatus = (status: string): void => {
+  const handleToggleUserStatus = (selectedStatus: UserType['status']): void => {
     socketRef.current?.emit('user-status-select', {
       roomId,
-      status,
+      socketId: socketRef.current?.id,
+      status: selectedStatus,
       name: user.name,
     });
+    setStatus(selectedStatus);
   };
 
   const joinRoom = async () => {
@@ -342,6 +341,7 @@ export function VoiceRoomChat() {
             isConnected={isConnected}
             initialize={initialize}
             isMicMuted={isMicMuted}
+            status={status}
             participants={participantsArray}
             remoteStreams={remoteStreams}
             localStream={localStream}

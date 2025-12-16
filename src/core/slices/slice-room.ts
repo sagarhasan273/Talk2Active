@@ -1,3 +1,4 @@
+import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RoomResponse } from 'src/types/type-chat';
 import type { Participant, ChatRoomMessage } from 'src/sections/section-chat-room/type';
@@ -54,6 +55,15 @@ export const roomSlice = createSlice({
         participant.isMuted = action.payload.isMuted;
       }
     },
+    updateRemoteParticipantStatus: (
+      state,
+      action: PayloadAction<{ socketId: string; status: UserType['status'] }>
+    ) => {
+      const participant = state.remoteParticipants[action.payload.socketId];
+      if (participant) {
+        participant.status = action.payload.status;
+      }
+    },
 
     resetRemoteParticipants: (state) => {
       state.remoteParticipants = {};
@@ -79,6 +89,7 @@ const {
   addRemoteParticipant,
   removeRemoteParticipant,
   updateRemoteParticipantAudio,
+  updateRemoteParticipantStatus,
   resetRemoteParticipants,
   addChatRoomMessage,
   clearUnreadChatRoomMessages,
@@ -114,6 +125,8 @@ export const useRoomTools = () => {
       removeRemoteParticipant: (socketId: string) => dispatch(removeRemoteParticipant(socketId)),
       updateRemoteParticipantAudio: (payload: { socketId: string; isMuted: boolean }) =>
         dispatch(updateRemoteParticipantAudio(payload)),
+      updateRemoteParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
+        dispatch(updateRemoteParticipantStatus(payload)),
       resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
       addChatRoomMessage: (message: ChatRoomMessage) => dispatch(addChatRoomMessage(message)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),

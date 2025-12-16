@@ -1,3 +1,5 @@
+import type { UserType } from 'src/types/type-user';
+
 import { useSelector } from 'react-redux';
 
 import { Box, Stack, Typography, LinearProgress } from '@mui/material';
@@ -14,6 +16,7 @@ export function ChatRoomChatBody({
   isConnected,
   initialize,
   isMicMuted,
+  status,
   participants,
   remoteStreams,
   localStream,
@@ -21,6 +24,7 @@ export function ChatRoomChatBody({
   isConnected: boolean;
   initialize: boolean;
   isMicMuted: boolean;
+  status: UserType['status'];
   participants: Participant[];
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
@@ -56,7 +60,7 @@ export function ChatRoomChatBody({
               id: user.id,
               name: user.name,
               avatar: user.profilePhoto,
-              status: user.status,
+              status,
               isSpeaking: false,
               isMuted: isMicMuted,
               userType: room.host.id === user.id ? 'Host' : 'Guest',

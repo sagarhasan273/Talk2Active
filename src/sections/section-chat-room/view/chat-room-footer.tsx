@@ -1,3 +1,5 @@
+import type { UserType } from 'src/types/type-user';
+
 import { Paper, styled, IconButton } from '@mui/material';
 import { Mic as MicIcon, MicOff as MicOffIcon, CallEnd as CallEndIcon } from '@mui/icons-material';
 
@@ -16,7 +18,7 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
 type ChatRoomFooterProps = {
   isMicMuted: boolean;
   onClickMic: () => void;
-  onStatusChange: (status: string) => void;
+  onStatusChange: (status: UserType['status']) => void;
   onClickLeaveRoom: () => void;
 };
 
