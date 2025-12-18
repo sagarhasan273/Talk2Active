@@ -1,7 +1,7 @@
 import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RoomResponse } from 'src/types/type-chat';
-import type { Participant, ChatRoomMessage } from 'src/sections/section-chat-room/type';
+import type { Message, Participant } from 'src/types/type-room';
 
 import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
@@ -14,7 +14,7 @@ interface RoomState {
   room: RoomResponse;
   loading: boolean;
   remoteParticipants: { [socketId: string]: Participant };
-  chatRoomMessages: ChatRoomMessage[];
+  chatRoomMessages: Message[];
   isUnreadChatRoomMessage: boolean;
 }
 
@@ -69,7 +69,7 @@ export const roomSlice = createSlice({
       state.remoteParticipants = {};
     },
 
-    addChatRoomMessage: (state, action: PayloadAction<ChatRoomMessage>) => {
+    addChatRoomMessage: (state, action: PayloadAction<Message>) => {
       state.chatRoomMessages.push(action.payload);
       state.isUnreadChatRoomMessage = action.payload.isUnread;
     },
@@ -128,7 +128,7 @@ export const useRoomTools = () => {
       updateRemoteParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
         dispatch(updateRemoteParticipantStatus(payload)),
       resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
-      addChatRoomMessage: (message: ChatRoomMessage) => dispatch(addChatRoomMessage(message)),
+      addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

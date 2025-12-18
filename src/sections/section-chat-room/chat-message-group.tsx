@@ -1,22 +1,21 @@
 import type { Socket } from 'socket.io-client';
+import type { Message } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 
-import { Box, Chip, Paper, Avatar, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 
 import { fDate } from 'src/utils/format-time';
-import { getAvatarText } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Scrollbar } from 'src/components/scrollbar';
+import { MessageContainer } from 'src/components/message';
 
 import { ChatMessageInput } from './chat-message-input';
-
-import type { ChatRoomMessage } from './type';
 
 export const ChatMessageGroup = ({
   onClose,
@@ -49,21 +48,25 @@ export const ChatMessageGroup = ({
   ): void => {
     if (message.trim() === '') return;
 
-    const newMessage: ChatRoomMessage = {
+    const newMessage: Message = {
       text: message,
       sender: 'me',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      name: user.name,
-      avatar: user.profilePhoto,
-      userId: user.id,
       isUnread: false,
       isPrivate: isPrivateMessage,
       senderSocketId: socketRef.current?.id,
       targetSocketId: targetUser?.socketId,
+      type: 'message',
+      userInfo: {
+        name: user.name,
+        userId: user.id,
+        avatar: user.profilePhoto,
+      },
       mentions,
     };
 
     addChatRoomMessage(newMessage);
+
     if (isPrivateMessage && targetUser) {
       socketRef.current?.emit('send-private-message', {
         roomId: room.id,
@@ -153,266 +156,7 @@ export const ChatMessageGroup = ({
           </Box>
 
           {/* Messages */}
-          {chatRoomMessages.map((msg) => (
-            <Box
-              key={msg.id}
-              sx={{
-                display: 'flex',
-                justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
-                ml: 'auto',
-                mb: 1.5,
-                '&:hover': {
-                  '& .message-time': {
-                    opacity: 1,
-                  },
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
-                  alignItems: 'flex-end',
-                  maxWidth: '75%',
-                  position: 'relative',
-                }}
-              >
-                {msg.sender === 'them' && (
-                  <Avatar
-                    src={msg.avatar}
-                    sx={{
-                      mr: 0.5,
-                      borderRadius: 1,
-                      width: 32,
-                      height: 32,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    {getAvatarText(msg.name)}
-                  </Avatar>
-                )}
-
-                {msg.sender === 'me' && msg.isPrivate && (
-                  <Avatar
-                    src={remoteParticipants[msg.targetSocketId || '']?.profilePhoto || ''}
-                    sx={{
-                      ml: 0.5,
-                      borderRadius: 1,
-                      width: 32,
-                      height: 32,
-                      fontSize: '0.875rem',
-                      border: (theme) =>
-                        `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`,
-                    }}
-                  >
-                    {getAvatarText(remoteParticipants[msg.targetSocketId || '']?.name || '')}
-                  </Avatar>
-                )}
-
-                {/* UNREAD INDICATOR */}
-                {msg.isUnread && msg.sender === 'them' && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      left: -8,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: 'primary.main',
-                      animation: 'pulse 1.5s infinite',
-                    }}
-                  />
-                )}
-
-                {/* PRIVATE MESSAGE INDICATOR */}
-                {msg.isPrivate && msg.sender === 'them' && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      left: 4,
-                      top: 2,
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        borderRadius: 0.5,
-                        px: 0.5,
-                        py: 0.1,
-                        border: msg.isPrivate
-                          ? (theme) =>
-                              `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
-                          : 'none',
-                        color: 'error.main',
-                      }}
-                    >
-                      PM
-                    </Typography>
-                  </Box>
-                )}
-
-                {msg.isPrivate && msg.sender === 'me' && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      right: 4,
-                      top: -1,
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        py: 0.1,
-                        color: 'error.main',
-                      }}
-                    >
-                      PM to
-                    </Typography>
-                  </Box>
-                )}
-
-                <Paper
-                  sx={{
-                    maxWidth: '100%',
-                    p: 1.25,
-                    pb: 0.75,
-                    backgroundColor: (theme) =>
-                      msg.sender === 'me'
-                        ? varAlpha(theme.vars.palette.background.paperChannel, 1)
-                        : varAlpha(theme.vars.palette.background.paperChannel, 0.5),
-                    borderRadius: msg.sender === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 8px',
-                    boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
-                    position: 'relative',
-                    border: msg.isPrivate
-                      ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
-                      : 'none',
-                  }}
-                >
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      wordBreak: 'break-word',
-                      lineHeight: 1.4,
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {msg.text}
-                  </Typography>
-
-                  {(() => {
-                    if (!msg.mentions.length) return null;
-
-                    const parts: React.ReactNode[] = [];
-
-                    msg.mentions.forEach((m, i) => {
-                      parts.push(
-                        <Chip
-                          key={m.userId + i}
-                          label={`@${m.name}`}
-                          size="small"
-                          variant="outlined"
-                          sx={{
-                            typography: 'caption',
-                            border: 'none',
-                            fontWeight: 'bold',
-                            color: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? theme.vars.palette.info.light
-                                : theme.vars.palette.info.main,
-                            backgroundColor: (theme) =>
-                              varAlpha(theme.vars.palette.info.mainChannel, 0.05),
-                          }}
-                        />
-                      );
-                    });
-
-                    return (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          alignItems: 'center',
-                          color: 'transparent',
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                          mt: 0.5,
-                          gap: 0.5,
-                        }}
-                      >
-                        {parts}
-                      </Box>
-                    );
-                  })()}
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
-                      mt: 0.25,
-                      mr: 1,
-                      gap: 0.5,
-                    }}
-                  >
-                    {msg.sender === 'them' && (
-                      <Typography
-                        variant="subtitle2"
-                        className="message-time"
-                        sx={{
-                          color: (theme) =>
-                            varAlpha(
-                              theme.vars.palette.primary[
-                                theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
-                              ],
-                              msg.isUnread && msg.sender === 'them' ? 1 : 0.8
-                            ),
-                          fontWeight: msg.isUnread && msg.sender === 'them' ? 'bold' : 'normal',
-                          mr: 'auto',
-                        }}
-                      >
-                        {msg.name}
-                      </Typography>
-                    )}
-                    <Typography
-                      variant="caption"
-                      className="message-time"
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: '0.5rem',
-                        opacity: msg.isUnread && msg.sender === 'them' ? 1 : 0.5,
-                        transition: 'opacity 0.2s',
-                      }}
-                    >
-                      {msg.time}
-                    </Typography>
-                    {msg.sender === 'me' && (
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'info.main',
-                            fontSize: '0.6rem',
-                          }}
-                        >
-                          ✓✓
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </Paper>
-              </Box>
-            </Box>
-          ))}
+          <MessageContainer messages={chatRoomMessages} />
 
           <div ref={messagesEndRef} />
         </Box>

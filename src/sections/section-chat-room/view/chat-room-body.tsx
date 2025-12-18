@@ -1,4 +1,5 @@
 import type { UserType } from 'src/types/type-user';
+import type { Participant } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 
@@ -9,8 +10,6 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 
 // Assumed actual import
 import { ChatUserCard } from '../chat-user-card';
-
-import type { Participant } from '../type';
 
 export function ChatRoomChatBody({
   isConnected,

@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
+import type { Message, Participant } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
@@ -29,14 +30,12 @@ import { selectAccount } from 'src/core/slices';
 
 import { STATUS_OPTIONS } from './chat-status-button';
 
-import type { Participant, ChatRoomMessage } from './type';
-
 interface ChatMessageInputProps {
   participants: Participant[];
   onSendMessage: (
     isPrivateMessage: boolean,
     targetUser?: { socketId: string; name?: string } | null,
-    mentions?: ChatRoomMessage['mentions']
+    mentions?: Message['mentions']
   ) => void;
   placeholder?: string;
   message: string;
@@ -55,7 +54,7 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   const user = useSelector(selectAccount);
 
   const [showMentions, setShowMentions] = useState(false);
-  const [mentions, setMentions] = useState<ChatRoomMessage['mentions']>([]);
+  const [mentions, setMentions] = useState<Message['mentions']>([]);
   const [mentionQuery, setMentionQuery] = useState('');
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [isPrivateMessage, setIsPrivateMessage] = useState(false);

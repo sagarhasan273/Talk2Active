@@ -15,6 +15,7 @@ import { CONFIG } from 'src/config-global'; // Assumed actual use
 import { setAccount, selectAccount } from 'src/core/slices'; // Assumed actual use
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
 import type { UserType } from 'src/types/type-user';
+import type { Message, Participant } from 'src/types/type-room';
 
 // Assumed actual use
 import { toast } from 'sonner';
@@ -29,8 +30,6 @@ import { ChatRoomHeader } from './chat-room-header';
 import { ChatRoomChatJoinNow } from './chat-room-join-now';
 // Assumed actual import
 import { CreateRoomModal } from '../../section-voice-room/voice-room-create-modal';
-
-import type { Participant, ChatRoomMessage } from '../type';
 
 interface WebRTCEventData {
   offer?: RTCSessionDescriptionInit;
@@ -165,32 +164,30 @@ export function VoiceRoomChat() {
 
       // chat room message received
       socketRef.current.on('receive-group-message', (data: any) => {
-        const receiveMessage: ChatRoomMessage = {
+        const receiveMessage: Message = {
           id: data.id,
           text: data.text,
           sender: 'them',
           time: data.time,
-          name: data.name,
-          avatar: data.avatar,
-          userId: data.userId,
           isUnread: true,
           isPrivate: false,
+          type: data.type,
+          userInfo: data.userInfo,
           mentions: data.mentions || [],
         };
         addChatRoomMessage(receiveMessage);
       });
 
       socketRef.current.on('receive-private-message', (data: any) => {
-        const receiveMessage: ChatRoomMessage = {
+        const receiveMessage: Message = {
           id: data.id,
           text: data.text,
           sender: 'them',
           time: data.time,
-          name: data.name,
-          avatar: data.avatar,
-          userId: data.userId,
+          userInfo: data.userInfo,
           isUnread: true,
           isPrivate: true,
+          type: data.type,
           mentions: data.mentions || [],
         };
         addChatRoomMessage(receiveMessage);
@@ -211,7 +208,6 @@ export function VoiceRoomChat() {
 
       // Connection state handlers
       socketRef.current.on('connect_error', (error: Error) => {
-        console.error('Connection error:', error);
         setIsConnected(false);
       });
 
@@ -231,7 +227,6 @@ export function VoiceRoomChat() {
     // Broadcast the new mute state to the signaling server
     socketRef.current?.emit('user-audio-toggle', {
       roomId,
-      socketId: socketRef.current?.id,
       isMuted: isNowMuted,
       name: user.name,
     });
