@@ -17,7 +17,7 @@ export type Message = {
   senderSocketId?: string;
   targetSocketId?: string;
   type: 'system' | 'message';
-  systemMessageType?: 'user-joined' | 'you-joined';
+  systemMessageType?: 'user-joined' | 'you-joined' | 'user-left';
   userInfo: {
     userId: string;
     name: string;

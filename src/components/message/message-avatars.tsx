@@ -20,7 +20,7 @@ export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
             fontSize: '0.875rem',
             border:
               message.type === 'system'
-                ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
+                ? (theme) => `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
                 : 'none',
           }}
         >
@@ -67,7 +67,7 @@ export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
           sx={{
             position: 'absolute',
             left: 4,
-            top: 2,
+            top: -2,
           }}
         >
           <Typography
@@ -92,7 +92,7 @@ export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
           sx={{
             position: 'absolute',
             right: 4,
-            top: -1,
+            top: -2,
           }}
         >
           <Typography

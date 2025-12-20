@@ -23,20 +23,11 @@ export function MessageText({ message }: { message: Message }) {
         border: message.isPrivate
           ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
           : message.type === 'system'
-            ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
+            ? (theme) => `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
             : 'none',
       }}
     >
-      <Typography
-        variant="body1"
-        sx={{
-          wordBreak: 'break-word',
-          lineHeight: 1.4,
-          whiteSpace: 'pre-wrap',
-        }}
-      >
-        {message.text}
-      </Typography>
+      <GetTextFromMessage message={message} />
 
       <MessageMention message={message} />
 
@@ -52,7 +43,7 @@ export function MessageText({ message }: { message: Message }) {
       >
         {message.sender === 'them' && (
           <Typography
-            variant="subtitle2"
+            variant="caption"
             className="message-time"
             sx={{
               color: (theme) =>
@@ -112,5 +103,43 @@ export function MessageText({ message }: { message: Message }) {
         )}
       </Box>
     </Paper>
+  );
+}
+
+function GetTextFromMessage({ message }: { message: Message }) {
+  if (message.type === 'system') {
+    if (message.systemMessageType === 'user-joined') {
+      return (
+        <Box sx={{ typography: 'body2' }}>
+          <Box component="span" sx={{ color: 'primary.main' }}>
+            {message?.userInfo.name}
+          </Box>{' '}
+          has joined in the voice room.
+        </Box>
+      );
+    }
+    if (message.systemMessageType === 'user-left') {
+      return (
+        <Box sx={{ typography: 'body2' }}>
+          <Box component="span" sx={{ color: 'primary.main' }}>
+            {message?.userInfo.name}
+          </Box>{' '}
+          has left the chat.
+        </Box>
+      );
+    }
+  }
+
+  return (
+    <Typography
+      variant="body2"
+      sx={{
+        wordBreak: 'break-word',
+        lineHeight: 1.4,
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {message.text}
+    </Typography>
   );
 }

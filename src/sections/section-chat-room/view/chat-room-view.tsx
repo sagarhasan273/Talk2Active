@@ -172,13 +172,14 @@ export function VoiceRoomChat() {
           isUnread: true,
           isPrivate: false,
           type: data.type,
+          systemMessageType: data?.systemMessageType,
           userInfo: data.userInfo,
           mentions: data.mentions || [],
         };
         addChatRoomMessage(receiveMessage);
       });
 
-      socketRef.current.on('receive-private-message', (data: any) => {
+      socketRef.current.on('receive-private-message', (data: Message) => {
         const receiveMessage: Message = {
           id: data.id,
           text: data.text,
@@ -188,6 +189,7 @@ export function VoiceRoomChat() {
           isUnread: true,
           isPrivate: true,
           type: data.type,
+          systemMessageType: data?.systemMessageType,
           mentions: data.mentions || [],
         };
         addChatRoomMessage(receiveMessage);
@@ -263,13 +265,14 @@ export function VoiceRoomChat() {
   // --- NEW: Synchronous cleanup for browser events ---
   const performCleanup = useCallback(async () => {
     if (socketRef.current) {
-      socketRef.current.emit('leave-voice-room', { roomId, userId: user.id });
+      socketRef.current.emit('leave-voice-room', { roomId, userId: user.id, name: user.name });
 
       socketRef.current.disconnect();
       socketRef.current = null;
     }
 
     cleanup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId, user.id, cleanup]);
   // --- END NEW: Synchronous cleanup for browser events ---
 

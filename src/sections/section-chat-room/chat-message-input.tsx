@@ -355,7 +355,8 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
             fullWidth
             sx={{
               flex: 1,
-              width: 'fit-content',
+              width: 1,
+              typography: 'caption',
               borderRadius: 0,
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'background.paper',
@@ -504,8 +505,9 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
               backgroundColor: 'action.disabledBackground',
               color: 'action.disabled',
             },
-            width: 40,
-            height: 40,
+            my: 0.5,
+            width: 32,
+            height: 32,
           }}
         >
           <SendIcon fontSize="small" />
