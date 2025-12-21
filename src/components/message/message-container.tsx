@@ -10,7 +10,7 @@ import { MessageAvatars } from './message-avatars';
 import { MessageActions } from './message-actions';
 
 export function MessageContainer({ messages }: { messages: Message[] }) {
-  const { remoteParticipants, isUnreadChatRoomMessage } = useRoomTools();
+  const { isUnreadChatRoomMessage } = useRoomTools();
 
   const theme = useTheme();
 
@@ -85,13 +85,7 @@ export function MessageContainer({ messages }: { messages: Message[] }) {
               }}
             >
               {/* Messages Avatar */}
-              <MessageAvatars
-                message={msg}
-                targetUser={{
-                  name: remoteParticipants[msg.targetSocketId || '']?.name || '',
-                  profilePhoto: remoteParticipants[msg.targetSocketId || '']?.profilePhoto || '',
-                }}
-              />
+              <MessageAvatars message={msg} />
 
               {/* Messages Text */}
               <MessageText message={msg} />

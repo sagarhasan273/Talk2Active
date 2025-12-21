@@ -34,7 +34,7 @@ interface ChatMessageInputProps {
   participants: Participant[];
   onSendMessage: (
     isPrivateMessage: boolean,
-    targetUser?: { socketId: string; name?: string } | null,
+    targetUserInfo?: Message['targetUserInfo'],
     mentions?: Message['mentions']
   ) => void;
   placeholder?: string;
@@ -160,9 +160,14 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   const handleSendMessage = () => {
     if (message.trim()) {
       if (isPrivateMessage && privateRecipient) {
-        onSendMessage(true, { socketId: privateRecipient.socketId, name: privateRecipient.name });
+        onSendMessage(true, {
+          socketId: privateRecipient.socketId,
+          userId: privateRecipient.userId,
+          name: privateRecipient.name,
+          avatar: privateRecipient?.profilePhoto,
+        });
       } else {
-        onSendMessage(false, null, mentions);
+        onSendMessage(false, undefined, mentions);
       }
       setMessage('');
       if (isPrivateMessage) {

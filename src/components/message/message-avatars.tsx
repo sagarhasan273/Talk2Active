@@ -6,7 +6,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import type { MessageAvatarsProps } from './type';
 
-export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
+export function MessageAvatars({ message }: MessageAvatarsProps) {
   return (
     <>
       {message.sender === 'them' && (
@@ -30,7 +30,7 @@ export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
 
       {message.sender === 'me' && message.isPrivate && (
         <Avatar
-          src={targetUser.profilePhoto || ''}
+          src={message?.targetUserInfo?.avatar || ''}
           sx={{
             ml: 0.5,
             borderRadius: 1,
@@ -40,7 +40,7 @@ export function MessageAvatars({ message, targetUser }: MessageAvatarsProps) {
             border: (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`,
           }}
         >
-          {getAvatarText(targetUser.name || '')}
+          {getAvatarText(message?.targetUserInfo?.name || '')}
         </Avatar>
       )}
 

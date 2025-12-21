@@ -34,11 +34,8 @@ export const ChatMessageGroup = ({
 
   const handleSendMessage = (
     isPrivateMessage: boolean,
-    targetUser: { socketId: string; name?: string } | null = null,
-    mentions: {
-      userId: string;
-      name: string;
-    }[] = []
+    targetUserInfo: Message['targetUserInfo'],
+    mentions: Message['mentions'] = []
   ): void => {
     if (message.trim() === '') return;
 
@@ -49,29 +46,27 @@ export const ChatMessageGroup = ({
       isUnread: false,
       isPrivate: isPrivateMessage,
       senderSocketId: socketRef.current?.id,
-      targetSocketId: targetUser?.socketId,
+      targetSocketId: targetUserInfo?.socketId,
       type: 'message',
       userInfo: {
-        name: user.name,
         userId: user.id,
+        name: user.name,
         avatar: user.profilePhoto,
       },
+      targetUserInfo,
       mentions,
     };
 
     addChatRoomMessage(newMessage);
 
-    if (isPrivateMessage && targetUser) {
+    if (isPrivateMessage && targetUserInfo) {
       socketRef.current?.emit('send-private-message', {
         roomId: room.id,
-        senderSocketId: socketRef.current?.id,
-        targetSocketId: targetUser.socketId,
         ...newMessage,
       });
     } else {
       socketRef.current?.emit('send-group-message', {
         roomId: room.id,
-        senderSocketId: socketRef.current?.id,
         ...newMessage,
       });
     }

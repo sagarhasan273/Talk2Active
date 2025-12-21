@@ -186,6 +186,7 @@ export function VoiceRoomChat() {
           sender: 'them',
           time: data.time,
           userInfo: data.userInfo,
+          targetUserInfo: data?.targetUserInfo,
           isUnread: true,
           isPrivate: true,
           type: data.type,

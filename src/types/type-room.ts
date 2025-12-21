@@ -31,6 +31,12 @@ export type Message = {
     name: string;
     avatar?: string;
   };
+  targetUserInfo?: {
+    socketId: string;
+    userId: string;
+    name: string;
+    avatar?: string;
+  };
   mentions: {
     userId: string;
     name: string;
