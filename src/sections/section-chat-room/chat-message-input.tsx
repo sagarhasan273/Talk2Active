@@ -26,7 +26,7 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 
-import { selectAccount } from 'src/core/slices';
+import { useRoomTools, selectAccount } from 'src/core/slices';
 
 import { STATUS_OPTIONS } from './chat-status-button';
 
@@ -52,6 +52,7 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
   const theme = useTheme();
 
   const user = useSelector(selectAccount);
+  const { clearUnreadChatRoomMessages } = useRoomTools();
 
   const [showMentions, setShowMentions] = useState(false);
   const [mentions, setMentions] = useState<Message['mentions']>([]);
@@ -272,22 +273,6 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
 
       {renderHighlightedText()}
 
-      {/* Quick Mention Hint */}
-      <Typography
-        variant="caption"
-        sx={{
-          position: 'absolute',
-          bottom: '100%',
-          right: 0,
-          p: 0.5,
-          backgroundColor: 'background.paper',
-          borderRadius: 1,
-          display: isPrivateMessage ? 'none' : 'block',
-        }}
-      >
-        Type @ to find users • Click to send a private message
-      </Typography>
-
       <Paper
         sx={{
           p: 1.5,
@@ -352,6 +337,9 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
             value={message}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
+            onFocus={() => {
+              clearUnreadChatRoomMessages();
+            }}
             fullWidth
             sx={{
               flex: 1,
@@ -513,6 +501,21 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
           <SendIcon fontSize="small" />
         </IconButton>
       </Paper>
+      {/* Quick Mention Hint */}
+      <Typography
+        variant="caption"
+        sx={{
+          position: 'absolute',
+          top: -8,
+          right: 0,
+          px: 0.5,
+          backgroundColor: 'background.neutral',
+          borderRadius: 0.5,
+          display: isPrivateMessage ? 'none' : 'block',
+        }}
+      >
+        Type @ to find users • Click to send a private message
+      </Typography>
     </Box>
   );
 };

@@ -34,6 +34,7 @@ export const roomSlice = createSlice({
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
       state.room = action.payload;
     },
+
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
@@ -55,6 +56,7 @@ export const roomSlice = createSlice({
         participant.isMuted = action.payload.isMuted;
       }
     },
+
     updateRemoteParticipantStatus: (
       state,
       action: PayloadAction<{ socketId: string; status: UserType['status'] }>
@@ -70,7 +72,10 @@ export const roomSlice = createSlice({
     },
 
     addChatRoomMessage: (state, action: PayloadAction<Message>) => {
-      state.chatRoomMessages.push(action.payload);
+      state.chatRoomMessages.push({
+        ...action.payload,
+        startOfUnread: !state.isUnreadChatRoomMessage === action.payload.isUnread,
+      });
       state.isUnreadChatRoomMessage = action.payload.isUnread;
     },
 
@@ -78,6 +83,7 @@ export const roomSlice = createSlice({
       state.isUnreadChatRoomMessage = false;
       state.chatRoomMessages.forEach((msg) => {
         msg.isUnread = false;
+        msg.startOfUnread = false;
       });
     },
   },

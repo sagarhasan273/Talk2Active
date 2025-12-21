@@ -10,8 +10,9 @@ export function MessageText({ message }: { message: Message }) {
   return (
     <Paper
       sx={{
-        maxWidth: '100%',
+        maxWidth: '75%',
         p: 1.25,
+        px: 2,
         pb: 0.75,
         backgroundColor: (theme) =>
           message.sender === 'me'
@@ -46,6 +47,7 @@ export function MessageText({ message }: { message: Message }) {
             variant="caption"
             className="message-time"
             sx={{
+              userSelect: 'text',
               color: (theme) =>
                 varAlpha(
                   theme.vars.palette.primary[
@@ -137,6 +139,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
         wordBreak: 'break-word',
         lineHeight: 1.4,
         whiteSpace: 'pre-wrap',
+        userSelect: 'text',
       }}
     >
       {message.text}

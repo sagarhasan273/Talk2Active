@@ -1,8 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { roomSlice } from './slices/slice-room';
-import { postsSlice } from './slices/slice-posts';
-import { accountSlice } from './slices/slice-account';
+import { roomSlice, postsSlice, accountSlice } from './slices';
 import { userApi, postApi, chatApi, socialApi, settingsApi, suggestionApi } from './apis';
 
 const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi, chatApi];

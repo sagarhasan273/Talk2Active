@@ -7,12 +7,20 @@ export interface Language {
   nativeSpeakers: number;
 }
 
+export interface Reaction {
+  emoji: string;
+  userId: string;
+  userName?: string;
+  timestamp: Date;
+}
+
 export type Message = {
   id?: number;
   text: string;
   sender: 'me' | 'them';
   time: string;
   isUnread: boolean;
+  startOfUnread?: boolean;
   isPrivate: boolean;
   senderSocketId?: string;
   targetSocketId?: string;
@@ -28,6 +36,8 @@ export type Message = {
     name: string;
     avatar?: string;
   }[];
+  isEdited?: boolean;
+  reactions?: Reaction[];
 };
 
 // Updated participant type

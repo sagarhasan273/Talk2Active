@@ -22,13 +22,7 @@ export const ChatMessageGroup = ({
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const {
-    room,
-    chatRoomMessages,
-    remoteParticipants,
-    addChatRoomMessage,
-    clearUnreadChatRoomMessages,
-  } = useRoomTools();
+  const { room, chatRoomMessages, remoteParticipants, addChatRoomMessage } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
@@ -90,9 +84,9 @@ export const ChatMessageGroup = ({
       socketRef.current = (window as any).socket;
     }
 
-    setTimeout(() => {
-      clearUnreadChatRoomMessages();
-    }, 1000);
+    // setTimeout(() => {
+    //   clearUnreadChatRoomMessages();
+    // }, 1000);
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,12 +120,7 @@ export const ChatMessageGroup = ({
         }}
       >
         {/* Messages Display Area */}
-        <Box
-          sx={{
-            p: 1.5,
-            pb: 3,
-          }}
-        >
+        <Box>
           {/* Date Separator */}
           <Box
             sx={{
