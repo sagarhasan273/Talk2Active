@@ -22,7 +22,7 @@ export const ChatMessageGroup = ({
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const { room, chatRoomMessages, remoteParticipants, addChatRoomMessage } = useRoomTools();
+  const { room, chatRoomMessages, remoteParticipants, reactionChatRoomMessage } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
@@ -57,8 +57,6 @@ export const ChatMessageGroup = ({
       mentions,
     };
 
-    addChatRoomMessage(newMessage);
-
     if (isPrivateMessage && targetUserInfo) {
       socketRef.current?.emit('send-private-message', {
         roomId: room.id,
@@ -72,6 +70,15 @@ export const ChatMessageGroup = ({
     }
 
     setMessage('');
+  };
+
+  const handleReaction = (messageId: Message['id'], emoji: string) => {
+    reactionChatRoomMessage({ messageId, reaction: { userId: user.id, name: user.name, emoji } });
+    socketRef.current?.emit('send-reaction-group-message', {
+      roomId: room.id,
+      messageId,
+      reaction: { userId: user.id, name: user.name, emoji },
+    });
   };
 
   useEffect(() => {
@@ -140,7 +147,7 @@ export const ChatMessageGroup = ({
           </Box>
 
           {/* Messages */}
-          <MessageContainer messages={chatRoomMessages} />
+          <MessageContainer messages={chatRoomMessages} onReaction={handleReaction} />
 
           <div ref={messagesEndRef} />
         </Box>

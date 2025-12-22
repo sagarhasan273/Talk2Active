@@ -7,15 +7,15 @@ export interface Language {
   nativeSpeakers: number;
 }
 
-export interface Reaction {
+export type Reaction = {
   emoji: string;
   userId: string;
-  userName?: string;
-  timestamp: Date;
-}
+  name?: string;
+  timestamp?: Date;
+};
 
 export type Message = {
-  id?: number;
+  id?: string;
   text: string;
   sender: 'me' | 'them';
   time: string;
@@ -44,6 +44,12 @@ export type Message = {
   }[];
   isEdited?: boolean;
   reactions?: Reaction[];
+};
+
+export type ReactionMessageData = {
+  roomId: string;
+  messageId: Message['id'];
+  reaction: Reaction;
 };
 
 // Updated participant type

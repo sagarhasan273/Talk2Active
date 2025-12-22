@@ -1,16 +1,22 @@
 import type { Message } from 'src/types/type-room';
 
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Tooltip, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
 import { MessageMention } from './message-mention';
 
 export function MessageText({ message }: { message: Message }) {
+  // Count reactions by emoji
+  const reactionCounts =
+    message.reactions?.reduce((acc: Record<string, number>, reaction) => {
+      acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+      return acc;
+    }, {}) || {};
+
   return (
     <Paper
       sx={{
-        maxWidth: '75%',
         p: 1.25,
         px: 2,
         pb: 0.75,
@@ -20,17 +26,66 @@ export function MessageText({ message }: { message: Message }) {
             : varAlpha(theme.vars.palette.background.paperChannel, 0.5),
         borderRadius: message.sender === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 8px',
         boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
-        position: 'relative',
         border: message.isPrivate
           ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
           : message.type === 'system'
             ? (theme) => `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
             : 'none',
+        position: 'relative',
+        minWidth: message.sender === 'them' ? 180 : 100,
       }}
     >
       <GetTextFromMessage message={message} />
 
       <MessageMention message={message} />
+
+      {/* Display existing reactions with counts */}
+      {Object.keys(reactionCounts).length > 0 && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            flexWrap: 'wrap',
+            pt: 1,
+            pb: 0.5,
+          }}
+        >
+          {Object.entries(reactionCounts).map(([emoji, count]) => (
+            <Tooltip key={emoji} title={`${count} reaction${count > 1 ? 's' : ''}`}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.25,
+                  cursor: 'pointer',
+                  backgroundColor: 'action.hover',
+                  borderRadius: 1,
+                  px: 0.5,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+                // onClick={() => handleEmojiClick(emoji)}
+              >
+                <Typography sx={{ fontSize: 14 }}>{emoji}</Typography>
+                {count > 1 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: 10,
+                      color: 'text.secondary',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {count}
+                  </Typography>
+                )}
+              </Box>
+            </Tooltip>
+          ))}
+        </Box>
+      )}
 
       <Box
         sx={{
@@ -112,7 +167,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
   if (message.type === 'system') {
     if (message.systemMessageType === 'user-joined') {
       return (
-        <Box sx={{ typography: 'body2' }}>
+        <Box sx={{ typography: 'body1' }}>
           <Box component="span" sx={{ color: 'primary.main' }}>
             {message?.userInfo.name}
           </Box>{' '}
@@ -122,7 +177,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
     }
     if (message.systemMessageType === 'user-left') {
       return (
-        <Box sx={{ typography: 'body2' }}>
+        <Box sx={{ typography: 'body1' }}>
           <Box component="span" sx={{ color: 'primary.main' }}>
             {message?.userInfo.name}
           </Box>{' '}
@@ -134,7 +189,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
 
   return (
     <Typography
-      variant="body2"
+      variant="body1"
       sx={{
         wordBreak: 'break-word',
         lineHeight: 1.4,

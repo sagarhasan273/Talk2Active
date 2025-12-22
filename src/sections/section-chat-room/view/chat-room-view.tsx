@@ -15,7 +15,7 @@ import { CONFIG } from 'src/config-global'; // Assumed actual use
 import { setAccount, selectAccount } from 'src/core/slices'; // Assumed actual use
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
 import type { UserType } from 'src/types/type-user';
-import type { Message, Participant } from 'src/types/type-room';
+import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
 // Assumed actual use
 import { toast } from 'sonner';
@@ -72,6 +72,7 @@ export function VoiceRoomChat() {
     updateRemoteParticipantStatus,
     resetRemoteParticipants,
     addChatRoomMessage,
+    reactionChatRoomMessage,
   } = useRoomTools();
 
   const editRoomBoolean = useBoolean(false);
@@ -163,11 +164,11 @@ export function VoiceRoomChat() {
       );
 
       // chat room message received
-      socketRef.current.on('receive-group-message', (data: any) => {
+      socketRef.current.on('receive-group-message', (data: Message) => {
         const receiveMessage: Message = {
           id: data.id,
           text: data.text,
-          sender: 'them',
+          sender: data.sender,
           time: data.time,
           isUnread: true,
           isPrivate: false,
@@ -179,11 +180,18 @@ export function VoiceRoomChat() {
         addChatRoomMessage(receiveMessage);
       });
 
+      socketRef.current.on('receive-reaction-group-message', (data: ReactionMessageData) => {
+        reactionChatRoomMessage({
+          messageId: data.messageId,
+          reaction: data.reaction,
+        });
+      });
+
       socketRef.current.on('receive-private-message', (data: Message) => {
         const receiveMessage: Message = {
           id: data.id,
           text: data.text,
-          sender: 'them',
+          sender: data.sender,
           time: data.time,
           userInfo: data.userInfo,
           targetUserInfo: data?.targetUserInfo,

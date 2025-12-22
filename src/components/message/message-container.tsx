@@ -9,7 +9,13 @@ import { MessageText } from './message-text';
 import { MessageAvatars } from './message-avatars';
 import { MessageActions } from './message-actions';
 
-export function MessageContainer({ messages }: { messages: Message[] }) {
+export function MessageContainer({
+  messages,
+  onReaction,
+}: {
+  messages: Message[];
+  onReaction: (messageId: Message['id'], emoji: string) => void;
+}) {
   const { isUnreadChatRoomMessage } = useRoomTools();
 
   const theme = useTheme();
@@ -29,10 +35,6 @@ export function MessageContainer({ messages }: { messages: Message[] }) {
 
   const handleDelete = (id: number) => {
     console.log('message', id);
-  };
-
-  const handleReact = (emoji: string) => {
-    console.log('message', emoji);
   };
 
   return (
@@ -61,7 +63,7 @@ export function MessageContainer({ messages }: { messages: Message[] }) {
               justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
               pl: 'auto',
               p: 1,
-              pb: 1.5,
+              pb: msg.reactions?.length ? 3 : 1,
               backgroundColor: msg.isUnread
                 ? varAlpha(theme.vars.palette.primary.mainChannel, 0.18)
                 : 'transparent',
@@ -81,6 +83,7 @@ export function MessageContainer({ messages }: { messages: Message[] }) {
                 flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
                 alignItems: 'flex-end',
                 maxWidth: msg.type === 'message' ? '80%' : '95%',
+                minWidth: '70%',
                 position: 'relative',
               }}
             >
@@ -97,7 +100,7 @@ export function MessageContainer({ messages }: { messages: Message[] }) {
                 onReply={handleReply}
                 onResend={handleResend}
                 onDelete={handleDelete}
-                onReaction={handleReact}
+                onReaction={onReaction}
               />
             </Box>
           </Box>

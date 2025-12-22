@@ -1,7 +1,7 @@
 import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RoomResponse } from 'src/types/type-chat';
-import type { Message, Participant } from 'src/types/type-room';
+import type { Message, Reaction, Participant } from 'src/types/type-room';
 
 import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
@@ -79,6 +79,17 @@ export const roomSlice = createSlice({
       state.isUnreadChatRoomMessage = action.payload.isUnread;
     },
 
+    reactionChatRoomMessage: (
+      state,
+      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
+    ) => {
+      state.chatRoomMessages.forEach((msg) => {
+        if (msg.id === action.payload.messageId) {
+          msg.reactions = [...(msg.reactions || []), action.payload.reaction];
+        }
+      });
+    },
+
     clearUnreadChatRoomMessages: (state) => {
       state.isUnreadChatRoomMessage = false;
       state.chatRoomMessages.forEach((msg) => {
@@ -98,6 +109,7 @@ const {
   updateRemoteParticipantStatus,
   resetRemoteParticipants,
   addChatRoomMessage,
+  reactionChatRoomMessage,
   clearUnreadChatRoomMessages,
 } = roomSlice.actions;
 
@@ -135,6 +147,8 @@ export const useRoomTools = () => {
         dispatch(updateRemoteParticipantStatus(payload)),
       resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
+      reactionChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
+        dispatch(reactionChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
