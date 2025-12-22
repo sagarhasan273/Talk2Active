@@ -1,4 +1,4 @@
-import type { Message } from 'src/types/type-room';
+import type { Message, MessageOnReply } from 'src/types/type-room';
 
 import React, { useState } from 'react';
 
@@ -15,10 +15,10 @@ import { varAlpha } from 'src/theme/styles';
 interface MessageActionsProps {
   message: Message;
   onEdit: any;
-  onReply: any;
+  onReply?: (message: MessageOnReply) => void;
   onResend?: any;
   onDelete: any;
-  onReaction: (id: Message['id'], emoji: string) => void;
+  onReaction?: (id: Message['id'], emoji: string) => void;
 }
 
 // Important emojis for quick reactions
@@ -44,8 +44,18 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   };
 
   const handleEmojiClick = (emoji: string) => {
-    onReaction(message.id, emoji);
+    onReaction?.(message.id, emoji);
     handleReactionMenuClose();
+  };
+
+  const handleReply = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    onReply?.({ id: message.id, text: message.text, name: message.userInfo.name });
+  };
+
+  const handleDelete = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    onDelete(message.id);
   };
 
   return (
@@ -91,7 +101,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <Tooltip title="Delete">
               <IconButton
                 size="small"
-                onClick={onDelete}
+                onClick={handleDelete}
                 sx={{
                   width: 24,
                   height: 24,
@@ -116,7 +126,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <Tooltip title="Reply">
               <IconButton
                 size="small"
-                onClick={onReply}
+                onClick={handleReply}
                 sx={{
                   width: 24,
                   height: 24,

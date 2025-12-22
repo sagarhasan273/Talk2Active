@@ -46,6 +46,12 @@ export type Message = {
   reactions?: Reaction[];
 };
 
+export type MessageOnReply = {
+  id: Message['id'];
+  text: Message['text'];
+  name: Message['userInfo']['name'];
+};
+
 export type ReactionMessageData = {
   roomId: string;
   messageId: Message['id'];

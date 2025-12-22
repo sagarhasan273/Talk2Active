@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
-import type { Message, Participant } from 'src/types/type-room';
+import type { Message, Participant, MessageOnReply } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
@@ -28,9 +28,10 @@ import {
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 
-import { STATUS_OPTIONS } from './chat-status-button';
+import { MessageReplyInfo } from './message-reply-info';
+import { STATUS_OPTIONS } from '../../sections/section-chat-room/chat-status-button';
 
-interface ChatMessageInputProps {
+interface MessageInputProps {
   participants: Participant[];
   onSendMessage: (
     isPrivateMessage: boolean,
@@ -38,14 +39,16 @@ interface ChatMessageInputProps {
     mentions?: Message['mentions']
   ) => void;
   placeholder?: string;
+  replyMessage?: MessageOnReply;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
+export const MessageInput: React.FC<MessageInputProps> = ({
   participants,
   onSendMessage,
   placeholder = 'Write a message...',
+  replyMessage,
   message,
   setMessage,
 }) => {
@@ -183,7 +186,7 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
 
   // Render mention chips
   const renderMentionChips = () => {
-    if (!isPrivateMessage) return null;
+    if (!isPrivateMessage || replyMessage) return null;
 
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', my: 1, px: 0.5, gap: 1 }}>
@@ -277,6 +280,8 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
       {renderMentionChips()}
 
       {renderHighlightedText()}
+
+      {replyMessage !== undefined && <MessageReplyInfo replyMessage={replyMessage} />}
 
       <Paper
         sx={{
@@ -516,7 +521,7 @@ export const ChatMessageInput: React.FC<ChatMessageInputProps> = ({
           px: 0.5,
           backgroundColor: 'background.neutral',
           borderRadius: 0.5,
-          display: isPrivateMessage ? 'none' : 'block',
+          display: isPrivateMessage || replyMessage !== undefined ? 'none' : 'block',
         }}
       >
         Type @ to find users • Click to send a private message

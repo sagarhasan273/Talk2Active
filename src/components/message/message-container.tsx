@@ -1,4 +1,4 @@
-import type { Message } from 'src/types/type-room';
+import type { Message, MessageOnReply } from 'src/types/type-room';
 
 import { Box, Divider, useTheme } from '@mui/material';
 
@@ -12,9 +12,11 @@ import { MessageActions } from './message-actions';
 export function MessageContainer({
   messages,
   onReaction,
+  onReply,
 }: {
   messages: Message[];
   onReaction: (messageId: Message['id'], emoji: string) => void;
+  onReply: (message: MessageOnReply) => void;
 }) {
   const { isUnreadChatRoomMessage } = useRoomTools();
 
@@ -22,11 +24,6 @@ export function MessageContainer({
 
   const handleEdit = (id: number, newText: string) => {
     console.log(id, newText);
-  };
-
-  const handleReply = (id: number) => {
-    console.log('Reply to message:', id);
-    // Implement reply logic
   };
 
   const handleResend = (id: number) => {
@@ -97,7 +94,7 @@ export function MessageContainer({
               <MessageActions
                 message={msg}
                 onEdit={handleEdit}
-                onReply={handleReply}
+                onReply={onReply}
                 onResend={handleResend}
                 onDelete={handleDelete}
                 onReaction={onReaction}

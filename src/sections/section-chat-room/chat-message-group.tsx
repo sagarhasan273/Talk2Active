@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io-client';
-import type { Message } from 'src/types/type-room';
+import type { Message, MessageOnReply } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect } from 'react';
@@ -15,17 +15,24 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 import { Scrollbar } from 'src/components/scrollbar';
 import { MessageContainer } from 'src/components/message';
 
-import { ChatMessageInput } from './chat-message-input';
+import { MessageInput } from '../../components/message/message-input';
 
 export const ChatMessageGroup = ({
   onClose,
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) => {
-  const { room, chatRoomMessages, remoteParticipants, reactionChatRoomMessage } = useRoomTools();
+  const {
+    room,
+    chatRoomMessages,
+    remoteParticipants,
+    reactionChatRoomMessage,
+    clearUnreadChatRoomMessages,
+  } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const [message, setMessage] = useState<string>('');
+  const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -81,14 +88,16 @@ export const ChatMessageGroup = ({
     });
   };
 
+  const handleReply = (messageReply: MessageOnReply) => {
+    setReplyMessage(messageReply);
+  };
+
   useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = (window as any).socket;
     }
 
-    // setTimeout(() => {
-    //   clearUnreadChatRoomMessages();
-    // }, 1000);
+    clearUnreadChatRoomMessages();
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,15 +156,20 @@ export const ChatMessageGroup = ({
           </Box>
 
           {/* Messages */}
-          <MessageContainer messages={chatRoomMessages} onReaction={handleReaction} />
+          <MessageContainer
+            messages={chatRoomMessages}
+            onReaction={handleReaction}
+            onReply={handleReply}
+          />
 
           <div ref={messagesEndRef} />
         </Box>
       </Scrollbar>
       {/* Message Input Box */}
-      <ChatMessageInput
+      <MessageInput
         participants={participantsArray}
         onSendMessage={handleSendMessage}
+        replyMessage={replyMessage}
         message={message}
         setMessage={setMessage}
       />
