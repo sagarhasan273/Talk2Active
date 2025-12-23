@@ -44,7 +44,7 @@ export function MessageText({ message }: { message: Message }) {
             ? `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
             : 'none',
         position: 'relative',
-        minWidth: message.sender === 'them' ? 190 : 100,
+        minWidth: message.sender === 'them' ? 180 : 100,
       }}
     >
       <MessageReplyInfo
