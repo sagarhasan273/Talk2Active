@@ -1,10 +1,11 @@
-import type { Socket } from 'socket.io-client';
 import type { Message, MessageOnReply } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 
 import { Box, Paper, Typography } from '@mui/material';
+
+import { useSocket } from 'src/hooks/use-socket';
 
 import { fDate } from 'src/utils/format-time';
 
@@ -31,11 +32,12 @@ export const ChatMessageGroup = ({
   } = useRoomTools();
   const user = useSelector(selectAccount);
 
+  const { socket } = useSocket();
+
   const [message, setMessage] = useState<string>('');
   const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<Socket | null>(null);
 
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
 
@@ -52,7 +54,7 @@ export const ChatMessageGroup = ({
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isUnread: false,
       isPrivate: isPrivateMessage,
-      senderSocketId: socketRef.current?.id,
+      senderSocketId: socket?.id,
       targetSocketId: targetUserInfo?.socketId,
       type: 'message',
       userInfo: {
@@ -65,12 +67,12 @@ export const ChatMessageGroup = ({
     };
 
     if (isPrivateMessage && targetUserInfo) {
-      socketRef.current?.emit('send-private-message', {
+      socket?.emit('send-private-message', {
         roomId: room.id,
         ...newMessage,
       });
     } else {
-      socketRef.current?.emit('send-group-message', {
+      socket?.emit('send-group-message', {
         roomId: room.id,
         ...newMessage,
       });
@@ -80,23 +82,30 @@ export const ChatMessageGroup = ({
   };
 
   const handleReaction = (messageId: Message['id'], emoji: string) => {
-    reactionChatRoomMessage({ messageId, reaction: { userId: user.id, name: user.name, emoji } });
-    socketRef.current?.emit('send-reaction-group-message', {
-      roomId: room.id,
+    const reactionData = {
       messageId,
-      reaction: { userId: user.id, name: user.name, emoji },
+      reaction: {
+        userId: user.id,
+        name: user.name,
+        emoji,
+      },
+    };
+    reactionChatRoomMessage(reactionData);
+    socket?.emit('send-reaction-group-message', {
+      roomId: room.id,
+      ...reactionData,
     });
   };
 
-  const handleReply = (messageReply: MessageOnReply) => {
+  const handleReply = (messageReply?: MessageOnReply) => {
     setReplyMessage(messageReply);
   };
 
-  useEffect(() => {
-    if (!socketRef.current) {
-      socketRef.current = (window as any).socket;
-    }
+  const handleCancelReply = () => {
+    setReplyMessage(undefined);
+  };
 
+  useEffect(() => {
     clearUnreadChatRoomMessages();
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -170,6 +179,7 @@ export const ChatMessageGroup = ({
         participants={participantsArray}
         onSendMessage={handleSendMessage}
         replyMessage={replyMessage}
+        cancelReplyMessage={handleCancelReply}
         message={message}
         setMessage={setMessage}
       />

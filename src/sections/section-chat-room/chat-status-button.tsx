@@ -16,42 +16,48 @@ export const STATUS_OPTIONS: ChatUserStatus[] = [
     label: 'Online',
     icon: CheckCircle,
     color: 'success.main',
-    bgColor: 'success.mainChannel',
+    bgColor: 'success',
+    bgColorChannel: 'mainChannel',
   },
   {
     name: 'busy',
     label: 'Busy',
     icon: Clock,
     color: 'error.light',
-    bgColor: 'error.lightChannel',
+    bgColor: 'error',
+    bgColorChannel: 'lightChannel',
   },
   {
     name: 'brb',
     label: 'BRB',
     icon: Pause,
     color: 'yellow.main',
-    bgColor: 'yellow.mainChannel',
+    bgColor: 'yellow',
+    bgColorChannel: 'mainChannel',
   },
   {
     name: 'afk',
     label: 'AFK',
     icon: UserX,
     color: 'orange.main',
-    bgColor: 'orange.mainChannel',
+    bgColor: 'orange',
+    bgColorChannel: 'mainChannel',
   },
   {
     name: 'zzz',
     label: 'Zzz',
     icon: Moon,
     color: 'stone.main',
-    bgColor: 'stone.mainChannel',
+    bgColor: 'stone',
+    bgColorChannel: 'mainChannel',
   },
   {
     name: 'offline',
     label: 'Offline',
     icon: CircleOff,
     color: 'stone.dark',
-    bgColor: 'stone.darkChannel',
+    bgColor: 'stone',
+    bgColorChannel: 'darkChannel',
   },
 ];
 
@@ -77,20 +83,6 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
   };
 
   const PrimaryIcon = currentStatus.icon;
-
-  // Safely resolve palette tokens like 'success.mainChannel' to a concrete value
-  const palette = theme.vars.palette as unknown as Record<string, any>;
-
-  const bgColorValue = (bgColorToken: string) => {
-    if (!bgColorToken || typeof bgColorToken !== 'string') return undefined;
-    const parts = bgColorToken.split('.');
-    if (parts.length === 2) {
-      const [group, shade] = parts;
-      return palette[group]?.[shade];
-    }
-    // fallback to direct key access if token is a single segment
-    return palette[bgColorToken];
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -164,10 +156,13 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
                       borderRadius: 1,
                       color: isSelected ? status.color : status.color,
                       backgroundColor: isSelected
-                        ? varAlpha(bgColorValue(status.bgColor), 0.28)
+                        ? varAlpha(theme.vars.palette[status.bgColor][status.bgColorChannel], 0.28)
                         : 'transparent',
                       '&:hover': {
-                        backgroundColor: varAlpha(bgColorValue(status.bgColor), 0.28),
+                        backgroundColor: varAlpha(
+                          theme.vars.palette[status.bgColor][status.bgColorChannel],
+                          0.28
+                        ),
                       },
                     }}
                     startIcon={<Icon style={{ width: 20 }} />}
@@ -202,10 +197,16 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
           alignItems: 'center',
           justifyContent: 'center',
           color: currentStatus.color,
-          background: varAlpha(bgColorValue(currentStatus.bgColor), 0.28),
+          background: varAlpha(
+            theme.vars.palette[currentStatus.bgColor][currentStatus.bgColorChannel],
+            0.28
+          ),
           '&:hover': {
             color: currentStatus.color,
-            background: varAlpha(bgColorValue(currentStatus.bgColor), 0.5),
+            background: varAlpha(
+              theme.vars.palette[currentStatus.bgColor][currentStatus.bgColorChannel],
+              0.5
+            ),
           },
         }}
       >

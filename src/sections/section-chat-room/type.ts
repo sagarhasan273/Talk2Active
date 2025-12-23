@@ -5,8 +5,15 @@ export interface ChatUserStatus {
   name: UserType['status'];
   label: string;
   icon: LucideIcon;
-  color: string;
-  bgColor: string;
+  color:
+    | 'success.main'
+    | 'error.light'
+    | 'yellow.main'
+    | 'orange.main'
+    | 'stone.main'
+    | 'stone.dark';
+  bgColor: 'success' | 'error' | 'yellow' | 'orange' | 'stone' | 'stone';
+  bgColorChannel: 'mainChannel' | 'lightChannel' | 'darkChannel';
 }
 
 // Types

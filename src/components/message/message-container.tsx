@@ -56,11 +56,11 @@ export function MessageContainer({
           <Box
             key={msg.id}
             sx={{
-              display: 'flex',
-              justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
               pl: 'auto',
               p: 1,
               pb: msg.reactions?.length ? 3 : 1,
+              display: 'flex',
+              justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
               backgroundColor: msg.isUnread
                 ? varAlpha(theme.vars.palette.primary.mainChannel, 0.18)
                 : 'transparent',
@@ -79,8 +79,8 @@ export function MessageContainer({
                 display: 'flex',
                 flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
                 alignItems: 'flex-end',
-                maxWidth: msg.type === 'message' ? '80%' : '95%',
-                minWidth: '70%',
+                maxWidth: msg.type === 'message' ? '90%' : '95%',
+                minWidth: '60%',
                 position: 'relative',
               }}
             >

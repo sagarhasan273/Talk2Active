@@ -17,7 +17,6 @@ import {
   Button,
   Tooltip,
   ListItem,
-  useTheme,
   TextField,
   Typography,
   IconButton,
@@ -40,6 +39,7 @@ interface MessageInputProps {
   ) => void;
   placeholder?: string;
   replyMessage?: MessageOnReply;
+  cancelReplyMessage?: () => void;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -49,11 +49,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   placeholder = 'Write a message...',
   replyMessage,
+  cancelReplyMessage,
   message,
   setMessage,
 }) => {
-  const theme = useTheme();
-
   const user = useSelector(selectAccount);
   const { clearUnreadChatRoomMessages } = useRoomTools();
 
@@ -104,7 +103,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   // Handle key down for mention navigation
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // Existing logic
     if (showMentions && filteredParticipants.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -251,28 +249,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     );
   };
 
-  // Safely resolve palette tokens like 'success.mainChannel' to a concrete value
-  const palette = theme.vars.palette as unknown as Record<string, any>;
-
   // Status configurations
   const statusConfig = {
     online: STATUS_OPTIONS[0],
-    offline: STATUS_OPTIONS[5],
     busy: STATUS_OPTIONS[1],
     brb: STATUS_OPTIONS[2],
     afk: STATUS_OPTIONS[3],
     zzz: STATUS_OPTIONS[4],
-  };
-
-  const bgColorValue = (bgColorToken: string) => {
-    if (!bgColorToken || typeof bgColorToken !== 'string') return undefined;
-    const parts = bgColorToken.split('.');
-    if (parts.length === 2) {
-      const [group, shade] = parts;
-      return palette[group]?.[shade];
-    }
-    // fallback to direct key access if token is a single segment
-    return palette[bgColorToken];
+    offline: STATUS_OPTIONS[5],
   };
 
   return (
@@ -281,7 +265,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       {renderHighlightedText()}
 
-      {replyMessage !== undefined && <MessageReplyInfo replyMessage={replyMessage} />}
+      {replyMessage !== undefined && (
+        <MessageReplyInfo replyMessage={replyMessage} cancelReplyMessage={cancelReplyMessage} />
+      )}
 
       <Paper
         sx={{
@@ -435,9 +421,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                               width: 8,
                               height: 8,
                               borderRadius: '50%',
-                              backgroundColor: bgColorValue(
-                                statusConfig[participant.status]?.color || 'primary.main'
-                              ),
+                              backgroundColor: statusConfig[participant.status || 'online'].color,
                             }}
                           />
                           <Typography variant="caption" color="text.secondary">

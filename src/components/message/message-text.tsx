@@ -1,13 +1,15 @@
 import type { Message } from 'src/types/type-room';
 
-import { Box, Paper, Tooltip, Typography } from '@mui/material';
+import { Box, Paper, Tooltip, useTheme, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
 import { MessageMention } from './message-mention';
+import { MessageReplyInfo } from './message-reply-info';
 
 export function MessageText({ message }: { message: Message }) {
-  // Count reactions by emoji
+  const theme = useTheme();
+
   const reactionCounts =
     message.reactions?.reduce((acc: Record<string, number>, reaction) => {
       acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
@@ -20,21 +22,39 @@ export function MessageText({ message }: { message: Message }) {
         p: 1.25,
         px: 2,
         pb: 0.75,
-        backgroundColor: (theme) =>
+        backgroundColor:
           message.sender === 'me'
-            ? varAlpha(theme.vars.palette.background.paperChannel, 1)
-            : varAlpha(theme.vars.palette.background.paperChannel, 0.5),
+            ? varAlpha(
+                theme.vars.palette.grey[
+                  theme.palette.mode === 'light' ? '400Channel' : '800Channel'
+                ],
+                1
+              )
+            : varAlpha(
+                theme.vars.palette.grey[
+                  theme.palette.mode === 'light' ? '400Channel' : '800Channel'
+                ],
+                0.6
+              ),
         borderRadius: message.sender === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 8px',
         boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
         border: message.isPrivate
-          ? (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
+          ? `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`
           : message.type === 'system'
-            ? (theme) => `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
+            ? `1px solid ${varAlpha(theme.vars.palette.info.mainChannel, 1)}`
             : 'none',
         position: 'relative',
-        minWidth: message.sender === 'them' ? 180 : 100,
+        minWidth: message.sender === 'them' ? 190 : 100,
       }}
     >
+      <MessageReplyInfo
+        replyMessage={{ id: 'sd', text: 'You are in the voice room', name: 'Sagar Hasan' }}
+        sx={{
+          mb: 2,
+          backgroundColor: theme.palette.mode === 'light' ? 'grey.300' : 'grey.900',
+        }}
+      />
+
       <GetTextFromMessage message={message} />
 
       <MessageMention message={message} />
@@ -103,13 +123,12 @@ export function MessageText({ message }: { message: Message }) {
             className="message-time"
             sx={{
               userSelect: 'text',
-              color: (theme) =>
-                varAlpha(
-                  theme.vars.palette.primary[
-                    theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
-                  ],
-                  message.isUnread && message.sender === 'them' ? 1 : 0.8
-                ),
+              color: varAlpha(
+                theme.vars.palette.primary[
+                  theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
+                ],
+                message.isUnread && message.sender === 'them' ? 1 : 0.8
+              ),
               fontWeight: message.isUnread && message.sender === 'them' ? 'bold' : 'normal',
               mr: 'auto',
             }}
