@@ -64,6 +64,7 @@ export const ChatMessageGroup = ({
       },
       targetUserInfo,
       mentions,
+      messageRepliedOf: replyMessage,
     };
 
     if (isPrivateMessage && targetUserInfo) {

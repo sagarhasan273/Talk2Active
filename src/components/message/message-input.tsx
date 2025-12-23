@@ -27,8 +27,19 @@ import {
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 
+import { STATUS_OPTIONS } from 'src/sections/section-chat-room/chat-status-button';
+
 import { MessageReplyInfo } from './message-reply-info';
-import { STATUS_OPTIONS } from '../../sections/section-chat-room/chat-status-button';
+
+// Status configurations
+const statusConfig = {
+  online: STATUS_OPTIONS[0],
+  busy: STATUS_OPTIONS[1],
+  brb: STATUS_OPTIONS[2],
+  afk: STATUS_OPTIONS[3],
+  zzz: STATUS_OPTIONS[4],
+  offline: STATUS_OPTIONS[5],
+};
 
 interface MessageInputProps {
   participants: Participant[];
@@ -247,16 +258,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </Typography>
       </Box>
     );
-  };
-
-  // Status configurations
-  const statusConfig = {
-    online: STATUS_OPTIONS[0],
-    busy: STATUS_OPTIONS[1],
-    brb: STATUS_OPTIONS[2],
-    afk: STATUS_OPTIONS[3],
-    zzz: STATUS_OPTIONS[4],
-    offline: STATUS_OPTIONS[5],
   };
 
   return (

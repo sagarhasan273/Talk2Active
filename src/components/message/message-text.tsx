@@ -47,13 +47,15 @@ export function MessageText({ message }: { message: Message }) {
         minWidth: message.sender === 'them' ? 180 : 100,
       }}
     >
-      <MessageReplyInfo
-        replyMessage={{ id: 'sd', text: 'You are in the voice room', name: 'Sagar Hasan' }}
-        sx={{
-          mb: 2,
-          backgroundColor: theme.palette.mode === 'light' ? 'grey.300' : 'grey.900',
-        }}
-      />
+      {message?.messageRepliedOf && (
+        <MessageReplyInfo
+          replyMessage={message.messageRepliedOf}
+          sx={{
+            mb: 2,
+            backgroundColor: theme.palette.mode === 'light' ? 'grey.300' : 'grey.900',
+          }}
+        />
+      )}
 
       <GetTextFromMessage message={message} />
 

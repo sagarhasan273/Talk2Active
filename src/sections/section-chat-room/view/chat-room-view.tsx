@@ -176,6 +176,7 @@ export function VoiceRoomChat() {
           systemMessageType: data?.systemMessageType,
           userInfo: data.userInfo,
           mentions: data.mentions || [],
+          messageRepliedOf: data?.messageRepliedOf,
         };
         addChatRoomMessage(receiveMessage);
       });
@@ -200,6 +201,7 @@ export function VoiceRoomChat() {
           type: data.type,
           systemMessageType: data?.systemMessageType,
           mentions: data.mentions || [],
+          messageRepliedOf: data?.messageRepliedOf,
         };
         addChatRoomMessage(receiveMessage);
       });

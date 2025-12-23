@@ -44,6 +44,7 @@ export type Message = {
   }[];
   isEdited?: boolean;
   reactions?: Reaction[];
+  messageRepliedOf?: MessageOnReply;
 };
 
 export type MessageOnReply = {
