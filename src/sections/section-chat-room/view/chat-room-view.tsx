@@ -75,17 +75,6 @@ export function VoiceRoomChat() {
     reactionChatRoomMessage,
   } = useRoomTools();
 
-  const editRoomBoolean = useBoolean(false);
-
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
-  const [status, setStatus] = useState<UserType['status']>('online');
-
-  const socketRef = useRef<Socket | null>(null);
-
-  const [joinRoomMutation] = useJoinRoomMutation();
-  const [leaveRoomMutation] = useLeaveRoomMutation();
-
   const {
     remoteStreams,
     localStream,
@@ -98,6 +87,17 @@ export function VoiceRoomChat() {
     toggleMicrophone,
     cleanup,
   } = useWebRTC();
+
+  const editRoomBoolean = useBoolean(false);
+
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
+  const [status, setStatus] = useState<UserType['status']>('online');
+
+  const socketRef = useRef<Socket | null>(null);
+
+  const [joinRoomMutation] = useJoinRoomMutation();
+  const [leaveRoomMutation] = useLeaveRoomMutation();
 
   // Convert map to array for rendering
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
