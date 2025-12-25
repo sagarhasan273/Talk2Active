@@ -86,7 +86,7 @@ export function VoiceRoomChat() {
     cleanup,
   } = useWebRTC();
 
-  const { socket, connect } = useSocket({ autoConnect: true });
+  const { socket } = useSocket({ autoConnect: true });
 
   const editRoomBoolean = useBoolean(false);
 
