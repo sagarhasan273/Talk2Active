@@ -5,7 +5,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 
 import { Box, Paper, Typography } from '@mui/material';
 
-import { useSocket } from 'src/hooks/use-socket';
+import { getGlobalSocket } from 'src/hooks/use-socket';
 
 import { fDate } from 'src/utils/format-time';
 
@@ -32,7 +32,8 @@ export const ChatMessageGroup = ({
   } = useRoomTools();
   const user = useSelector(selectAccount);
 
-  const { socket } = useSocket();
+  const socket = getGlobalSocket();
+  console.log(socket?.id);
 
   const [message, setMessage] = useState<string>('');
   const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);

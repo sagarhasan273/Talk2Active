@@ -1,8 +1,5 @@
-import type { Socket } from 'socket.io-client';
-
-import { io } from 'socket.io-client';
 import { useDispatch, useSelector } from 'react-redux';
-import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useMemo, useState, useEffect, useCallback } from 'react'; // Added useCallback
 
 import { styled } from '@mui/material/styles';
 import { Box, Container, Typography } from '@mui/material';
@@ -11,7 +8,7 @@ import { Box, Container, Typography } from '@mui/material';
 import { useParams } from 'src/routes/route-hooks';
 
 import useWebRTC from 'src/hooks/use-web-rtc'; // Assumed actual use
-import { CONFIG } from 'src/config-global'; // Assumed actual use
+// Assumed actual use
 import { setAccount, selectAccount } from 'src/core/slices'; // Assumed actual use
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis'; // Assumed actual use
 import type { UserType } from 'src/types/type-user';
@@ -20,6 +17,7 @@ import type { Message, Participant, ReactionMessageData } from 'src/types/type-r
 // Assumed actual use
 import { toast } from 'sonner';
 
+import { useSocket } from 'src/hooks/use-socket';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -88,13 +86,13 @@ export function VoiceRoomChat() {
     cleanup,
   } = useWebRTC();
 
+  const { socket, connect } = useSocket({ autoConnect: true });
+
   const editRoomBoolean = useBoolean(false);
 
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [initialize, setInitialize] = useState<boolean>(true); // Tracks if we're ready to join
   const [status, setStatus] = useState<UserType['status']>('online');
-
-  const socketRef = useRef<Socket | null>(null);
 
   const [joinRoomMutation] = useJoinRoomMutation();
   const [leaveRoomMutation] = useLeaveRoomMutation();
@@ -106,57 +104,48 @@ export function VoiceRoomChat() {
     try {
       await initializeMicrophone();
 
-      // Ensure no double connection
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      console.log('socket', socket?.id);
 
-      socketRef.current = io(CONFIG.serverUrl, {
-        transports: ['websocket'],
-      });
-
-      socketRef.current.on('connect', () => {
-        setIsConnected(true);
-        socketRef.current?.emit('join-voice-room', {
-          roomId,
-          userId: user.id,
-          name: user.name,
-          profilePhoto: user.profilePhoto,
-          isMuted: isMicMuted,
-          status: 'online',
-          userType: room.host.id === user.id ? 'Host' : 'Guest',
-          verified: user.verified,
-        });
+      setIsConnected(true);
+      socket?.emit('join-voice-room', {
+        roomId,
+        userId: user.id,
+        name: user.name,
+        profilePhoto: user.profilePhoto,
+        isMuted: isMicMuted,
+        status: 'online',
+        userType: room.host.id === user.id ? 'Host' : 'Guest',
+        verified: user.verified,
       });
 
       // Handle existing participants and start WebRTC handshake
-      socketRef.current.on('existing-participants', (data: ExistingParticipantsData) => {
+      socket?.on('existing-participants', (data: ExistingParticipantsData) => {
         data.participants.forEach((participant) => {
           addRemoteParticipant(participant);
-          createOffer(participant.socketId, socketRef.current!);
+          createOffer(participant.socketId, socket!);
         });
       });
 
       // Handle new user joining
-      socketRef.current.on('user-joined', (data: Participant) => {
-        if (data.socketId !== socketRef.current?.id) {
+      socket?.on('user-joined', (data: Participant) => {
+        if (data.socketId !== socket?.id) {
           addRemoteParticipant(data);
-          createOffer(data.socketId, socketRef.current!);
+          createOffer(data.socketId, socket!);
         }
       });
 
       // Handle user leaving
-      socketRef.current.on('user-left', (data: { socketId: string }) => {
+      socket?.on('user-left', (data: { socketId: string }) => {
         removeRemoteParticipant(data.socketId);
       });
 
       // Handle remote user's audio state update (NEW)
-      socketRef.current.on('user-audio-toggled', (data: { socketId: string; isMuted: boolean }) => {
+      socket?.on('user-audio-toggled', (data: { socketId: string; isMuted: boolean }) => {
         updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
       });
 
       // Handle remote user's status update (NEW)
-      socketRef.current.on(
+      socket?.on(
         'user-status-selected',
         (data: { socketId: string; status: UserType['status'] }) => {
           updateRemoteParticipantStatus({ socketId: data.socketId, status: data.status });
@@ -164,7 +153,7 @@ export function VoiceRoomChat() {
       );
 
       // chat room message received
-      socketRef.current.on('receive-group-message', (data: Message) => {
+      socket?.on('receive-group-message', (data: Message) => {
         const receiveMessage: Message = {
           id: data.id,
           text: data.text,
@@ -181,14 +170,14 @@ export function VoiceRoomChat() {
         addChatRoomMessage(receiveMessage);
       });
 
-      socketRef.current.on('receive-reaction-group-message', (data: ReactionMessageData) => {
+      socket?.on('receive-reaction-group-message', (data: ReactionMessageData) => {
         reactionChatRoomMessage({
           messageId: data.messageId,
           reaction: data.reaction,
         });
       });
 
-      socketRef.current.on('receive-private-message', (data: Message) => {
+      socket?.on('receive-private-message', (data: Message) => {
         const receiveMessage: Message = {
           id: data.id,
           text: data.text,
@@ -207,24 +196,24 @@ export function VoiceRoomChat() {
       });
 
       // WebRTC signaling events
-      socketRef.current.on('webrtc-offer', (data: WebRTCEventData) => {
-        handleOffer(data, socketRef.current!);
+      socket?.on('webrtc-offer', (data: WebRTCEventData) => {
+        handleOffer(data, socket!);
       });
 
-      socketRef.current.on('webrtc-answer', (data: WebRTCEventData) => {
+      socket?.on('webrtc-answer', (data: WebRTCEventData) => {
         handleAnswer(data);
       });
 
-      socketRef.current.on('webrtc-ice-candidate', (data: WebRTCEventData) => {
+      socket?.on('webrtc-ice-candidate', (data: WebRTCEventData) => {
         handleIceCandidate(data);
       });
 
       // Connection state handlers
-      socketRef.current.on('connect_error', (error: Error) => {
+      socket?.on('connect_error', (error: Error) => {
         setIsConnected(false);
       });
 
-      socketRef.current.on('disconnect', async () => {
+      socket?.on('disconnect', async () => {
         await leaveRoomMutation({ roomId, userId: user.id });
         leaveRoom();
       });
@@ -238,7 +227,7 @@ export function VoiceRoomChat() {
   const handleToggleMicrophone = (): void => {
     const isNowMuted = toggleMicrophone();
     // Broadcast the new mute state to the signaling server
-    socketRef.current?.emit('user-audio-toggle', {
+    socket?.emit('user-audio-toggle', {
       roomId,
       isMuted: isNowMuted,
       name: user.name,
@@ -246,9 +235,9 @@ export function VoiceRoomChat() {
   };
 
   const handleToggleUserStatus = (selectedStatus: UserType['status']): void => {
-    socketRef.current?.emit('user-status-select', {
+    socket?.emit('user-status-select', {
       roomId,
-      socketId: socketRef.current?.id,
+      socketId: socket?.id,
       status: selectedStatus,
       name: user.name,
     });
@@ -275,11 +264,9 @@ export function VoiceRoomChat() {
 
   // --- NEW: Synchronous cleanup for browser events ---
   const performCleanup = useCallback(async () => {
-    if (socketRef.current) {
-      socketRef.current.emit('leave-voice-room', { roomId, userId: user.id, name: user.name });
-
-      socketRef.current.disconnect();
-      socketRef.current = null;
+    if (socket) {
+      socket?.emit('leave-voice-room', { roomId, userId: user.id, name: user.name });
+      await leaveRoomMutation({ roomId, userId: user.id });
     }
 
     cleanup();
@@ -294,19 +281,19 @@ export function VoiceRoomChat() {
     performCleanup();
 
     resetRemoteParticipants();
-    setIsConnected(false);
+
     setInitialize(true);
     dispatch(setAccount({ ...user, status: 'online' }));
   };
 
   // Store socket globally for WebRTC hook access
-  useEffect(() => {
-    (window as any).socket = socketRef.current;
-    return () => {
-      delete (window as any).socket;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socketRef.current]);
+  // useEffect(() => {
+  //   (window as any).socket = socket;
+  //   return () => {
+  //     delete (window as any).socket;
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [socket]);
 
   useEffect(
     () => () => {
@@ -315,17 +302,17 @@ export function VoiceRoomChat() {
     [performCleanup]
   );
 
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      performCleanup();
-    };
+  // useEffect(() => {
+  //   const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  //     performCleanup();
+  //   };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
 
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [performCleanup]);
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   };
+  // }, [performCleanup]);
 
   if (!roomId) {
     return (

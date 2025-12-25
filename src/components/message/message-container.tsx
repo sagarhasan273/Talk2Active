@@ -37,7 +37,7 @@ export function MessageContainer({
   return (
     <>
       {messages.map((msg) => (
-        <>
+        <Box key={msg.id}>
           {msg?.startOfUnread && (
             <Divider
               sx={{
@@ -54,7 +54,6 @@ export function MessageContainer({
             </Divider>
           )}
           <Box
-            key={msg.id}
             sx={{
               pl: 'auto',
               p: 1,
@@ -101,7 +100,7 @@ export function MessageContainer({
               />
             </Box>
           </Box>
-        </>
+        </Box>
       ))}
 
       {/*
