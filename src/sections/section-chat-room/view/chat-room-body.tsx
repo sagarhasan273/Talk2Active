@@ -13,7 +13,7 @@ import { ChatUserCard } from '../chat-user-card';
 
 export function ChatRoomChatBody({
   isConnected,
-  initialize,
+  isInitializing,
   isMicMuted,
   status,
   participants,
@@ -21,7 +21,7 @@ export function ChatRoomChatBody({
   localStream,
 }: {
   isConnected: boolean;
-  initialize: boolean;
+  isInitializing: boolean;
   isMicMuted: boolean;
   status: UserType['status'];
   participants: Participant[];
@@ -33,7 +33,7 @@ export function ChatRoomChatBody({
 
   return (
     <Box flex={1} display="flex" flexDirection="column">
-      {!isConnected && !initialize && <LinearProgress color="warning" sx={{ mb: 2 }} />}
+      {!isConnected && !isInitializing && <LinearProgress color="warning" sx={{ mb: 2 }} />}
 
       <Stack direction="row" gap={2} flexWrap="wrap">
         {participants.map((participant) => (

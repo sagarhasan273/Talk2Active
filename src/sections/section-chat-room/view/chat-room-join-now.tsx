@@ -28,7 +28,15 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 
 type ParticipantsProps = { user: UserType; joinedAt: Date };
 
-export function ChatRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) {
+export function ChatRoomChatJoinNow({
+  onJoinRoom,
+  isLoading,
+  isDisabled,
+}: {
+  onJoinRoom: () => void;
+  isLoading: boolean;
+  isDisabled: boolean;
+}) {
   const theme = useTheme();
 
   const { roomId } = useParams();
@@ -47,7 +55,7 @@ export function ChatRoomChatJoinNow({ onJoinRoom }: { onJoinRoom: () => void }) 
       setParticipants(room.currentParticipants || []);
     }
   }, [roomData, room, setRoom]);
-
+  console.log(isLoading, isDisabled);
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, backgroundColor: 'transparent' }}>
       <CardContent sx={{ p: { xs: 1, sm: 4 } }}>

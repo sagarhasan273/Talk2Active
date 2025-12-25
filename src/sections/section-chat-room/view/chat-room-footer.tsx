@@ -17,6 +17,7 @@ const ControlsPaper = styled(Paper)(({ theme }) => ({
 
 type ChatRoomFooterProps = {
   isMicMuted: boolean;
+  isLeaving: boolean;
   onClickMic: () => void;
   onStatusChange: (status: UserType['status']) => void;
   onClickLeaveRoom: () => void;
@@ -24,10 +25,12 @@ type ChatRoomFooterProps = {
 
 export function ChatRoomFooter({
   isMicMuted,
+  isLeaving,
   onClickMic,
   onStatusChange,
   onClickLeaveRoom,
 }: ChatRoomFooterProps) {
+  console.log(isLeaving);
   return (
     <ControlsPaper elevation={0}>
       <IconButton
