@@ -227,7 +227,6 @@ export function VoiceRoomChat() {
         name: user.name,
       });
     } catch (error) {
-      console.error('Failed to toggle microphone:', error);
       toast.error('Failed to toggle microphone');
     }
   }, [socket, roomId, user?.name, toggleMicrophone]);
@@ -275,6 +274,8 @@ export function VoiceRoomChat() {
       }
     };
   }, [state.isConnected, leaveRoom]);
+
+  console.log('render voice room chat');
 
   // Validation
   if (!roomId) {

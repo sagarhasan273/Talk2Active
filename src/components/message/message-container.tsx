@@ -36,8 +36,8 @@ export function MessageContainer({
 
   return (
     <>
-      {messages.map((msg) => (
-        <Box key={msg.id}>
+      {messages.map((msg, index) => (
+        <Box key={`${msg.id}${index}`}>
           {msg?.startOfUnread && (
             <Divider
               sx={{
