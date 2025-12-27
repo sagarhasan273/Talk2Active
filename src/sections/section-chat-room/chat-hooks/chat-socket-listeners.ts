@@ -2,8 +2,8 @@ import type { UserType } from 'src/types/type-user';
 import type { UseWebRTCReturn } from 'src/hooks/use-web-rtc';
 import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
+import { useCallback } from 'react';
 import { useParams } from 'react-router';
-import { useEffect, useCallback } from 'react';
 
 import { useRoomTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -12,9 +12,11 @@ import type { WebRTCEventData, ExistingParticipantsData } from '../type';
 
 // ----------------------------------------------------------------------
 
-export type UseBooleanReturn = {} | undefined;
+export type UseReturnChatSocketListeners = {
+  setupChatSocketListeners: () => () => void;
+};
 
-export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseBooleanReturn {
+export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
   const roomId = useParams().roomId as string;
 
   // Room management
@@ -34,9 +36,9 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseBooleanRe
   const { socket, on, off } = useSocketContext();
 
   // WebRTC and socket event handlers
-  const setupSocketListeners = useCallback(() => {
+  const setupChatSocketListeners = useCallback(() => {
     if (!socket) {
-      return undefined;
+      return () => {};
     }
 
     // Existing participants
@@ -94,6 +96,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseBooleanRe
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
       };
+
       addChatRoomMessage(receiveMessage);
     };
 
@@ -119,6 +122,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseBooleanRe
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
       };
+
       addChatRoomMessage(receiveMessage);
     };
 
@@ -178,16 +182,5 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseBooleanRe
     handleIceCandidate,
   ]);
 
-  // Setup socket listeners on mount and socket change
-  useEffect(() => {
-    if (!socket) return undefined;
-
-    const cleanupListeners = setupSocketListeners();
-
-    return () => {
-      cleanupListeners?.();
-    };
-  }, [socket, setupSocketListeners]);
-
-  return undefined;
+  return { setupChatSocketListeners };
 }

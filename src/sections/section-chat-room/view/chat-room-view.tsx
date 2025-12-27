@@ -59,10 +59,6 @@ export function VoiceRoomChat() {
   const roomId = useParams().roomId as string;
   const user = useSelector(selectAccount);
 
-  // Refs
-  const cleanupPerformed = useRef(false);
-  const initializationAttempted = useRef(false);
-
   // Room management
   const { room, remoteParticipants, resetRemoteParticipants } = useRoomTools();
 
@@ -78,7 +74,7 @@ export function VoiceRoomChat() {
   } = webRTC;
 
   // Socket listeners
-  useChatSocketListeners(webRTC);
+  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
 
   // Socket
   const { socket, isSocketConnected } = useSocketContext();
@@ -93,6 +89,11 @@ export function VoiceRoomChat() {
   });
   const [status, setStatus] = useState<UserType['status']>('online');
   const [micError, setMicError] = useState<string | null>(null);
+
+  // Refs
+  const cleanupPerformed = useRef(false);
+  const initializationAttempted = useRef(false);
+  const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
   // API mutations
   const [joinRoomMutation, { isLoading: isJoining }] = useJoinRoomMutation();
@@ -159,6 +160,7 @@ export function VoiceRoomChat() {
 
       if (response.status) {
         const initialized = await initializeVoiceRoom();
+        setupChatSocketListenersRef.current = setupChatSocketListeners?.();
         if (initialized) {
           toast.success('Joined the room successfully');
         }
@@ -170,7 +172,7 @@ export function VoiceRoomChat() {
     } finally {
       initializationAttempted.current = false;
     }
-  }, [canJoin, roomId, user?.id, joinRoomMutation, initializeVoiceRoom]);
+  }, [canJoin, roomId, user?.id, setupChatSocketListeners, joinRoomMutation, initializeVoiceRoom]);
 
   // Leave room
   const leaveRoom = useCallback(async () => {
@@ -191,6 +193,9 @@ export function VoiceRoomChat() {
 
       // Cleanup WebRTC
       cleanupWebRTC();
+
+      // chat listeners close
+      setupChatSocketListenersRef.current?.();
 
       // Reset local state
       resetRemoteParticipants();
@@ -268,14 +273,13 @@ export function VoiceRoomChat() {
   useEffect(() => {
     cleanupPerformed.current = false;
     return () => {
-      if (state.isConnected && !cleanupPerformed.current) {
+      if (!cleanupPerformed.current) {
         cleanupPerformed.current = true;
         leaveRoom();
       }
     };
-  }, [state.isConnected, leaveRoom]);
-
-  console.log('render voice room chat');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Validation
   if (!roomId) {
