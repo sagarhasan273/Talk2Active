@@ -1,189 +1,158 @@
-import { io, type Socket } from 'socket.io-client';
+// hooks/use-socket.ts
+import type { Socket } from 'socket.io-client';
+
 import { useRef, useState, useEffect, useCallback } from 'react';
 
-import { CONFIG } from 'src/config-global';
+import SocketManager, {
+  type SocketEventHandlers,
+  type SocketManagerOptions,
+} from 'src/lib/socket-manager';
 
 // ----------------------------------------------------------------------
 
-export type UseSocketOptions = {
+export type UseSocketOptions = SocketManagerOptions & {
   autoConnect?: boolean;
-  transports?: ('websocket' | 'polling')[];
-  reconnection?: boolean;
-  reconnectionAttempts?: number;
-  reconnectionDelay?: number;
-  namespace?: string;
-  path?: string;
+  eventHandlers?: SocketEventHandlers;
+  enableStateUpdates?: boolean;
 };
 
 export type UseSocketReturn = {
   socket: Socket | null;
-  isConnected: boolean;
-  isConnecting: boolean;
+  isSocketConnected: boolean;
+  isSocketConnecting: boolean;
   isError: boolean;
   error: Error | null;
   connect: () => void;
   disconnect: () => void;
   reconnect: () => void;
+  emit: (event: string, ...args: any[]) => void;
+  on: (event: string, handler: Function) => () => void;
+  off: (event: string, handler?: Function) => void;
+  getId: () => string | undefined;
+  authenticate: (token: string) => void;
+  updateAuth: (token: string) => void;
 };
-
-// Singleton socket instance
-let globalSocket: Socket | null = null;
-let connectionCount = 0;
-const globalListeners: Map<string, Set<(...args: any[]) => void>> = new Map();
-
-const GLOBAL_EVENTS = [
-  'connect',
-  'connect_error',
-  'disconnect',
-  'reconnect',
-  'reconnect_error',
-  'reconnect_failed',
-];
-
-// ----------------------------------------------------------------------
 
 export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const {
     autoConnect = true,
-    transports = ['websocket'],
-    reconnection = true,
-    reconnectionAttempts = 5,
-    reconnectionDelay = 1000,
-    namespace = '',
+    eventHandlers,
+    enableStateUpdates = true,
+    ...socketOptions
   } = options;
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const socketManagerRef = useRef(SocketManager.getInstance(socketOptions));
+  const [state, setState] = useState(() => socketManagerRef.current.getConnectionState());
 
-  const socketRef = useRef<Socket | null>(null);
+  const cleanupRef = useRef<() => void>();
 
-  // Create or get singleton socket
-  const initializeSocket = useCallback(() => {
-    if (globalSocket) {
-      socketRef.current = globalSocket;
-      return globalSocket;
+  // Update options if they change
+  useEffect(() => {
+    if (socketOptions) {
+      socketManagerRef.current.updateOptions(socketOptions);
+    }
+  }, [socketOptions]);
+
+  // Subscribe to connection state changes
+  useEffect(() => {
+    if (!enableStateUpdates) return undefined;
+
+    const unsubscribe = socketManagerRef.current.subscribeToConnectionState(
+      (newState: ReturnType<typeof socketManagerRef.current.getConnectionState>) => {
+        setState(newState);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [enableStateUpdates]);
+
+  // Setup event handlers
+  useEffect(() => {
+    if (!eventHandlers) return undefined;
+
+    const cleanupFns: (() => void)[] = [];
+
+    if (eventHandlers.onConnect) {
+      cleanupFns.push(socketManagerRef.current.on('connect', eventHandlers.onConnect));
     }
 
-    const socket = io(`${CONFIG.serverUrl}${namespace}`, {
-      transports,
-      autoConnect: false,
-      reconnection,
-      reconnectionAttempts,
-      reconnectionDelay,
-    });
+    if (eventHandlers.onDisconnect) {
+      cleanupFns.push(socketManagerRef.current.on('disconnect', eventHandlers.onDisconnect));
+    }
 
-    // Centralized event dispatcher
-    GLOBAL_EVENTS.forEach((event) => {
-      socket.on(event, (...args) => {
-        globalListeners.get(event)?.forEach((listener) => listener(...args));
-      });
-    });
+    if (eventHandlers.onConnectError) {
+      cleanupFns.push(socketManagerRef.current.on('connect_error', eventHandlers.onConnectError));
+    }
 
-    globalSocket = socket;
-    socketRef.current = socket;
-    return globalSocket;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transports.join(','), reconnection, reconnectionAttempts, reconnectionDelay, namespace]);
-
-  // Register global event listeners for this instance
-  const registerGlobalListeners = useCallback(() => {
-    const handlers = {
-      connect: () => {
-        setIsConnected(true);
-        setIsConnecting(false);
-        setIsError(false);
-      },
-      connect_error: (err: Error) => {
-        setIsError(true);
-        setError(err);
-        setIsConnecting(false);
-      },
-      disconnect: () => setIsConnected(false),
-      reconnect: () => {
-        setIsConnected(true);
-        setIsError(false);
-      },
+    cleanupRef.current = () => {
+      cleanupFns.forEach((cleanup) => cleanup());
     };
-
-    Object.entries(handlers).forEach(([event, handler]) => {
-      if (!globalListeners.has(event)) globalListeners.set(event, new Set());
-      globalListeners.get(event)!.add(handler);
-    });
 
     return () => {
-      Object.entries(handlers).forEach(([event, handler]) => {
-        globalListeners.get(event)?.delete(handler);
-      });
+      if (cleanupRef.current) cleanupRef.current();
     };
-  }, []);
+  }, [eventHandlers]);
+
+  // Auto-connect
+  useEffect(() => {
+    if (autoConnect) {
+      socketManagerRef.current.connect(eventHandlers);
+    }
+
+    // Cleanup on unmount (but don't disconnect the socket!)
+    return () => {
+      // Only cleanup event listeners, not the socket connection
+      if (cleanupRef.current) {
+        cleanupRef.current();
+      }
+    };
+  }, [autoConnect, eventHandlers]);
 
   // Connect function
   const connect = useCallback(() => {
-    const s = initializeSocket();
-    if (!s.connected) {
-      setIsConnecting(true);
-      s.connect();
-    }
-  }, [initializeSocket]);
+    socketManagerRef.current.connect(eventHandlers);
+  }, [eventHandlers]);
 
-  useEffect(() => {
-    const cleanup = registerGlobalListeners();
-    connectionCount += 1;
+  // Disconnect function
+  const disconnect = useCallback(() => {
+    socketManagerRef.current.disconnect();
+  }, []);
 
-    if (autoConnect) connect();
+  // Reconnect function
+  const reconnect = useCallback(() => {
+    socketManagerRef.current.reconnect();
+  }, []);
 
-    return () => {
-      cleanup();
-      connectionCount -= 1;
-      if (connectionCount <= 0 && globalSocket) {
-        globalSocket.disconnect();
-        globalSocket.removeAllListeners();
-        globalSocket = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoConnect]);
+  // Emit function
+  const emit = useCallback((event: string, ...args: any[]) => {
+    socketManagerRef.current.emit(event, ...args);
+  }, []);
 
-  // Store socket globally for WebRTC hook access
-  useEffect(() => {
-    (window as any).socket = globalSocket;
-    return () => {
-      delete (window as any).socket;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalSocket]);
+  // On function
+  const on = useCallback(
+    (event: string, handler: Function) => socketManagerRef.current.on(event, handler),
+    []
+  );
+
+  // Off function
+  const off = useCallback((event: string, handler?: Function) => {
+    socketManagerRef.current.off(event, handler);
+  }, []);
 
   return {
-    socket: socketRef.current,
-    isConnected,
-    isConnecting,
-    isError,
-    error,
+    socket: socketManagerRef.current.getSocket(),
+    isSocketConnected: state.isConnected,
+    isSocketConnecting: state.isConnecting,
+    isError: state.isError,
+    error: state.error,
     connect,
-    disconnect: useCallback(() => globalSocket?.disconnect(), []),
-    reconnect: connect,
+    disconnect,
+    reconnect,
+    emit,
+    on,
+    off,
+    getId: () => socketManagerRef.current.getId(),
+    authenticate: (token: string) => socketManagerRef.current.authenticate(token),
+    updateAuth: (token: string) => socketManagerRef.current.updateAuth(token),
   };
-}
-
-// ----------------------------------------------------------------------
-
-// Helper functions for manual singleton management
-
-export function getGlobalSocket(): Socket | null {
-  return globalSocket;
-}
-
-export function disconnectGlobalSocket(): void {
-  if (globalSocket) {
-    globalSocket.disconnect();
-    globalSocket = null;
-    connectionCount = 0;
-    globalListeners.clear();
-  }
-}
-
-export function isGlobalSocketConnected(): boolean {
-  return globalSocket?.connected || false;
 }

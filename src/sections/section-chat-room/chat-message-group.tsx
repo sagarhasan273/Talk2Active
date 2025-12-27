@@ -5,13 +5,12 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 
 import { Box, Paper, Typography } from '@mui/material';
 
-import { getGlobalSocket } from 'src/hooks/use-socket';
-
 import { fDate } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 import { MessageContainer } from 'src/components/message';
@@ -32,8 +31,7 @@ export const ChatMessageGroup = ({
   } = useRoomTools();
   const user = useSelector(selectAccount);
 
-  const socket = getGlobalSocket();
-  console.log(socket?.id);
+  const { socket } = useSocketContext();
 
   const [message, setMessage] = useState<string>('');
   const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);

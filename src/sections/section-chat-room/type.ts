@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { UserType } from 'src/types/type-user';
+import type { Participant } from 'src/types/type-room';
 
 export interface ChatUserStatus {
   name: UserType['status'];
@@ -26,3 +27,16 @@ export type ChatUserCardAudioSettings = {
   volume: number;
   audioQuality: AudioQuality;
 };
+
+export interface WebRTCEventData {
+  offer?: RTCSessionDescriptionInit;
+  answer?: RTCSessionDescriptionInit;
+  candidate?: RTCIceCandidateInit;
+  sender?: string;
+  target?: string;
+}
+
+export interface ExistingParticipantsData {
+  participants: Participant[];
+  roomId: string;
+}

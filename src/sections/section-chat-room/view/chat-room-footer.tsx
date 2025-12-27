@@ -30,7 +30,6 @@ export function ChatRoomFooter({
   onStatusChange,
   onClickLeaveRoom,
 }: ChatRoomFooterProps) {
-  console.log(isLeaving);
   return (
     <ControlsPaper elevation={0}>
       <IconButton

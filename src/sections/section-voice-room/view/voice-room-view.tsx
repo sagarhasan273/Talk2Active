@@ -16,7 +16,7 @@ export function VoiceRoomView() {
 
   const handleJoinRoom = async (room: RoomResponse) => {
     setRoom(room);
-    router.push(`/voice-room/${room.id}`);
+    router.open(`/voice-room/${room.id}`);
   };
 
   return (

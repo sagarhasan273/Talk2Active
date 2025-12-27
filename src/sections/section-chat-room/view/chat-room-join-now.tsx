@@ -32,10 +32,12 @@ export function ChatRoomChatJoinNow({
   onJoinRoom,
   isLoading,
   isDisabled,
+  micError,
 }: {
   onJoinRoom: () => void;
   isLoading: boolean;
   isDisabled: boolean;
+  micError?: string | null;
 }) {
   const theme = useTheme();
 
@@ -55,7 +57,7 @@ export function ChatRoomChatJoinNow({
       setParticipants(room.currentParticipants || []);
     }
   }, [roomData, room, setRoom]);
-  console.log(isLoading, isDisabled);
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, backgroundColor: 'transparent' }}>
       <CardContent sx={{ p: { xs: 1, sm: 4 } }}>

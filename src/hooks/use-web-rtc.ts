@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 
-interface UseWebRTCReturn {
+export interface UseWebRTCReturn {
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
   isMicMuted: boolean;

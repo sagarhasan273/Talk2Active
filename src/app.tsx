@@ -20,6 +20,7 @@ import { AuthProvider } from 'src/auth/context/jwt';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/route-components';
+import { SocketProvider } from './core/contexts/socket-context';
 
 // ----------------------------------------------------------------------
 
@@ -31,16 +32,18 @@ export default function App() {
       <Provider store={store}>
         <UserProvider>
           <AuthProvider>
-            <SettingsProvider settings={defaultSettings}>
-              <ThemeProvider>
-                <MotionLazy>
-                  <Snackbar />
-                  <ProgressBar />
-                  <SettingsDrawer />
-                  <Router />
-                </MotionLazy>
-              </ThemeProvider>
-            </SettingsProvider>
+            <SocketProvider>
+              <SettingsProvider settings={defaultSettings}>
+                <ThemeProvider>
+                  <MotionLazy>
+                    <Snackbar />
+                    <ProgressBar />
+                    <SettingsDrawer />
+                    <Router />
+                  </MotionLazy>
+                </ThemeProvider>
+              </SettingsProvider>
+            </SocketProvider>
           </AuthProvider>
         </UserProvider>
       </Provider>
