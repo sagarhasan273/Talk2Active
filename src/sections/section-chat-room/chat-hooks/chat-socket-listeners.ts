@@ -62,7 +62,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
 
     // User left
     const handleUserLeft = (data: { socketId: string; roomId?: string }) => {
-      removeRemoteParticipant(data.socketId);
+      // setTimeout(() => removeRemoteParticipant(data.socketId), 2000);
     };
 
     // Audio toggled

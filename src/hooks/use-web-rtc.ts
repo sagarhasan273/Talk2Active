@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 
+import { useRoomTools } from 'src/core/slices';
+
 // Types for audio settings
 export interface AudioSettings {
   volume: number; // 0-100
@@ -23,6 +25,7 @@ export interface UseWebRTCReturn {
   localStream: MediaStream | null;
   isMicMuted: boolean;
   audioSettings: AudioSettings;
+  connectionStatus: { [socketId: string]: string };
 
   // Core WebRTC functions
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
@@ -62,7 +65,11 @@ const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   isMicMuted: false,
 };
 
+const CONNECTION_TIMEOUT = 10000;
+
 export default function useWebRTC(): UseWebRTCReturn {
+  const { removeRemoteParticipant } = useRoomTools();
+
   // Refs
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<{ [socketId: string]: RTCPeerConnection }>({});
@@ -83,6 +90,7 @@ export default function useWebRTC(): UseWebRTCReturn {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(DEFAULT_AUDIO_SETTINGS);
+  const [connectionStatus, setConnectionStatus] = useState<{ [socketId: string]: string }>({});
 
   const getIceServers = useCallback(
     () => ({
@@ -292,13 +300,75 @@ export default function useWebRTC(): UseWebRTCReturn {
 
       peerConnection.onconnectionstatechange = () => {
         const state = peerConnection.connectionState;
-        console.log(`Connection state for ${socketId}:`, state);
+        setConnectionStatus((prev) => {
+          const currentStatus = prev[socketId];
+
+          switch (state) {
+            case 'connected':
+              // Connection successful
+              console.log(`Connection to ${socketId} connected`);
+              return { ...prev, [socketId]: 'connected' };
+
+            case 'disconnected':
+              // Temporary disconnection - wait for recovery
+              console.log(`Disconnected from ${socketId}, waiting for recovery...`);
+              return { ...prev, [socketId]: 'disconnected' };
+
+            case 'failed': {
+              // Permanent failure - clean up
+              console.error(`Connection to ${socketId} failed`);
+              setTimeout(() => {
+                removeRemoteParticipant(socketId);
+                if (peerConnectionsRef.current[socketId]) {
+                  peerConnectionsRef.current[socketId].close();
+                  delete peerConnectionsRef.current[socketId];
+                }
+              }, 100);
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { [socketId]: _, ...rest } = prev;
+              return rest;
+            }
+
+            case 'closed': {
+              // Connection closed intentionally
+              console.log(`Connection to ${socketId} closed`);
+              const remaining = { ...prev };
+              delete remaining[socketId];
+              return remaining;
+            }
+
+            case 'connecting':
+              // Set timeout for connection attempt
+              if (currentStatus !== 'connecting') {
+                console.log(`Attempting to connect to ${socketId}...`);
+                // Set timeout for connection attempt
+                setTimeout(() => {
+                  if (peerConnection.connectionState === 'connecting') {
+                    console.warn(
+                      `Connection to ${socketId} timed out after ${CONNECTION_TIMEOUT}ms`
+                    );
+                    peerConnection.close();
+                    removeRemoteParticipant(socketId);
+                  }
+                }, CONNECTION_TIMEOUT);
+              }
+              return { ...prev, [socketId]: 'connecting' };
+
+            case 'new':
+              // New connection created
+              console.log(`New connection for ${socketId}`);
+              return { ...prev, [socketId]: 'new' };
+
+            default:
+              return prev;
+          }
+        });
       };
 
       peerConnectionsRef.current[socketId] = peerConnection;
       return peerConnection;
     },
-    [getIceServers]
+    [getIceServers, removeRemoteParticipant]
   );
 
   // Audio control functions
@@ -639,6 +709,7 @@ export default function useWebRTC(): UseWebRTCReturn {
     localStream,
     isMicMuted,
     audioSettings,
+    connectionStatus,
     initializeMicrophone,
     createOffer,
     handleOffer,

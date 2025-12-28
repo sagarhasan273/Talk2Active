@@ -9,12 +9,12 @@ import { Box, Container, Typography } from '@mui/material';
 
 import { useParams } from 'src/routes/route-hooks';
 
-import useWebRTC from 'src/hooks/use-web-rtc';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { setAccount, selectAccount } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis';
 
 import { ChatRoomFooter } from './chat-room-footer';
@@ -62,8 +62,11 @@ export function VoiceRoomChat() {
   // Room management
   const { room, remoteParticipants, resetRemoteParticipants } = useRoomTools();
 
+  // Socket
+  const { socket, isSocketConnected } = useSocketContext();
+
   // WebRTC
-  const webRTC = useWebRTC();
+  const webRTC = useWebRTCContext();
   const {
     remoteStreams,
     localStream,
@@ -75,9 +78,6 @@ export function VoiceRoomChat() {
 
   // Socket listeners
   const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
-
-  // Socket
-  const { socket, isSocketConnected } = useSocketContext();
 
   // State
   const editRoomBoolean = useBoolean(false);
@@ -276,12 +276,9 @@ export function VoiceRoomChat() {
 
   // Cleanup on unmount
   useEffect(() => {
-    cleanupPerformed.current = false;
+    console.log('Clean up while component unmount.');
     return () => {
-      if (!cleanupPerformed.current) {
-        cleanupPerformed.current = true;
-        leaveRoom();
-      }
+      leaveRoom();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

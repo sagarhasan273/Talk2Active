@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 
 import { CONFIG } from 'src/config-global';
 import { UserLayout } from 'src/layouts/user';
+import { WebRTCProvider } from 'src/core/contexts/webRTC-context';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
@@ -26,6 +27,12 @@ const layoutContent = (
   </UserLayout>
 );
 
+const voiceRoomChat = (
+  <WebRTCProvider>
+    <VoiceRoomChat />
+  </WebRTCProvider>
+);
+
 export const userRoutes = [
   {
     path: '/',
@@ -35,7 +42,7 @@ export const userRoutes = [
       { path: 'user/profile', element: <ProfilePage /> },
       { path: 'user/settings', element: <SettingsView /> },
       { path: 'voice-room', element: <VoiceRoomView /> },
-      { path: 'voice-room/:roomId', element: <VoiceRoomChat /> },
+      { path: 'voice-room/:roomId', element: voiceRoomChat },
     ],
   },
 ];

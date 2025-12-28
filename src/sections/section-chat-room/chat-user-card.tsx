@@ -47,6 +47,7 @@ export type ChatUserCardProps = {
   stream: MediaStream | null;
   isLocal: boolean;
   showSettings?: boolean;
+  connectionStatus?: string;
   onSettingsChange?: (settings: any) => void;
   onToggleMute?: (userId: string) => void;
   onVolumeToggle?: (userId: string) => void;
@@ -58,9 +59,12 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
   onSettingsChange,
   stream,
   isLocal,
+  connectionStatus,
   onToggleMute,
   onVolumeToggle,
 }) => {
+  const menuOpen = useBoolean(false);
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [privateMessageEL, setPrivateMessageEL] = useState<null | HTMLElement>(null);
@@ -151,24 +155,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
     onVolumeToggle?.(id);
   };
 
-  // Safely resolve palette tokens like 'success.mainChannel' to a concrete value
-  const palette = theme.vars.palette as unknown as Record<string, any>;
-
-  const bgColorValue = (bgColorToken: string) => {
-    if (!bgColorToken || typeof bgColorToken !== 'string') return undefined;
-    const parts = bgColorToken.split('.');
-    if (parts.length === 2) {
-      const [group, shade] = parts;
-      return palette[group]?.[shade];
-    }
-    // fallback to direct key access if token is a single segment
-    return palette[bgColorToken];
-  };
-
-  const statusColor = bgColorValue(statusConfig[status]?.color || 'primary.main');
-
-  const menuOpen = useBoolean(false);
-
   return (
     <Box sx={{ position: 'relative' }}>
       <Card
@@ -184,7 +170,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
           position: 'relative',
           overflow: 'hidden',
           backgroundColor: 'background.paper',
-          boxShadow: isSpeaking ? `0 0 0 2px ${statusColor}40` : 'none',
+          boxShadow: isSpeaking ? `0 0 0 2px ${statusConfig[status].color}40` : 'none',
           transition: 'all 0.2s ease',
           cursor: 'pointer',
           ...(menuOpen.value && {
@@ -199,7 +185,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
           }),
         }}
       >
-        {isSpeaking && <VoiceRoomIsSpeaking statusColor={statusColor} />}
+        {isSpeaking && <VoiceRoomIsSpeaking statusColor={statusConfig[status].color} />}
 
         <Box
           sx={{
@@ -221,6 +207,27 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
             {verified ? 'VERIFIED' : 'UNVERIFIED'}
           </Typography>
         </Box>
+        {connectionStatus && !isSpeaking && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+
+              borderColor: 'background.paper',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ px: '4px', fontWeight: 'bold', color: 'text.primary' }}
+            >
+              {connectionStatus || 'Connected'}
+            </Typography>
+          </Box>
+        )}
 
         <CardContent
           sx={{

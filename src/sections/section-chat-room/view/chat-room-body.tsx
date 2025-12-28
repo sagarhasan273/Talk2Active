@@ -7,6 +7,7 @@ import { Box, Stack, Typography, LinearProgress } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 // Assumed actual import
 import { ChatUserCard } from '../chat-user-card';
@@ -30,6 +31,9 @@ export function ChatRoomChatBody({
 }) {
   const user = useSelector(selectAccount);
   const { room } = useRoomTools();
+  const { connectionStatus } = useWebRTCContext();
+
+  console.log(connectionStatus);
 
   return (
     <Box flex={1} display="flex" flexDirection="column">
@@ -50,6 +54,7 @@ export function ChatRoomChatBody({
               verified: participant.verified,
             }}
             stream={remoteStreams[participant.socketId] || null}
+            connectionStatus={connectionStatus[participant.socketId]}
             isLocal={false}
           />
         ))}
