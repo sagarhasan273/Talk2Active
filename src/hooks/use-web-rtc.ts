@@ -25,7 +25,7 @@ export interface UseWebRTCReturn {
   audioSettings: AudioSettings;
 
   // Core WebRTC functions
-  initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<void>;
+  initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
   createOffer: (targetSocketId: string, socket: any) => Promise<void>;
   handleOffer: (data: any, socket: any) => Promise<void>;
   handleAnswer: (data: any) => Promise<void>;
@@ -208,7 +208,7 @@ export default function useWebRTC(): UseWebRTCReturn {
   }, []);
 
   const initializeMicrophone = useCallback(
-    async (customConstraints?: MediaStreamConstraints): Promise<void> => {
+    async (customConstraints?: MediaStreamConstraints): Promise<boolean> => {
       try {
         if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
           throw new Error('Microphone not supported in this environment.');
@@ -239,6 +239,8 @@ export default function useWebRTC(): UseWebRTCReturn {
 
         // Start microphone level monitoring
         startMicrophoneLevelMonitoring();
+
+        return !audioTrack.enabled;
       } catch (error) {
         console.error('Error accessing microphone:', error);
         throw new Error('Microphone access denied. Please allow camera/microphone access.');

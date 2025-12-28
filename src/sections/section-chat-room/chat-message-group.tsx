@@ -1,7 +1,7 @@
 import type { Message, MessageOnReply } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import { Box, Paper, Typography } from '@mui/material';
 
@@ -40,46 +40,49 @@ export const ChatMessageGroup = ({
 
   const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
 
-  const handleSendMessage = (
-    isPrivateMessage: boolean,
-    targetUserInfo: Message['targetUserInfo'],
-    mentions: Message['mentions'] = []
-  ): void => {
-    if (message.trim() === '') return;
+  const handleSendMessage = useCallback(
+    (
+      isPrivateMessage: boolean,
+      targetUserInfo: Message['targetUserInfo'],
+      mentions: Message['mentions'] = []
+    ): void => {
+      if (message.trim() === '') return;
 
-    const newMessage: Message = {
-      text: message,
-      sender: 'me',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isUnread: false,
-      isPrivate: isPrivateMessage,
-      senderSocketId: socket?.id,
-      targetSocketId: targetUserInfo?.socketId,
-      type: 'message',
-      userInfo: {
-        userId: user.id,
-        name: user.name,
-        avatar: user.profilePhoto,
-      },
-      targetUserInfo,
-      mentions,
-      messageRepliedOf: replyMessage,
-    };
+      const newMessage: Message = {
+        text: message,
+        sender: 'me',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isUnread: false,
+        isPrivate: isPrivateMessage,
+        senderSocketId: socket?.id,
+        targetSocketId: targetUserInfo?.socketId,
+        type: 'message',
+        userInfo: {
+          userId: user.id,
+          name: user.name,
+          avatar: user.profilePhoto,
+        },
+        targetUserInfo,
+        mentions,
+        messageRepliedOf: replyMessage,
+      };
 
-    if (isPrivateMessage && targetUserInfo) {
-      socket?.emit('send-private-message', {
-        roomId: room.id,
-        ...newMessage,
-      });
-    } else {
-      socket?.emit('send-group-message', {
-        roomId: room.id,
-        ...newMessage,
-      });
-    }
+      if (isPrivateMessage && targetUserInfo) {
+        socket?.emit('send-private-message', {
+          roomId: room.id,
+          ...newMessage,
+        });
+      } else {
+        socket?.emit('send-group-message', {
+          roomId: room.id,
+          ...newMessage,
+        });
+      }
 
-    setMessage('');
-  };
+      setMessage('');
+    },
+    [message, replyMessage, room.id, socket, user]
+  );
 
   const handleReaction = (messageId: Message['id'], emoji: string) => {
     const reactionData = {

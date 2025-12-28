@@ -118,7 +118,7 @@ export function VoiceRoomChat() {
       setMicError(null);
 
       // Initialize microphone
-      await initializeMicrophone();
+      const isMic = await initializeMicrophone();
 
       // Join voice room
       socket.emit('join-voice-room', {
@@ -126,8 +126,8 @@ export function VoiceRoomChat() {
         userId: user.id,
         name: user.name,
         profilePhoto: user.profilePhoto,
-        isMuted: isMicMuted,
-        status: 'online',
+        isMuted: isMic,
+        status,
         userType: room.host?.id === user.id ? 'Host' : 'Guest',
         verified: user.verified,
       });
@@ -147,7 +147,7 @@ export function VoiceRoomChat() {
       setState((prev) => ({ ...prev, isInitializing: false }));
       return false;
     }
-  }, [socket, roomId, user, isMicMuted, room.host?.id, initializeMicrophone]);
+  }, [socket, roomId, status, user, room.host?.id, initializeMicrophone]);
 
   // Join room
   const joinRoom = useCallback(async () => {
@@ -160,7 +160,10 @@ export function VoiceRoomChat() {
 
       if (response.status) {
         const initialized = await initializeVoiceRoom();
-        setupChatSocketListenersRef.current = setupChatSocketListeners?.();
+
+        if (!setupChatSocketListenersRef.current)
+          setupChatSocketListenersRef.current = setupChatSocketListeners?.();
+
         if (initialized) {
           toast.success('Joined the room successfully');
         }
@@ -187,6 +190,8 @@ export function VoiceRoomChat() {
         userId: user.id,
         name: user.name,
       });
+
+      setStatus('online');
 
       // Update API
       await leaveRoomMutation({ roomId, userId: user.id }).unwrap();
