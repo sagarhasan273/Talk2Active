@@ -24,36 +24,25 @@ export interface UseWebRTCReturn {
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
   isMicMuted: boolean;
+  micLevel: number;
   audioSettings: AudioSettings;
   connectionStatus: { [socketId: string]: string };
-
-  // Core WebRTC functions
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
   createOffer: (targetSocketId: string, socket: any) => Promise<void>;
   handleOffer: (data: any, socket: any) => Promise<void>;
   handleAnswer: (data: any) => Promise<void>;
   handleIceCandidate: (data: any) => Promise<void>;
   toggleMicrophone: () => boolean;
-
-  // Audio control functions
-  setMicrophoneVolume: (level: number) => void; // 0-100
-  setMicrophoneGain: (gain: number) => void; // 0-100
+  setMicrophoneVolume: (level: number) => void;
+  setMicrophoneGain: (gain: number) => void;
   setEchoCancellation: (enabled: boolean) => void;
   setNoiseSuppression: (enabled: boolean) => void;
   setAutoGainControl: (enabled: boolean) => void;
   muteMicrophone: () => void;
   unmuteMicrophone: () => void;
   onClickMicrophone: (value: boolean) => void;
-
-  // Audio analysis
-  getMicrophoneLevel: () => number; // 0-100
-
-  // Cleanup
   cleanup: () => void;
-
-  // Helper methods
   applyAudioSettings: (settings: Partial<AudioSettings>) => void;
-  getAudioSettings: () => AudioSettings;
 }
 
 const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
@@ -65,16 +54,15 @@ const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   isMicMuted: false,
 };
 
-const CONNECTION_TIMEOUT = 10000;
-
 export default function useWebRTC(): UseWebRTCReturn {
   const { removeRemoteParticipant } = useRoomTools();
 
   // Refs
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<{ [socketId: string]: RTCPeerConnection }>({});
+  const iceCandidatesQueue = useRef<{ [socketId: string]: RTCIceCandidateInit[] }>({});
   const pendingOffersRef = useRef<{ [socketId: string]: boolean }>({});
-  const pendingAnswersRef = useRef<{ [socketId: string]: boolean }>({});
+
   const audioNodesRef = useRef<AudioNodeManager>({
     microphoneGainNode: null,
     volumeGainNode: null,
@@ -89,6 +77,7 @@ export default function useWebRTC(): UseWebRTCReturn {
   const [remoteStreams, setRemoteStreams] = useState<{ [socketId: string]: MediaStream }>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(DEFAULT_AUDIO_SETTINGS);
   const [connectionStatus, setConnectionStatus] = useState<{ [socketId: string]: string }>({});
 
@@ -102,44 +91,48 @@ export default function useWebRTC(): UseWebRTCReturn {
     []
   );
 
+  // Process queued ICE candidates once remote description is set
+  const processIceQueue = useCallback(async (socketId: string) => {
+    const pc = peerConnectionsRef.current[socketId];
+    const queue = iceCandidatesQueue.current[socketId];
+    if (pc && pc.remoteDescription && queue) {
+      const candidates = queue.splice(0);
+      const promises = candidates.map((candidate) =>
+        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch((e) => {
+          console.error('Error adding queued ICE candidate', e);
+        })
+      );
+      await Promise.all(promises);
+    }
+  }, []);
+
   const setupAudioProcessing = useCallback(
     (stream: MediaStream): MediaStream => {
       try {
-        // Create audio context if not exists
         if (!audioNodesRef.current.audioContext) {
           audioNodesRef.current.audioContext = new (window.AudioContext ||
             (window as any).webkitAudioContext)();
         }
-
         const { audioContext } = audioNodesRef.current;
+        if (audioContext.state === 'suspended') audioContext.resume();
 
-        // Resume audio context if it's suspended
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
-        }
-
-        // Create nodes
         const sourceNode = audioContext.createMediaStreamSource(stream);
         const microphoneGainNode = audioContext.createGain();
         const volumeGainNode = audioContext.createGain();
         const destinationNode = audioContext.createMediaStreamDestination();
 
-        // Set initial gain values
         microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
         volumeGainNode.gain.value = audioSettings.volume / 100;
 
-        // Connect nodes: source -> microphoneGain -> volumeGain -> destination
         sourceNode.connect(microphoneGainNode);
         microphoneGainNode.connect(volumeGainNode);
         volumeGainNode.connect(destinationNode);
 
-        // Setup audio analyser for microphone level
         const analyser = audioContext.createAnalyser();
         volumeGainNode.connect(analyser);
         analyser.fftSize = 256;
         audioAnalyserRef.current = analyser;
 
-        // Store references
         audioNodesRef.current = {
           ...audioNodesRef.current,
           sourceNode,
@@ -147,82 +140,86 @@ export default function useWebRTC(): UseWebRTCReturn {
           volumeGainNode,
           destinationNode,
         };
-
         return destinationNode.stream;
       } catch (error) {
-        console.error('Error setting up audio processing:', error);
-        return stream; // Fallback to original stream
+        console.error('Audio Setup Error:', error);
+        return stream;
       }
     },
     [audioSettings.microphoneGain, audioSettings.volume]
   );
 
-  const updateAudioTrackConstraints = useCallback(
-    (stream: MediaStream, settings: Partial<AudioSettings>) => {
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!audioTrack) return;
-
-      const constraints: MediaTrackConstraints = {};
-
-      if (settings.echoCancellation !== undefined) {
-        constraints.echoCancellation = settings.echoCancellation;
-      }
-
-      if (settings.noiseSuppression !== undefined) {
-        constraints.noiseSuppression = settings.noiseSuppression;
-      }
-
-      if (settings.autoGainControl !== undefined) {
-        constraints.autoGainControl = settings.autoGainControl;
-      }
-
-      if (Object.keys(constraints).length > 0) {
-        audioTrack.applyConstraints(constraints).catch(console.error);
-      }
-    },
-    []
-  );
-
   const startMicrophoneLevelMonitoring = useCallback(() => {
     if (!audioAnalyserRef.current) return;
-
-    const stopMonitoring = () => {
-      if (audioAnimationRef.current) {
-        cancelAnimationFrame(audioAnimationRef.current);
-        audioAnimationRef.current = null;
-      }
+    const monitor = () => {
+      if (!audioAnalyserRef.current) return;
+      const dataArray = new Uint8Array(audioAnalyserRef.current.frequencyBinCount);
+      audioAnalyserRef.current.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      setMicLevel(Math.min(Math.max((average / 128) * 100, 0), 100));
+      audioAnimationRef.current = requestAnimationFrame(monitor);
     };
-
-    // Clean up previous monitoring
-    stopMonitoring();
-
-    const monitorMicrophoneLevel = () => {
-      if (!audioAnalyserRef.current) {
-        stopMonitoring();
-        return;
-      }
-
-      const analyser = audioAnalyserRef.current;
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
-
-      // Update audio settings with current level (optional)
-      // Could be used for visual indicators
-
-      audioAnimationRef.current = requestAnimationFrame(monitorMicrophoneLevel);
-    };
-
-    audioAnimationRef.current = requestAnimationFrame(monitorMicrophoneLevel);
+    audioAnimationRef.current = requestAnimationFrame(monitor);
   }, []);
+
+  const createPeerConnection = useCallback(
+    (socketId: string, socket: any): RTCPeerConnection => {
+      if (peerConnectionsRef.current[socketId]) {
+        peerConnectionsRef.current[socketId].close();
+      }
+
+      const pc = new RTCPeerConnection(getIceServers());
+
+      if (localStreamRef.current) {
+        localStreamRef.current
+          .getTracks()
+          .forEach((track) => pc.addTrack(track, localStreamRef.current!));
+      }
+
+      pc.ontrack = (event) => {
+        setRemoteStreams((prev) => ({ ...prev, [socketId]: event.streams[0] }));
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('webrtc-ice-candidate', { candidate: event.candidate, target: socketId });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
+
+        if (state === 'failed') {
+          // Trigger ICE Restart or cleanup
+          console.warn(`Connection to ${socketId} failed. Attempting cleanup.`);
+          removeRemoteParticipant(socketId);
+          pc.close();
+          delete peerConnectionsRef.current[socketId];
+        }
+
+        if (state === 'disconnected') {
+          console.log(`Lost connection to ${socketId}. Waiting for auto-recovery...`);
+        }
+      };
+
+      // Negotiate automatic ICE restart if needed
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'failed') {
+          pc.restartIce();
+        }
+      };
+
+      peerConnectionsRef.current[socketId] = pc;
+      return pc;
+    },
+    [getIceServers, removeRemoteParticipant]
+  );
 
   const initializeMicrophone = useCallback(
     async (customConstraints?: MediaStreamConstraints): Promise<boolean> => {
       try {
-        if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
-          throw new Error('Microphone not supported in this environment.');
-        }
-
-        const defaultConstraints: MediaStreamConstraints = {
+        const constraints = customConstraints || {
           audio: {
             echoCancellation: audioSettings.echoCancellation,
             noiseSuppression: audioSettings.noiseSuppression,
@@ -230,484 +227,121 @@ export default function useWebRTC(): UseWebRTCReturn {
           },
           video: false,
         };
-
-        const constraints = customConstraints || defaultConstraints;
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-        // Setup audio processing
         const processedStream = setupAudioProcessing(stream);
-
-        // Store original stream for reference
         localStreamRef.current = processedStream;
         setLocalStream(processedStream);
-
-        // Set initial mute state
+        startMicrophoneLevelMonitoring();
         const audioTrack = stream.getAudioTracks()[0];
         setIsMicMuted(!audioTrack.enabled);
-
-        // Start microphone level monitoring
-        startMicrophoneLevelMonitoring();
-
         return !audioTrack.enabled;
       } catch (error) {
-        console.error('Error accessing microphone:', error);
-        throw new Error('Microphone access denied. Please allow camera/microphone access.');
+        console.error('Microphone Access Error:', error);
+        return false;
       }
     },
     [audioSettings, setupAudioProcessing, startMicrophoneLevelMonitoring]
   );
 
-  const createPeerConnection = useCallback(
-    (socketId: string): RTCPeerConnection => {
-      if (peerConnectionsRef.current[socketId]) {
-        console.warn('Re-creating connection for:', socketId);
-        peerConnectionsRef.current[socketId].close();
-      }
-
-      const peerConnection = new RTCPeerConnection(getIceServers());
-
-      // Add local stream tracks
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => {
-          if (!peerConnection.getSenders().some((sender) => sender.track === track)) {
-            peerConnection.addTrack(track, localStreamRef.current!);
-          }
-        });
-      }
-
-      // Handle incoming remote stream
-      peerConnection.ontrack = (event) => {
-        console.log('Received remote track from:', socketId);
-        const [remoteStream] = event.streams;
-        setRemoteStreams((prev) => ({
-          ...prev,
-          [socketId]: remoteStream,
-        }));
-      };
-
-      // Handle ICE candidates
-      peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          const { socket } = window as any;
-          if (socket) {
-            socket.emit('webrtc-ice-candidate', {
-              candidate: event.candidate,
-              target: socketId,
-            });
-          }
-        }
-      };
-
-      peerConnection.onconnectionstatechange = () => {
-        const state = peerConnection.connectionState;
-        setConnectionStatus((prev) => {
-          const currentStatus = prev[socketId];
-
-          switch (state) {
-            case 'connected':
-              // Connection successful
-              console.log(`Connection to ${socketId} connected`);
-              return { ...prev, [socketId]: 'connected' };
-
-            case 'disconnected':
-              // Temporary disconnection - wait for recovery
-              console.log(`Disconnected from ${socketId}, waiting for recovery...`);
-              return { ...prev, [socketId]: 'disconnected' };
-
-            case 'failed': {
-              // Permanent failure - clean up
-              console.error(`Connection to ${socketId} failed`);
-              setTimeout(() => {
-                removeRemoteParticipant(socketId);
-                if (peerConnectionsRef.current[socketId]) {
-                  peerConnectionsRef.current[socketId].close();
-                  delete peerConnectionsRef.current[socketId];
-                }
-              }, 100);
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { [socketId]: _, ...rest } = prev;
-              return rest;
-            }
-
-            case 'closed': {
-              // Connection closed intentionally
-              console.log(`Connection to ${socketId} closed`);
-              const remaining = { ...prev };
-              delete remaining[socketId];
-              return remaining;
-            }
-
-            case 'connecting':
-              // Set timeout for connection attempt
-              if (currentStatus !== 'connecting') {
-                console.log(`Attempting to connect to ${socketId}...`);
-                // Set timeout for connection attempt
-                setTimeout(() => {
-                  if (peerConnection.connectionState === 'connecting') {
-                    console.warn(
-                      `Connection to ${socketId} timed out after ${CONNECTION_TIMEOUT}ms`
-                    );
-                    peerConnection.close();
-                    removeRemoteParticipant(socketId);
-                  }
-                }, CONNECTION_TIMEOUT);
-              }
-              return { ...prev, [socketId]: 'connecting' };
-
-            case 'new':
-              // New connection created
-              console.log(`New connection for ${socketId}`);
-              return { ...prev, [socketId]: 'new' };
-
-            default:
-              return prev;
-          }
-        });
-      };
-
-      peerConnectionsRef.current[socketId] = peerConnection;
-      return peerConnection;
-    },
-    [getIceServers, removeRemoteParticipant]
-  );
-
-  // Audio control functions
-  const setMicrophoneVolume = useCallback((level: number) => {
-    const volume = Math.min(Math.max(level, 0), 100);
-
-    if (audioNodesRef.current.volumeGainNode) {
-      audioNodesRef.current.volumeGainNode.gain.value = volume / 100;
-    }
-
-    setAudioSettings((prev) => ({
-      ...prev,
-      volume,
-    }));
-  }, []);
-
-  const setMicrophoneGain = useCallback((gain: number) => {
-    const microphoneGain = Math.min(Math.max(gain, 0), 100);
-
-    if (audioNodesRef.current.microphoneGainNode) {
-      audioNodesRef.current.microphoneGainNode.gain.value = microphoneGain / 100;
-    }
-
-    setAudioSettings((prev) => ({
-      ...prev,
-      microphoneGain,
-    }));
-  }, []);
-
-  const setEchoCancellation = useCallback(
-    (enabled: boolean) => {
-      if (localStreamRef.current) {
-        updateAudioTrackConstraints(localStreamRef.current, { echoCancellation: enabled });
-      }
-
-      setAudioSettings((prev) => ({
-        ...prev,
-        echoCancellation: enabled,
-      }));
-    },
-    [updateAudioTrackConstraints]
-  );
-
-  const setNoiseSuppression = useCallback(
-    (enabled: boolean) => {
-      if (localStreamRef.current) {
-        updateAudioTrackConstraints(localStreamRef.current, { noiseSuppression: enabled });
-      }
-
-      setAudioSettings((prev) => ({
-        ...prev,
-        noiseSuppression: enabled,
-      }));
-    },
-    [updateAudioTrackConstraints]
-  );
-
-  const setAutoGainControl = useCallback(
-    (enabled: boolean) => {
-      if (localStreamRef.current) {
-        updateAudioTrackConstraints(localStreamRef.current, { autoGainControl: enabled });
-      }
-
-      setAudioSettings((prev) => ({
-        ...prev,
-        autoGainControl: enabled,
-      }));
-    },
-    [updateAudioTrackConstraints]
-  );
-
-  const muteMicrophone = useCallback(() => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = false;
-      });
-      setIsMicMuted(true);
-      setAudioSettings((prev) => ({ ...prev, isMicMuted: true }));
-    }
-  }, []);
-
-  const unmuteMicrophone = useCallback(() => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = true;
-      });
-      setIsMicMuted(false);
-      setAudioSettings((prev) => ({ ...prev, isMicMuted: false }));
-    }
-  }, []);
-
-  const onClickMicrophone = useCallback((value: boolean) => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = !value;
-      });
-      setIsMicMuted(value);
-      setAudioSettings((prev) => ({ ...prev, isMicMuted: value }));
-    }
-  }, []);
-
-  const toggleMicrophone = useCallback((): boolean => {
-    if (localStreamRef.current) {
-      const audioTracks = localStreamRef.current.getAudioTracks();
-
-      audioTracks.forEach((track) => {
-        track.enabled = !track.enabled;
-      });
-
-      const newMutedState = !audioTracks[0]?.enabled;
-
-      setIsMicMuted(newMutedState);
-      setAudioSettings((prev) => ({ ...prev, isMicMuted: newMutedState }));
-      return newMutedState;
-    }
-    return isMicMuted;
-  }, [isMicMuted]);
-
-  const getMicrophoneLevel = useCallback((): number => {
-    if (!audioAnalyserRef.current) return 0;
-
-    const analyser = audioAnalyserRef.current;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(dataArray);
-
-    // Calculate average level (0-100)
-    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-    return Math.min(Math.max((average / 128) * 100, 0), 100);
-  }, []);
-
-  const applyAudioSettings = useCallback(
-    (newSettings: Partial<AudioSettings>) => {
-      setAudioSettings((prev) => {
-        const updated = { ...prev, ...newSettings };
-
-        // Apply each setting
-        if (newSettings.volume !== undefined) {
-          setMicrophoneVolume(newSettings.volume);
-        }
-
-        if (newSettings.microphoneGain !== undefined) {
-          setMicrophoneGain(newSettings.microphoneGain);
-        }
-
-        if (newSettings.echoCancellation !== undefined) {
-          setEchoCancellation(newSettings.echoCancellation);
-        }
-
-        if (newSettings.noiseSuppression !== undefined) {
-          setNoiseSuppression(newSettings.noiseSuppression);
-        }
-
-        if (newSettings.autoGainControl !== undefined) {
-          setAutoGainControl(newSettings.autoGainControl);
-        }
-
-        if (newSettings.isMicMuted !== undefined) {
-          if (newSettings.isMicMuted) {
-            muteMicrophone();
-          } else {
-            unmuteMicrophone();
-          }
-        }
-
-        return updated;
-      });
-    },
-    [
-      setMicrophoneVolume,
-      setMicrophoneGain,
-      setEchoCancellation,
-      setNoiseSuppression,
-      setAutoGainControl,
-      muteMicrophone,
-      unmuteMicrophone,
-    ]
-  );
-
-  const getAudioSettings = useCallback((): AudioSettings => audioSettings, [audioSettings]);
-
-  // Rest of the WebRTC functions (createOffer, handleOffer, handleAnswer, handleIceCandidate)
-  // remain the same as in your original code...
-
   const createOffer = useCallback(
-    async (targetSocketId: string, socket: any): Promise<void> => {
+    async (targetSocketId: string, socket: any) => {
+      if (pendingOffersRef.current[targetSocketId]) return;
       try {
-        if (pendingOffersRef.current[targetSocketId]) {
-          return;
-        }
-
         pendingOffersRef.current[targetSocketId] = true;
-        const peerConnection = createPeerConnection(targetSocketId);
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-
-        socket.emit('webrtc-offer', {
-          offer,
-          target: targetSocketId,
-        });
-
+        const pc = createPeerConnection(targetSocketId, socket);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('webrtc-offer', { offer, target: targetSocketId });
+      } catch (e) {
+        console.error('Offer Error:', e);
+      } finally {
         setTimeout(() => {
           pendingOffersRef.current[targetSocketId] = false;
-        }, 5000);
-      } catch (error) {
-        console.error('Error creating offer:', error);
-        pendingOffersRef.current[targetSocketId] = false;
+        }, 2000);
       }
     },
     [createPeerConnection]
   );
 
   const handleOffer = useCallback(
-    async (data: any, socket: any): Promise<void> => {
+    async (data: any, socket: any) => {
       try {
         const { offer, sender } = data;
-        const peerConnection = createPeerConnection(sender);
-
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        socket.emit('webrtc-answer', {
-          answer,
-          target: sender,
-        });
-      } catch (error) {
-        console.error('Error handling offer:', error);
+        const pc = createPeerConnection(sender, socket);
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('webrtc-answer', { answer, target: sender });
+        processIceQueue(sender);
+      } catch (e) {
+        console.error('Handle Offer Error:', e);
       }
     },
-    [createPeerConnection]
+    [createPeerConnection, processIceQueue]
   );
 
-  const handleAnswer = useCallback(async (data: any): Promise<void> => {
-    const { answer, sender } = data;
-    try {
-      const peerConnection = peerConnectionsRef.current[sender];
-
-      if (!peerConnection) {
-        console.error('No peer connection found for:', sender);
-        return;
+  const handleAnswer = useCallback(
+    async (data: any) => {
+      const { answer, sender } = data;
+      const pc = peerConnectionsRef.current[sender];
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        processIceQueue(sender);
       }
+    },
+    [processIceQueue]
+  );
 
-      if (peerConnection.signalingState !== 'have-local-offer') {
-        return;
-      }
-
-      if (pendingAnswersRef.current[sender]) {
-        return;
-      }
-
-      pendingAnswersRef.current[sender] = true;
-
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-      console.log('Successfully set remote description from answer for:', sender);
-
-      setTimeout(() => {
-        pendingAnswersRef.current[sender] = false;
-      }, 3000);
-    } catch (error) {
-      console.error('Error handling answer:', error);
-      pendingAnswersRef.current[sender] = false;
+  const handleIceCandidate = useCallback(async (data: any) => {
+    const { candidate, sender } = data;
+    const pc = peerConnectionsRef.current[sender];
+    if (pc && pc.remoteDescription) {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    } else {
+      if (!iceCandidatesQueue.current[sender]) iceCandidatesQueue.current[sender] = [];
+      iceCandidatesQueue.current[sender].push(candidate);
     }
   }, []);
 
-  const handleIceCandidate = useCallback(async (data: any): Promise<void> => {
-    try {
-      const { candidate, sender } = data;
-      const peerConnection = peerConnectionsRef.current[sender];
+  // Audio Controls
+  const setMicrophoneVolume = (level: number) => {
+    if (audioNodesRef.current.volumeGainNode)
+      audioNodesRef.current.volumeGainNode.gain.value = level / 100;
+    setAudioSettings((p) => ({ ...p, volume: level }));
+  };
 
-      if (peerConnection && candidate) {
-        if (peerConnection.remoteDescription) {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-        } else {
-          console.warn('Queuing ICE candidate for later, no remote description yet for:', sender);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling ICE candidate:', error);
-    }
-  }, []);
+  const setMicrophoneGain = (gain: number) => {
+    if (audioNodesRef.current.microphoneGainNode)
+      audioNodesRef.current.microphoneGainNode.gain.value = gain / 100;
+    setAudioSettings((p) => ({ ...p, microphoneGain: gain }));
+  };
 
-  const cleanup = useCallback((): void => {
-    console.log('Cleaning up WebRTC connections...');
-
-    // Stop microphone level monitoring
-    if (audioAnimationRef.current) {
-      cancelAnimationFrame(audioAnimationRef.current);
-      audioAnimationRef.current = null;
-    }
-
-    // Close all peer connections
-    Object.entries(peerConnectionsRef.current).forEach(([, peerConnection]) => {
-      peerConnection.close();
-    });
-    peerConnectionsRef.current = {};
-
-    // Clear pending states
-    pendingOffersRef.current = {};
-    pendingAnswersRef.current = {};
-
-    // Cleanup audio processing
-    if (audioNodesRef.current.sourceNode) {
-      audioNodesRef.current.sourceNode.disconnect();
-    }
-    if (audioNodesRef.current.audioContext) {
-      audioNodesRef.current.audioContext.close();
-    }
-    audioNodesRef.current = {
-      microphoneGainNode: null,
-      volumeGainNode: null,
-      audioContext: null,
-      sourceNode: null,
-      destinationNode: null,
-    };
-
-    // Stop local stream
+  const toggleMicrophone = () => {
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        track.stop();
-      });
-      localStreamRef.current = null;
-      setLocalStream(null);
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      setIsMicMuted(!audioTrack.enabled);
+      setAudioSettings((p) => ({ ...p, isMicMuted: !audioTrack.enabled }));
+      return !audioTrack.enabled;
     }
+    return isMicMuted;
+  };
 
-    // Clear remote streams
+  const cleanup = useCallback(() => {
+    if (audioAnimationRef.current) cancelAnimationFrame(audioAnimationRef.current);
+    Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+    peerConnectionsRef.current = {};
+    if (audioNodesRef.current.audioContext) audioNodesRef.current.audioContext.close();
+    if (localStreamRef.current) localStreamRef.current.getTracks().forEach((t) => t.stop());
     setRemoteStreams({});
-
-    // Reset audio settings
-    setAudioSettings(DEFAULT_AUDIO_SETTINGS);
-
-    console.log('WebRTC cleanup completed');
+    setLocalStream(null);
   }, []);
 
   return {
     remoteStreams,
     localStream,
     isMicMuted,
+    micLevel,
     audioSettings,
     connectionStatus,
     initializeMicrophone,
@@ -718,15 +352,22 @@ export default function useWebRTC(): UseWebRTCReturn {
     toggleMicrophone,
     setMicrophoneVolume,
     setMicrophoneGain,
-    setEchoCancellation,
-    setNoiseSuppression,
-    setAutoGainControl,
-    muteMicrophone,
-    unmuteMicrophone,
-    onClickMicrophone,
-    getMicrophoneLevel,
     cleanup,
-    applyAudioSettings,
-    getAudioSettings,
+    setEchoCancellation: (e) => setAudioSettings((p) => ({ ...p, echoCancellation: e })),
+    setNoiseSuppression: (e) => setAudioSettings((p) => ({ ...p, noiseSuppression: e })),
+    setAutoGainControl: (e) => setAudioSettings((p) => ({ ...p, autoGainControl: e })),
+    muteMicrophone: () => {
+      if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = false;
+      setIsMicMuted(true);
+    },
+    unmuteMicrophone: () => {
+      if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = true;
+      setIsMicMuted(false);
+    },
+    onClickMicrophone: (v) => {
+      if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = !v;
+      setIsMicMuted(v);
+    },
+    applyAudioSettings: (s) => setAudioSettings((p) => ({ ...p, ...s })),
   };
 }
