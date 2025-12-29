@@ -283,6 +283,8 @@ export function VoiceRoomChat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  console.log('render');
+
   // Validation
   if (!roomId) {
     return (

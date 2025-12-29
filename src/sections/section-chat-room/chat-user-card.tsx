@@ -65,7 +65,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
 }) => {
   const menuOpen = useBoolean(false);
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [privateMessageEL, setPrivateMessageEL] = useState<null | HTMLElement>(null);
   const [audioSettings, setAudioSettings] = useState<ChatUserCardAudioSettings>({
@@ -170,7 +169,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
           position: 'relative',
           overflow: 'hidden',
           backgroundColor: 'background.paper',
-          boxShadow: isSpeaking ? `0 0 0 2px ${statusConfig[status].color}40` : 'none',
           transition: 'all 0.2s ease',
           cursor: 'pointer',
           ...(menuOpen.value && {
@@ -185,7 +183,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
           }),
         }}
       >
-        {isSpeaking && <VoiceRoomIsSpeaking statusColor={statusConfig[status].color} />}
+        <VoiceRoomIsSpeaking statusColor={statusConfig[status].color} stream={stream} />
 
         <Box
           sx={{
@@ -207,7 +205,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
             {verified ? 'VERIFIED' : 'UNVERIFIED'}
           </Typography>
         </Box>
-        {connectionStatus && !isSpeaking && (
+        {connectionStatus && (
           <Box
             sx={{
               position: 'absolute',
@@ -266,13 +264,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
             </Typography>
           </Box>
 
-          <UserAudio
-            stream={stream}
-            isLocal={isLocal}
-            userName={user.name}
-            isSpeaking={isSpeaking}
-            setIsSpeaking={setIsSpeaking}
-          />
+          <UserAudio stream={stream} isLocal={isLocal} userName={user.name} />
 
           {/* Hidden Quick Actions (Visible on Hover) */}
           <ChatUserCardQuickActions

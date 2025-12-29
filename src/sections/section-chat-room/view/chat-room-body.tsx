@@ -54,7 +54,7 @@ export function ChatRoomChatBody({
               verified: participant.verified,
             }}
             stream={remoteStreams[participant.socketId] || null}
-            connectionStatus={connectionStatus[participant.socketId]}
+            // connectionStatus={connectionStatus[participant.socketId]}
             isLocal={false}
           />
         ))}

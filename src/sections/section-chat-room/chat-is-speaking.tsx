@@ -1,7 +1,15 @@
 import { Box } from '@mui/material';
-import { Mic } from '@mui/icons-material';
 
-export function VoiceRoomIsSpeaking({ statusColor }: { statusColor: any }) {
+import { useMicLevel } from 'src/hooks/use-mic-level';
+
+export function VoiceRoomIsSpeaking({
+  statusColor,
+  stream,
+}: {
+  statusColor: any;
+  stream: MediaStream | null;
+}) {
+  const { micLevel } = useMicLevel(stream);
   return (
     <>
       {/* Option 1: Voice Wave Visualization */}
@@ -58,32 +66,55 @@ export function VoiceRoomIsSpeaking({ statusColor }: { statusColor: any }) {
       <Box
         sx={{
           position: 'absolute',
-          bottom: 3,
-          right: 3,
-          width: 18,
-          height: 18,
-          borderRadius: 1,
-          backgroundColor: statusColor,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: 'micActive 1.5s ease-in-out infinite',
-          border: '2px solid',
-          borderColor: 'background.paper',
-          '@keyframes micActive': {
-            '0%, 100%': {
-              transform: 'scale(1)',
-              boxShadow: `0 0 0 0 ${statusColor}40`,
-            },
-            '50%': {
-              transform: 'scale(1.2)',
-              boxShadow: `0 0 0 4px ${statusColor}40`,
-            },
-          },
+          right: 35,
+          bottom: 15,
         }}
       >
-        <Mic sx={{ fontSize: 12, color: 'white' }} />
+        <MicLevelIndicator micLevel={micLevel} />
       </Box>
     </>
+  );
+}
+
+type MicLevelProps = {
+  micLevel: number; // 0–50
+};
+
+export function MicLevelIndicator({ micLevel }: MicLevelProps) {
+  const normalized = Math.min(Math.max(micLevel, 0), 50);
+  const bars = Math.ceil((normalized / 50) * 5); // 0–5 bars
+  const isTalking = normalized > 5;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'absolute' }}>
+      {/* <span
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: isTalking ? '#22c55e' : '#9ca3af',
+        }}
+      >
+        {isTalking ? 'Talking' : 'Silent'}
+      </span> */}
+      <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end' }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: 3,
+              height: i * 2.5,
+              borderRadius: 3,
+              backgroundColor:
+                i <= bars
+                  ? isTalking
+                    ? '#22c55e' // green
+                    : '#9ca3af'
+                  : '#e5e7eb',
+              transition: 'all 120ms ease',
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

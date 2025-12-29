@@ -24,7 +24,6 @@ export interface UseWebRTCReturn {
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
   isMicMuted: boolean;
-  micLevel: number;
   audioSettings: AudioSettings;
   connectionStatus: { [socketId: string]: string };
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
@@ -77,7 +76,6 @@ export default function useWebRTC(): UseWebRTCReturn {
   const [remoteStreams, setRemoteStreams] = useState<{ [socketId: string]: MediaStream }>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
-  const [micLevel, setMicLevel] = useState(0);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(DEFAULT_AUDIO_SETTINGS);
   const [connectionStatus, setConnectionStatus] = useState<{ [socketId: string]: string }>({});
 
@@ -149,19 +147,6 @@ export default function useWebRTC(): UseWebRTCReturn {
     [audioSettings.microphoneGain, audioSettings.volume]
   );
 
-  const startMicrophoneLevelMonitoring = useCallback(() => {
-    if (!audioAnalyserRef.current) return;
-    const monitor = () => {
-      if (!audioAnalyserRef.current) return;
-      const dataArray = new Uint8Array(audioAnalyserRef.current.frequencyBinCount);
-      audioAnalyserRef.current.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      setMicLevel(Math.min(Math.max((average / 128) * 100, 0), 100));
-      audioAnimationRef.current = requestAnimationFrame(monitor);
-    };
-    audioAnimationRef.current = requestAnimationFrame(monitor);
-  }, []);
-
   const createPeerConnection = useCallback(
     (socketId: string, socket: any): RTCPeerConnection => {
       if (peerConnectionsRef.current[socketId]) {
@@ -204,11 +189,11 @@ export default function useWebRTC(): UseWebRTCReturn {
       };
 
       // Negotiate automatic ICE restart if needed
-      pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === 'failed') {
-          pc.restartIce();
-        }
-      };
+      // pc.oniceconnectionstatechange = () => {
+      //   if (pc.iceConnectionState === 'failed') {
+      //     pc.restartIce();
+      //   }
+      // };
 
       peerConnectionsRef.current[socketId] = pc;
       return pc;
@@ -231,7 +216,6 @@ export default function useWebRTC(): UseWebRTCReturn {
         const processedStream = setupAudioProcessing(stream);
         localStreamRef.current = processedStream;
         setLocalStream(processedStream);
-        startMicrophoneLevelMonitoring();
         const audioTrack = stream.getAudioTracks()[0];
         setIsMicMuted(!audioTrack.enabled);
         return !audioTrack.enabled;
@@ -240,7 +224,7 @@ export default function useWebRTC(): UseWebRTCReturn {
         return false;
       }
     },
-    [audioSettings, setupAudioProcessing, startMicrophoneLevelMonitoring]
+    [audioSettings, setupAudioProcessing]
   );
 
   const createOffer = useCallback(
@@ -341,7 +325,6 @@ export default function useWebRTC(): UseWebRTCReturn {
     remoteStreams,
     localStream,
     isMicMuted,
-    micLevel,
     audioSettings,
     connectionStatus,
     initializeMicrophone,
