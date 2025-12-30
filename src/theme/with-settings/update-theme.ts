@@ -41,6 +41,7 @@ export function updateCoreWithSettings(
 
   return {
     ...theme,
+    defaultColorScheme: settings.colorScheme,
     colorSchemes: {
       ...colorSchemes,
       light: {
@@ -64,6 +65,7 @@ export function updateCoreWithSettings(
         },
       },
     },
+    colorSchemeSelector: 'class',
   };
 }
 

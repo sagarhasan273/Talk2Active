@@ -2,15 +2,19 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 // ----------------------------------------------------------------------
 
+import { useSelector } from 'react-redux';
+
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
+import { Box, Chip, Badge } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { Box, Chip, Badge, Typography } from '@mui/material';
 import { SmartToy, Message as MessageIcon } from '@mui/icons-material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -27,14 +31,13 @@ export function VoiceRoomMessageGroupDrawer({
 }: VoiceRoomMessageGroupDrawerProps) {
   const drawer = useBoolean();
 
-  const { isUnreadChatRoomMessage } = useRoomTools();
+  const user = useSelector(selectAccount);
+  const { isUnreadChatRoomMessage, remoteParticipants } = useRoomTools();
+  const { socket } = useSocketContext();
 
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
       <Box>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Spanish Conversation Circle
-        </Typography>
         <Box
           sx={{
             display: 'flex',
@@ -46,8 +49,12 @@ export function VoiceRoomMessageGroupDrawer({
           <VoiceRoomMessageGroupHeader
             roomName="React Voice Room"
             users={[
-              { _id: 'dafdds', name: 'sagar hasan', profilePhoto: 'https://image.png' },
-              { _id: 'dafdds', name: 'venus luice', profilePhoto: 'https://image1.png' },
+              { _id: socket?.id || '$1', name: user.name, profilePhoto: user.profilePhoto },
+              ...(Object.values(remoteParticipants)?.map((participant) => ({
+                _id: participant?.socketId,
+                name: participant.name,
+                profilePhoto: participant.profilePhoto,
+              })) || []),
             ]}
           />
           <Chip
