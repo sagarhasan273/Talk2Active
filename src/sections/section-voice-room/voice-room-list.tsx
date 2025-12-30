@@ -134,7 +134,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
         }}
       >
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={12} md={6}>
+          <Grid sx={{ xs: 12, sm: 12, md: 6 }}>
             <TextField
               fullWidth
               placeholder="Search rooms..."
@@ -147,7 +147,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth>
               <InputLabel>Language</InputLabel>
               <Select
@@ -166,7 +166,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
             <FormControl fullWidth>
               <InputLabel>Skill Level</InputLabel>
               <Select
@@ -192,7 +192,7 @@ export const VoiceRoomList: React.FC<RoomListProps> = ({ onJoinRoom }) => {
           const isFull = room.currentParticipants.length >= room.maxParticipants;
 
           return (
-            <Grid item xs={12} md={6} lg={4} key={room.id}>
+            <Grid sx={{ xs: 12, md: 6, lg: 4 }} key={room.id}>
               <Card
                 sx={{
                   height: 1,

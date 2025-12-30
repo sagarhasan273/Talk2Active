@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 
 import {
   Box,
-  Grid,
   List,
+  Grid,
   Button,
   Avatar,
   Divider,
@@ -63,7 +63,7 @@ export function ChatRoomChatJoinNow({
       <CardContent sx={{ p: { xs: 1, sm: 4 } }}>
         <Grid container spacing={4}>
           {/* Left Column - Main Content */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 display: 'flex',
@@ -149,7 +149,7 @@ export function ChatRoomChatJoinNow({
           </Grid>
 
           {/* Right Column - Participants */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <Box sx={{ mb: 3 }}>
                 <Typography

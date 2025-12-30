@@ -139,7 +139,7 @@ function SettingsProfileNotifications() {
                 {deliveryMethods.map((method) => {
                   const Icon = method.icon;
                   return (
-                    <Grid item xs={12} md={6} key={method.key}>
+                    <Grid sx={{ xs: 12, sm: 6 }} key={method.key}>
                       <Paper
                         elevation={0}
                         sx={{

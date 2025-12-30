@@ -14,7 +14,12 @@ export interface ChatUserStatus {
     | 'stone.main'
     | 'stone.dark';
   bgColor: 'success' | 'error' | 'yellow' | 'orange' | 'stone' | 'stone';
-  bgColorChannel: 'mainChannel' | 'lightChannel' | 'darkChannel';
+  bgColorChannel:
+    | 'mainChannel'
+    | 'lightChannel'
+    | 'lighterChannel'
+    | 'darkChannel'
+    | 'darkerChannel';
 }
 
 // Types

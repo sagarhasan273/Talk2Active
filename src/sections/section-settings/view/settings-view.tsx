@@ -25,7 +25,7 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   minHeight: 'auto',
   padding: theme.spacing(1.5, 2),
   margin: theme.spacing(0.5, 0),
-  borderRadius: theme.shape.borderRadius * 2,
+  borderRadius: theme.spacing(2),
   '&.Mui-selected': {
     background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
     color: theme.palette.common.white,
@@ -62,7 +62,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
       <Box sx={{ maxWidth: 'md', mx: 'auto', px: 2, py: 3 }}>
         <Grid container spacing={3}>
           {/* Sidebar */}
-          <Grid item xs={12} md={3}>
+          <Grid sx={{ xs: 12, md: 3 }}>
             <StyledTabs
               orientation="vertical"
               value={activeTab}
@@ -94,7 +94,7 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
           </Grid>
 
           {/* Content */}
-          <Grid item xs={12} md={9}>
+          <Grid sx={{ xs: 12, md: 3 }}>
             <Card sx={{ borderRadius: { xs: 1, sm: 2, md: 3 }, boxShadow: 1, overflow: 'hidden' }}>
               {/* Profile Tab */}
               {activeTab === 'profile' && <SettingsProfileInformation />}

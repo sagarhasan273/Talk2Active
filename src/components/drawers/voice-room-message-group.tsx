@@ -1,7 +1,5 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { m } from 'framer-motion';
-
 // ----------------------------------------------------------------------
 
 import Stack from '@mui/material/Stack';
@@ -15,6 +13,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Iconify } from 'src/components/iconify';
+
+import { VoiceRoomMessageGroupHeader } from './voice-room-message-group-header';
 
 export type VoiceRoomMessageGroupDrawerProps = IconButtonProps & {
   children?: React.ReactNode;
@@ -43,6 +43,13 @@ export function VoiceRoomMessageGroupDrawer({
             gap: 1,
           }}
         >
+          <VoiceRoomMessageGroupHeader
+            roomName="React Voice Room"
+            users={[
+              { _id: 'dafdds', name: 'sagar hasan', profilePhoto: 'https://image.png' },
+              { _id: 'dafdds', name: 'venus luice', profilePhoto: 'https://image1.png' },
+            ]}
+          />
           <Chip
             icon={<Iconify icon="formkit:people" />}
             label="13"
@@ -70,8 +77,6 @@ export function VoiceRoomMessageGroupDrawer({
   return (
     <>
       <IconButton
-        component={m.button}
-        whileTap="tap"
         onClick={drawer.onTrue}
         sx={{
           p: 1,

@@ -1,7 +1,7 @@
 import type { Theme } from '@mui/material/styles';
 import type { SettingsState } from 'src/components/settings';
 
-import { experimental_extendTheme as extendTheme } from '@mui/material/styles';
+import { extendTheme } from '@mui/material';
 
 import { setFont } from './styles/utils';
 import { overridesTheme } from './overrides-theme';
@@ -33,7 +33,11 @@ export function createTheme(settings: SettingsState): Theme {
   /**
    * 2.Create theme + add locale + update component with settings.
    */
-  const theme = extendTheme(updateTheme, updateComponentsWithSettings(settings), overridesTheme);
+  const theme = extendTheme(
+    updateTheme as any,
+    updateComponentsWithSettings(settings),
+    overridesTheme
+  );
 
   return theme;
 }

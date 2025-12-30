@@ -314,7 +314,7 @@ function SettingsProfileInformation() {
         {/* Form Fields */}
         <Stack spacing={3}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ xs: 12, sm: 6 }}>
               <Field.Text
                 key="name-field"
                 name="name"
@@ -329,7 +329,7 @@ function SettingsProfileInformation() {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ xs: 12, sm: 6 }}>
               <Field.Text
                 name="username"
                 label={
@@ -389,7 +389,7 @@ function SettingsProfileInformation() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ xs: 12, sm: 6 }}>
               <Field.Text
                 name="location"
                 label={
@@ -404,7 +404,7 @@ function SettingsProfileInformation() {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ xs: 12, sm: 6 }}>
               <Field.Text
                 name="website"
                 label={

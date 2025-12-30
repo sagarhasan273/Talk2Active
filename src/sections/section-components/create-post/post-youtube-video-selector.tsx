@@ -302,7 +302,7 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
             ) : searchResults.length > 0 ? (
               <Grid container spacing={2}>
                 {searchResults.map((video) => (
-                  <Grid item xs={12} sm={6} key={video.id.videoId}>
+                  <Grid sx={{ xs: 12, sm: 6 }} key={video.id.videoId}>
                     <Card
                       sx={{
                         cursor: 'pointer',

@@ -388,9 +388,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 {filteredParticipants.map((participant, index) => (
                   <ListItem
                     key={participant.userId}
-                    button
-                    selected={index === selectedMentionIndex}
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent<HTMLLIElement>) => {
                       e.stopPropagation();
                       if (isPrivateMessage) {
                         startPrivateMessage(participant);
@@ -400,12 +398,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                     }}
                     onMouseEnter={() => setSelectedMentionIndex(index)}
                     sx={{
-                      '&.Mui-selected': {
-                        backgroundColor: 'action.selected',
-                      },
+                      backgroundColor:
+                        index === selectedMentionIndex ? 'action.selected' : 'transparent',
                       '&:hover': {
                         backgroundColor: 'action.hover',
                       },
+                      cursor: 'pointer',
                     }}
                   >
                     <ListItemAvatar>
@@ -434,7 +432,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
                     <Button
                       variant="contained"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                         e.stopPropagation();
                         startPrivateMessage(participant);
                       }}

@@ -122,7 +122,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               </Typography>
 
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid sx={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="Room Name"
@@ -134,7 +134,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid sx={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="Description"
@@ -150,7 +150,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
                     <InputLabel>Language</InputLabel>
                     <Select
@@ -170,7 +170,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
                     <InputLabel>Skill Level</InputLabel>
                     <Select
@@ -263,7 +263,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               </Box>
 
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -281,7 +281,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -302,7 +302,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -323,7 +323,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid sx={{ xs: 12, sm: 6 }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -344,7 +344,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid sx={{ xs: 12 }}>
                   <Typography gutterBottom>
                     Max Simultaneous Speakers: {formData.maxSimutaneousSpeakers}
                   </Typography>
@@ -363,7 +363,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid sx={{ xs: 12 }}>
                   <FormControl fullWidth>
                     <InputLabel>Moderation Mode</InputLabel>
                     <Select

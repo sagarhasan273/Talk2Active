@@ -156,11 +156,21 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
                       borderRadius: 1,
                       color: isSelected ? status.color : status.color,
                       backgroundColor: isSelected
-                        ? varAlpha(theme.vars.palette[status.bgColor][status.bgColorChannel], 0.28)
+                        ? varAlpha(
+                            (
+                              theme.vars.palette[status.bgColor] as unknown as Record<
+                                string,
+                                string
+                              >
+                            )[status.bgColorChannel],
+                            0.28
+                          )
                         : 'transparent',
                       '&:hover': {
                         backgroundColor: varAlpha(
-                          theme.vars.palette[status.bgColor][status.bgColorChannel],
+                          (theme.vars.palette[status.bgColor] as unknown as Record<string, string>)[
+                            status.bgColorChannel
+                          ],
                           0.28
                         ),
                       },
@@ -198,13 +208,17 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
           justifyContent: 'center',
           color: currentStatus.color,
           background: varAlpha(
-            theme.vars.palette[currentStatus.bgColor][currentStatus.bgColorChannel],
+            (theme.vars.palette[currentStatus.bgColor] as unknown as Record<string, string>)[
+              currentStatus.bgColorChannel
+            ],
             0.28
           ),
           '&:hover': {
             color: currentStatus.color,
             background: varAlpha(
-              theme.vars.palette[currentStatus.bgColor][currentStatus.bgColorChannel],
+              (theme.vars.palette[currentStatus.bgColor] as unknown as Record<string, string>)[
+                currentStatus.bgColorChannel
+              ],
               0.5
             ),
           },

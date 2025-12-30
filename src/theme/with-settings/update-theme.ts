@@ -6,7 +6,6 @@ import PRIMARY_COLOR from './primary-color.json';
 import { components as coreComponents } from '../core/components';
 import { hexToRgbChannel, createPaletteChannel } from '../styles';
 import { primary as corePrimary, grey as coreGreyPalette } from '../core/palette';
-import { createShadowColor, customShadows as coreCustomShadows } from '../core/custom-shadows';
 
 import type { ThemeComponents, ThemeUpdateOptions } from '../types';
 
@@ -32,7 +31,7 @@ export function updateCoreWithSettings(
   theme: ThemeUpdateOptions,
   settings: SettingsState
 ): ThemeUpdateOptions {
-  const { colorSchemes, customShadows } = theme;
+  const { colorSchemes } = theme;
 
   const updatedPrimary = getPalette(
     settings.primaryColor,
@@ -46,12 +45,12 @@ export function updateCoreWithSettings(
       ...colorSchemes,
       light: {
         palette: {
-          ...colorSchemes?.light?.palette,
+          ...(colorSchemes?.light as any)?.palette,
           /** [1] */
           primary: updatedPrimary,
           /** [2] */
           background: {
-            ...colorSchemes?.light?.palette?.background,
+            ...(colorSchemes?.light as any)?.palette?.background,
             default: getBackgroundDefault(settings.contrast),
             defaultChannel: hexToRgbChannel(getBackgroundDefault(settings.contrast)),
           },
@@ -59,19 +58,11 @@ export function updateCoreWithSettings(
       },
       dark: {
         palette: {
-          ...colorSchemes?.dark?.palette,
+          ...(colorSchemes?.dark as any)?.palette,
           /** [1] */
           primary: updatedPrimary,
         },
       },
-    },
-    customShadows: {
-      ...customShadows,
-      /** [1] */
-      primary:
-        settings.primaryColor === 'default'
-          ? coreCustomShadows('light').primary
-          : createShadowColor(updatedPrimary.mainChannel),
     },
   };
 }

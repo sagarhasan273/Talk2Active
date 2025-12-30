@@ -47,7 +47,7 @@ interface CategorySidebarProps {
 const GradientBox = styled(Box)(({ theme }) => ({
   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   color: theme.palette.common.white,
-  borderRadius: theme.shape.borderRadius * 1,
+  borderRadius: theme.shape.borderRadius,
   padding: theme.spacing(3),
 }));
 
@@ -216,7 +216,7 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
             const Icon = category.icon;
             const isSelected = selectedCategory.includes(category.key);
             return (
-              <Grid key={category.key} item xs={6}>
+              <Grid key={category.key} sx={{ xs: 6 }}>
                 <Button
                   startIcon={
                     <Icon
