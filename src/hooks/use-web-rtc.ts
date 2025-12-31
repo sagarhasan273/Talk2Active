@@ -108,8 +108,9 @@ export default function useWebRTC(): UseWebRTCReturn {
     (stream: MediaStream): MediaStream => {
       try {
         if (!audioNodesRef.current.audioContext) {
-          audioNodesRef.current.audioContext = new (window.AudioContext ||
-            (window as any).webkitAudioContext)();
+          audioNodesRef.current.audioContext = new (
+            window.AudioContext || (window as any).webkitAudioContext
+          )();
         }
         const { audioContext } = audioNodesRef.current;
         if (audioContext.state === 'suspended') audioContext.resume();
@@ -229,19 +230,48 @@ export default function useWebRTC(): UseWebRTCReturn {
 
   const createOffer = useCallback(
     async (targetSocketId: string, socket: any) => {
-      if (pendingOffersRef.current[targetSocketId]) return;
+      // Prevent duplicate offers
+      if (pendingOffersRef.current[targetSocketId]) {
+        console.log(`[${targetSocketId}] Offer already pending, skipping`);
+        return;
+      }
+
+      // Check if we already have an active connection with this peer
+      const existingPc = peerConnectionsRef.current[targetSocketId];
+      if (existingPc && existingPc.signalingState !== 'closed') {
+        console.log(
+          `[${targetSocketId}] Already have active connection in state: ${existingPc.signalingState}`
+        );
+        return;
+      }
+
+      pendingOffersRef.current[targetSocketId] = true;
+
       try {
-        pendingOffersRef.current[targetSocketId] = true;
         const pc = createPeerConnection(targetSocketId, socket);
+
+        // Create and set local offer
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+        console.log(`[${targetSocketId}] Created offer, signaling state: ${pc.signalingState}`);
+
+        // Emit the offer
         socket.emit('webrtc-offer', { offer, target: targetSocketId });
-      } catch (e) {
-        console.error('Offer Error:', e);
+      } catch (error) {
+        console.error(`[${targetSocketId}] Create offer error:`, error);
+
+        // Clean up on error
+        if (peerConnectionsRef.current[targetSocketId]) {
+          peerConnectionsRef.current[targetSocketId].close();
+          delete peerConnectionsRef.current[targetSocketId];
+        }
+
+        throw error;
       } finally {
+        // Clear pending flag with delay
         setTimeout(() => {
           pendingOffersRef.current[targetSocketId] = false;
-        }, 2000);
+        }, 1000);
       }
     },
     [createPeerConnection]
@@ -249,16 +279,63 @@ export default function useWebRTC(): UseWebRTCReturn {
 
   const handleOffer = useCallback(
     async (data: any, socket: any) => {
+      const { offer, sender } = data;
+
+      console.log(
+        `[${sender}] Received offer, current signaling state: ${peerConnectionsRef.current[sender]?.signalingState}`
+      );
+
+      // Check if we already have a connection in progress
+      const existingPc = peerConnectionsRef.current[sender];
+
+      // GLARE DETECTION: If we already made an offer to this peer, we should handle as the answerer
+      if (existingPc) {
+        const { signalingState } = existingPc;
+
+        // If we're the offerer (have-local-offer), we should ignore incoming offer
+        if (signalingState === 'have-local-offer') {
+          console.log(
+            `[${sender}] Glare detected: We already made an offer to this peer, ignoring incoming offer`
+          );
+          return;
+        }
+
+        // If connection is already stable, ignore
+        if (signalingState === 'stable') {
+          console.log(`[${sender}] Connection already established, ignoring duplicate offer`);
+          return;
+        }
+
+        // If connection is closed, create new one
+        if (signalingState === 'closed') {
+          delete peerConnectionsRef.current[sender];
+        }
+      }
+
       try {
-        const { offer, sender } = data;
         const pc = createPeerConnection(sender, socket);
+
+        // Set remote description
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        console.log(`[${sender}] Remote offer set, signaling state: ${pc.signalingState}`);
+
+        // Create and set local answer
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log(`[${sender}] Created answer, signaling state: ${pc.signalingState}`);
+
+        // Send answer back
         socket.emit('webrtc-answer', { answer, target: sender });
-        processIceQueue(sender);
-      } catch (e) {
-        console.error('Handle Offer Error:', e);
+
+        // Process any queued ICE candidates
+        await processIceQueue(sender);
+      } catch (error: any) {
+        console.error(`[${sender}] Handle offer error:`, error);
+
+        // If error is because we're in wrong state, check if we should switch roles
+        if (error.name === 'InvalidStateError' && error.message.includes('wrong state')) {
+          console.warn(`[${sender}] State conflict, may be glare situation`);
+        }
       }
     },
     [createPeerConnection, processIceQueue]
@@ -268,14 +345,64 @@ export default function useWebRTC(): UseWebRTCReturn {
     async (data: any) => {
       const { answer, sender } = data;
       const pc = peerConnectionsRef.current[sender];
-      if (pc) {
-        await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        processIceQueue(sender);
+
+      if (!pc) {
+        console.warn(`[${sender}] No peer connection found`);
+        return;
+      }
+
+      // Check signaling state first
+      const { signalingState } = pc;
+      console.log(`[${sender}] handleAnswer called, signaling state: ${signalingState}`);
+
+      // If we're already stable, ignore this answer (it's a duplicate)
+      if (signalingState === 'stable') {
+        console.log(`[${sender}] Already stable, ignoring duplicate answer`);
+        // Still process any queued ICE candidates
+        await processIceQueue(sender);
+        return;
+      }
+
+      // Check if we're in the right state to accept an answer
+      const validStatesForAnswer = ['have-local-offer', 'have-remote-pranswer'];
+      if (!validStatesForAnswer.includes(signalingState)) {
+        console.warn(`[${sender}] Cannot accept answer in state: ${signalingState}`);
+        return;
+      }
+
+      try {
+        // Validate answer
+        if (!answer || answer.type !== 'answer') {
+          console.error(`[${sender}] Invalid answer format`);
+          return;
+        }
+
+        const answerDescription = new RTCSessionDescription(answer);
+        await pc.setRemoteDescription(answerDescription);
+        console.log(`[${sender}] Successfully set remote answer`);
+
+        // Process any queued ICE candidates
+        await processIceQueue(sender);
+      } catch (error: any) {
+        console.error(`[${sender}] Error in handleAnswer:`, error);
+
+        // Don't throw the error - just log it
+        // This prevents "Uncaught (in promise)" errors
+
+        if (error.name === 'InvalidStateError') {
+          console.warn(`[${sender}] Connection already established, ignoring duplicate answer`);
+        } else if (error.message?.includes('already have a remote description')) {
+          console.log(`[${sender}] Already have remote description`);
+        }
+
+        // Still try to process ICE candidates even if answer failed
+        await processIceQueue(sender).catch((e) =>
+          console.warn(`[${sender}] Error processing ICE queue:`, e)
+        );
       }
     },
     [processIceQueue]
   );
-
   const handleIceCandidate = useCallback(async (data: any) => {
     const { candidate, sender } = data;
     const pc = peerConnectionsRef.current[sender];
@@ -312,13 +439,87 @@ export default function useWebRTC(): UseWebRTCReturn {
   };
 
   const cleanup = useCallback(() => {
-    if (audioAnimationRef.current) cancelAnimationFrame(audioAnimationRef.current);
-    Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+    // Cancel animation frame if exists
+    if (audioAnimationRef.current) {
+      cancelAnimationFrame(audioAnimationRef.current);
+      audioAnimationRef.current = null;
+    }
+
+    // Close all peer connections
+    Object.values(peerConnectionsRef.current).forEach((pc) => {
+      if (pc && pc.connectionState !== 'closed') {
+        pc.close();
+      }
+    });
     peerConnectionsRef.current = {};
-    if (audioNodesRef.current.audioContext) audioNodesRef.current.audioContext.close();
-    if (localStreamRef.current) localStreamRef.current.getTracks().forEach((t) => t.stop());
+
+    // Clear ICE candidates queue
+    Object.keys(iceCandidatesQueue.current).forEach((key) => {
+      delete iceCandidatesQueue.current[key];
+    });
+    iceCandidatesQueue.current = {};
+
+    // Clear pending offers
+    Object.keys(pendingOffersRef.current).forEach((key) => {
+      delete pendingOffersRef.current[key];
+    });
+    pendingOffersRef.current = {};
+
+    // Close AudioContext safely
+    if (audioNodesRef.current.audioContext) {
+      const { audioContext } = audioNodesRef.current;
+
+      // Check state before closing
+      if (audioContext.state !== 'closed') {
+        try {
+          // Disconnect all nodes first
+          if (audioNodesRef.current.sourceNode) {
+            audioNodesRef.current.sourceNode.disconnect();
+          }
+          if (audioNodesRef.current.microphoneGainNode) {
+            audioNodesRef.current.microphoneGainNode.disconnect();
+          }
+          if (audioNodesRef.current.volumeGainNode) {
+            audioNodesRef.current.volumeGainNode.disconnect();
+          }
+          if (audioNodesRef.current.destinationNode) {
+            audioNodesRef.current.destinationNode.disconnect();
+          }
+
+          // Close the context
+          audioContext.close().catch((error) => {
+            console.warn('Error closing AudioContext:', error);
+          });
+        } catch (error) {
+          console.warn('Error during AudioContext cleanup:', error);
+        }
+      }
+
+      // Reset audio nodes ref
+      audioNodesRef.current = {
+        microphoneGainNode: null,
+        volumeGainNode: null,
+        audioContext: null,
+        sourceNode: null,
+        destinationNode: null,
+      };
+    }
+
+    // Stop all tracks in local stream
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
+      localStreamRef.current = null;
+    }
+
+    // Reset state
     setRemoteStreams({});
     setLocalStream(null);
+    setIsMicMuted(false);
+    setAudioSettings(DEFAULT_AUDIO_SETTINGS);
+    setConnectionStatus({});
   }, []);
 
   return {
