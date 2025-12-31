@@ -285,33 +285,6 @@ export default function useWebRTC(): UseWebRTCReturn {
         `[${sender}] Received offer, current signaling state: ${peerConnectionsRef.current[sender]?.signalingState}`
       );
 
-      // Check if we already have a connection in progress
-      const existingPc = peerConnectionsRef.current[sender];
-
-      // GLARE DETECTION: If we already made an offer to this peer, we should handle as the answerer
-      if (existingPc) {
-        const { signalingState } = existingPc;
-
-        // If we're the offerer (have-local-offer), we should ignore incoming offer
-        if (signalingState === 'have-local-offer') {
-          console.log(
-            `[${sender}] Glare detected: We already made an offer to this peer, ignoring incoming offer`
-          );
-          return;
-        }
-
-        // If connection is already stable, ignore
-        if (signalingState === 'stable') {
-          console.log(`[${sender}] Connection already established, ignoring duplicate offer`);
-          return;
-        }
-
-        // If connection is closed, create new one
-        if (signalingState === 'closed') {
-          delete peerConnectionsRef.current[sender];
-        }
-      }
-
       try {
         const pc = createPeerConnection(sender, socket);
 
