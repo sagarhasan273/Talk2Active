@@ -27,6 +27,7 @@ export const ChatMessageGroup = ({
     chatRoomMessages,
     remoteParticipants,
     reactionChatRoomMessage,
+    reactionPopChatRoomMessage,
     clearUnreadChatRoomMessages,
   } = useRoomTools();
   const user = useSelector(selectAccount);
@@ -84,20 +85,30 @@ export const ChatMessageGroup = ({
     [message, replyMessage, room.id, socket, user]
   );
 
-  const handleReaction = (messageId: Message['id'], emoji: string) => {
+  const handleReaction = (messageObj: Message, emoji: string) => {
     const reactionData = {
-      messageId,
+      messageId: messageObj.id,
       reaction: {
         userId: user.id,
         name: user.name,
         emoji,
       },
     };
-    reactionChatRoomMessage(reactionData);
-    socket?.emit('send-reaction-group-message', {
-      roomId: room.id,
-      ...reactionData,
-    });
+    const hasReact = messageObj?.reactions?.some((reaction) => reaction?.userId === user?.id);
+    console.log('pop');
+    if (hasReact) {
+      reactionPopChatRoomMessage(reactionData);
+      socket?.emit('send-reaction-pop-group-message', {
+        roomId: room.id,
+        ...reactionData,
+      });
+    } else {
+      reactionChatRoomMessage(reactionData);
+      socket?.emit('send-reaction-group-message', {
+        roomId: room.id,
+        ...reactionData,
+      });
+    }
   };
 
   const handleReply = (messageReply?: MessageOnReply) => {

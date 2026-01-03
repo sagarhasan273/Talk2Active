@@ -1,5 +1,3 @@
-import type { Message, MessageOnReply } from 'src/types/type-room';
-
 import { Box, Divider, useTheme } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
@@ -9,15 +7,9 @@ import { MessageText } from './message-text';
 import { MessageAvatars } from './message-avatars';
 import { MessageActions } from './message-actions';
 
-export function MessageContainer({
-  messages,
-  onReaction,
-  onReply,
-}: {
-  messages: Message[];
-  onReaction: (messageId: Message['id'], emoji: string) => void;
-  onReply: (message: MessageOnReply) => void;
-}) {
+import type { MessageContainerProps } from './type';
+
+export function MessageContainer({ messages, onReaction, onReply }: MessageContainerProps) {
   const { isUnreadChatRoomMessage } = useRoomTools();
 
   const theme = useTheme();
@@ -87,7 +79,7 @@ export function MessageContainer({
               <MessageAvatars message={msg} />
 
               {/* Messages Text */}
-              <MessageText message={msg} />
+              <MessageText message={msg} onReaction={onReaction} />
 
               {/* Messages Action */}
               <MessageActions

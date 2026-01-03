@@ -18,7 +18,7 @@ interface MessageActionsProps {
   onReply?: (message: MessageOnReply) => void;
   onResend?: any;
   onDelete: any;
-  onReaction?: (id: Message['id'], emoji: string) => void;
+  onReaction?: (message: Message, emoji: string) => void;
 }
 
 // Important emojis for quick reactions
@@ -44,7 +44,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   };
 
   const handleEmojiClick = (emoji: string) => {
-    onReaction?.(message.id, emoji);
+    onReaction?.(message, emoji);
     handleReactionMenuClose();
   };
 

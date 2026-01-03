@@ -27,6 +27,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     updateRemoteParticipantStatus,
     addChatRoomMessage,
     reactionChatRoomMessage,
+    reactionPopChatRoomMessage,
   } = useRoomTools();
 
   // WebRTC
@@ -106,6 +107,12 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         reaction: data.reaction,
       });
     };
+    const handleReactionPopMessage = (data: ReactionMessageData) => {
+      reactionPopChatRoomMessage({
+        messageId: data.messageId,
+        reaction: data.reaction,
+      });
+    };
 
     const handlePrivateMessage = (data: Message) => {
       const receiveMessage: Message = {
@@ -147,6 +154,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('user-status-selected', handleStatusUpdated);
     on('receive-group-message', handleGroupMessage);
     on('receive-reaction-group-message', handleReactionMessage);
+    on('receive-reaction-pop-group-message', handleReactionPopMessage);
     on('receive-private-message', handlePrivateMessage);
     on('webrtc-offer', handleWebRTCOffer);
     on('webrtc-answer', handleWebRTCAnswer);

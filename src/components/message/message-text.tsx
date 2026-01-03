@@ -7,7 +7,9 @@ import { varAlpha } from 'src/theme/styles';
 import { MessageMention } from './message-mention';
 import { MessageReplyInfo } from './message-reply-info';
 
-export function MessageText({ message }: { message: Message }) {
+import type { MessageTextProps } from './type';
+
+export function MessageText({ message, onReaction }: MessageTextProps) {
   const theme = useTheme();
 
   const reactionCounts =
@@ -88,7 +90,10 @@ export function MessageText({ message }: { message: Message }) {
                     backgroundColor: 'action.hover',
                   },
                 }}
-                // onClick={() => handleEmojiClick(emoji)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onReaction?.(message, emoji);
+                }}
               >
                 <Typography sx={{ fontSize: 14 }}>{emoji}</Typography>
                 {count > 1 && (

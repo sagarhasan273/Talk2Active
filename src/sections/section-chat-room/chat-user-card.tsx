@@ -21,11 +21,13 @@ import {
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { varAlpha } from 'src/theme/styles';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 import UserAudio from './chat-user-audio';
 import { STATUS_OPTIONS } from './chat-status-button';
 import { VoiceRoomIsSpeaking } from './chat-is-speaking';
 import { ChatUserAvatarBadge } from './chat-user-avater-badge';
+import { ChatUserCardPCStatus } from './chat-user-card-pc-status';
 import { VoiceRoomMessageIndividual } from './chat-message-individual';
 import { ChatUserCardQuickActions } from './chat-user-card-quick-actions';
 
@@ -44,10 +46,10 @@ export type ChatUserCardProps = {
     userType?: string;
     verified?: boolean;
   };
+  socketId: string;
   stream: MediaStream | null;
   isLocal: boolean;
   showSettings?: boolean;
-  connectionStatus?: string;
   onSettingsChange?: (settings: any) => void;
   onToggleMute?: (userId: string) => void;
   onVolumeToggle?: (userId: string) => void;
@@ -57,13 +59,15 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
   user,
   showSettings: externalShowSettings,
   onSettingsChange,
+  socketId,
   stream,
   isLocal,
-  connectionStatus,
+
   onToggleMute,
   onVolumeToggle,
 }) => {
   const menuOpen = useBoolean(false);
+  const { connectionStatus } = useWebRTCContext();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [privateMessageEL, setPrivateMessageEL] = useState<null | HTMLElement>(null);
@@ -185,47 +189,10 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
       >
         <VoiceRoomIsSpeaking statusColor={statusConfig[status].color} stream={stream} />
 
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: -2,
-            left: -2,
-            backgroundColor: verified ? 'primary.main' : 'grey.500',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px solid',
-            borderColor: 'background.paper',
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{ px: '4px', fontWeight: 'bold', color: 'common.white' }}
-          >
-            {verified ? 'VERIFIED' : 'UNVERIFIED'}
-          </Typography>
-        </Box>
-        {connectionStatus && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-
-              borderColor: 'background.paper',
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ px: '4px', fontWeight: 'bold', color: 'text.primary' }}
-            >
-              {connectionStatus || 'Connected'}
-            </Typography>
-          </Box>
-        )}
+        <ChatUserCardPCStatus
+          verified={verified}
+          PCStatus={connectionStatus[socketId] || 'connected'}
+        />
 
         <CardContent
           sx={{

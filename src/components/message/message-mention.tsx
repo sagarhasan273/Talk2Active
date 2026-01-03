@@ -1,10 +1,10 @@
-import type { Message } from 'src/types/type-room';
-
 import { Box, Chip } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
-export function MessageMention({ message }: { message: Message }) {
+import type { MessageMentionProps } from './type';
+
+export function MessageMention({ message }: MessageMentionProps) {
   if (!message.mentions.length) return null;
 
   const parts: React.ReactNode[] = [];

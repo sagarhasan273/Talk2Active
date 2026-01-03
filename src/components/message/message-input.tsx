@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
-import type { Message, Participant, MessageOnReply } from 'src/types/type-room';
+import type { Message, Participant } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
@@ -31,6 +31,8 @@ import { STATUS_OPTIONS } from 'src/sections/section-chat-room/chat-status-butto
 
 import { MessageReplyInfo } from './message-reply-info';
 
+import type { MessageInputProps } from './type';
+
 // Status configurations
 const statusConfig = {
   online: STATUS_OPTIONS[0],
@@ -40,20 +42,6 @@ const statusConfig = {
   zzz: STATUS_OPTIONS[4],
   offline: STATUS_OPTIONS[5],
 };
-
-interface MessageInputProps {
-  participants: Participant[];
-  onSendMessage: (
-    isPrivateMessage: boolean,
-    targetUserInfo?: Message['targetUserInfo'],
-    mentions?: Message['mentions']
-  ) => void;
-  placeholder?: string;
-  replyMessage?: MessageOnReply;
-  cancelReplyMessage?: () => void;
-  message: string;
-  setMessage: React.Dispatch<React.SetStateAction<string>>;
-}
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   participants,

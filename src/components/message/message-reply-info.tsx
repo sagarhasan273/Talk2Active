@@ -1,19 +1,10 @@
-import type { SxProps } from '@mui/material';
-import type { MessageOnReply } from 'src/types/type-room';
-
 import { Box, SvgIcon, useTheme, Typography, IconButton } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
-export function MessageReplyInfo({
-  replyMessage,
-  cancelReplyMessage,
-  sx,
-}: {
-  replyMessage: MessageOnReply;
-  cancelReplyMessage?: () => void;
-  sx?: SxProps;
-}) {
+import type { MessageReplyInfoProps } from './type';
+
+export function MessageReplyInfo({ replyMessage, cancelReplyMessage, sx }: MessageReplyInfoProps) {
   const theme = useTheme();
 
   const handleClose = (event: React.MouseEvent<HTMLElement>) => {

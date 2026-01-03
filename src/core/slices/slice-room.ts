@@ -89,6 +89,19 @@ export const roomSlice = createSlice({
         }
       });
     },
+    reactionPopChatRoomMessage: (
+      state,
+      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
+    ) => {
+      console.log('pop');
+      state.chatRoomMessages.forEach((msg) => {
+        if (msg.id === action.payload.messageId) {
+          msg.reactions = (msg.reactions || []).filter(
+            (reaction) => reaction.userId !== action.payload.reaction.userId
+          );
+        }
+      });
+    },
 
     clearUnreadChatRoomMessages: (state) => {
       state.isUnreadChatRoomMessage = false;
@@ -110,6 +123,7 @@ const {
   resetRemoteParticipants,
   addChatRoomMessage,
   reactionChatRoomMessage,
+  reactionPopChatRoomMessage,
   clearUnreadChatRoomMessages,
 } = roomSlice.actions;
 
@@ -149,6 +163,8 @@ export const useRoomTools = () => {
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
       reactionChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
         dispatch(reactionChatRoomMessage(payload)),
+      reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
+        dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
