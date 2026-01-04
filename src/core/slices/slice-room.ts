@@ -79,6 +79,31 @@ export const roomSlice = createSlice({
       state.isUnreadChatRoomMessage = action.payload.isUnread;
     },
 
+    editChatRoomMessage: (
+      state,
+      action: PayloadAction<{ messageId: Message['id']; text: Message['text'] }>
+    ) => {
+      state.chatRoomMessages.forEach((msg) => {
+        if (msg.id === action.payload.messageId) {
+          msg.isEdited = true;
+          msg.text = action.payload.text;
+        }
+      });
+    },
+
+    deleteChatRoomMessage: (
+      state,
+      action: PayloadAction<{ messageId: Message['id']; text?: Message['text'] }>
+    ) => {
+      state.chatRoomMessages.forEach((msg) => {
+        if (msg.id === action.payload.messageId) {
+          msg.isDeleted = true;
+          msg.isEdited = false;
+          msg.text = action.payload.text || 'Message has deleted!';
+        }
+      });
+    },
+
     reactionChatRoomMessage: (
       state,
       action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
@@ -89,11 +114,11 @@ export const roomSlice = createSlice({
         }
       });
     },
+
     reactionPopChatRoomMessage: (
       state,
       action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
     ) => {
-      console.log('pop');
       state.chatRoomMessages.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.reactions = (msg.reactions || []).filter(

@@ -6,7 +6,12 @@ import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
 import React, { useRef, useState } from 'react';
 
-import { Mood as MoodIcon, Send as SendIcon, Close as CloseIcon } from '@mui/icons-material';
+import {
+  Edit as EditIcon,
+  Mood as MoodIcon,
+  Send as SendIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
 import {
   Box,
   List,
@@ -48,7 +53,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   placeholder = 'Write a message...',
   replyMessage,
+  isEditing,
   cancelReplyMessage,
+  cancelEditMessage,
   message,
   setMessage,
 }) => {
@@ -261,8 +268,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       <Paper
         sx={{
           p: 1.5,
-          display: 'flex',
-          alignItems: 'flex-start',
+
           gap: 1,
           position: 'sticky',
           bottom: 0,
@@ -273,214 +279,245 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           minHeight: 90,
         }}
       >
-        {/* Emoji Button */}
-        <Tooltip title="Emoji">
-          <IconButton
-            ref={emojiButtonRef}
-            onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+        {isEditing && (
+          <Box
             sx={{
-              color: 'text.secondary',
-              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+              px: 1,
+              py: 0.25,
+              mb: 1,
+              fontSize: 11,
+              borderRadius: 0.5,
+              backgroundColor: 'grey.500',
+              color: 'common.white',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
             }}
-            size="medium"
           >
-            <MoodIcon />
-          </IconButton>
-        </Tooltip>
-
-        {/* Emoji Picker Popper */}
-        <Popper
-          open={emojiPickerOpen}
-          anchorEl={emojiButtonRef.current}
-          placement="top-start"
-          sx={{ zIndex: 9999 }}
-        >
-          <ClickAwayListener onClickAway={() => setEmojiPickerOpen(false)}>
-            <Box sx={{ mt: 0 }}>
-              <EmojiPicker
-                onEmojiClick={handleEmojiClick}
-                height={400}
-                width={350}
-                searchDisabled={false}
-                previewConfig={{ showPreview: false }}
-              />
-            </Box>
-          </ClickAwayListener>
-        </Popper>
-
-        {/* Message Input */}
-        <Box sx={{ flex: 1, position: 'relative' }} ref={textFieldRef}>
-          <TextField
-            inputRef={inputRef}
-            placeholder={
-              isPrivateMessage ? `Private message to ${privateRecipient?.name}...` : placeholder
-            }
-            variant="outlined"
-            size="small"
-            multiline
-            maxRows={4}
-            value={message}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            onFocus={() => {
-              clearUnreadChatRoomMessages();
-            }}
-            fullWidth
-            sx={{
-              flex: 1,
-              width: 1,
-              typography: 'caption',
-              borderRadius: 0,
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'background.paper',
-                borderRadius: 0,
-                padding: '4px 0px',
-                '& fieldset': {
-                  border: 'none',
-                },
-                '&:hover fieldset': {
-                  border: 'none',
-                },
-                '&.Mui-focused fieldset': {
-                  border: 'none',
-                  borderColor: 'primary.main',
-                },
-              },
-              '& .MuiOutlinedInput-input': {
-                padding: '8px 0',
-              },
-            }}
-          />
-
-          {/* Mention Suggestions Popover */}
-          {showMentions && filteredParticipants.length > 0 && (
-            <Paper
+            <EditIcon sx={{ fontSize: 16 }} /> EDITING{' '}
+            <IconButton
+              onClick={() => cancelEditMessage?.()}
               sx={{
-                position: 'absolute',
-                bottom: '100%',
-                left: -20,
-                mb: 1,
-                width: 300,
-                maxHeight: 300,
-                overflow: 'auto',
-                boxShadow: 3,
+                height: 16,
+                width: 16,
+                color: 'common.white',
+                '&:hover': { color: 'error.main' },
               }}
-              ref={mentionListRef}
             >
-              <List dense>
-                <ListItem>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {isPrivateMessage ? 'Private Message' : 'Participants'}
-                  </Typography>
-                </ListItem>
-                {filteredParticipants.map((participant, index) => (
-                  <ListItem
-                    key={participant.userId}
-                    onClick={(e: React.MouseEvent<HTMLLIElement>) => {
-                      e.stopPropagation();
-                      if (isPrivateMessage) {
-                        startPrivateMessage(participant);
-                        return;
-                      }
-                      mentionParticipant(participant);
-                    }}
-                    onMouseEnter={() => setSelectedMentionIndex(index)}
-                    sx={{
-                      backgroundColor:
-                        index === selectedMentionIndex ? 'action.selected' : 'transparent',
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      },
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar src={participant.profilePhoto} sx={{ width: 32, height: 32 }}>
-                        {participant.name.charAt(0).toUpperCase()}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={participant.name}
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              backgroundColor: statusConfig[participant.status || 'online'].color,
-                            }}
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {participant.status}
-                          </Typography>
-                        </Box>
-                      }
-                    />
+              <CloseIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+        )}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+          {/* Emoji Button */}
+          <Tooltip title="Emoji">
+            <IconButton
+              ref={emojiButtonRef}
+              onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+              }}
+              size="medium"
+            >
+              <MoodIcon />
+            </IconButton>
+          </Tooltip>
 
-                    <Button
-                      variant="contained"
-                      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                        e.stopPropagation();
-                        startPrivateMessage(participant);
-                      }}
-                      startIcon={
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            d="M2 6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7.333L4 21.5c-.824.618-2 .03-2-1z"
-                            className="duoicon-secondary-layer"
-                            opacity="0.3"
-                          />
-                          <path
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            d="M8 12a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2zM7 9a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1"
-                            className="duoicon-primary-layer"
-                          />
-                        </svg>
-                      }
-                      size="small"
-                      sx={{ textTransform: 'none' }}
-                      disabled={isPrivateMessage || mentions.length > 0}
-                    >
-                      PM
-                    </Button>
+          {/* Emoji Picker Popper */}
+          <Popper
+            open={emojiPickerOpen}
+            anchorEl={emojiButtonRef.current}
+            placement="top-start"
+            sx={{ zIndex: 9999 }}
+          >
+            <ClickAwayListener onClickAway={() => setEmojiPickerOpen(false)}>
+              <Box sx={{ mt: 0 }}>
+                <EmojiPicker
+                  onEmojiClick={handleEmojiClick}
+                  height={400}
+                  width={350}
+                  searchDisabled={false}
+                  previewConfig={{ showPreview: false }}
+                />
+              </Box>
+            </ClickAwayListener>
+          </Popper>
+
+          {/* Message Input */}
+          <Box sx={{ flex: 1, position: 'relative' }} ref={textFieldRef}>
+            <TextField
+              inputRef={inputRef}
+              placeholder={
+                isPrivateMessage ? `Private message to ${privateRecipient?.name}...` : placeholder
+              }
+              variant="outlined"
+              size="small"
+              multiline
+              maxRows={4}
+              value={message}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                clearUnreadChatRoomMessages();
+              }}
+              fullWidth
+              sx={{
+                flex: 1,
+                width: 1,
+                typography: 'caption',
+                borderRadius: 0,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'background.paper',
+                  borderRadius: 0,
+                  padding: '4px 0px',
+                  '& fieldset': {
+                    border: 'none',
+                  },
+                  '&:hover fieldset': {
+                    border: 'none',
+                  },
+                  '&.Mui-focused fieldset': {
+                    border: 'none',
+                    borderColor: 'primary.main',
+                  },
+                },
+                '& .MuiOutlinedInput-input': {
+                  padding: '8px 0',
+                },
+              }}
+            />
+
+            {/* Mention Suggestions Popover */}
+            {showMentions && filteredParticipants.length > 0 && (
+              <Paper
+                sx={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: -20,
+                  mb: 1,
+                  width: 300,
+                  maxHeight: 300,
+                  overflow: 'auto',
+                  boxShadow: 3,
+                }}
+                ref={mentionListRef}
+              >
+                <List dense>
+                  <ListItem>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {isPrivateMessage ? 'Private Message' : 'Participants'}
+                    </Typography>
                   </ListItem>
-                ))}
-              </List>
-            </Paper>
-          )}
-        </Box>
+                  {filteredParticipants.map((participant, index) => (
+                    <ListItem
+                      key={participant.userId}
+                      onClick={(e: React.MouseEvent<HTMLLIElement>) => {
+                        e.stopPropagation();
+                        if (isPrivateMessage) {
+                          startPrivateMessage(participant);
+                          return;
+                        }
+                        mentionParticipant(participant);
+                      }}
+                      onMouseEnter={() => setSelectedMentionIndex(index)}
+                      sx={{
+                        backgroundColor:
+                          index === selectedMentionIndex ? 'action.selected' : 'transparent',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar src={participant.profilePhoto} sx={{ width: 32, height: 32 }}>
+                          {participant.name.charAt(0).toUpperCase()}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={participant.name}
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: statusConfig[participant.status || 'online'].color,
+                              }}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {participant.status}
+                            </Typography>
+                          </Box>
+                        }
+                      />
 
-        {/* Send Button */}
-        <IconButton
-          color="primary"
-          onClick={handleSendMessage}
-          disabled={!message.trim()}
-          sx={{
-            backgroundColor: 'primary.main',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-            },
-            '&.Mui-disabled': {
-              backgroundColor: 'action.disabledBackground',
-              color: 'action.disabled',
-            },
-            my: 0.5,
-            width: 32,
-            height: 32,
-          }}
-        >
-          <SendIcon fontSize="small" />
-        </IconButton>
+                      <Button
+                        variant="contained"
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                          e.stopPropagation();
+                          startPrivateMessage(participant);
+                        }}
+                        startIcon={
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="currentColor"
+                              fillRule="evenodd"
+                              d="M2 6a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7.333L4 21.5c-.824.618-2 .03-2-1z"
+                              className="duoicon-secondary-layer"
+                              opacity="0.3"
+                            />
+                            <path
+                              fill="currentColor"
+                              fillRule="evenodd"
+                              d="M8 12a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2zM7 9a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1"
+                              className="duoicon-primary-layer"
+                            />
+                          </svg>
+                        }
+                        size="small"
+                        sx={{ textTransform: 'none' }}
+                        disabled={isPrivateMessage || mentions.length > 0}
+                      >
+                        PM
+                      </Button>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+          </Box>
+
+          {/* Send Button */}
+          <IconButton
+            color="primary"
+            onClick={handleSendMessage}
+            disabled={!message.trim()}
+            sx={{
+              backgroundColor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'primary.dark',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: 'action.disabledBackground',
+                color: 'action.disabled',
+              },
+              my: 0.5,
+              width: 32,
+              height: 32,
+            }}
+          >
+            <SendIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </Paper>
       {/* Quick Mention Hint */}
       <Typography
@@ -492,7 +529,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           px: 0.5,
           backgroundColor: 'background.neutral',
           borderRadius: 0.5,
-          display: isPrivateMessage || replyMessage !== undefined ? 'none' : 'block',
+          display: isPrivateMessage || replyMessage !== undefined || isEditing ? 'none' : 'block',
         }}
       >
         Type @ to find users • Click to send a private message

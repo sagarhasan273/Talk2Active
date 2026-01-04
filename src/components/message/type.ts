@@ -9,6 +9,8 @@ export type MessageContainerProps = {
   messages: Message[];
   onReaction: (message: Message, emoji: string) => void;
   onReply: (message: MessageOnReply) => void;
+  onEdit: (message: Message) => void;
+  isEditing?: boolean;
 };
 
 export type MessageReplyInfoProps = {
@@ -32,9 +34,11 @@ export type MessageInputProps = {
     targetUserInfo?: Message['targetUserInfo'],
     mentions?: Message['mentions']
   ) => void;
+  isEditing?: boolean;
   placeholder?: string;
   replyMessage?: MessageOnReply;
   cancelReplyMessage?: () => void;
+  cancelEditMessage?: () => void;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
 };

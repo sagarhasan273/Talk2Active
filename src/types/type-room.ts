@@ -43,6 +43,7 @@ export type Message = {
     avatar?: string;
   }[];
   isEdited?: boolean;
+  isDeleted?: boolean;
   reactions?: Reaction[];
   messageRepliedOf?: MessageOnReply;
 };

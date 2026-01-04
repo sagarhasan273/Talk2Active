@@ -1,3 +1,7 @@
+import type { Message } from 'src/types/type-room';
+
+import { useState, useCallback } from 'react';
+
 import { Box, Divider, useTheme } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
@@ -9,18 +13,30 @@ import { MessageActions } from './message-actions';
 
 import type { MessageContainerProps } from './type';
 
-export function MessageContainer({ messages, onReaction, onReply }: MessageContainerProps) {
+export function MessageContainer({
+  messages,
+  onReaction,
+  onReply,
+  onEdit,
+  isEditing,
+}: MessageContainerProps) {
   const { isUnreadChatRoomMessage } = useRoomTools();
 
   const theme = useTheme();
 
-  const handleEdit = (id: number, newText: string) => {
-    console.log(id, newText);
-  };
+  const [messageIdEdit, setMessageIdEdit] = useState<Message['id']>('');
 
   const handleResend = (id: number) => {
     console.log('Resend message:', id);
   };
+
+  const handleEdit = useCallback(
+    (message: Message) => {
+      setMessageIdEdit(message.id);
+      onEdit?.(message);
+    },
+    [onEdit, setMessageIdEdit]
+  );
 
   const handleDelete = (id: number) => {
     console.log('message', id);
@@ -63,6 +79,9 @@ export function MessageContainer({ messages, onReaction, onReply }: MessageConta
                   opacity: 1,
                 },
               },
+              ...(isEditing && {
+                opacity: messageIdEdit === msg.id ? 1 : 0.5,
+              }),
             }}
           >
             <Box

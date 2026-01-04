@@ -35,6 +35,7 @@ export const ChatMessageGroup = ({
   const { socket } = useSocketContext();
 
   const [message, setMessage] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,43 +82,58 @@ export const ChatMessageGroup = ({
       }
 
       setMessage('');
+      setReplyMessage(undefined);
     },
     [message, replyMessage, room.id, socket, user]
   );
 
-  const handleReaction = (messageObj: Message, emoji: string) => {
-    const reactionData = {
-      messageId: messageObj.id,
-      reaction: {
-        userId: user.id,
-        name: user.name,
-        emoji,
-      },
-    };
-    const hasReact = messageObj?.reactions?.some((reaction) => reaction?.userId === user?.id);
-    console.log('pop');
-    if (hasReact) {
-      reactionPopChatRoomMessage(reactionData);
-      socket?.emit('send-reaction-pop-group-message', {
-        roomId: room.id,
-        ...reactionData,
-      });
-    } else {
-      reactionChatRoomMessage(reactionData);
-      socket?.emit('send-reaction-group-message', {
-        roomId: room.id,
-        ...reactionData,
-      });
-    }
-  };
+  const handleReaction = useCallback(
+    (messageObj: Message, emoji: string) => {
+      const reactionData = {
+        messageId: messageObj.id,
+        reaction: {
+          userId: user.id,
+          name: user.name,
+          emoji,
+        },
+      };
 
-  const handleReply = (messageReply?: MessageOnReply) => {
+      const hasReact = messageObj?.reactions?.some((reaction) => reaction?.userId === user?.id);
+
+      if (hasReact) {
+        reactionPopChatRoomMessage(reactionData);
+        socket?.emit('send-reaction-pop-group-message', {
+          roomId: room.id,
+          ...reactionData,
+        });
+      } else {
+        reactionChatRoomMessage(reactionData);
+        socket?.emit('send-reaction-group-message', {
+          roomId: room.id,
+          ...reactionData,
+        });
+      }
+    },
+    [room.id, user.id, user.name, socket, reactionChatRoomMessage, reactionPopChatRoomMessage]
+  );
+
+  const handleReply = useCallback((messageReply?: MessageOnReply) => {
     setReplyMessage(messageReply);
-  };
+  }, []);
 
-  const handleCancelReply = () => {
+  const handleEdit = useCallback((messageEdit: Message) => {
+    setMessage(messageEdit?.text || '');
+    setIsEditing(true);
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
     setReplyMessage(undefined);
-  };
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setMessage('');
+    setIsEditing(false);
+  }, []);
 
   useEffect(() => {
     clearUnreadChatRoomMessages();
@@ -183,6 +199,8 @@ export const ChatMessageGroup = ({
             messages={chatRoomMessages}
             onReaction={handleReaction}
             onReply={handleReply}
+            isEditing={isEditing}
+            onEdit={handleEdit}
           />
 
           <div ref={messagesEndRef} />
@@ -192,8 +210,10 @@ export const ChatMessageGroup = ({
       <MessageInput
         participants={participantsArray}
         onSendMessage={handleSendMessage}
+        isEditing={isEditing}
         replyMessage={replyMessage}
         cancelReplyMessage={handleCancelReply}
+        cancelEditMessage={handleCancelEdit}
         message={message}
         setMessage={setMessage}
       />

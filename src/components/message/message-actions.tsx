@@ -14,7 +14,7 @@ import { varAlpha } from 'src/theme/styles';
 
 interface MessageActionsProps {
   message: Message;
-  onEdit: any;
+  onEdit?: (message: Message) => void;
   onReply?: (message: MessageOnReply) => void;
   onResend?: any;
   onDelete: any;
@@ -53,6 +53,11 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onReply?.({ id: message.id, text: message.text, name: message.userInfo.name });
   };
 
+  const handleEdit = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    onEdit?.(message);
+  };
+
   const handleDelete = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     onDelete(message.id);
@@ -81,7 +86,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             <Tooltip title="Edit">
               <IconButton
                 size="small"
-                onClick={onEdit}
+                onClick={handleEdit}
                 sx={{
                   width: 24,
                   height: 24,
