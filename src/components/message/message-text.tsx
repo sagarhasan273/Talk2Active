@@ -1,6 +1,6 @@
 import type { Message } from 'src/types/type-room';
 
-import { Box, Paper, Tooltip, useTheme, Typography } from '@mui/material';
+import { Box, Paper, Tooltip, SvgIcon, useTheme, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -154,6 +154,7 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
           variant="caption"
           className="message-time"
           sx={{
+            ml: 0.5,
             color: 'text.primary',
             fontSize: '0.5rem',
             opacity: message.isUnread && message.sender === 'them' ? 1 : 0.5,
@@ -163,6 +164,37 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
           {message.time}
         </Typography>
 
+        {message.isEdited && (
+          <Box
+            sx={{
+              ml: 0.25,
+              width: 'fit-content',
+              height: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.25,
+            }}
+          >
+            <SvgIcon sx={{ fontSize: 12, color: 'info.main' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M6.414 15.89L16.556 5.748l-1.414-1.414L5 14.476v1.414zm.829 2H3v-4.243L14.435 2.212a1 1 0 0 1 1.414 0l2.829 2.829a1 1 0 0 1 0 1.414zM3 19.89h18v2H3z"
+                />
+              </svg>
+            </SvgIcon>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'info.main',
+                fontSize: '0.6rem',
+              }}
+            >
+              Edited
+            </Typography>
+          </Box>
+        )}
         {message.sender === 'me' && (
           <Box
             sx={{

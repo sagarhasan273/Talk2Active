@@ -8,7 +8,7 @@ export type MessageAvatarsProps = {
 export type MessageContainerProps = {
   messages: Message[];
   onReaction: (message: Message, emoji: string) => void;
-  onReply: (message: MessageOnReply) => void;
+  onReply: (message: Message) => void;
   onEdit: (message: Message) => void;
   isEditing?: boolean;
 };
@@ -30,7 +30,7 @@ export type MessageMentionProps = {
 export type MessageInputProps = {
   participants: Participant[];
   onSendMessage: (
-    isPrivateMessage: boolean,
+    isPrivate: boolean,
     targetUserInfo?: Message['targetUserInfo'],
     mentions?: Message['mentions']
   ) => void;
@@ -41,4 +41,6 @@ export type MessageInputProps = {
   cancelEditMessage?: () => void;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
+  isPrivateMessage: boolean;
+  setIsPrivateMessage: React.Dispatch<React.SetStateAction<boolean>>;
 };

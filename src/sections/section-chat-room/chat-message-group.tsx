@@ -35,7 +35,9 @@ export const ChatMessageGroup = ({
   const { socket } = useSocketContext();
 
   const [message, setMessage] = useState<string>('');
+  const [messageId, setMessageId] = useState<Message['id']>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isPrivateMessage, setIsPrivateMessage] = useState<boolean>(false);
   const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export const ChatMessageGroup = ({
 
   const handleSendMessage = useCallback(
     (
-      isPrivateMessage: boolean,
+      isPrivate: boolean,
       targetUserInfo: Message['targetUserInfo'],
       mentions: Message['mentions'] = []
     ): void => {
@@ -55,7 +57,7 @@ export const ChatMessageGroup = ({
         sender: 'me',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isUnread: false,
-        isPrivate: isPrivateMessage,
+        isPrivate,
         senderSocketId: socket?.id,
         targetSocketId: targetUserInfo?.socketId,
         type: 'message',
@@ -69,7 +71,14 @@ export const ChatMessageGroup = ({
         messageRepliedOf: replyMessage,
       };
 
-      if (isPrivateMessage && targetUserInfo) {
+      if (isEditing) {
+        socket?.emit('send-edit-group-message', {
+          roomId: room.id,
+          messageId,
+          text: newMessage.text,
+          time: newMessage.time,
+        });
+      } else if (isPrivate && targetUserInfo) {
         socket?.emit('send-private-message', {
           roomId: room.id,
           ...newMessage,
@@ -82,9 +91,12 @@ export const ChatMessageGroup = ({
       }
 
       setMessage('');
+      setMessageId('');
+      setIsEditing(false);
+      setIsPrivateMessage(false);
       setReplyMessage(undefined);
     },
-    [message, replyMessage, room.id, socket, user]
+    [message, messageId, isEditing, replyMessage, room.id, socket, user]
   );
 
   const handleReaction = useCallback(
@@ -117,12 +129,18 @@ export const ChatMessageGroup = ({
     [room.id, user.id, user.name, socket, reactionChatRoomMessage, reactionPopChatRoomMessage]
   );
 
-  const handleReply = useCallback((messageReply?: MessageOnReply) => {
-    setReplyMessage(messageReply);
+  const handleReply = useCallback((messageReply: Message) => {
+    setReplyMessage({
+      id: messageReply?.id,
+      text: messageReply?.text,
+      name: messageReply.userInfo.name,
+    });
+    setIsPrivateMessage(!!messageReply.isPrivate);
   }, []);
 
   const handleEdit = useCallback((messageEdit: Message) => {
     setMessage(messageEdit?.text || '');
+    setMessageId(messageEdit?.id);
     setIsEditing(true);
   }, []);
 
@@ -216,6 +234,8 @@ export const ChatMessageGroup = ({
         cancelEditMessage={handleCancelEdit}
         message={message}
         setMessage={setMessage}
+        isPrivateMessage={isPrivateMessage}
+        setIsPrivateMessage={setIsPrivateMessage}
       />
     </>
   );

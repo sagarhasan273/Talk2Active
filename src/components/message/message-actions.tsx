@@ -1,4 +1,4 @@
-import type { Message, MessageOnReply } from 'src/types/type-room';
+import type { Message } from 'src/types/type-room';
 
 import React, { useState } from 'react';
 
@@ -15,7 +15,7 @@ import { varAlpha } from 'src/theme/styles';
 interface MessageActionsProps {
   message: Message;
   onEdit?: (message: Message) => void;
-  onReply?: (message: MessageOnReply) => void;
+  onReply?: (message: Message) => void;
   onResend?: any;
   onDelete: any;
   onReaction?: (message: Message, emoji: string) => void;
@@ -50,7 +50,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
   const handleReply = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    onReply?.({ id: message.id, text: message.text, name: message.userInfo.name });
+    onReply?.(message);
   };
 
   const handleEdit = (event: React.MouseEvent<HTMLElement>) => {

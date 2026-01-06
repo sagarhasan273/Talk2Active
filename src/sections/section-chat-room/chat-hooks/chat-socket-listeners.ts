@@ -26,6 +26,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     updateRemoteParticipantAudio,
     updateRemoteParticipantStatus,
     addChatRoomMessage,
+    editChatRoomMessage,
     reactionChatRoomMessage,
     reactionPopChatRoomMessage,
   } = useRoomTools();
@@ -133,6 +134,10 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       addChatRoomMessage(receiveMessage);
     };
 
+    const handleEditedMessage = (data: { messageId: Message['id']; text: Message['text'] }) => {
+      editChatRoomMessage(data);
+    };
+
     // WebRTC signaling
     const handleWebRTCOffer = (data: WebRTCEventData) => {
       handleOffer(data, socket);
@@ -153,6 +158,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('user-audio-toggled', handleAudioToggled);
     on('user-status-selected', handleStatusUpdated);
     on('receive-group-message', handleGroupMessage);
+    on('receive-edit-group-message', handleEditedMessage);
     on('receive-reaction-group-message', handleReactionMessage);
     on('receive-reaction-pop-group-message', handleReactionPopMessage);
     on('receive-private-message', handlePrivateMessage);
@@ -168,6 +174,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       off('user-audio-toggled', handleAudioToggled);
       off('user-status-selected', handleStatusUpdated);
       off('receive-group-message', handleGroupMessage);
+      off('receive-edit-group-message', handleEditedMessage);
       off('receive-reaction-group-message', handleReactionMessage);
       off('receive-private-message', handlePrivateMessage);
       off('webrtc-offer', handleWebRTCOffer);

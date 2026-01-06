@@ -81,25 +81,35 @@ export const roomSlice = createSlice({
 
     editChatRoomMessage: (
       state,
-      action: PayloadAction<{ messageId: Message['id']; text: Message['text'] }>
+      action: PayloadAction<{
+        messageId: Message['id'];
+        text: Message['text'];
+        time?: Message['time'];
+      }>
     ) => {
       state.chatRoomMessages.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.isEdited = true;
-          msg.text = action.payload.text;
+          msg.text = action.payload.text || msg.text;
+          msg.time = action.payload.time || msg.time;
         }
       });
     },
 
     deleteChatRoomMessage: (
       state,
-      action: PayloadAction<{ messageId: Message['id']; text?: Message['text'] }>
+      action: PayloadAction<{
+        messageId: Message['id'];
+        text?: Message['text'];
+        time?: Message['time'];
+      }>
     ) => {
       state.chatRoomMessages.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.isDeleted = true;
           msg.isEdited = false;
           msg.text = action.payload.text || 'Message has deleted!';
+          msg.time = action.payload.text || msg.time;
         }
       });
     },
@@ -147,6 +157,8 @@ const {
   updateRemoteParticipantStatus,
   resetRemoteParticipants,
   addChatRoomMessage,
+  editChatRoomMessage,
+  deleteChatRoomMessage,
   reactionChatRoomMessage,
   reactionPopChatRoomMessage,
   clearUnreadChatRoomMessages,
@@ -186,6 +198,16 @@ export const useRoomTools = () => {
         dispatch(updateRemoteParticipantStatus(payload)),
       resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
+      editChatRoomMessage: (payload: {
+        messageId: Message['id'];
+        text: Message['text'];
+        time?: Message['time'];
+      }) => dispatch(editChatRoomMessage(payload)),
+      deleteChatRoomMessage: (payload: {
+        messageId: Message['id'];
+        text?: Message['text'];
+        time?: Message['time'];
+      }) => dispatch(deleteChatRoomMessage(payload)),
       reactionChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
         dispatch(reactionChatRoomMessage(payload)),
       reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
