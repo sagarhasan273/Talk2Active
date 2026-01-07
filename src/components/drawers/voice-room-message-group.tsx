@@ -4,11 +4,11 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { useSelector } from 'react-redux';
 
+import { Badge } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
-import { Box, Chip, Badge } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { SmartToy, Message as MessageIcon } from '@mui/icons-material';
+import { Message as MessageIcon } from '@mui/icons-material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -37,43 +37,17 @@ export function VoiceRoomMessageGroupDrawer({
 
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
-      <Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'row', sm: 'row' },
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: 1,
-          }}
-        >
-          <VoiceRoomMessageGroupHeader
-            roomName="React Voice Room"
-            users={[
-              { _id: socket?.id || '$1', name: user.name, profilePhoto: user.profilePhoto },
-              ...(Object.values(remoteParticipants)?.map((participant) => ({
-                _id: participant?.socketId,
-                name: participant.name,
-                profilePhoto: participant.profilePhoto,
-              })) || []),
-            ]}
-          />
-          <Chip
-            icon={<Iconify icon="formkit:people" />}
-            label="13"
-            size="small"
-            color="default"
-            variant="outlined"
-          />
-
-          <Chip
-            icon={<SmartToy />}
-            label="AI Assistant"
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        </Box>
-      </Box>
+      <VoiceRoomMessageGroupHeader
+        roomName="Group messages"
+        users={[
+          { _id: socket?.id || '$1', name: user.name, profilePhoto: user.profilePhoto },
+          ...(Object.values(remoteParticipants)?.map((participant) => ({
+            _id: participant?.socketId,
+            name: participant.name,
+            profilePhoto: participant.profilePhoto,
+          })) || []),
+        ]}
+      />
 
       <IconButton onClick={drawer.onFalse} sx={{ ml: 'auto', display: { xs: 'inline-flex' } }}>
         <Iconify icon="mingcute:close-line" />

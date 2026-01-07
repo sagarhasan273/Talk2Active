@@ -1,5 +1,5 @@
 import type { SxProps } from '@mui/material';
-import type { Message, Participant, MessageOnReply } from 'src/types/type-room';
+import type { Message, Participant, PrivateParticipantProps } from 'src/types/type-room';
 
 export type MessageAvatarsProps = {
   message: Message;
@@ -14,7 +14,7 @@ export type MessageContainerProps = {
 };
 
 export type MessageReplyInfoProps = {
-  replyMessage: MessageOnReply;
+  replyMessage: Partial<Message>;
   cancelReplyMessage?: () => void;
   sx?: SxProps;
 };
@@ -36,11 +36,13 @@ export type MessageInputProps = {
   ) => void;
   isEditing?: boolean;
   placeholder?: string;
-  replyMessage?: MessageOnReply;
+  replyMessage?: Partial<Message>;
   cancelReplyMessage?: () => void;
   cancelEditMessage?: () => void;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
   isPrivateMessage: boolean;
   setIsPrivateMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  privateRecipient: PrivateParticipantProps | null;
+  setPrivateRecipient: React.Dispatch<React.SetStateAction<PrivateParticipantProps | null>>;
 };

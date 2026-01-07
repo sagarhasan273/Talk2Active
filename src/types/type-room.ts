@@ -45,13 +45,14 @@ export type Message = {
   isEdited?: boolean;
   isDeleted?: boolean;
   reactions?: Reaction[];
-  messageRepliedOf?: MessageOnReply;
+  messageRepliedOf?: Partial<Message>;
 };
 
 export type MessageOnReply = {
   id: Message['id'];
   text: Message['text'];
   name: Message['userInfo']['name'];
+  targetSocketId?: Message['targetSocketId'];
 };
 
 export type ReactionMessageData = {
@@ -67,4 +68,11 @@ export type Participant = UserType & {
   isMuted: boolean;
   isSpeaking: boolean;
   userType?: string;
+};
+
+export type PrivateParticipantProps = {
+  socketId: string;
+  userId: UserType['userId'];
+  name: UserType['name'];
+  profilePhoto?: UserType['profilePhoto'];
 };

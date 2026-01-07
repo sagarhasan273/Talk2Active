@@ -1,4 +1,4 @@
-import type { Message, MessageOnReply } from 'src/types/type-room';
+import type { Message, PrivateParticipantProps } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
@@ -38,7 +38,9 @@ export const ChatMessageGroup = ({
   const [messageId, setMessageId] = useState<Message['id']>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isPrivateMessage, setIsPrivateMessage] = useState<boolean>(false);
-  const [replyMessage, setReplyMessage] = useState<MessageOnReply | undefined>(undefined);
+  const [privateRecipient, setPrivateRecipient] = useState<PrivateParticipantProps | null>(null);
+  const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
+  const [editMessage, setEditMessage] = useState<Message | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -72,12 +74,21 @@ export const ChatMessageGroup = ({
       };
 
       if (isEditing) {
-        socket?.emit('send-edit-group-message', {
-          roomId: room.id,
-          messageId,
-          text: newMessage.text,
-          time: newMessage.time,
-        });
+        if (isPrivate && editMessage?.targetSocketId) {
+          socket?.emit('send-edit-private-message', {
+            roomId: room.id,
+            messageId,
+            text: newMessage.text,
+            time: newMessage.time,
+          });
+        } else {
+          socket?.emit('send-edit-group-message', {
+            roomId: room.id,
+            messageId,
+            text: newMessage.text,
+            time: newMessage.time,
+          });
+        }
       } else if (isPrivate && targetUserInfo) {
         socket?.emit('send-private-message', {
           roomId: room.id,
@@ -96,7 +107,7 @@ export const ChatMessageGroup = ({
       setIsPrivateMessage(false);
       setReplyMessage(undefined);
     },
-    [message, messageId, isEditing, replyMessage, room.id, socket, user]
+    [message, messageId, isEditing, replyMessage, editMessage, room.id, socket, user]
   );
 
   const handleReaction = useCallback(
@@ -130,17 +141,24 @@ export const ChatMessageGroup = ({
   );
 
   const handleReply = useCallback((messageReply: Message) => {
-    setReplyMessage({
-      id: messageReply?.id,
-      text: messageReply?.text,
-      name: messageReply.userInfo.name,
-    });
+    setReplyMessage(messageReply);
     setIsPrivateMessage(!!messageReply.isPrivate);
+    console.log('private', messageReply);
+    if (!!messageReply.isPrivate && messageReply.senderSocketId) {
+      setPrivateRecipient({
+        socketId: messageReply.senderSocketId,
+        userId: messageReply.userInfo.userId,
+        name: messageReply.userInfo.name,
+        profilePhoto: messageReply?.userInfo?.avatar,
+      });
+    }
   }, []);
 
   const handleEdit = useCallback((messageEdit: Message) => {
     setMessage(messageEdit?.text || '');
     setMessageId(messageEdit?.id);
+    setEditMessage(messageEdit);
+    setIsPrivateMessage(!!messageEdit.isPrivate);
     setIsEditing(true);
   }, []);
 
@@ -175,8 +193,8 @@ export const ChatMessageGroup = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="caption" color="success.main">
-            Online • Last seen 5 minutes ago
+          <Typography variant="caption" color="grey.500">
+            Conversations with other participants and system alerts will be shown in this chat.
           </Typography>
         </Box>
       </Paper>
@@ -236,6 +254,8 @@ export const ChatMessageGroup = ({
         setMessage={setMessage}
         isPrivateMessage={isPrivateMessage}
         setIsPrivateMessage={setIsPrivateMessage}
+        privateRecipient={privateRecipient}
+        setPrivateRecipient={setPrivateRecipient}
       />
     </>
   );

@@ -1,7 +1,4 @@
-import MicIcon from '@mui/icons-material/Mic';
-import SearchIcon from '@mui/icons-material/Search';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { Box, Stack, Avatar, Toolbar, IconButton, Typography, AvatarGroup } from '@mui/material';
+import { Box, Stack, Avatar, Toolbar, Typography, AvatarGroup } from '@mui/material';
 
 type User = {
   _id: string;
@@ -16,7 +13,7 @@ type VoiceRoomMessageGroupHeaderProps = {
 
 export function VoiceRoomMessageGroupHeader({ roomName, users }: VoiceRoomMessageGroupHeaderProps) {
   return (
-    <Toolbar sx={{ minHeight: 64 }}>
+    <Toolbar sx={{ minHeight: 64, paddingLeft: '4px !important' }}>
       {/* LEFT */}
       <Stack direction="row" alignItems="center" spacing={2} flex={1} minWidth={0}>
         <AvatarGroup max={3}>
@@ -33,21 +30,6 @@ export function VoiceRoomMessageGroupHeader({ roomName, users }: VoiceRoomMessag
             {users.length} participants
           </Typography>
         </Box>
-      </Stack>
-
-      {/* RIGHT */}
-      <Stack direction="row" spacing={1}>
-        <IconButton>
-          <SearchIcon />
-        </IconButton>
-
-        <IconButton color="primary">
-          <MicIcon />
-        </IconButton>
-
-        <IconButton>
-          <SettingsIcon />
-        </IconButton>
       </Stack>
     </Toolbar>
   );

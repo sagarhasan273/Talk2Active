@@ -58,6 +58,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   cancelEditMessage,
   message,
   setMessage,
+  isPrivateMessage,
+  setIsPrivateMessage,
+  privateRecipient,
+  setPrivateRecipient,
 }) => {
   const user = useSelector(selectAccount);
   const { clearUnreadChatRoomMessages } = useRoomTools();
@@ -66,8 +70,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [mentions, setMentions] = useState<Message['mentions']>([]);
   const [mentionQuery, setMentionQuery] = useState('');
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
-  const [isPrivateMessage, setIsPrivateMessage] = useState(false);
-  const [privateRecipient, setPrivateRecipient] = useState<Participant | null>(null);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState<boolean>(false);
 
   const textFieldRef = useRef<HTMLDivElement>(null);
@@ -279,6 +281,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           minHeight: 90,
         }}
       >
+        {/* Quick Mention Hint */}
+        <Typography
+          variant="caption"
+          sx={{
+            position: 'absolute',
+            top: -8,
+            right: 0,
+            px: 0.5,
+            backgroundColor: 'background.neutral',
+            borderRadius: 0.5,
+            display: isPrivateMessage || replyMessage !== undefined || isEditing ? 'none' : 'block',
+          }}
+        >
+          Type @ to find users • Click to send a private message
+        </Typography>
         {isEditing && (
           <Box
             sx={{
@@ -519,21 +536,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </IconButton>
         </Box>
       </Paper>
-      {/* Quick Mention Hint */}
-      <Typography
-        variant="caption"
-        sx={{
-          position: 'absolute',
-          top: -8,
-          right: 0,
-          px: 0.5,
-          backgroundColor: 'background.neutral',
-          borderRadius: 0.5,
-          display: isPrivateMessage || replyMessage !== undefined || isEditing ? 'none' : 'block',
-        }}
-      >
-        Type @ to find users • Click to send a private message
-      </Typography>
     </Box>
   );
 };

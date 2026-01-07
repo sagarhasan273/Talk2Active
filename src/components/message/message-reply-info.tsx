@@ -38,7 +38,7 @@ export function MessageReplyInfo({ replyMessage, cancelReplyMessage, sx }: Messa
             ),
           }}
         >
-          {replyMessage.name}
+          {replyMessage?.userInfo?.name}
         </Typography>
         <Typography variant="body1" sx={{ color: 'text.secondary' }}>
           {replyMessage?.text}
