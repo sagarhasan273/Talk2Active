@@ -27,6 +27,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     updateRemoteParticipantStatus,
     addChatRoomMessage,
     editChatRoomMessage,
+    deleteChatRoomMessage,
     reactionChatRoomMessage,
     reactionPopChatRoomMessage,
   } = useRoomTools();
@@ -142,6 +143,14 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       editChatRoomMessage(data);
     };
 
+    const handleDeleteGroupMessage = (data: {
+      messageId: Message['id'];
+      text: Message['text'];
+      time: Message['time'];
+    }) => {
+      deleteChatRoomMessage(data);
+    };
+
     // WebRTC signaling
     const handleWebRTCOffer = (data: WebRTCEventData) => {
       handleOffer(data, socket);
@@ -163,6 +172,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('user-status-selected', handleStatusUpdated);
     on('receive-group-message', handleGroupMessage);
     on('receive-edit-group-message', handleEditedMessage);
+    on('receive-delete-group-message', handleDeleteGroupMessage);
     on('receive-reaction-group-message', handleReactionMessage);
     on('receive-reaction-pop-group-message', handleReactionPopMessage);
     on('receive-private-message', handlePrivateMessage);
@@ -179,6 +189,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       off('user-status-selected', handleStatusUpdated);
       off('receive-group-message', handleGroupMessage);
       off('receive-edit-group-message', handleEditedMessage);
+      off('receive-delete-group-message', handleDeleteGroupMessage);
       off('receive-reaction-group-message', handleReactionMessage);
       off('receive-private-message', handlePrivateMessage);
       off('webrtc-offer', handleWebRTCOffer);

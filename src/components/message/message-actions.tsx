@@ -17,7 +17,7 @@ interface MessageActionsProps {
   onEdit?: (message: Message) => void;
   onReply?: (message: Message) => void;
   onResend?: any;
-  onDelete: any;
+  onDelete?: (message: Message) => void;
   onReaction?: (message: Message, emoji: string) => void;
 }
 
@@ -60,8 +60,12 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
   const handleDelete = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
-    onDelete(message.id);
+    onDelete?.(message);
   };
+
+  if (message.isDeleted || message.type === 'system') {
+    return null;
+  }
 
   return (
     <>

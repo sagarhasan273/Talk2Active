@@ -1,50 +1,39 @@
-import type { Message, PrivateParticipantProps } from 'src/types/type-room';
+import type { Message } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
-import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import { Box, Paper, Typography } from '@mui/material';
 
 import { fDate } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
-import { selectAccount } from 'src/core/slices';
-import { useRoomTools } from 'src/core/slices/slice-room';
+import { selectAccount, useMessagesTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import { Scrollbar } from 'src/components/scrollbar';
-import { MessageContainer } from 'src/components/message';
+import { Scrollbar } from 'src/components/scrollbar/scrollbar';
+import { MessageInput } from 'src/components/message/message-input';
+import { MessageContainer } from 'src/components/message/message-container';
 
-import { MessageInput } from '../../components/message/message-input';
-
-export const ChatMessageGroup = ({
-  onClose,
-}: {
-  onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-}) => {
+export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: string }) => {
   const {
-    room,
-    chatRoomMessages,
-    remoteParticipants,
-    reactionChatRoomMessage,
-    reactionPopChatRoomMessage,
-    clearUnreadChatRoomMessages,
-  } = useRoomTools();
+    individualMessages,
+    reactionIndividualMessage,
+    reactionPopIndividualMessage,
+    clearUnreadIndividualMessages,
+  } = useMessagesTools();
   const user = useSelector(selectAccount);
 
   const { socket } = useSocketContext();
-
+  console.log(individualMessages);
   const [message, setMessage] = useState<string>('');
   const [messageId, setMessageId] = useState<Message['id']>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isPrivateMessage, setIsPrivateMessage] = useState<boolean>(false);
-  const [privateRecipient, setPrivateRecipient] = useState<PrivateParticipantProps | null>(null);
   const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
   const [editMessage, setEditMessage] = useState<Message | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
 
   const handleSendMessage = useCallback(
     (
@@ -74,29 +63,14 @@ export const ChatMessageGroup = ({
       };
 
       if (isEditing) {
-        if (isPrivate && editMessage?.targetSocketId) {
-          socket?.emit('send-edit-private-message', {
-            roomId: room.id,
-            messageId,
-            text: newMessage.text,
-            time: newMessage.time,
-          });
-        } else {
-          socket?.emit('send-edit-group-message', {
-            roomId: room.id,
-            messageId,
-            text: newMessage.text,
-            time: newMessage.time,
-          });
-        }
-      } else if (isPrivate && targetUserInfo) {
-        socket?.emit('send-private-message', {
-          roomId: room.id,
-          ...newMessage,
+        socket?.emit('send-edit-group-message', {
+          messageId,
+          text: newMessage.text,
+          time: newMessage.time,
         });
       } else {
-        socket?.emit('send-group-message', {
-          roomId: room.id,
+        socket?.emit('send-individual-message', {
+          userId: targetUserId,
           ...newMessage,
         });
       }
@@ -107,7 +81,7 @@ export const ChatMessageGroup = ({
       setIsPrivateMessage(false);
       setReplyMessage(undefined);
     },
-    [message, messageId, isEditing, replyMessage, editMessage, room.id, socket, user]
+    [message, targetUserId, messageId, isEditing, replyMessage, socket, user]
   );
 
   const handleReaction = useCallback(
@@ -124,34 +98,24 @@ export const ChatMessageGroup = ({
       const hasReact = messageObj?.reactions?.some((reaction) => reaction?.userId === user?.id);
 
       if (hasReact) {
-        reactionPopChatRoomMessage(reactionData);
+        reactionPopIndividualMessage(reactionData);
         socket?.emit('send-reaction-pop-group-message', {
-          roomId: room.id,
           ...reactionData,
         });
       } else {
-        reactionChatRoomMessage(reactionData);
+        reactionIndividualMessage(reactionData);
         socket?.emit('send-reaction-group-message', {
-          roomId: room.id,
           ...reactionData,
         });
       }
     },
-    [room.id, user.id, user.name, socket, reactionChatRoomMessage, reactionPopChatRoomMessage]
+    [user.id, user.name, socket, reactionIndividualMessage, reactionPopIndividualMessage]
   );
 
   const handleReply = useCallback((messageReply: Message) => {
     setReplyMessage(messageReply);
     setIsPrivateMessage(!!messageReply.isPrivate);
     console.log('private', messageReply);
-    if (!!messageReply.isPrivate && messageReply.senderSocketId) {
-      setPrivateRecipient({
-        socketId: messageReply.senderSocketId,
-        userId: messageReply.userInfo.userId,
-        name: messageReply.userInfo.name,
-        profilePhoto: messageReply?.userInfo?.avatar,
-      });
-    }
   }, []);
 
   const handleEdit = useCallback((messageEdit: Message) => {
@@ -165,12 +129,11 @@ export const ChatMessageGroup = ({
   const handleDelete = useCallback(
     (messageDelete: Message) => {
       socket?.emit('send-delete-group-message', {
-        roomId: room.id,
         messageId: messageDelete.id,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
     },
-    [socket, room.id]
+    [socket]
   );
 
   const handleCancelReply = useCallback(() => {
@@ -183,11 +146,11 @@ export const ChatMessageGroup = ({
   }, []);
 
   useEffect(() => {
-    clearUnreadChatRoomMessages();
+    clearUnreadIndividualMessages();
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatRoomMessages]);
+  }, [individualMessages]);
 
   return (
     <>
@@ -205,7 +168,7 @@ export const ChatMessageGroup = ({
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="caption" color="grey.500">
-            Conversations with other participants and system alerts will be shown in this chat.
+            Messages will be remove after 7 days.
           </Typography>
         </Box>
       </Paper>
@@ -243,7 +206,7 @@ export const ChatMessageGroup = ({
 
           {/* Messages */}
           <MessageContainer
-            messages={chatRoomMessages}
+            messages={individualMessages}
             onReaction={handleReaction}
             onReply={handleReply}
             isEditing={isEditing}
@@ -256,7 +219,6 @@ export const ChatMessageGroup = ({
       </Scrollbar>
       {/* Message Input Box */}
       <MessageInput
-        participants={participantsArray}
         onSendMessage={handleSendMessage}
         isEditing={isEditing}
         replyMessage={replyMessage}
@@ -266,8 +228,6 @@ export const ChatMessageGroup = ({
         setMessage={setMessage}
         isPrivateMessage={isPrivateMessage}
         setIsPrivateMessage={setIsPrivateMessage}
-        privateRecipient={privateRecipient}
-        setPrivateRecipient={setPrivateRecipient}
       />
     </>
   );

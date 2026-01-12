@@ -28,8 +28,8 @@ import { STATUS_OPTIONS } from './chat-status-button';
 import { VoiceRoomIsSpeaking } from './chat-is-speaking';
 import { ChatUserAvatarBadge } from './chat-user-avater-badge';
 import { ChatUserCardPCStatus } from './chat-user-card-pc-status';
-import { VoiceRoomMessageIndividual } from './chat-message-individual';
 import { ChatUserCardQuickActions } from './chat-user-card-quick-actions';
+import { VoiceRoomMessageIndividual } from '../../layouts/components/social-drawer/message-individual';
 
 import type { AudioQuality, ChatUserCardAudioSettings } from './type';
 
@@ -366,7 +366,7 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
           },
         }}
       >
-        <VoiceRoomMessageIndividual onClose={handleMessageClose} />
+        <VoiceRoomMessageIndividual />
       </Menu>
     </Box>
   );

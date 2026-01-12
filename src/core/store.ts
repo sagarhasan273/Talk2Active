@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import { socialSlice } from './slices/slice-social';
 import { roomSlice, postsSlice, accountSlice } from './slices';
 import { userApi, postApi, chatApi, socialApi, settingsApi, suggestionApi } from './apis';
 
@@ -10,6 +11,7 @@ const rootReducer = {
   account: accountSlice.reducer,
   posts: postsSlice.reducer,
   room: roomSlice.reducer,
+  social: socialSlice.reducer,
   [userApi.reducerPath]: userApi.reducer,
   [settingsApi.reducerPath]: settingsApi.reducer,
   [postApi.reducerPath]: postApi.reducer,

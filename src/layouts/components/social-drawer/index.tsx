@@ -17,7 +17,9 @@ import { Stack, Avatar, Tooltip } from '@mui/material';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { selectAccount } from 'src/core/slices';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
+import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
 import {
   useGetFriendsQuery,
   useGetFollowingQuery,
@@ -29,6 +31,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
 import { SocialItem } from './social-item';
+import { useSocialSocketListeners } from './social-listeners';
 
 // ----------------------------------------------------------------------
 
@@ -55,6 +58,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
 
   const user = useSelector(selectAccount);
+  const { socket } = useSocketContext();
+  const { setupSocialSocketListeners } = useSocialSocketListeners();
 
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('');
@@ -73,9 +78,16 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     skip: currentTab !== 'following',
   });
 
-  const handleChangeHeaderTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
-    setHeaderTab(newValue);
-  }, []);
+  const handleChangeHeaderTab = useCallback(
+    (event: React.SyntheticEvent, newValue: string) => {
+      setHeaderTab(newValue);
+      if (newValue === 'messaging-with') {
+        setupSocialSocketListeners?.();
+        socket?.emit('join-individual-message-room', { userId: user.id });
+      }
+    },
+    [user.id, socket, setupSocialSocketListeners]
+  );
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
     setCurrentTab(newValue);
@@ -124,6 +136,9 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             minWidth: 100,
             '&.MuiButtonBase-root': {
               px: 1.5,
+              '&.Mui-selected': {
+                color: 'common.black',
+              },
             },
           }}
         />
@@ -139,6 +154,9 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             maxWidth: 160,
             '&.MuiButtonBase-root': {
               px: 1.5,
+              '&.Mui-selected': {
+                color: 'common.black',
+              },
             },
           }}
         />
@@ -155,6 +173,11 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           value={tab.value}
           label={tab.label}
           icon={<Iconify icon={tab.icon} />}
+          sx={{
+            '&.Mui-selected': {
+              color: 'common.black',
+            },
+          }}
         />
       ))}
     </CustomTabs>
@@ -175,17 +198,32 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     </Scrollbar>
   );
 
+  const renderMessageList = (
+    <Scrollbar>
+      <Box component="ul">
+        {people.map((relation, index) => (
+          <Box component="li" key={index} sx={{ display: 'flex' }}>
+            <SocialItem
+              relation={relation}
+              onClick={() => setSelectedForMessage(relation.accountDetails)}
+            />
+          </Box>
+        ))}
+      </Box>
+    </Scrollbar>
+  );
+
   useEffect(() => {
     if (currentTab === 'all' && allRelations?.data) {
       setPoeple(allRelations.data);
     }
-    if (currentTab === 'friends' && friends?.data) {
+    if ((currentTab === 'friends' || headerTab === 'message') && friends?.data) {
       setPoeple(friends.data);
     }
     if (currentTab === 'following' && following?.data) {
       setPoeple(following.data);
     }
-  }, [currentTab, allRelations, friends, following, setPoeple]);
+  }, [currentTab, headerTab, allRelations, friends, following, setPoeple]);
 
   return (
     <>
@@ -253,6 +291,12 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
         {headerTab === 'social' && renderTabs}
 
         {headerTab === 'social' && renderList}
+
+        {headerTab === 'message' && renderMessageList}
+
+        {headerTab === 'messaging-with' && (
+          <VoiceRoomMessageIndividual targetUserId={selectedForMessage?.id} />
+        )}
 
         {headerTab === 'social' && (
           <Box sx={{ p: 1 }}>

@@ -108,8 +108,8 @@ export const roomSlice = createSlice({
         if (msg.id === action.payload.messageId) {
           msg.isDeleted = true;
           msg.isEdited = false;
-          msg.text = action.payload.text || 'Message has deleted!';
-          msg.time = action.payload.text || msg.time;
+          msg.text = action.payload.text || '[This message was deleted]';
+          msg.time = action.payload.time || msg.time;
         }
       });
     },

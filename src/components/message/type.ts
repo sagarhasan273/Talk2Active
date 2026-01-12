@@ -10,6 +10,7 @@ export type MessageContainerProps = {
   onReaction: (message: Message, emoji: string) => void;
   onReply: (message: Message) => void;
   onEdit: (message: Message) => void;
+  onDelete: (message: Message) => void;
   isEditing?: boolean;
 };
 
@@ -28,7 +29,8 @@ export type MessageMentionProps = {
 };
 
 export type MessageInputProps = {
-  participants: Participant[];
+  inputFor?: 'individual' | 'group';
+  participants?: Participant[];
   onSendMessage: (
     isPrivate: boolean,
     targetUserInfo?: Message['targetUserInfo'],
@@ -43,6 +45,6 @@ export type MessageInputProps = {
   setMessage: React.Dispatch<React.SetStateAction<string>>;
   isPrivateMessage: boolean;
   setIsPrivateMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  privateRecipient: PrivateParticipantProps | null;
-  setPrivateRecipient: React.Dispatch<React.SetStateAction<PrivateParticipantProps | null>>;
+  privateRecipient?: PrivateParticipantProps | null;
+  setPrivateRecipient?: React.Dispatch<React.SetStateAction<PrivateParticipantProps | null>>;
 };

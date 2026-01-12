@@ -2,13 +2,18 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { m } from 'framer-motion';
 
+import { Badge } from '@mui/material';
 import NoSsr from '@mui/material/NoSsr';
 import Avatar from '@mui/material/Avatar';
 import SvgIcon from '@mui/material/SvgIcon';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 
+import { useSocketContext } from 'src/core/contexts/socket-context';
+
 import { AnimateAvatar } from 'src/components/animate';
+
+import { useSocialSocketListeners } from './social-drawer/social-listeners';
 
 // ----------------------------------------------------------------------
 
@@ -19,6 +24,10 @@ export type AccountButtonProps = IconButtonProps & {
 
 export function AccountButton({ photoURL, displayName, sx, ...other }: AccountButtonProps) {
   const theme = useTheme();
+
+  useSocialSocketListeners();
+
+  const { isSocketConnected } = useSocketContext();
 
   const renderFallback = (
     <Avatar
@@ -40,21 +49,41 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
   );
 
   return (
-    <IconButton component={m.button} whileTap="tap" sx={{ p: 0, ...sx }} {...other}>
-      <NoSsr fallback={renderFallback}>
-        <AnimateAvatar
-          slotProps={{
-            avatar: { src: photoURL, alt: displayName },
-            overlay: {
-              border: 1,
-              spacing: 2,
-              color: `conic-gradient(${theme.vars.palette.primary.main}, ${theme.vars.palette.warning.main}, ${theme.vars.palette.primary.main})`,
-            },
-          }}
-        >
-          {displayName?.charAt(0).toUpperCase()}
-        </AnimateAvatar>
-      </NoSsr>
+    <IconButton component={m.button} whileTap="tap" sx={{ p: 0, mr: 2, ...sx }} {...other}>
+      <Badge
+        variant="dot"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{
+          '& .MuiBadge-badge': {
+            position: 'absolute',
+            bottom: 5,
+            right: 5,
+            backgroundColor: isSocketConnected ? 'success.main' : 'grey.500',
+            boxShadow: `0 0 0 1px ${theme.vars.palette.success.lighter}`,
+            transition: 'background-color 0.3s ease',
+          },
+        }}
+      >
+        <NoSsr fallback={renderFallback}>
+          <AnimateAvatar
+            sx={{ width: 40, height: 40 }}
+            slotProps={{
+              avatar: { src: photoURL, alt: displayName },
+              overlay: {
+                border: 1,
+                spacing: 2,
+                color: `conic-gradient(
+              ${theme.vars.palette.primary.main},
+              ${theme.vars.palette.warning.main},
+              ${theme.vars.palette.primary.main}
+            )`,
+              },
+            }}
+          >
+            {displayName?.charAt(0).toUpperCase()}
+          </AnimateAvatar>
+        </NoSsr>
+      </Badge>
     </IconButton>
   );
 }

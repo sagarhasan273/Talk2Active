@@ -49,6 +49,7 @@ const statusConfig = {
 };
 
 export const MessageInput: React.FC<MessageInputProps> = ({
+  inputFor = 'group',
   participants,
   onSendMessage,
   placeholder = 'Write a message...',
@@ -79,12 +80,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   // Filter participants based on mention query
-  const filteredParticipants = participants.filter(
-    (participant) =>
-      participant.userId !== user.id &&
-      !mentions.map((m) => m.userId).includes(participant.userId) &&
-      participant.name.toLowerCase().includes(mentionQuery.toLowerCase())
-  );
+  const filteredParticipants =
+    participants?.filter(
+      (participant) =>
+        participant.userId !== user.id &&
+        !mentions.map((m) => m.userId).includes(participant.userId) &&
+        participant.name.toLowerCase().includes(mentionQuery.toLowerCase())
+    ) || [];
 
   // Handle text change
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +154,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Start a private message
   const startPrivateMessage = (participant: Participant) => {
     setIsPrivateMessage(true);
-    setPrivateRecipient(participant);
+    setPrivateRecipient?.(participant);
     setMessage('');
     setShowMentions(false);
     inputRef.current?.focus();
@@ -161,7 +163,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Cancel private message
   const cancelPrivateMessage = () => {
     setIsPrivateMessage(false);
-    setPrivateRecipient(null);
+    setPrivateRecipient?.(null);
     setMessage('');
   };
 
@@ -291,7 +293,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             px: 0.5,
             backgroundColor: 'background.neutral',
             borderRadius: 0.5,
-            display: isPrivateMessage || replyMessage !== undefined || isEditing ? 'none' : 'block',
+            display:
+              inputFor === 'group' || isPrivateMessage || replyMessage !== undefined || isEditing
+                ? 'none'
+                : 'block',
           }}
         >
           Type @ to find users • Click to send a private message

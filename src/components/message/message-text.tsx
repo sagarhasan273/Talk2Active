@@ -245,6 +245,24 @@ function GetTextFromMessage({ message }: { message: Message }) {
     }
   }
 
+  if (message.isDeleted) {
+    return (
+      <Typography
+        variant="body1"
+        sx={{
+          wordBreak: 'break-word',
+          lineHeight: 1.4,
+          whiteSpace: 'pre-wrap',
+          userSelect: 'text',
+          fontStyle: 'italic',
+          color: 'text.secondary',
+        }}
+      >
+        {message.text || 'Message deleted'}
+      </Typography>
+    );
+  }
+
   return (
     <Typography
       variant="body1"

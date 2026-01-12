@@ -18,6 +18,7 @@ export function MessageContainer({
   onReaction,
   onReply,
   onEdit,
+  onDelete,
   isEditing,
 }: MessageContainerProps) {
   const { isUnreadChatRoomMessage } = useRoomTools();
@@ -38,9 +39,12 @@ export function MessageContainer({
     [onEdit, setMessageIdEdit]
   );
 
-  const handleDelete = (id: number) => {
-    console.log('message', id);
-  };
+  const handleDelete = useCallback(
+    (message: Message) => {
+      onDelete?.(message);
+    },
+    [onDelete]
+  );
 
   return (
     <>
