@@ -24,23 +24,22 @@ export function useSocialSocketListeners() {
   const { socket, on, off } = useSocketContext();
 
   // WebRTC and socket event handlers
-  const setupSocialSocketListeners = useCallback(() => {
+  const setupSocialSocketListeners: () => () => void = useCallback(() => {
     if (!socket) {
       return () => {};
     }
 
     // Message handlers
-    const handleIndividualMessage = (data: Message) => {
-      const receiveMessage: Message = {
-        id: data.id,
+    const handleIndividualMessage = (data: any) => {
+      const receiveMessage: any = {
+        id: data.messageId,
         text: data.text,
-        sender: data.sender,
         time: data.time,
+        sender: data.sender,
         isUnread: true,
-        isPrivate: false,
         type: data.type,
-        systemMessageType: data?.systemMessageType,
-        userInfo: data.userInfo,
+        senderInfo: data.senderInfo,
+        targetUserInfo: data?.targetUserInfo,
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
         senderSocketId: data?.senderSocketId,
@@ -70,7 +69,7 @@ export function useSocialSocketListeners() {
         text: data.text,
         sender: data.sender,
         time: data.time,
-        userInfo: data.userInfo,
+        senderInfo: data.senderInfo,
         targetUserInfo: data?.targetUserInfo,
         senderSocketId: data?.senderSocketId,
         targetSocketId: data?.targetSocketId,
@@ -101,6 +100,7 @@ export function useSocialSocketListeners() {
     on('receive-individual-message', handleIndividualMessage);
     on('receive-individual-message-self', handleIndividualMessage);
     on('receive-edit-individual-message', handleEditedMessage);
+    on('receive-edit-individual-message-self', handleEditedMessage);
     on('receive-delete-individual-message', handleDeleteIndividualMessage);
     on('receive-reaction-individual-message', handleReactionMessage);
     on('receive-reaction-pop-individual-message', handleReactionPopMessage);
@@ -111,6 +111,7 @@ export function useSocialSocketListeners() {
       off('receive-individual-message', handleIndividualMessage);
       off('receive-individual-message-self', handleIndividualMessage);
       off('receive-edit-individual-message', handleEditedMessage);
+      off('receive-edit-individual-message-self', handleEditedMessage);
       off('receive-delete-individual-message', handleDeleteIndividualMessage);
       off('receive-reaction-individual-message', handleReactionMessage);
       off('receive-private-message', handlePrivateMessage);

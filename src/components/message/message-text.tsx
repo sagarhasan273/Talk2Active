@@ -145,7 +145,7 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
                 Talk2Active System
               </Box>
             ) : (
-              message.userInfo.name
+              message.senderInfo.name
             )}
           </Typography>
         )}
@@ -227,7 +227,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
       return (
         <Box sx={{ typography: 'body1' }}>
           <Box component="span" sx={{ color: 'primary.main' }}>
-            {message?.userInfo.name}
+            {message?.senderInfo?.name}
           </Box>{' '}
           has joined in the voice room.
         </Box>
@@ -237,7 +237,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
       return (
         <Box sx={{ typography: 'body1' }}>
           <Box component="span" sx={{ color: 'primary.main' }}>
-            {message?.userInfo.name}
+            {message?.senderInfo?.name}
           </Box>{' '}
           has left the chat.
         </Box>

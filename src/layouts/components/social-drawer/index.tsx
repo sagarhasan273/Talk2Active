@@ -17,7 +17,6 @@ import { Stack, Avatar, Tooltip } from '@mui/material';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { selectAccount } from 'src/core/slices';
-import { useSocketContext } from 'src/core/contexts/socket-context';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
 import {
@@ -31,7 +30,6 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
 import { SocialItem } from './social-item';
-import { useSocialSocketListeners } from './social-listeners';
 
 // ----------------------------------------------------------------------
 
@@ -58,8 +56,6 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
 
   const user = useSelector(selectAccount);
-  const { socket } = useSocketContext();
-  const { setupSocialSocketListeners } = useSocialSocketListeners();
 
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('');
@@ -78,16 +74,9 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     skip: currentTab !== 'following',
   });
 
-  const handleChangeHeaderTab = useCallback(
-    (event: React.SyntheticEvent, newValue: string) => {
-      setHeaderTab(newValue);
-      if (newValue === 'messaging-with') {
-        setupSocialSocketListeners?.();
-        socket?.emit('join-individual-message-room', { userId: user.id });
-      }
-    },
-    [user.id, socket, setupSocialSocketListeners]
-  );
+  const handleChangeHeaderTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
+    setHeaderTab(newValue);
+  }, []);
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
     setCurrentTab(newValue);
@@ -295,7 +284,13 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
         {headerTab === 'message' && renderMessageList}
 
         {headerTab === 'messaging-with' && (
-          <VoiceRoomMessageIndividual targetUserId={selectedForMessage?.id} />
+          <VoiceRoomMessageIndividual
+            targetUserInfo={{
+              userId: selectedForMessage?.id,
+              name: selectedForMessage?.name,
+              avatar: selectedForMessage?.profilePhoto,
+            }}
+          />
         )}
 
         {headerTab === 'social' && (

@@ -15,7 +15,11 @@ import { Scrollbar } from 'src/components/scrollbar/scrollbar';
 import { MessageInput } from 'src/components/message/message-input';
 import { MessageContainer } from 'src/components/message/message-container';
 
-export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: string }) => {
+export const VoiceRoomMessageIndividual = ({
+  targetUserInfo,
+}: {
+  targetUserInfo?: { userId?: string; name?: string; avatar?: string };
+}) => {
   const {
     individualMessages,
     reactionIndividualMessage,
@@ -25,7 +29,7 @@ export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: st
   const user = useSelector(selectAccount);
 
   const { socket } = useSocketContext();
-  console.log(individualMessages);
+
   const [message, setMessage] = useState<string>('');
   const [messageId, setMessageId] = useState<Message['id']>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -35,54 +39,50 @@ export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: st
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = useCallback(
-    (
-      isPrivate: boolean,
-      targetUserInfo: Message['targetUserInfo'],
-      mentions: Message['mentions'] = []
-    ): void => {
-      if (message.trim() === '') return;
+  const handleSendMessage = useCallback((): void => {
+    if (message.trim() === '') return;
 
-      const newMessage: Message = {
+    const newMessage = {
+      text: message,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isUnread: false,
+      type: 'message',
+      senderInfo: {
+        userId: user.id,
+        name: user.name,
+        avatar: user.profilePhoto,
+      },
+      targetUserInfo: {
+        userId: targetUserInfo?.userId || '',
+        name: targetUserInfo?.name || '',
+        avatar: targetUserInfo?.avatar,
+      },
+      messageRepliedOf: replyMessage,
+    };
+
+    console.log('sending message', newMessage, isEditing, messageId);
+
+    if (isEditing) {
+      socket?.emit('send-edit-individual-message', {
+        messageId,
+        userId: targetUserInfo?.userId,
         text: message,
-        sender: 'me',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isUnread: false,
-        isPrivate,
-        senderSocketId: socket?.id,
-        targetSocketId: targetUserInfo?.socketId,
-        type: 'message',
-        userInfo: {
-          userId: user.id,
-          name: user.name,
-          avatar: user.profilePhoto,
-        },
-        targetUserInfo,
-        mentions,
-        messageRepliedOf: replyMessage,
-      };
+        targetUserInfo: editMessage?.targetUserInfo,
+      });
+    } else {
+      socket?.emit('send-individual-message', {
+        userId: targetUserInfo?.userId,
+        ...newMessage,
+      });
+    }
 
-      if (isEditing) {
-        socket?.emit('send-edit-group-message', {
-          messageId,
-          text: newMessage.text,
-          time: newMessage.time,
-        });
-      } else {
-        socket?.emit('send-individual-message', {
-          userId: targetUserId,
-          ...newMessage,
-        });
-      }
-
-      setMessage('');
-      setMessageId('');
-      setIsEditing(false);
-      setIsPrivateMessage(false);
-      setReplyMessage(undefined);
-    },
-    [message, targetUserId, messageId, isEditing, replyMessage, socket, user]
-  );
+    setMessage('');
+    setMessageId('');
+    setIsEditing(false);
+    setIsPrivateMessage(false);
+    setReplyMessage(undefined);
+  }, [message, editMessage, targetUserInfo, messageId, isEditing, replyMessage, socket, user]);
 
   const handleReaction = useCallback(
     (messageObj: Message, emoji: string) => {
@@ -99,17 +99,26 @@ export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: st
 
       if (hasReact) {
         reactionPopIndividualMessage(reactionData);
-        socket?.emit('send-reaction-pop-group-message', {
+        socket?.emit('send-reaction-pop-individual-message', {
+          userId: targetUserInfo?.userId,
           ...reactionData,
         });
       } else {
         reactionIndividualMessage(reactionData);
-        socket?.emit('send-reaction-group-message', {
+        socket?.emit('send-reaction-individual-message', {
+          userId: targetUserInfo?.userId,
           ...reactionData,
         });
       }
     },
-    [user.id, user.name, socket, reactionIndividualMessage, reactionPopIndividualMessage]
+    [
+      user.id,
+      user.name,
+      targetUserInfo,
+      socket,
+      reactionIndividualMessage,
+      reactionPopIndividualMessage,
+    ]
   );
 
   const handleReply = useCallback((messageReply: Message) => {
@@ -122,18 +131,19 @@ export const VoiceRoomMessageIndividual = ({ targetUserId }: { targetUserId?: st
     setMessage(messageEdit?.text || '');
     setMessageId(messageEdit?.id);
     setEditMessage(messageEdit);
-    setIsPrivateMessage(!!messageEdit.isPrivate);
+    console.log('edit message', messageEdit);
     setIsEditing(true);
   }, []);
 
   const handleDelete = useCallback(
     (messageDelete: Message) => {
-      socket?.emit('send-delete-group-message', {
+      socket?.emit('send-delete-individual-message', {
+        userId: targetUserInfo?.userId,
         messageId: messageDelete.id,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
     },
-    [socket]
+    [socket, targetUserInfo?.userId]
   );
 
   const handleCancelReply = useCallback(() => {

@@ -63,7 +63,7 @@ export const ChatMessageGroup = ({
         senderSocketId: socket?.id,
         targetSocketId: targetUserInfo?.socketId,
         type: 'message',
-        userInfo: {
+        senderInfo: {
           userId: user.id,
           name: user.name,
           avatar: user.profilePhoto,
@@ -147,9 +147,9 @@ export const ChatMessageGroup = ({
     if (!!messageReply.isPrivate && messageReply.senderSocketId) {
       setPrivateRecipient({
         socketId: messageReply.senderSocketId,
-        userId: messageReply.userInfo.userId,
-        name: messageReply.userInfo.name,
-        profilePhoto: messageReply?.userInfo?.avatar,
+        userId: messageReply.senderInfo.userId,
+        name: messageReply.senderInfo.name,
+        profilePhoto: messageReply?.senderInfo?.avatar,
       });
     }
   }, []);

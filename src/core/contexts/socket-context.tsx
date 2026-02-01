@@ -12,12 +12,14 @@ interface SocketProviderProps {
 }
 
 export function SocketProvider({ children, options }: SocketProviderProps) {
-  const socket = useSocket({
+  const { socket, ...rest } = useSocket({
     autoConnect: true,
     ...options,
   });
 
-  return <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>;
+  const memoizedSocket = React.useMemo(() => ({ socket, ...rest }), [socket, rest]);
+
+  return <SocketContext.Provider value={memoizedSocket}>{children}</SocketContext.Provider>;
 }
 
 export function useSocketContext() {

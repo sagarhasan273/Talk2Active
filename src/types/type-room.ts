@@ -26,7 +26,7 @@ export type Message = {
   targetSocketId?: string;
   type: 'system' | 'message';
   systemMessageType?: 'user-joined' | 'you-joined' | 'user-left';
-  userInfo: {
+  senderInfo: {
     userId: string;
     name: string;
     avatar?: string;
@@ -51,7 +51,7 @@ export type Message = {
 export type MessageOnReply = {
   id: Message['id'];
   text: Message['text'];
-  name: Message['userInfo']['name'];
+  name: Message['senderInfo']['name'];
   targetSocketId?: Message['targetSocketId'];
 };
 

@@ -11,7 +11,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
     <>
       {message.sender === 'them' && (
         <Avatar
-          src={message.type === 'system' ? undefined : message.userInfo.avatar}
+          src={message.type === 'system' ? undefined : message.senderInfo.avatar}
           sx={{
             mr: 0.5,
             borderRadius: 1,
@@ -24,7 +24,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
                 : 'none',
           }}
         >
-          {message.type === 'system' ? 'TS' : getAvatarText(message.userInfo.name)}
+          {message.type === 'system' ? 'TS' : getAvatarText(message.senderInfo.name)}
         </Avatar>
       )}
 
