@@ -61,18 +61,15 @@ export const VoiceRoomMessageIndividual = ({
       messageRepliedOf: replyMessage,
     };
 
-    console.log('sending message', newMessage, isEditing, messageId);
-
     if (isEditing) {
       socket?.emit('send-edit-individual-message', {
         messageId,
-        userId: targetUserInfo?.userId,
+        userId: user.id,
         text: message,
         targetUserInfo: editMessage?.targetUserInfo,
       });
     } else {
       socket?.emit('send-individual-message', {
-        userId: targetUserInfo?.userId,
         ...newMessage,
       });
     }
@@ -95,18 +92,22 @@ export const VoiceRoomMessageIndividual = ({
         },
       };
 
-      const hasReact = messageObj?.reactions?.some((reaction) => reaction?.userId === user?.id);
+      const hasReact = messageObj?.reactions?.some(
+        (reaction) => reaction?.userId === user?.id && reaction?.emoji === emoji
+      );
 
       if (hasReact) {
-        reactionPopIndividualMessage(reactionData);
+        reactionPopIndividualMessage({ ...reactionData, userId: targetUserInfo?.userId });
         socket?.emit('send-reaction-pop-individual-message', {
-          userId: targetUserInfo?.userId,
+          senderId: user.id,
+          receiverId: targetUserInfo?.userId,
           ...reactionData,
         });
       } else {
-        reactionIndividualMessage(reactionData);
+        reactionIndividualMessage({ ...reactionData, userId: targetUserInfo?.userId });
         socket?.emit('send-reaction-individual-message', {
-          userId: targetUserInfo?.userId,
+          senderId: user.id,
+          receiverId: targetUserInfo?.userId,
           ...reactionData,
         });
       }
@@ -138,12 +139,13 @@ export const VoiceRoomMessageIndividual = ({
   const handleDelete = useCallback(
     (messageDelete: Message) => {
       socket?.emit('send-delete-individual-message', {
-        userId: targetUserInfo?.userId,
+        senderId: user.id,
+        receiverId: targetUserInfo?.userId,
         messageId: messageDelete.id,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
     },
-    [socket, targetUserInfo?.userId]
+    [socket, user.id, targetUserInfo?.userId]
   );
 
   const handleCancelReply = useCallback(() => {
@@ -156,12 +158,11 @@ export const VoiceRoomMessageIndividual = ({
   }, []);
 
   useEffect(() => {
-    clearUnreadIndividualMessages();
+    clearUnreadIndividualMessages(targetUserInfo?.userId || '');
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [individualMessages]);
-
+  }, [individualMessages, targetUserInfo?.userId]);
   return (
     <>
       {/* Chat Header */}
@@ -216,7 +217,7 @@ export const VoiceRoomMessageIndividual = ({
 
           {/* Messages */}
           <MessageContainer
-            messages={individualMessages}
+            messages={individualMessages[targetUserInfo?.userId || ''] || []}
             onReaction={handleReaction}
             onReply={handleReply}
             isEditing={isEditing}

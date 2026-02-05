@@ -12,7 +12,7 @@ import type { RootState } from '../types';
 interface SocialState {
   friends: UserType[];
   loading: boolean;
-  individualMessages: Message[];
+  individualMessages: { [userId: string]: Message[] };
   isUnreadIndividualMessage: boolean;
 }
 
@@ -20,7 +20,7 @@ interface SocialState {
 const initialState: SocialState = {
   friends: [] as UserType[],
   loading: false,
-  individualMessages: [],
+  individualMessages: {},
   isUnreadIndividualMessage: false,
 };
 
@@ -35,21 +35,27 @@ export const socialSlice = createSlice({
       state.loading = action.payload;
     },
 
-    addIndividualMessage: (state, action: PayloadAction<Message>) => {
-      state.individualMessages.push({
-        ...action.payload,
+    addIndividualMessage: (state, action: PayloadAction<{ userId: string; message: Message }>) => {
+      const { userId } = action.payload;
+
+      if (!state.individualMessages[userId]) {
+        state.individualMessages[userId] = [];
+      }
+      state.individualMessages[userId].push({
+        ...action.payload.message,
       });
     },
 
     editIndividualMessage: (
       state,
       action: PayloadAction<{
+        userId: string;
         messageId: Message['id'];
         text: Message['text'];
         time?: Message['time'];
       }>
     ) => {
-      state.individualMessages.forEach((msg) => {
+      state.individualMessages[action.payload.userId]?.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.isEdited = true;
           msg.text = action.payload.text || msg.text;
@@ -61,12 +67,13 @@ export const socialSlice = createSlice({
     deleteIndividualMessage: (
       state,
       action: PayloadAction<{
+        userId: string;
         messageId: Message['id'];
         text?: Message['text'];
         time?: Message['time'];
       }>
     ) => {
-      state.individualMessages.forEach((msg) => {
+      state.individualMessages[action.payload.userId]?.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.isDeleted = true;
           msg.isEdited = false;
@@ -78,31 +85,38 @@ export const socialSlice = createSlice({
 
     reactionIndividualMessage: (
       state,
-      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
+      action: PayloadAction<{ userId?: string; messageId: Message['id']; reaction: Reaction }>
     ) => {
-      state.individualMessages.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.reactions = [...(msg.reactions || []), action.payload.reaction];
-        }
-      });
+      if (action.payload.userId && action.payload.userId !== '') {
+        state.individualMessages[action.payload.userId]?.forEach((msg) => {
+          if (msg.id === action.payload.messageId) {
+            msg.reactions = [...(msg.reactions || []), action.payload.reaction];
+          }
+        });
+      }
     },
 
     reactionPopIndividualMessage: (
       state,
-      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
+      action: PayloadAction<{ userId?: string; messageId: Message['id']; reaction: Reaction }>
     ) => {
-      state.individualMessages.forEach((msg) => {
+      if (!action.payload.userId || action.payload.userId === '') return;
+      state.individualMessages[action.payload.userId]?.forEach((msg) => {
         if (msg.id === action.payload.messageId) {
           msg.reactions = (msg.reactions || []).filter(
-            (reaction) => reaction.userId !== action.payload.reaction.userId
+            (reaction) =>
+              !(
+                reaction.userId === action.payload.reaction.userId &&
+                reaction.emoji === action.payload.reaction.emoji
+              )
           );
         }
       });
     },
 
-    clearUnreadIndividualMessages: (state) => {
+    clearUnreadIndividualMessages: (state, action: PayloadAction<string>) => {
       state.isUnreadIndividualMessage = false;
-      state.individualMessages.forEach((msg) => {
+      state.individualMessages[action.payload]?.forEach((msg) => {
         msg.isUnread = false;
         msg.startOfUnread = false;
       });
@@ -138,22 +152,32 @@ export const useMessagesTools = () => {
     () => ({
       individualMessages,
       isUnreadIndividualMessage,
-      addIndividualMessage: (message: Message) => dispatch(addIndividualMessage(message)),
+      addIndividualMessage: ({ userId, message }: { userId: string; message: Message }) =>
+        dispatch(addIndividualMessage({ userId, message })),
       editIndividualMessage: (payload: {
+        userId: string;
         messageId: Message['id'];
         text: Message['text'];
         time?: Message['time'];
       }) => dispatch(editIndividualMessage(payload)),
       deleteIndividualMessage: (payload: {
+        userId: string;
         messageId: Message['id'];
         text?: Message['text'];
         time?: Message['time'];
       }) => dispatch(deleteIndividualMessage(payload)),
-      reactionIndividualMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
-        dispatch(reactionIndividualMessage(payload)),
-      reactionPopIndividualMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
-        dispatch(reactionPopIndividualMessage(payload)),
-      clearUnreadIndividualMessages: () => dispatch(clearUnreadIndividualMessages()),
+      reactionIndividualMessage: (payload: {
+        userId?: string;
+        messageId: Message['id'];
+        reaction: Reaction;
+      }) => dispatch(reactionIndividualMessage(payload)),
+      reactionPopIndividualMessage: (payload: {
+        userId?: string;
+        messageId: Message['id'];
+        reaction: Reaction;
+      }) => dispatch(reactionPopIndividualMessage(payload)),
+      clearUnreadIndividualMessages: (userId: string) =>
+        dispatch(clearUnreadIndividualMessages(userId)),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [individualMessages, isUnreadIndividualMessage]

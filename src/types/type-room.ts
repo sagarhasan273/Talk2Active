@@ -56,6 +56,9 @@ export type MessageOnReply = {
 };
 
 export type ReactionMessageData = {
+  userId: string;
+  senderId?: string;
+  receiverId?: string;
   roomId: string;
   messageId: Message['id'];
   reaction: Reaction;

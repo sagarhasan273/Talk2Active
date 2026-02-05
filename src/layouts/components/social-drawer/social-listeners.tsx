@@ -46,11 +46,30 @@ export function useSocialSocketListeners() {
         targetSocketId: data?.targetSocketId,
       };
 
-      addIndividualMessage(receiveMessage);
+      addIndividualMessage({ userId: data.senderInfo?.userId || '', message: receiveMessage });
+    };
+    const handleIndividualMessageSelf = (data: any) => {
+      const receiveMessage: any = {
+        id: data.messageId,
+        text: data.text,
+        time: data.time,
+        sender: data.sender,
+        isUnread: true,
+        type: data.type,
+        senderInfo: data.senderInfo,
+        targetUserInfo: data?.targetUserInfo,
+        mentions: data.mentions || [],
+        messageRepliedOf: data?.messageRepliedOf,
+        senderSocketId: data?.senderSocketId,
+        targetSocketId: data?.targetSocketId,
+      };
+
+      addIndividualMessage({ userId: data.targetUserInfo?.userId || '', message: receiveMessage });
     };
 
     const handleReactionMessage = (data: ReactionMessageData) => {
       reactionIndividualMessage({
+        userId: data.senderId,
         messageId: data.messageId,
         reaction: data.reaction,
       });
@@ -58,63 +77,77 @@ export function useSocialSocketListeners() {
 
     const handleReactionPopMessage = (data: ReactionMessageData) => {
       reactionPopIndividualMessage({
+        userId: data.senderId,
         messageId: data.messageId,
         reaction: data.reaction,
       });
     };
 
-    const handlePrivateMessage = (data: Message) => {
-      const receiveMessage: Message = {
-        id: data.id,
-        text: data.text,
-        sender: data.sender,
-        time: data.time,
-        senderInfo: data.senderInfo,
-        targetUserInfo: data?.targetUserInfo,
-        senderSocketId: data?.senderSocketId,
-        targetSocketId: data?.targetSocketId,
-        isUnread: true,
-        isPrivate: true,
-        type: data.type,
-        systemMessageType: data?.systemMessageType,
-        mentions: data.mentions || [],
-        messageRepliedOf: data?.messageRepliedOf,
-      };
-
-      addIndividualMessage(receiveMessage);
-    };
-
-    const handleEditedMessage = (data: { messageId: Message['id']; text: Message['text'] }) => {
+    const handleEditedMessage = (data: {
+      userId: string;
+      messageId: Message['id'];
+      text: Message['text'];
+    }) => {
       editIndividualMessage(data);
     };
 
+    const handleEditedMessageSelf = (data: {
+      userId: string;
+      messageId: Message['id'];
+      text: Message['text'];
+      targetUserInfo: {
+        userId: string;
+        name: string;
+        avatar?: string;
+      };
+    }) => {
+      const { messageId, text, targetUserInfo } = data;
+      editIndividualMessage({
+        userId: targetUserInfo?.userId || '',
+        messageId,
+        text,
+      });
+    };
+
     const handleDeleteIndividualMessage = (data: {
+      senderId: string;
+      receiverId: string;
       messageId: Message['id'];
       text: Message['text'];
       time: Message['time'];
     }) => {
-      deleteIndividualMessage(data);
+      deleteIndividualMessage({ ...data, userId: data.senderId || '' });
+    };
+
+    const handleDeleteIndividualMessageSelf = (data: {
+      senderId: string;
+      receiverId: string;
+      messageId: Message['id'];
+      text: Message['text'];
+      time: Message['time'];
+    }) => {
+      deleteIndividualMessage({ ...data, userId: data.receiverId || '' });
     };
 
     // Register listeners
     on('receive-individual-message', handleIndividualMessage);
-    on('receive-individual-message-self', handleIndividualMessage);
+    on('receive-individual-message-self', handleIndividualMessageSelf);
     on('receive-edit-individual-message', handleEditedMessage);
-    on('receive-edit-individual-message-self', handleEditedMessage);
+    on('receive-edit-individual-message-self', handleEditedMessageSelf);
     on('receive-delete-individual-message', handleDeleteIndividualMessage);
+    on('receive-delete-individual-message-self', handleDeleteIndividualMessageSelf);
     on('receive-reaction-individual-message', handleReactionMessage);
     on('receive-reaction-pop-individual-message', handleReactionPopMessage);
-    on('receive-private-message', handlePrivateMessage);
 
     // Return cleanup function
     return () => {
       off('receive-individual-message', handleIndividualMessage);
-      off('receive-individual-message-self', handleIndividualMessage);
+      off('receive-individual-message-self', handleIndividualMessageSelf);
       off('receive-edit-individual-message', handleEditedMessage);
-      off('receive-edit-individual-message-self', handleEditedMessage);
+      off('receive-edit-individual-message-self', handleEditedMessageSelf);
       off('receive-delete-individual-message', handleDeleteIndividualMessage);
+      off('receive-delete-individual-message-self', handleDeleteIndividualMessageSelf);
       off('receive-reaction-individual-message', handleReactionMessage);
-      off('receive-private-message', handlePrivateMessage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, roomId, addIndividualMessage, reactionIndividualMessage]);
