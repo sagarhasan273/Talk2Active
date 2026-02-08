@@ -125,14 +125,12 @@ export const VoiceRoomMessageIndividual = ({
   const handleReply = useCallback((messageReply: Message) => {
     setReplyMessage(messageReply);
     setIsPrivateMessage(!!messageReply.isPrivate);
-    console.log('private', messageReply);
   }, []);
 
   const handleEdit = useCallback((messageEdit: Message) => {
     setMessage(messageEdit?.text || '');
     setMessageId(messageEdit?.id);
     setEditMessage(messageEdit);
-    console.log('edit message', messageEdit);
     setIsEditing(true);
   }, []);
 

@@ -35,6 +35,12 @@ export type AuthorRelationship = {
 };
 export type AllRelationsType = {
   accountDetails: UserType;
+  latestMessage: {
+    _id: string;
+    text: string;
+    time: string;
+    createdAt: string;
+  } | null;
   relation: 'friend' | 'following' | 'follower';
   status: RelationshipStatusEnumProps;
   type: RelationshipTypeEnumProps;

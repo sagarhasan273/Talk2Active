@@ -61,13 +61,14 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const [currentTab, setCurrentTab] = useState('');
   const [selectedForMessage, setSelectedForMessage] = useState<Partial<UserType>>({});
   const [people, setPoeple] = useState<AllRelationsType[]>([]);
+  const [chatPeople, setChatPoeple] = useState<AllRelationsType[]>([]);
 
   const { data: allRelations } = useGetAllRelationsQuery(user.id, {
     skip: currentTab !== 'all',
   });
 
   const { data: friends } = useGetFriendsQuery(user.id, {
-    skip: currentTab !== 'friends',
+    skip: !(currentTab === 'friends' || headerTab === 'message'),
   });
 
   const { data: following } = useGetFollowingQuery(user.id, {
@@ -190,7 +191,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const renderMessageList = (
     <Scrollbar>
       <Box component="ul">
-        {people.map((relation, index) => (
+        {chatPeople.map((relation, index) => (
           <Box component="li" key={index} sx={{ display: 'flex' }}>
             <SocialItem
               relation={relation}
@@ -206,8 +207,11 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     if (currentTab === 'all' && allRelations?.data) {
       setPoeple(allRelations.data);
     }
-    if ((currentTab === 'friends' || headerTab === 'message') && friends?.data) {
+    if (currentTab === 'friends' && friends?.data) {
       setPoeple(friends.data);
+    }
+    if (headerTab === 'message' && friends?.data) {
+      setChatPoeple(friends.data);
     }
     if (currentTab === 'following' && following?.data) {
       setPoeple(following.data);
