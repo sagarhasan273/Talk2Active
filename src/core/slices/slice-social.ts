@@ -1,6 +1,7 @@
 import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { Message, Reaction } from 'src/types/type-room';
+import type { AllRelationsType } from 'src/types/type-social';
 
 import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
@@ -12,6 +13,8 @@ import type { RootState } from '../types';
 interface SocialState {
   friends: UserType[];
   loading: boolean;
+  chatPeople: AllRelationsType[];
+  chatPeopleLoading: boolean;
   individualMessages: { [userId: string]: Message[] };
   isUnreadIndividualMessage: boolean;
 }
@@ -20,6 +23,8 @@ interface SocialState {
 const initialState: SocialState = {
   friends: [] as UserType[],
   loading: false,
+  chatPeople: [] as AllRelationsType[],
+  chatPeopleLoading: false,
   individualMessages: {},
   isUnreadIndividualMessage: false,
 };
@@ -31,6 +36,42 @@ export const socialSlice = createSlice({
     setFriends: (state, action: PayloadAction<SocialState['friends']>) => {
       state.friends = action.payload;
     },
+
+    setChatPeople: (state, action: PayloadAction<SocialState['chatPeople']>) => {
+      state.chatPeople = action.payload;
+    },
+
+    setUnreadChatPeople(
+      state,
+      action: PayloadAction<{ userId: UserType['id']; isUnread?: boolean }>
+    ) {
+      state.chatPeople.map((person) => {
+        if (person.accountDetails.id === action.payload.userId) {
+          return {
+            ...person,
+            latestMessage: {
+              ...person.latestMessage,
+              _id: person.latestMessage?._id || '',
+              isUnread: action.payload.isUnread ?? false,
+            },
+          };
+        }
+        return person;
+      });
+    },
+
+    sortChatPeople: (state) => {
+      state.chatPeople.sort((a, b) => {
+        const timeA = new Date(a.latestMessage?.createdAt || '').getTime() || 0;
+        const timeB = new Date(b.latestMessage?.createdAt || '').getTime() || 0;
+        return timeB - timeA;
+      });
+    },
+
+    setChatPeopleLoading: (state, action: PayloadAction<boolean>) => {
+      state.chatPeopleLoading = action.payload;
+    },
+
     setFriendsLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
@@ -41,6 +82,30 @@ export const socialSlice = createSlice({
       if (!state.individualMessages[userId]) {
         state.individualMessages[userId] = [];
       }
+
+      let tempChatPeople = null;
+
+      state.chatPeople = state.chatPeople.filter((person) => {
+        if (person.accountDetails.id === userId) {
+          tempChatPeople = {
+            ...person,
+            latestMessage: {
+              _id: action.payload.message.id || '',
+              text: action.payload.message.text,
+              time: action.payload.message.time,
+              createdAt: new Date().toISOString(),
+              isUnread: true,
+            },
+          };
+          return false;
+        }
+        return true;
+      });
+
+      if (tempChatPeople) {
+        state.chatPeople.unshift(tempChatPeople);
+      }
+
       state.individualMessages[userId].push({
         ...action.payload.message,
       });
@@ -127,6 +192,9 @@ export const socialSlice = createSlice({
 export const {
   setFriends,
   setFriendsLoading,
+  setChatPeople,
+  sortChatPeople,
+  setChatPeopleLoading,
   addIndividualMessage,
   editIndividualMessage,
   deleteIndividualMessage,
@@ -138,6 +206,8 @@ export const {
 // Selectors with proper typing
 export const selectFriends = (state: RootState) => state.social.friends;
 export const selectFriendsLoading = (state: RootState) => state.social.loading;
+const selectChatPeople = (state: RootState) => state.social.chatPeople;
+const selectChatPeopleLoading = (state: RootState) => state.social.chatPeopleLoading;
 const selectIndividualMessages = (state: RootState) => state.social.individualMessages;
 const selectIsUnreadIndividualMessage = (state: RootState) =>
   state.social.isUnreadIndividualMessage;
@@ -147,11 +217,19 @@ export const useMessagesTools = () => {
 
   const individualMessages = useSelector(selectIndividualMessages);
   const isUnreadIndividualMessage = useSelector(selectIsUnreadIndividualMessage);
+  const chatPeople = useSelector(selectChatPeople);
+  const chatPeopleLoading = useSelector(selectChatPeopleLoading);
 
   const memoizedMessages = useMemo(
     () => ({
       individualMessages,
       isUnreadIndividualMessage,
+      chatPeople,
+      chatPeopleLoading,
+
+      setChatPeople: (payload: AllRelationsType[]) => dispatch(setChatPeople(payload)),
+      sortChatPeople: () => dispatch(sortChatPeople()),
+      setChatPeopleLoading: (loading: boolean) => dispatch(setChatPeopleLoading(loading)),
       addIndividualMessage: ({ userId, message }: { userId: string; message: Message }) =>
         dispatch(addIndividualMessage({ userId, message })),
       editIndividualMessage: (payload: {
@@ -180,7 +258,7 @@ export const useMessagesTools = () => {
         dispatch(clearUnreadIndividualMessages(userId)),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [individualMessages, isUnreadIndividualMessage]
+    [chatPeople, chatPeopleLoading, individualMessages, isUnreadIndividualMessage]
   );
   return memoizedMessages;
 };

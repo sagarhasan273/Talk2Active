@@ -10,13 +10,16 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
+import { Stack, Tooltip } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import { Stack, Avatar, Tooltip } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+import { useResponsive } from 'src/hooks/use-responsive';
 
-import { selectAccount } from 'src/core/slices';
+import { fUsername } from 'src/utils/helper';
+
+import { selectAccount, useMessagesTools } from 'src/core/slices';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
 import {
@@ -28,6 +31,7 @@ import {
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
+import { AvatarUser } from 'src/components/avatar-user';
 
 import { SocialItem } from './social-item';
 
@@ -53,15 +57,17 @@ const TABS = [
 export type SocialDrawerProps = IconButtonProps;
 
 export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
+  const smDown = useResponsive('down', 'sm');
+
   const drawer = useBoolean();
 
   const user = useSelector(selectAccount);
+  const { chatPeople, setChatPeople } = useMessagesTools();
 
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('');
   const [selectedForMessage, setSelectedForMessage] = useState<Partial<UserType>>({});
-  const [people, setPoeple] = useState<AllRelationsType[]>([]);
-  const [chatPeople, setChatPoeple] = useState<AllRelationsType[]>([]);
+  const [people, setPeople] = useState<AllRelationsType[]>([]);
 
   const { data: allRelations } = useGetAllRelationsQuery(user.id, {
     skip: currentTab !== 'all',
@@ -83,30 +89,36 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     setCurrentTab(newValue);
   }, []);
 
+  const handleSelectedForMessage = useCallback((accountDetails: Partial<UserType>) => {
+    setSelectedForMessage(accountDetails);
+    setHeaderTab('messaging-with');
+  }, []);
+
   const messagingWith = {
     icon: (
-      <Avatar
-        src={selectedForMessage.profilePhoto}
-        alt={selectedForMessage.name}
-        sx={{ width: 24, height: 24 }}
+      <AvatarUser
+        avatarUrl={selectedForMessage.profilePhoto || null}
+        name={selectedForMessage.name ?? 'TS'}
+        verified={selectedForMessage.verified ?? false}
+        sx={{ width: 24, height: 24, fontSize: 10 }}
       />
     ),
     label: (
-      <Tooltip title="Sagar Hasan">
+      <Tooltip title={selectedForMessage.name || 'Unknown User'}>
         <Stack sx={{ position: 'relative' }}>
           <Typography
             sx={{
-              maxWidth: 100,
+              maxWidth: smDown ? 50 : 120,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               display: 'block',
             }}
           >
-            {selectedForMessage.name}
+            {smDown ? fUsername(selectedForMessage.name) : selectedForMessage.name}
           </Typography>
 
-          <MessageTypingIllustration sx={{ position: 'absolute', top: 12, left: -5 }} />
+          <MessageTypingIllustration sx={{ position: 'absolute', top: 12 }} />
         </Stack>
       </Tooltip>
     ),
@@ -120,10 +132,10 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           key={tab.value}
           iconPosition="start"
           value={tab.value}
-          label={tab.label}
+          label={smDown ? undefined : tab.label}
           icon={tab.icon}
           sx={{
-            minWidth: 100,
+            minWidth: smDown ? 50 : 100,
             '&.MuiButtonBase-root': {
               px: 1.5,
               '&.Mui-selected': {
@@ -140,8 +152,9 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           label={messagingWith.label}
           icon={messagingWith.icon}
           sx={{
-            minWidth: 120,
-            maxWidth: 160,
+            minWidth: smDown ? 50 : 120,
+            maxWidth: smDown ? 80 : 160,
+            gap: 0.5,
             '&.MuiButtonBase-root': {
               px: 1.5,
               '&.Mui-selected': {
@@ -180,7 +193,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           <Box component="li" key={index} sx={{ display: 'flex' }}>
             <SocialItem
               relation={relation}
-              onClick={() => setSelectedForMessage(relation.accountDetails)}
+              onClick={() => handleSelectedForMessage(relation.accountDetails)}
             />
           </Box>
         ))}
@@ -195,7 +208,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           <Box component="li" key={index} sx={{ display: 'flex' }}>
             <SocialItem
               relation={relation}
-              onClick={() => setSelectedForMessage(relation.accountDetails)}
+              onClick={() => handleSelectedForMessage(relation.accountDetails)}
+              isChat
             />
           </Box>
         ))}
@@ -205,18 +219,27 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
 
   useEffect(() => {
     if (currentTab === 'all' && allRelations?.data) {
-      setPoeple(allRelations.data);
+      setPeople(allRelations.data);
     }
     if (currentTab === 'friends' && friends?.data) {
-      setPoeple(friends.data);
+      setPeople(friends.data);
     }
-    if (headerTab === 'message' && friends?.data) {
-      setChatPoeple(friends.data);
+    if (headerTab === 'message' && friends?.data && !chatPeople.length) {
+      setChatPeople(friends.data);
     }
     if (currentTab === 'following' && following?.data) {
-      setPoeple(following.data);
+      setPeople(following.data);
     }
-  }, [currentTab, headerTab, allRelations, friends, following, setPoeple]);
+  }, [
+    currentTab,
+    headerTab,
+    allRelations,
+    friends,
+    following,
+    chatPeople,
+    setPeople,
+    setChatPeople,
+  ]);
 
   return (
     <>

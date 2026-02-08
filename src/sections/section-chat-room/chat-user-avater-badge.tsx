@@ -3,7 +3,7 @@ import React from 'react';
 import { MicOff as MicOffIcon } from '@mui/icons-material';
 import { Box, Badge, Avatar, useTheme, Typography } from '@mui/material';
 
-import { getAvatarText } from 'src/utils/helper';
+import { fUsername } from 'src/utils/helper';
 
 import { STATUS_OPTIONS } from './chat-status-button';
 
@@ -130,7 +130,7 @@ export function ChatUserAvatarBadge({
             fontSize: 24,
           }}
         >
-          {getAvatarText(user.name)}
+          {fUsername(user.name)}
         </Avatar>
       </Badge>
     </Badge>

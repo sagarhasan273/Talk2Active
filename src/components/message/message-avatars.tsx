@@ -1,6 +1,6 @@
 import { Box, Avatar, Typography } from '@mui/material';
 
-import { getAvatarText } from 'src/utils/helper';
+import { fUsername } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -24,7 +24,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
                 : 'none',
           }}
         >
-          {message.type === 'system' ? 'TS' : getAvatarText(message.senderInfo.name)}
+          {message.type === 'system' ? 'TS' : fUsername(message.senderInfo.name)}
         </Avatar>
       )}
 
@@ -40,7 +40,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
             border: (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`,
           }}
         >
-          {getAvatarText(message?.targetUserInfo?.name || '')}
+          {fUsername(message?.targetUserInfo?.name || '')}
         </Avatar>
       )}
 

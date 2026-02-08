@@ -200,7 +200,7 @@ export const extractYouTubeId = (inputUrl: string): string | null => {
   return null;
 };
 
-export function getAvatarText(fullName: string): string {
+export function fUsername(fullName?: string): string {
   if (!fullName) return '';
 
   const parts = fullName.trim().split(/\s+/);

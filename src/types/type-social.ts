@@ -39,6 +39,7 @@ export type AllRelationsType = {
     _id: string;
     text: string;
     time: string;
+    isUnread: boolean;
     createdAt: string;
   } | null;
   relation: 'friend' | 'following' | 'follower';

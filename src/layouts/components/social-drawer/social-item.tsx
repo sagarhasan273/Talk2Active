@@ -4,17 +4,18 @@ import { useSelector } from 'react-redux';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import { SvgIcon, Typography } from '@mui/material';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
+import { SvgIcon, useTheme, Typography } from '@mui/material';
 
 import { fToNow } from 'src/utils/format-time';
 
+import { varAlpha } from 'src/theme/styles';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { selectAccount } from 'src/core/slices/slice-account';
 import { useUnfollowMutation } from 'src/core/apis/api-social';
 
+import { AvatarUser } from 'src/components/avatar-user';
 import { ButtonUnfollowIcon } from 'src/components/buttons';
 
 // ----------------------------------------------------------------------
@@ -27,15 +28,19 @@ export type SocialItemProps = {
   isUnRead: boolean;
   avatarUrl: string | null;
   createdAt: string | number | null;
+  isChat: boolean;
 };
 
 export function SocialItem({
   relation,
   onClick,
+  isChat = false,
 }: {
   relation: AllRelationsType;
   onClick: () => void;
+  isChat?: boolean;
 }) {
+  const theme = useTheme();
   const user = useSelector(selectAccount);
 
   const [unfollowMutate] = useUnfollowMutation();
@@ -50,10 +55,14 @@ export function SocialItem({
         gap: 0.5,
       }}
     >
-      <Avatar src={relation.accountDetails.profilePhoto} sx={{ bgcolor: 'background.neutral' }} />
-      <Typography variant="body1" sx={{ color: 'primary.main', fontSize: 8 }}>
-        {relation.accountDetails.verified ? 'VERIFIED' : 'UNVERIFIED'}
-      </Typography>
+      <AvatarUser
+        name={relation.accountDetails.name}
+        avatarUrl={relation.accountDetails.profilePhoto}
+        verified={relation.accountDetails.verified || false}
+        sx={{
+          fontSize: 14,
+        }}
+      />
     </ListItemAvatar>
   );
 
@@ -125,6 +134,34 @@ export function SocialItem({
     </Stack>
   );
 
+  const renderMessage = (
+    <Stack>
+      <Typography variant="body1" sx={{ color: 'primary.main' }}>
+        {relation.accountDetails.name}
+        {relation?.latestMessage?.isUnread && (
+          <SvgIcon sx={{ fontSize: '16px!important', mx: 0.5, mt: 0.5, verticalAlign: 'middle' }}>
+            <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+            <path d="M3 3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3 6a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 6m0 2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" />
+          </SvgIcon>
+        )}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          color: relation?.latestMessage?.isUnread
+            ? theme.palette.mode === 'dark'
+              ? 'common.white'
+              : 'common.black'
+            : 'text.secondary',
+          opacity: relation?.latestMessage?.isUnread ? 1 : 0.5,
+          mt: -0.5,
+        }}
+      >
+        {relation?.latestMessage?.text}
+      </Typography>
+    </Stack>
+  );
+
   return (
     <ListItemButton
       disableRipple
@@ -132,7 +169,12 @@ export function SocialItem({
         px: 2,
         py: 1,
         alignItems: 'flex-start',
-        borderBottom: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+        borderBottom: `dashed 1px ${theme.vars.palette.divider}`,
+        backgroundColor: relation?.latestMessage?.isUnread
+          ? theme.palette.mode === 'dark'
+            ? varAlpha(theme.vars.palette.primary.mainChannel, 0.24)
+            : varAlpha(theme.vars.palette.primary.mainChannel, 0.24)
+          : 'transparent',
       }}
       onClick={(event) => {
         event.stopPropagation();
@@ -143,7 +185,9 @@ export function SocialItem({
     >
       {renderAvatar}
 
-      <Stack sx={{ flexGrow: 1, justifyContent: 'center', height: 1 }}>{renderText}</Stack>
+      <Stack sx={{ flexGrow: 1, justifyContent: 'center', height: 1 }}>
+        {isChat ? renderMessage : renderText}
+      </Stack>
     </ListItemButton>
   );
 }

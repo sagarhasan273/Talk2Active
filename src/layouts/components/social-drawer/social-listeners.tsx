@@ -13,13 +13,14 @@ export function useSocialSocketListeners() {
 
   // Room management
   const {
+    chatPeople,
     addIndividualMessage,
     editIndividualMessage,
     deleteIndividualMessage,
     reactionIndividualMessage,
     reactionPopIndividualMessage,
   } = useMessagesTools();
-
+  console.log(chatPeople);
   // Socket
   const { socket, on, off } = useSocketContext();
 
@@ -48,6 +49,7 @@ export function useSocialSocketListeners() {
 
       addIndividualMessage({ userId: data.senderInfo?.userId || '', message: receiveMessage });
     };
+
     const handleIndividualMessageSelf = (data: any) => {
       const receiveMessage: any = {
         id: data.messageId,
