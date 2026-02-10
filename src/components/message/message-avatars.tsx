@@ -45,7 +45,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
       )}
 
       {/* UNREAD INDICATOR */}
-      {message.isUnread && message.sender === 'them' && (
+      {/* {message.isUnread && message.sender === 'them' && (
         <Box
           sx={{
             position: 'absolute',
@@ -59,7 +59,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
             animation: 'pulse 1.5s infinite',
           }}
         />
-      )}
+      )} */}
 
       {/* PRIVATE MESSAGE INDICATOR */}
       {message.isPrivate && message.sender === 'them' && (

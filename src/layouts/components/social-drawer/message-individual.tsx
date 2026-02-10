@@ -20,12 +20,8 @@ export const VoiceRoomMessageIndividual = ({
 }: {
   targetUserInfo?: { userId?: string; name?: string; avatar?: string };
 }) => {
-  const {
-    individualMessages,
-    reactionIndividualMessage,
-    reactionPopIndividualMessage,
-    clearUnreadIndividualMessages,
-  } = useMessagesTools();
+  const { individualMessages, reactionIndividualMessage, reactionPopIndividualMessage } =
+    useMessagesTools();
   const user = useSelector(selectAccount);
 
   const { socket } = useSocketContext();
@@ -156,11 +152,12 @@ export const VoiceRoomMessageIndividual = ({
   }, []);
 
   useEffect(() => {
-    clearUnreadIndividualMessages(targetUserInfo?.userId || '');
+    // clearUnreadIndividualMessages(targetUserInfo?.userId || '');
 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [individualMessages, targetUserInfo?.userId]);
+
   return (
     <>
       {/* Chat Header */}

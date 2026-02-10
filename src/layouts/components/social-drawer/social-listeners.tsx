@@ -13,14 +13,13 @@ export function useSocialSocketListeners() {
 
   // Room management
   const {
-    chatPeople,
     addIndividualMessage,
     editIndividualMessage,
     deleteIndividualMessage,
     reactionIndividualMessage,
     reactionPopIndividualMessage,
   } = useMessagesTools();
-  console.log(chatPeople);
+
   // Socket
   const { socket, on, off } = useSocketContext();
 
@@ -56,7 +55,7 @@ export function useSocialSocketListeners() {
         text: data.text,
         time: data.time,
         sender: data.sender,
-        isUnread: true,
+        isUnread: false,
         type: data.type,
         senderInfo: data.senderInfo,
         targetUserInfo: data?.targetUserInfo,

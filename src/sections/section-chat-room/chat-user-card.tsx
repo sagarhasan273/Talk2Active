@@ -15,7 +15,6 @@ import {
   CardContent,
   ListItemIcon,
   ListItemText,
-  useMediaQuery,
 } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -29,7 +28,6 @@ import { VoiceRoomIsSpeaking } from './chat-is-speaking';
 import { ChatUserAvatarBadge } from './chat-user-avater-badge';
 import { ChatUserCardPCStatus } from './chat-user-card-pc-status';
 import { ChatUserCardQuickActions } from './chat-user-card-quick-actions';
-import { VoiceRoomMessageIndividual } from '../../layouts/components/social-drawer/message-individual';
 
 import type { AudioQuality, ChatUserCardAudioSettings } from './type';
 
@@ -81,7 +79,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
 
   // In your component
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // or (max-width:600px)
 
   const { name, avatar, status = 'online', id, verified } = user;
 
@@ -111,9 +108,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMessageClose = () => {
-    setPrivateMessageEL(null);
-  };
   const handleSettingsClose = () => {
     setAnchorEl(null);
   };
@@ -337,36 +331,6 @@ export const ChatUserCard: React.FC<ChatUserCardProps> = ({
             </ListItemText>
           </MenuItem>
         ))}
-      </Menu>
-
-      <Menu
-        anchorEl={privateMessageEL}
-        open={Boolean(privateMessageEL)}
-        onClose={handleMessageClose}
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-        anchorOrigin={{
-          vertical: isMobile ? 'bottom' : 'top',
-          horizontal: isMobile ? 'center' : 'left',
-        }}
-        transformOrigin={{
-          vertical: isMobile ? 'bottom' : 'top',
-          horizontal: isMobile ? 'center' : 'left',
-        }}
-        PaperProps={{
-          sx: {
-            backgroundColor: 'background.paper',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid',
-            borderColor: 'divider',
-            color: 'text.primary',
-            minWidth: 200,
-          },
-        }}
-      >
-        <VoiceRoomMessageIndividual />
       </Menu>
     </Box>
   );

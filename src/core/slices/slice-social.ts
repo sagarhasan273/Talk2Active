@@ -15,7 +15,9 @@ interface SocialState {
   loading: boolean;
   chatPeople: AllRelationsType[];
   chatPeopleLoading: boolean;
+  selectedForMessage: Partial<UserType>;
   individualMessages: { [userId: string]: Message[] };
+  readMessageIds: string[];
   isUnreadIndividualMessage: boolean;
 }
 
@@ -25,7 +27,9 @@ const initialState: SocialState = {
   loading: false,
   chatPeople: [] as AllRelationsType[],
   chatPeopleLoading: false,
+  selectedForMessage: {} as Partial<UserType>,
   individualMessages: {},
+  readMessageIds: [] as string[],
   isUnreadIndividualMessage: false,
 };
 
@@ -39,33 +43,45 @@ export const socialSlice = createSlice({
 
     setChatPeople: (state, action: PayloadAction<SocialState['chatPeople']>) => {
       state.chatPeople = action.payload;
+      let tempUnreadCount = false;
+
+      state.chatPeople.forEach((person) => {
+        if (person?.latestMessage?.isUnread) {
+          tempUnreadCount = true;
+        }
+      });
+
+      if (tempUnreadCount) {
+        state.isUnreadIndividualMessage = true;
+      } else {
+        state.isUnreadIndividualMessage = false;
+      }
     },
 
     setUnreadChatPeople(
       state,
       action: PayloadAction<{ userId: UserType['id']; isUnread?: boolean }>
     ) {
-      state.chatPeople.map((person) => {
-        if (person.accountDetails.id === action.payload.userId) {
-          return {
-            ...person,
-            latestMessage: {
-              ...person.latestMessage,
-              _id: person.latestMessage?._id || '',
-              isUnread: action.payload.isUnread ?? false,
-            },
-          };
-        }
-        return person;
-      });
-    },
+      let tempUnreadCount = false;
 
-    sortChatPeople: (state) => {
-      state.chatPeople.sort((a, b) => {
-        const timeA = new Date(a.latestMessage?.createdAt || '').getTime() || 0;
-        const timeB = new Date(b.latestMessage?.createdAt || '').getTime() || 0;
-        return timeB - timeA;
+      state.chatPeople.forEach((person) => {
+        if (person.accountDetails.id === action.payload.userId) {
+          person.latestMessage = {
+            ...person.latestMessage,
+            isUnread: action.payload.isUnread === undefined ? false : action.payload.isUnread,
+          } as AllRelationsType['latestMessage'];
+
+          if (person?.latestMessage?.isUnread) {
+            tempUnreadCount = true;
+          }
+        }
       });
+
+      if (tempUnreadCount) {
+        state.isUnreadIndividualMessage = true;
+      } else {
+        state.isUnreadIndividualMessage = false;
+      }
     },
 
     setChatPeopleLoading: (state, action: PayloadAction<boolean>) => {
@@ -76,6 +92,36 @@ export const socialSlice = createSlice({
       state.loading = action.payload;
     },
 
+    setSelectedForMessage: (state, action: PayloadAction<Partial<UserType>>) => {
+      state.selectedForMessage = action.payload;
+
+      let hasUnreadMessages = false;
+
+      state.chatPeople.forEach((person) => {
+        if (person.accountDetails.id === action.payload.id) {
+          person.latestMessage = {
+            ...person.latestMessage,
+            isUnread: false,
+          } as AllRelationsType['latestMessage'];
+        }
+        if (person?.latestMessage?.isUnread) {
+          hasUnreadMessages = true;
+        }
+      });
+
+      state.isUnreadIndividualMessage = hasUnreadMessages;
+
+      if (action.payload.id) {
+        state.individualMessages[action.payload.id]?.forEach((msg) => {
+          if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
+            state.readMessageIds.push(msg.id);
+          }
+          msg.isUnread = false;
+          msg.startOfUnread = false;
+        });
+      }
+    },
+
     addIndividualMessage: (state, action: PayloadAction<{ userId: string; message: Message }>) => {
       const { userId } = action.payload;
 
@@ -84,6 +130,7 @@ export const socialSlice = createSlice({
       }
 
       let tempChatPeople = null;
+      let hasUnread = false;
 
       state.chatPeople = state.chatPeople.filter((person) => {
         if (person.accountDetails.id === userId) {
@@ -94,9 +141,17 @@ export const socialSlice = createSlice({
               text: action.payload.message.text,
               time: action.payload.message.time,
               createdAt: new Date().toISOString(),
-              isUnread: true,
+              isUnread:
+                person.accountDetails.id === state.selectedForMessage?.id
+                  ? false
+                  : action.payload.message.isUnread,
             },
           };
+
+          if (tempChatPeople.latestMessage?.isUnread) {
+            hasUnread = true;
+          }
+
           return false;
         }
         return true;
@@ -105,10 +160,26 @@ export const socialSlice = createSlice({
       if (tempChatPeople) {
         state.chatPeople.unshift(tempChatPeople);
       }
+      state.isUnreadIndividualMessage = hasUnread;
 
       state.individualMessages[userId].push({
         ...action.payload.message,
+        isUnread: state.selectedForMessage.id === userId ? false : action.payload.message.isUnread,
       });
+      if (
+        state.selectedForMessage.id === userId &&
+        action.payload.message.isUnread &&
+        action.payload.message.id &&
+        !state.readMessageIds.includes(action.payload.message.id)
+      ) {
+        state.readMessageIds.push(action.payload.message.id || '');
+      }
+    },
+
+    pushUnreadMessageId: (state, action: PayloadAction<string>) => {
+      if (!state.readMessageIds.includes(action.payload)) {
+        state.readMessageIds.push(action.payload);
+      }
     },
 
     editIndividualMessage: (
@@ -182,6 +253,9 @@ export const socialSlice = createSlice({
     clearUnreadIndividualMessages: (state, action: PayloadAction<string>) => {
       state.isUnreadIndividualMessage = false;
       state.individualMessages[action.payload]?.forEach((msg) => {
+        if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
+          state.readMessageIds.push(msg.id);
+        }
         msg.isUnread = false;
         msg.startOfUnread = false;
       });
@@ -193,8 +267,8 @@ export const {
   setFriends,
   setFriendsLoading,
   setChatPeople,
-  sortChatPeople,
   setChatPeopleLoading,
+  setSelectedForMessage,
   addIndividualMessage,
   editIndividualMessage,
   deleteIndividualMessage,
@@ -219,17 +293,20 @@ export const useMessagesTools = () => {
   const isUnreadIndividualMessage = useSelector(selectIsUnreadIndividualMessage);
   const chatPeople = useSelector(selectChatPeople);
   const chatPeopleLoading = useSelector(selectChatPeopleLoading);
+  const selectedForMessage = useSelector((state: RootState) => state.social.selectedForMessage);
+  const readMessageIds = useSelector((state: RootState) => state.social.readMessageIds);
 
   const memoizedMessages = useMemo(
     () => ({
       individualMessages,
       isUnreadIndividualMessage,
+      readMessageIds,
       chatPeople,
       chatPeopleLoading,
-
+      selectedForMessage,
       setChatPeople: (payload: AllRelationsType[]) => dispatch(setChatPeople(payload)),
-      sortChatPeople: () => dispatch(sortChatPeople()),
       setChatPeopleLoading: (loading: boolean) => dispatch(setChatPeopleLoading(loading)),
+      setSelectedForMessage: (user: Partial<UserType>) => dispatch(setSelectedForMessage(user)),
       addIndividualMessage: ({ userId, message }: { userId: string; message: Message }) =>
         dispatch(addIndividualMessage({ userId, message })),
       editIndividualMessage: (payload: {
@@ -258,7 +335,14 @@ export const useMessagesTools = () => {
         dispatch(clearUnreadIndividualMessages(userId)),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chatPeople, chatPeopleLoading, individualMessages, isUnreadIndividualMessage]
+    [
+      chatPeople,
+      chatPeopleLoading,
+      selectedForMessage,
+      individualMessages,
+      isUnreadIndividualMessage,
+      readMessageIds,
+    ]
   );
   return memoizedMessages;
 };

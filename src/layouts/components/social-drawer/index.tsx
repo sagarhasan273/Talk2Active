@@ -62,49 +62,68 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
 
   const user = useSelector(selectAccount);
-  const { chatPeople, setChatPeople } = useMessagesTools();
+  const {
+    isUnreadIndividualMessage,
+    chatPeople,
+    setChatPeople,
+    selectedForMessage,
+    setSelectedForMessage,
+  } = useMessagesTools();
 
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('');
-  const [selectedForMessage, setSelectedForMessage] = useState<Partial<UserType>>({});
+
   const [people, setPeople] = useState<AllRelationsType[]>([]);
+  const [chatUser, setChatUser] = useState<Partial<UserType>>({});
 
   const { data: allRelations } = useGetAllRelationsQuery(user.id, {
     skip: currentTab !== 'all',
   });
 
   const { data: friends } = useGetFriendsQuery(user.id, {
-    skip: !(currentTab === 'friends' || headerTab === 'message'),
+    skip: !chatPeople,
   });
 
   const { data: following } = useGetFollowingQuery(user.id, {
     skip: currentTab !== 'following',
   });
 
-  const handleChangeHeaderTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
-    setHeaderTab(newValue);
-  }, []);
+  const handleChangeHeaderTab = useCallback(
+    (event: React.SyntheticEvent, newValue: string) => {
+      setHeaderTab(newValue);
+      if (newValue === 'messaging-with') {
+        setSelectedForMessage(chatUser);
+      } else {
+        setSelectedForMessage({});
+      }
+    },
+    [chatUser, setSelectedForMessage]
+  );
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
     setCurrentTab(newValue);
   }, []);
 
-  const handleSelectedForMessage = useCallback((accountDetails: Partial<UserType>) => {
-    setSelectedForMessage(accountDetails);
-    setHeaderTab('messaging-with');
-  }, []);
+  const handleSelectedForMessage = useCallback(
+    (accountDetails: Partial<UserType>) => {
+      setHeaderTab('messaging-with');
+      setChatUser(accountDetails);
+      setSelectedForMessage(accountDetails);
+    },
+    [setChatUser, setSelectedForMessage]
+  );
 
   const messagingWith = {
     icon: (
       <AvatarUser
-        avatarUrl={selectedForMessage.profilePhoto || null}
-        name={selectedForMessage.name ?? 'TS'}
-        verified={selectedForMessage.verified ?? false}
+        avatarUrl={chatUser.profilePhoto || null}
+        name={chatUser.name ?? 'TS'}
+        verified={chatUser.verified ?? false}
         sx={{ width: 24, height: 24, fontSize: 10 }}
       />
     ),
     label: (
-      <Tooltip title={selectedForMessage.name || 'Unknown User'}>
+      <Tooltip title={chatUser.name || 'Unknown User'}>
         <Stack sx={{ position: 'relative' }}>
           <Typography
             sx={{
@@ -115,7 +134,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
               display: 'block',
             }}
           >
-            {smDown ? fUsername(selectedForMessage.name) : selectedForMessage.name}
+            {smDown ? fUsername(chatUser.name) : chatUser.name}
           </Typography>
 
           <MessageTypingIllustration sx={{ position: 'absolute', top: 12 }} />
@@ -133,7 +152,25 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           iconPosition="start"
           value={tab.value}
           label={smDown ? undefined : tab.label}
-          icon={tab.icon}
+          icon={
+            <Stack>
+              {isUnreadIndividualMessage && tab.value === 'message' && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 5,
+                    right: 5,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: 'error.main',
+                    zIndex: 1,
+                  }}
+                />
+              )}
+              {tab.icon}
+            </Stack>
+          }
           sx={{
             minWidth: smDown ? 50 : 100,
             '&.MuiButtonBase-root': {
@@ -145,7 +182,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           }}
         />
       ))}
-      {selectedForMessage.name && (
+      {chatUser.name && (
         <Tab
           iconPosition="start"
           value={messagingWith.value}
@@ -224,7 +261,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     if (currentTab === 'friends' && friends?.data) {
       setPeople(friends.data);
     }
-    if (headerTab === 'message' && friends?.data && !chatPeople.length) {
+    if (friends?.data && !chatPeople.length) {
       setChatPeople(friends.data);
     }
     if (currentTab === 'following' && following?.data) {
@@ -262,6 +299,22 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
         disableRipple
         {...other}
       >
+        {/* Simple dot indicator */}
+        {isUnreadIndividualMessage && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: 'error.main',
+              zIndex: 1,
+            }}
+          />
+        )}
+
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48">
           <path
             fill="currentColor"
@@ -292,6 +345,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             strokeWidth="1"
           />
         </svg>
+
         <Typography variant="caption">Social</Typography>
       </IconButton>
 
