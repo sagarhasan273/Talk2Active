@@ -20,6 +20,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import { fUsername } from 'src/utils/helper';
 
 import { selectAccount, useMessagesTools } from 'src/core/slices';
+import { useGetConversationQuery } from 'src/core/apis/api-message';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
 import {
@@ -66,6 +67,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     isUnreadIndividualMessage,
     chatPeople,
     setChatPeople,
+    individualMessages,
+    setIndividualMessages,
     selectedForMessage,
     setSelectedForMessage,
   } = useMessagesTools();
@@ -87,6 +90,16 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const { data: following } = useGetFollowingQuery(user.id, {
     skip: currentTab !== 'following',
   });
+
+  const { data, isLoading, isFetching } = useGetConversationQuery(
+    {
+      userId1: user.id,
+      userId2: chatUser.id || '',
+    },
+    {
+      skip: !chatUser.id,
+    }
+  );
 
   const handleChangeHeaderTab = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
@@ -253,6 +266,18 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       </Box>
     </Scrollbar>
   );
+  console.log(individualMessages, 'data?.chatUserId');
+
+  useEffect(() => {
+    if (
+      !(isLoading || isFetching) &&
+      data?.messages &&
+      data?.chatUserId &&
+      !individualMessages[data?.chatUserId]
+    ) {
+      setIndividualMessages({ userId: data?.chatUserId, messages: data.messages || [] });
+    }
+  }, [data, isLoading, isFetching, individualMessages, setIndividualMessages, chatUser]);
 
   useEffect(() => {
     if (currentTab === 'all' && allRelations?.data) {

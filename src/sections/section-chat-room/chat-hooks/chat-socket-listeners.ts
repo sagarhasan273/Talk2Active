@@ -99,7 +99,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
         senderSocketId: data?.senderSocketId,
-        targetSocketId: data?.targetSocketId,
+        receiverSocketId: data?.receiverSocketId,
       };
 
       addChatRoomMessage(receiveMessage);
@@ -125,9 +125,9 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         sender: data.sender,
         time: data.time,
         senderInfo: data.senderInfo,
-        targetUserInfo: data?.targetUserInfo,
+        receiverInfo: data?.receiverInfo,
         senderSocketId: data?.senderSocketId,
-        targetSocketId: data?.targetSocketId,
+        receiverSocketId: data?.receiverSocketId,
         isUnread: true,
         isPrivate: true,
         type: data.type,

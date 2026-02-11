@@ -33,7 +33,7 @@ export type MessageInputProps = {
   participants?: Participant[];
   onSendMessage: (
     isPrivate: boolean,
-    targetUserInfo?: Message['targetUserInfo'],
+    targetUserInfo?: Message['receiverInfo'] & { socketId?: string },
     mentions?: Message['mentions']
   ) => void;
   isEditing?: boolean;

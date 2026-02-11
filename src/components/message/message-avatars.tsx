@@ -11,7 +11,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
     <>
       {message.sender === 'them' && (
         <Avatar
-          src={message.type === 'system' ? undefined : message.senderInfo.avatar}
+          src={message.type === 'system' ? undefined : message.senderInfo?.profilePhoto}
           sx={{
             mr: 0.5,
             borderRadius: 1,
@@ -24,13 +24,13 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
                 : 'none',
           }}
         >
-          {message.type === 'system' ? 'TS' : fUsername(message.senderInfo.name)}
+          {message.type === 'system' ? 'TS' : fUsername(message.senderInfo?.name)}
         </Avatar>
       )}
 
       {message.sender === 'me' && message.isPrivate && (
         <Avatar
-          src={message?.targetUserInfo?.avatar || ''}
+          src={message?.receiverInfo?.profilePhoto || ''}
           sx={{
             ml: 0.5,
             borderRadius: 1,
@@ -40,7 +40,7 @@ export function MessageAvatars({ message }: MessageAvatarsProps) {
             border: (theme) => `1px dashed ${varAlpha(theme.vars.palette.error.mainChannel, 1)}`,
           }}
         >
-          {fUsername(message?.targetUserInfo?.name || '')}
+          {fUsername(message?.receiverInfo?.name || '')}
         </Avatar>
       )}
 

@@ -2,9 +2,17 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { socialSlice } from './slices/slice-social';
 import { roomSlice, postsSlice, accountSlice } from './slices';
-import { userApi, postApi, chatApi, socialApi, settingsApi, suggestionApi } from './apis';
+import {
+  userApi,
+  postApi,
+  chatApi,
+  socialApi,
+  messageApi,
+  settingsApi,
+  suggestionApi,
+} from './apis';
 
-const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi, chatApi];
+const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi, chatApi, messageApi];
 
 // Combine reducers
 const rootReducer = {
@@ -18,6 +26,7 @@ const rootReducer = {
   [socialApi.reducerPath]: socialApi.reducer,
   [suggestionApi.reducerPath]: suggestionApi.reducer,
   [chatApi.reducerPath]: chatApi.reducer,
+  [messageApi.reducerPath]: messageApi.reducer,
 };
 
 export const store = configureStore({

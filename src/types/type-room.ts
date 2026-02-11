@@ -16,28 +16,20 @@ export type Reaction = {
 
 export type Message = {
   id?: string;
+  conversationId?: string;
   text: string;
   sender: 'me' | 'them';
-  time: string;
+  time: Date | string;
   isUnread: boolean;
   startOfUnread?: boolean;
-  isPrivate: boolean;
+  isPrivate?: boolean;
   senderSocketId?: string;
-  targetSocketId?: string;
+  receiverSocketId?: string;
   type: 'system' | 'message';
   systemMessageType?: 'user-joined' | 'you-joined' | 'user-left';
-  senderInfo: {
-    userId: string;
-    name: string;
-    avatar?: string;
-  };
-  targetUserInfo?: {
-    socketId: string;
-    userId: string;
-    name: string;
-    avatar?: string;
-  };
-  mentions: {
+  senderInfo?: Partial<UserType>;
+  receiverInfo?: Partial<UserType>;
+  mentions?: {
     userId: string;
     name: string;
     avatar?: string;
@@ -46,13 +38,14 @@ export type Message = {
   isDeleted?: boolean;
   reactions?: Reaction[];
   messageRepliedOf?: Partial<Message>;
+  parentMessage?: string | Partial<Message>; // For threading
 };
 
 export type MessageOnReply = {
   id: Message['id'];
   text: Message['text'];
-  name: Message['senderInfo']['name'];
-  targetSocketId?: Message['targetSocketId'];
+  name: UserType['name'];
+  targetSocketId?: Message['receiverSocketId'];
 };
 
 export type ReactionMessageData = {

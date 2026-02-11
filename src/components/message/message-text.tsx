@@ -59,6 +59,16 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
         />
       )}
 
+      {message?.parentMessage && (
+        <MessageReplyInfo
+          replyMessage={message.parentMessage as Message}
+          sx={{
+            mb: 2,
+            backgroundColor: theme.palette.mode === 'light' ? 'grey.300' : 'grey.900',
+          }}
+        />
+      )}
+
       <GetTextFromMessage message={message} />
 
       <MessageMention message={message} />
@@ -145,7 +155,7 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
                 Talk2Active System
               </Box>
             ) : (
-              message.senderInfo.name
+              message.senderInfo?.name
             )}
           </Typography>
         )}
@@ -161,7 +171,7 @@ export function MessageText({ message, onReaction }: MessageTextProps) {
             transition: 'opacity 0.2s',
           }}
         >
-          {message.time}
+          {new Date(message.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Typography>
 
         {message.isEdited && (
@@ -258,7 +268,7 @@ function GetTextFromMessage({ message }: { message: Message }) {
           color: 'text.secondary',
         }}
       >
-        {message.text || 'Message deleted'}
+        [This message was deleted]
       </Typography>
     );
   }

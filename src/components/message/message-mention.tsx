@@ -5,11 +5,11 @@ import { varAlpha } from 'src/theme/styles';
 import type { MessageMentionProps } from './type';
 
 export function MessageMention({ message }: MessageMentionProps) {
-  if (!message.mentions.length) return null;
+  if (!message?.mentions?.length) return null;
 
   const parts: React.ReactNode[] = [];
 
-  message.mentions.forEach((m, i) => {
+  message?.mentions.forEach((m, i) => {
     parts.push(
       <Chip
         key={m.userId + i}

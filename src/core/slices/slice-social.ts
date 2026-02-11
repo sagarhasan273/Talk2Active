@@ -122,6 +122,16 @@ export const socialSlice = createSlice({
       }
     },
 
+    setIndividualMessages: (
+      state,
+      action: PayloadAction<{ userId: string; messages: Message[] }>
+    ) => {
+      const { userId, messages } = action.payload;
+      if (!state.individualMessages[userId]) {
+        state.individualMessages[userId] = [...messages];
+      }
+    },
+
     addIndividualMessage: (state, action: PayloadAction<{ userId: string; message: Message }>) => {
       const { userId } = action.payload;
 
@@ -270,6 +280,7 @@ export const {
   setChatPeopleLoading,
   setSelectedForMessage,
   addIndividualMessage,
+  setIndividualMessages,
   editIndividualMessage,
   deleteIndividualMessage,
   reactionIndividualMessage,
@@ -307,6 +318,8 @@ export const useMessagesTools = () => {
       setChatPeople: (payload: AllRelationsType[]) => dispatch(setChatPeople(payload)),
       setChatPeopleLoading: (loading: boolean) => dispatch(setChatPeopleLoading(loading)),
       setSelectedForMessage: (user: Partial<UserType>) => dispatch(setSelectedForMessage(user)),
+      setIndividualMessages: ({ userId, messages }: { userId: string; messages: Message[] }) =>
+        dispatch(setIndividualMessages({ userId, messages })),
       addIndividualMessage: ({ userId, message }: { userId: string; message: Message }) =>
         dispatch(addIndividualMessage({ userId, message })),
       editIndividualMessage: (payload: {

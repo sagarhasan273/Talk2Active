@@ -49,7 +49,7 @@ export const ChatMessageGroup = ({
   const handleSendMessage = useCallback(
     (
       isPrivate: boolean,
-      targetUserInfo: Message['targetUserInfo'],
+      targetUserInfo: (Message['receiverInfo'] & { socketId?: string }) | undefined,
       mentions: Message['mentions'] = []
     ): void => {
       if (message.trim() === '') return;
@@ -57,24 +57,24 @@ export const ChatMessageGroup = ({
       const newMessage: Message = {
         text: message,
         sender: 'me',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(),
         isUnread: false,
         isPrivate,
         senderSocketId: socket?.id,
-        targetSocketId: targetUserInfo?.socketId,
+        receiverSocketId: targetUserInfo?.socketId,
         type: 'message',
         senderInfo: {
-          userId: user.id,
+          id: user.id,
           name: user.name,
-          avatar: user.profilePhoto,
+          profilePhoto: user.profilePhoto,
         },
-        targetUserInfo,
+        receiverInfo: targetUserInfo,
         mentions,
         messageRepliedOf: replyMessage,
       };
 
       if (isEditing) {
-        if (isPrivate && editMessage?.targetSocketId) {
+        if (isPrivate && editMessage?.receiverSocketId) {
           socket?.emit('send-edit-private-message', {
             roomId: room.id,
             messageId,
@@ -147,9 +147,9 @@ export const ChatMessageGroup = ({
     if (!!messageReply.isPrivate && messageReply.senderSocketId) {
       setPrivateRecipient({
         socketId: messageReply.senderSocketId,
-        userId: messageReply.senderInfo.userId,
-        name: messageReply.senderInfo.name,
-        profilePhoto: messageReply?.senderInfo?.avatar,
+        userId: messageReply?.senderInfo?.id as string,
+        name: messageReply?.senderInfo?.name as string,
+        profilePhoto: messageReply?.senderInfo?.profilePhoto,
       });
     }
   }, []);

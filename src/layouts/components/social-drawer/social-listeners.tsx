@@ -1,3 +1,4 @@
+import type { UserType } from 'src/types/type-user';
 import type { Message, ReactionMessageData } from 'src/types/type-room';
 
 import { useCallback } from 'react';
@@ -39,14 +40,14 @@ export function useSocialSocketListeners() {
         isUnread: true,
         type: data.type,
         senderInfo: data.senderInfo,
-        targetUserInfo: data?.targetUserInfo,
+        receiverInfo: data?.receiverInfo,
         mentions: data.mentions || [],
-        messageRepliedOf: data?.messageRepliedOf,
+        parentMessage: data?.parentMessage,
         senderSocketId: data?.senderSocketId,
-        targetSocketId: data?.targetSocketId,
+        receiverSocketId: data?.receiverSocketId,
       };
 
-      addIndividualMessage({ userId: data.senderInfo?.userId || '', message: receiveMessage });
+      addIndividualMessage({ userId: data.senderInfo?.id || '', message: receiveMessage });
     };
 
     const handleIndividualMessageSelf = (data: any) => {
@@ -58,14 +59,13 @@ export function useSocialSocketListeners() {
         isUnread: false,
         type: data.type,
         senderInfo: data.senderInfo,
-        targetUserInfo: data?.targetUserInfo,
-        mentions: data.mentions || [],
-        messageRepliedOf: data?.messageRepliedOf,
+        receiverInfo: data?.receiverInfo,
+        parentMessage: data?.parentMessage,
         senderSocketId: data?.senderSocketId,
-        targetSocketId: data?.targetSocketId,
+        receiverSocketId: data?.receiverSocketId,
       };
 
-      addIndividualMessage({ userId: data.targetUserInfo?.userId || '', message: receiveMessage });
+      addIndividualMessage({ userId: data.receiverInfo?.id || '', message: receiveMessage });
     };
 
     const handleReactionMessage = (data: ReactionMessageData) => {
@@ -96,15 +96,11 @@ export function useSocialSocketListeners() {
       userId: string;
       messageId: Message['id'];
       text: Message['text'];
-      targetUserInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-      };
+      receiverInfo: Partial<UserType>;
     }) => {
-      const { messageId, text, targetUserInfo } = data;
+      const { messageId, text, receiverInfo } = data;
       editIndividualMessage({
-        userId: targetUserInfo?.userId || '',
+        userId: receiverInfo?.id || '',
         messageId,
         text,
       });

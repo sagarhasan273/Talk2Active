@@ -26,20 +26,22 @@ export function MessageReplyInfo({ replyMessage, cancelReplyMessage, sx }: Messa
       }}
     >
       <Box sx={{ px: 1 }}>
-        <Typography
-          variant="caption"
-          className="message-time"
-          sx={{
-            color: varAlpha(
-              theme.vars.palette.primary[
-                theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
-              ],
-              1
-            ),
-          }}
-        >
-          {replyMessage?.senderInfo?.name}
-        </Typography>
+        {replyMessage?.senderInfo && (
+          <Typography
+            variant="caption"
+            className="message-time"
+            sx={{
+              color: varAlpha(
+                theme.vars.palette.primary[
+                  theme.palette.mode === 'dark' ? 'lightChannel' : 'mainChannel'
+                ],
+                1
+              ),
+            }}
+          >
+            {replyMessage?.senderInfo?.name}
+          </Typography>
+        )}
         <Typography variant="body1" sx={{ color: 'text.secondary' }}>
           {replyMessage?.text}
         </Typography>

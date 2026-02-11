@@ -84,7 +84,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     participants?.filter(
       (participant) =>
         participant.userId !== user.id &&
-        !mentions.map((m) => m.userId).includes(participant.userId) &&
+        !mentions?.map((m) => m.userId).includes(participant.userId) &&
         participant.name.toLowerCase().includes(mentionQuery.toLowerCase())
     ) || [];
 
@@ -133,10 +133,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Mention a participant
   const mentionParticipant = (participant: Participant) => {
     setMentions((prev) => [
-      ...prev,
+      ...(prev || []),
       {
         userId: participant.userId,
         name: participant.name,
+        avatar: participant.profilePhoto,
       },
     ]);
 
@@ -148,7 +149,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setShowMentions(false);
     setMentionQuery('');
     setSelectedMentionIndex(0);
-    setMentions((prev) => prev.filter((m) => m.userId !== participantId));
+    setMentions((prev) => prev?.filter((m) => m.userId !== participantId));
   };
 
   // Start a private message
@@ -175,7 +176,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           socketId: privateRecipient.socketId,
           userId: privateRecipient.userId,
           name: privateRecipient.name,
-          avatar: privateRecipient?.profilePhoto,
+          profilePhoto: privateRecipient?.profilePhoto,
         });
       } else {
         onSendMessage(false, undefined, mentions);
@@ -214,7 +215,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const renderHighlightedText = () => {
-    if (!mentions.length) return null;
+    if (!mentions?.length) return null;
 
     const parts: React.ReactNode[] = [];
 
@@ -506,7 +507,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                         }
                         size="small"
                         sx={{ textTransform: 'none' }}
-                        disabled={isPrivateMessage || mentions.length > 0}
+                        disabled={isPrivateMessage || (mentions?.length || 0) > 0}
                       >
                         PM
                       </Button>

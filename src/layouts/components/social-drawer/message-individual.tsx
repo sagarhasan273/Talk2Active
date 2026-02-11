@@ -20,8 +20,12 @@ export const VoiceRoomMessageIndividual = ({
 }: {
   targetUserInfo?: { userId?: string; name?: string; avatar?: string };
 }) => {
-  const { individualMessages, reactionIndividualMessage, reactionPopIndividualMessage } =
-    useMessagesTools();
+  const {
+    individualMessages,
+    selectedForMessage,
+    reactionIndividualMessage,
+    reactionPopIndividualMessage,
+  } = useMessagesTools();
   const user = useSelector(selectAccount);
 
   const { socket } = useSocketContext();
@@ -41,20 +45,25 @@ export const VoiceRoomMessageIndividual = ({
     const newMessage = {
       text: message,
       sender: 'me',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isUnread: false,
       type: 'message',
       senderInfo: {
-        userId: user.id,
+        id: user.id,
         name: user.name,
         avatar: user.profilePhoto,
       },
-      targetUserInfo: {
-        userId: targetUserInfo?.userId || '',
-        name: targetUserInfo?.name || '',
-        avatar: targetUserInfo?.avatar,
+      receiverInfo: {
+        id: selectedForMessage?.id || '',
+        name: selectedForMessage?.name || '',
+        avatar: selectedForMessage?.profilePhoto || '',
       },
-      messageRepliedOf: replyMessage,
+      isReply: !!replyMessage,
+      parentMessage: replyMessage
+        ? {
+            id: replyMessage?.id,
+            text: replyMessage?.text,
+          }
+        : undefined,
     };
 
     if (isEditing) {
@@ -62,7 +71,7 @@ export const VoiceRoomMessageIndividual = ({
         messageId,
         userId: user.id,
         text: message,
-        targetUserInfo: editMessage?.targetUserInfo,
+        receiverInfo: editMessage?.receiverInfo,
       });
     } else {
       socket?.emit('send-individual-message', {
@@ -75,7 +84,7 @@ export const VoiceRoomMessageIndividual = ({
     setIsEditing(false);
     setIsPrivateMessage(false);
     setReplyMessage(undefined);
-  }, [message, editMessage, targetUserInfo, messageId, isEditing, replyMessage, socket, user]);
+  }, [message, editMessage, selectedForMessage, messageId, isEditing, replyMessage, socket, user]);
 
   const handleReaction = useCallback(
     (messageObj: Message, emoji: string) => {
@@ -93,17 +102,17 @@ export const VoiceRoomMessageIndividual = ({
       );
 
       if (hasReact) {
-        reactionPopIndividualMessage({ ...reactionData, userId: targetUserInfo?.userId });
+        reactionPopIndividualMessage({ ...reactionData, userId: selectedForMessage?.userId });
         socket?.emit('send-reaction-pop-individual-message', {
           senderId: user.id,
-          receiverId: targetUserInfo?.userId,
+          receiverId: selectedForMessage?.userId,
           ...reactionData,
         });
       } else {
-        reactionIndividualMessage({ ...reactionData, userId: targetUserInfo?.userId });
+        reactionIndividualMessage({ ...reactionData, userId: selectedForMessage?.userId });
         socket?.emit('send-reaction-individual-message', {
           senderId: user.id,
-          receiverId: targetUserInfo?.userId,
+          receiverId: selectedForMessage?.userId,
           ...reactionData,
         });
       }
@@ -111,7 +120,7 @@ export const VoiceRoomMessageIndividual = ({
     [
       user.id,
       user.name,
-      targetUserInfo,
+      selectedForMessage,
       socket,
       reactionIndividualMessage,
       reactionPopIndividualMessage,
@@ -134,12 +143,11 @@ export const VoiceRoomMessageIndividual = ({
     (messageDelete: Message) => {
       socket?.emit('send-delete-individual-message', {
         senderId: user.id,
-        receiverId: targetUserInfo?.userId,
+        receiverId: selectedForMessage?.id,
         messageId: messageDelete.id,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
     },
-    [socket, user.id, targetUserInfo?.userId]
+    [socket, user.id, selectedForMessage?.id]
   );
 
   const handleCancelReply = useCallback(() => {
@@ -212,7 +220,7 @@ export const VoiceRoomMessageIndividual = ({
 
           {/* Messages */}
           <MessageContainer
-            messages={individualMessages[targetUserInfo?.userId || ''] || []}
+            messages={individualMessages[selectedForMessage?.id || ''] || []}
             onReaction={handleReaction}
             onReply={handleReply}
             isEditing={isEditing}
