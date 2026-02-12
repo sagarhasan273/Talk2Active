@@ -30,7 +30,7 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 
-import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useRoomTools, selectAccount, useMessagesTools } from 'src/core/slices';
 
 import { STATUS_OPTIONS } from 'src/sections/section-chat-room/chat-status-button';
 
@@ -66,6 +66,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const user = useSelector(selectAccount);
   const { clearUnreadChatRoomMessages } = useRoomTools();
+  const { clearUnreadIndividualMessages } = useMessagesTools();
 
   const [showMentions, setShowMentions] = useState(false);
   const [mentions, setMentions] = useState<Message['mentions']>([]);
@@ -382,7 +383,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
               onFocus={() => {
-                clearUnreadChatRoomMessages();
+                setTimeout(() => {
+                  console.log('Cleared unread messages');
+                  clearUnreadChatRoomMessages();
+                  clearUnreadIndividualMessages();
+                }, 1500);
               }}
               fullWidth
               sx={{

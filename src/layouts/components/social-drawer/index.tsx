@@ -266,7 +266,6 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       </Box>
     </Scrollbar>
   );
-  console.log(individualMessages, 'data?.chatUserId');
 
   useEffect(() => {
     if (

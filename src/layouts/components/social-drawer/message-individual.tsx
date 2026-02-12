@@ -25,6 +25,7 @@ export const VoiceRoomMessageIndividual = ({
     selectedForMessage,
     reactionIndividualMessage,
     reactionPopIndividualMessage,
+    clearUnreadIndividualMessages,
   } = useMessagesTools();
   const user = useSelector(selectAccount);
 
@@ -50,12 +51,12 @@ export const VoiceRoomMessageIndividual = ({
       senderInfo: {
         id: user.id,
         name: user.name,
-        avatar: user.profilePhoto,
+        profilePhoto: user.profilePhoto,
       },
       receiverInfo: {
         id: selectedForMessage?.id || '',
         name: selectedForMessage?.name || '',
-        avatar: selectedForMessage?.profilePhoto || '',
+        profilePhoto: selectedForMessage?.profilePhoto || '',
       },
       isReply: !!replyMessage,
       parentMessage: replyMessage
@@ -159,9 +160,15 @@ export const VoiceRoomMessageIndividual = ({
     setIsEditing(false);
   }, []);
 
-  useEffect(() => {
-    // clearUnreadIndividualMessages(targetUserInfo?.userId || '');
+  const handleMessageUnread = useCallback(() => {
+    if (selectedForMessage?.id) {
+      setTimeout(() => {
+        clearUnreadIndividualMessages();
+      }, 1500);
+    }
+  }, [selectedForMessage, clearUnreadIndividualMessages]);
 
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [individualMessages, targetUserInfo?.userId]);
@@ -194,7 +201,7 @@ export const VoiceRoomMessageIndividual = ({
         }}
       >
         {/* Messages Display Area */}
-        <Box>
+        <Box onClick={() => handleMessageUnread()} sx={{ minHeight: 200, p: 2 }}>
           {/* Date Separator */}
           <Box
             sx={{

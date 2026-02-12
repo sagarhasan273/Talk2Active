@@ -2,7 +2,7 @@ import type { Message } from 'src/types/type-room';
 
 import { useState, useCallback } from 'react';
 
-import { Box, Divider, useTheme } from '@mui/material';
+import { Box, Divider, useTheme, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -55,26 +55,28 @@ export function MessageContainer({
               sx={{
                 typography: 'caption',
                 color: theme.vars.palette.text.primary,
-                background: varAlpha(theme.vars.palette.primary.mainChannel, 0.18),
+                background: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
                 '&::before, &::after': {
                   border: 1,
                   borderColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.8),
                 },
               }}
             >
-              Unread
+              <Typography variant="caption" color="primary">
+                Unread Messages
+              </Typography>
             </Divider>
           )}
           <Box
             sx={{
               pl: 'auto',
-              p: 1,
+              py: 1,
               pb: msg.reactions?.length ? 3 : 1,
               display: 'flex',
               justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
-              backgroundColor: msg.isUnread
-                ? varAlpha(theme.vars.palette.primary.mainChannel, 0.18)
-                : 'transparent',
+              // backgroundColor: msg.isUnread
+              //   ? varAlpha(theme.vars.palette.primary.mainChannel, 0.08)
+              //   : 'transparent',
               '&:hover': {
                 '& .message-time': {
                   opacity: 1,

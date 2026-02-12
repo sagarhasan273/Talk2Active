@@ -58,32 +58,6 @@ export const socialSlice = createSlice({
       }
     },
 
-    setUnreadChatPeople(
-      state,
-      action: PayloadAction<{ userId: UserType['id']; isUnread?: boolean }>
-    ) {
-      let tempUnreadCount = false;
-
-      state.chatPeople.forEach((person) => {
-        if (person.accountDetails.id === action.payload.userId) {
-          person.latestMessage = {
-            ...person.latestMessage,
-            isUnread: action.payload.isUnread === undefined ? false : action.payload.isUnread,
-          } as AllRelationsType['latestMessage'];
-
-          if (person?.latestMessage?.isUnread) {
-            tempUnreadCount = true;
-          }
-        }
-      });
-
-      if (tempUnreadCount) {
-        state.isUnreadIndividualMessage = true;
-      } else {
-        state.isUnreadIndividualMessage = false;
-      }
-    },
-
     setChatPeopleLoading: (state, action: PayloadAction<boolean>) => {
       state.chatPeopleLoading = action.payload;
     },
@@ -110,16 +84,6 @@ export const socialSlice = createSlice({
       });
 
       state.isUnreadIndividualMessage = hasUnreadMessages;
-
-      if (action.payload.id) {
-        state.individualMessages[action.payload.id]?.forEach((msg) => {
-          if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
-            state.readMessageIds.push(msg.id);
-          }
-          msg.isUnread = false;
-          msg.startOfUnread = false;
-        });
-      }
     },
 
     setIndividualMessages: (
@@ -170,12 +134,17 @@ export const socialSlice = createSlice({
       if (tempChatPeople) {
         state.chatPeople.unshift(tempChatPeople);
       }
-      state.isUnreadIndividualMessage = hasUnread;
 
       state.individualMessages[userId].push({
         ...action.payload.message,
         isUnread: state.selectedForMessage.id === userId ? false : action.payload.message.isUnread,
+        startOfUnread:
+          !state.isUnreadIndividualMessage &&
+          (state.selectedForMessage.id === userId ? false : action.payload.message.isUnread),
       });
+
+      state.isUnreadIndividualMessage = hasUnread;
+
       if (
         state.selectedForMessage.id === userId &&
         action.payload.message.isUnread &&
@@ -260,15 +229,43 @@ export const socialSlice = createSlice({
       });
     },
 
-    clearUnreadIndividualMessages: (state, action: PayloadAction<string>) => {
+    clearUnreadIndividualMessages: (state) => {
       state.isUnreadIndividualMessage = false;
-      state.individualMessages[action.payload]?.forEach((msg) => {
-        if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
-          state.readMessageIds.push(msg.id);
+      if (state.selectedForMessage?.id) {
+        state.individualMessages[state.selectedForMessage.id]?.forEach((msg) => {
+          if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
+            state.readMessageIds.push(msg.id);
+          }
+          msg.isUnread = false;
+          msg.startOfUnread = false;
+        });
+      }
+    },
+
+    setUnreadChatPeople(
+      state,
+      action: PayloadAction<{ userId: UserType['id']; isUnread?: boolean }>
+    ) {
+      let tempUnreadCount = false;
+
+      state.chatPeople.forEach((person) => {
+        if (person.accountDetails.id === action.payload.userId) {
+          person.latestMessage = {
+            ...person.latestMessage,
+            isUnread: action.payload.isUnread === undefined ? false : action.payload.isUnread,
+          } as AllRelationsType['latestMessage'];
+
+          if (person?.latestMessage?.isUnread) {
+            tempUnreadCount = true;
+          }
         }
-        msg.isUnread = false;
-        msg.startOfUnread = false;
       });
+
+      if (tempUnreadCount) {
+        state.isUnreadIndividualMessage = true;
+      } else {
+        state.isUnreadIndividualMessage = false;
+      }
     },
   },
 });
@@ -344,8 +341,7 @@ export const useMessagesTools = () => {
         messageId: Message['id'];
         reaction: Reaction;
       }) => dispatch(reactionPopIndividualMessage(payload)),
-      clearUnreadIndividualMessages: (userId: string) =>
-        dispatch(clearUnreadIndividualMessages(userId)),
+      clearUnreadIndividualMessages: () => dispatch(clearUnreadIndividualMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
