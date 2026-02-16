@@ -18,7 +18,6 @@ export function useSocialSocketListeners() {
     editIndividualMessage,
     deleteIndividualMessage,
     reactionIndividualMessage,
-    reactionPopIndividualMessage,
   } = useMessagesTools();
 
   // Socket
@@ -78,14 +77,6 @@ export function useSocialSocketListeners() {
       });
     };
 
-    const handleReactionPopMessage = (data: ReactionMessageData) => {
-      reactionPopIndividualMessage({
-        userId: data.senderId,
-        messageId: data.messageId,
-        reaction: data.reaction,
-      });
-    };
-
     const handleEditedMessage = (data: {
       userId: string;
       messageId: Message['id'];
@@ -136,7 +127,6 @@ export function useSocialSocketListeners() {
     on('receive-delete-individual-message', handleDeleteIndividualMessage);
     on('receive-delete-individual-message-self', handleDeleteIndividualMessageSelf);
     on('receive-reaction-individual-message', handleReactionMessage);
-    on('receive-reaction-pop-individual-message', handleReactionPopMessage);
 
     // Return cleanup function
     return () => {

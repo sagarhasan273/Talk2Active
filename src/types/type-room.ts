@@ -11,7 +11,6 @@ export type Reaction = {
   emoji: string;
   userId: string;
   name?: string;
-  timestamp?: Date;
 };
 
 export type Message = {

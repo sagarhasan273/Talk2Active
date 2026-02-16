@@ -23,8 +23,8 @@ export const VoiceRoomMessageIndividual = ({
   const {
     individualMessages,
     selectedForMessage,
+    readMessageIds,
     reactionIndividualMessage,
-    reactionPopIndividualMessage,
     clearUnreadIndividualMessages,
   } = useMessagesTools();
   const user = useSelector(selectAccount);
@@ -77,6 +77,7 @@ export const VoiceRoomMessageIndividual = ({
     } else {
       socket?.emit('send-individual-message', {
         ...newMessage,
+        readMessageIds,
       });
     }
 
@@ -85,7 +86,17 @@ export const VoiceRoomMessageIndividual = ({
     setIsEditing(false);
     setIsPrivateMessage(false);
     setReplyMessage(undefined);
-  }, [message, editMessage, selectedForMessage, messageId, isEditing, replyMessage, socket, user]);
+  }, [
+    message,
+    editMessage,
+    readMessageIds,
+    selectedForMessage,
+    messageId,
+    isEditing,
+    replyMessage,
+    socket,
+    user,
+  ]);
 
   const handleReaction = useCallback(
     (messageObj: Message, emoji: string) => {
@@ -98,34 +109,14 @@ export const VoiceRoomMessageIndividual = ({
         },
       };
 
-      const hasReact = messageObj?.reactions?.some(
-        (reaction) => reaction?.userId === user?.id && reaction?.emoji === emoji
-      );
-
-      if (hasReact) {
-        reactionPopIndividualMessage({ ...reactionData, userId: selectedForMessage?.userId });
-        socket?.emit('send-reaction-pop-individual-message', {
-          senderId: user.id,
-          receiverId: selectedForMessage?.userId,
-          ...reactionData,
-        });
-      } else {
-        reactionIndividualMessage({ ...reactionData, userId: selectedForMessage?.userId });
-        socket?.emit('send-reaction-individual-message', {
-          senderId: user.id,
-          receiverId: selectedForMessage?.userId,
-          ...reactionData,
-        });
-      }
+      reactionIndividualMessage({ ...reactionData, userId: targetUserInfo?.userId });
+      socket?.emit('send-reaction-individual-message', {
+        senderId: user.id,
+        receiverId: targetUserInfo?.userId,
+        ...reactionData,
+      });
     },
-    [
-      user.id,
-      user.name,
-      selectedForMessage,
-      socket,
-      reactionIndividualMessage,
-      reactionPopIndividualMessage,
-    ]
+    [user.id, user.name, targetUserInfo, socket, reactionIndividualMessage]
   );
 
   const handleReply = useCallback((messageReply: Message) => {

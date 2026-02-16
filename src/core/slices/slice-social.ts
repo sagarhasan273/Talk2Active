@@ -205,28 +205,27 @@ export const socialSlice = createSlice({
       if (action.payload.userId && action.payload.userId !== '') {
         state.individualMessages[action.payload.userId]?.forEach((msg) => {
           if (msg.id === action.payload.messageId) {
-            msg.reactions = [...(msg.reactions || []), action.payload.reaction];
+            const hasReact = msg.reactions?.some(
+              (reaction) =>
+                reaction.userId === action.payload.reaction.userId &&
+                reaction.emoji === action.payload.reaction.emoji
+            );
+
+            if (hasReact) {
+              msg.reactions =
+                (msg.reactions || []).filter(
+                  (reaction) =>
+                    !(
+                      reaction.userId === action.payload.reaction.userId &&
+                      reaction.emoji === action.payload.reaction.emoji
+                    )
+                ) || [];
+            } else {
+              msg.reactions = [...(msg.reactions || []), action.payload.reaction];
+            }
           }
         });
       }
-    },
-
-    reactionPopIndividualMessage: (
-      state,
-      action: PayloadAction<{ userId?: string; messageId: Message['id']; reaction: Reaction }>
-    ) => {
-      if (!action.payload.userId || action.payload.userId === '') return;
-      state.individualMessages[action.payload.userId]?.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.reactions = (msg.reactions || []).filter(
-            (reaction) =>
-              !(
-                reaction.userId === action.payload.reaction.userId &&
-                reaction.emoji === action.payload.reaction.emoji
-              )
-          );
-        }
-      });
     },
 
     clearUnreadIndividualMessages: (state) => {
@@ -281,7 +280,6 @@ export const {
   editIndividualMessage,
   deleteIndividualMessage,
   reactionIndividualMessage,
-  reactionPopIndividualMessage,
   clearUnreadIndividualMessages,
 } = socialSlice.actions;
 
@@ -336,11 +334,6 @@ export const useMessagesTools = () => {
         messageId: Message['id'];
         reaction: Reaction;
       }) => dispatch(reactionIndividualMessage(payload)),
-      reactionPopIndividualMessage: (payload: {
-        userId?: string;
-        messageId: Message['id'];
-        reaction: Reaction;
-      }) => dispatch(reactionPopIndividualMessage(payload)),
       clearUnreadIndividualMessages: () => dispatch(clearUnreadIndividualMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
