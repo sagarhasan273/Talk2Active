@@ -20,8 +20,8 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import { fUsername } from 'src/utils/helper';
 
 import { selectAccount, useMessagesTools } from 'src/core/slices';
-import { useGetConversationQuery } from 'src/core/apis/api-message';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
+import { useGetConversationQuery, useReadMessagesMutation } from 'src/core/apis/api-message';
 import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
 import {
   useGetFriendsQuery,
@@ -100,6 +100,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       skip: !chatUser.id,
     }
   );
+
+  const [updateReadMessages] = useReadMessagesMutation();
 
   const handleChangeHeaderTab = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
@@ -243,7 +245,15 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           <Box component="li" key={index} sx={{ display: 'flex' }}>
             <SocialItem
               relation={relation}
-              onClick={() => handleSelectedForMessage(relation.accountDetails)}
+              onClick={async () => {
+                handleSelectedForMessage(relation.accountDetails);
+                if (relation?.latestMessage?.isUnread) {
+                  await updateReadMessages({
+                    userId1: user.id,
+                    userId2: relation.accountDetails.id,
+                  });
+                }
+              }}
             />
           </Box>
         ))}
@@ -258,7 +268,15 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           <Box component="li" key={index} sx={{ display: 'flex' }}>
             <SocialItem
               relation={relation}
-              onClick={() => handleSelectedForMessage(relation.accountDetails)}
+              onClick={async () => {
+                handleSelectedForMessage(relation.accountDetails);
+                if (relation?.latestMessage?.isUnread) {
+                  await updateReadMessages({
+                    userId1: user.id,
+                    userId2: relation.accountDetails.id,
+                  });
+                }
+              }}
               isChat
             />
           </Box>

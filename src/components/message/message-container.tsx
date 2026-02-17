@@ -2,7 +2,7 @@ import type { Message } from 'src/types/type-room';
 
 import { useState, useCallback } from 'react';
 
-import { Box, Divider, useTheme, Typography } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -50,7 +50,7 @@ export function MessageContainer({
     <>
       {messages.map((msg, index) => (
         <Box key={`${msg.id}${index}`}>
-          {msg?.startOfUnread && (
+          {/* {msg?.startOfUnread && (
             <Divider
               sx={{
                 typography: 'caption',
@@ -66,7 +66,7 @@ export function MessageContainer({
                 Unread Messages
               </Typography>
             </Divider>
-          )}
+          )} */}
           <Box
             sx={{
               pl: 'auto',

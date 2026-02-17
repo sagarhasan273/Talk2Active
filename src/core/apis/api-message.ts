@@ -27,7 +27,17 @@ export const messageApi = createApi({
       query: ({ userId1, userId2 }) => `message/${userId1}/${userId2}`,
       providesTags: ['chat-recall'],
     }),
+
+    readMessages: builder.mutation<
+      { message: string; status: boolean },
+      { userId1: string; userId2: string }
+    >({
+      query: ({ userId1, userId2 }) => ({
+        url: `message/${userId1}/${userId2}/read`,
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
-export const { useGetConversationQuery } = messageApi;
+export const { useGetConversationQuery, useReadMessagesMutation } = messageApi;
