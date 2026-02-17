@@ -20,6 +20,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import { fUsername } from 'src/utils/helper';
 
 import { selectAccount, useMessagesTools } from 'src/core/slices';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import { useGetConversationQuery, useReadMessagesMutation } from 'src/core/apis/api-message';
 import { VoiceRoomMessageIndividual } from 'src/layouts/components/social-drawer/message-individual';
@@ -73,6 +74,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     setSelectedForMessage,
   } = useMessagesTools();
 
+  const { emit } = useSocketContext();
+
   const [headerTab, setHeaderTab] = useState('social');
   const [currentTab, setCurrentTab] = useState('');
 
@@ -108,11 +111,18 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       setHeaderTab(newValue);
       if (newValue === 'messaging-with') {
         setSelectedForMessage(chatUser);
+        emit('listening-to-user', {
+          userId: user.id,
+          listenerId: chatUser.id,
+        });
       } else {
         setSelectedForMessage({});
+        emit('stop-listening-to-user', {
+          userId: user.id,
+        });
       }
     },
-    [chatUser, setSelectedForMessage]
+    [user.id, chatUser, emit, setSelectedForMessage]
   );
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
@@ -124,8 +134,12 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
       setHeaderTab('messaging-with');
       setChatUser(accountDetails);
       setSelectedForMessage(accountDetails);
+      emit('listening-to-user', {
+        userId: user.id,
+        listenerId: accountDetails.id,
+      });
     },
-    [setChatUser, setSelectedForMessage]
+    [user.id, setChatUser, setSelectedForMessage, emit]
   );
 
   const messagingWith = {
