@@ -22,7 +22,7 @@ import { ChatRoomChatBody } from './chat-room-body';
 import { ChatRoomHeader } from './chat-room-header';
 import { ChatRoomChatJoinNow } from './chat-room-join-now';
 import { useChatSocketListeners } from '../chat-hooks/chat-socket-listeners';
-import { CreateRoomModal } from '../../section-voice-room/voice-room-create-modal';
+import { CreateRoomModal } from '../../section-voice/voice-create-room-modal';
 
 // Types
 interface VoiceRoomState {

@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { VoiceRoomView } from 'src/sections/section-voice-room';
+import { VoiceMainView } from 'src/sections/section-voice';
 
 // ----------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <VoiceRoomView />
+      <VoiceMainView />
     </>
   );
 }
