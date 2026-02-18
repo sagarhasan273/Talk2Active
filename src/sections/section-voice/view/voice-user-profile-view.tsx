@@ -60,12 +60,12 @@ const VoiceUserProfileView = () => {
           <Box sx={{ overflow: 'hidden' }}>
             <Typography
               variant="subtitle2"
-              sx={{ color: '#f2f3f5', fontWeight: 700, lineHeight: 1.2 }}
+              sx={{ color: 'text.primary', fontWeight: 700, lineHeight: 1.2 }}
             >
-              Alex Chen
+              {user.name}
             </Typography>
             <Typography variant="caption" sx={{ color: '#b5bac1', display: 'block' }}>
-              #0001
+              {user.username}
             </Typography>
           </Box>
         </Stack>
