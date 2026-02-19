@@ -156,7 +156,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // Start a private message
   const startPrivateMessage = (participant: Participant) => {
     setIsPrivateMessage(true);
-    setPrivateRecipient?.(participant);
+    setPrivateRecipient?.({
+      socketId: participant.socketId,
+      userId: participant.userId,
+      name: participant.name,
+      profilePhoto: participant.profilePhoto,
+    });
     setMessage('');
     setShowMentions(false);
     inputRef.current?.focus();

@@ -42,7 +42,7 @@ export function ChatRoomChatBody({
           <ChatUserCard
             key={participant.socketId}
             user={{
-              id: participant.id,
+              id: participant.userId,
               name: participant.name,
               avatar: participant.profilePhoto,
               status: participant.status,

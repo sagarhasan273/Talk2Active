@@ -21,7 +21,7 @@ export function VoiceRoomView() {
   const webRTC = useWebRTCContext();
 
   const { hasJoined, isMicMuted } = userVoiceState;
-  const { initializeMicrophone, localStream } = webRTC;
+  const { initializeMicrophone } = webRTC;
 
   // Socket listeners
   const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
@@ -62,14 +62,16 @@ export function VoiceRoomView() {
       updateUserVoiceState({ isMicMuted: isMuted, hasJoined: true });
 
       addParticipant({
-        ...user,
+        userId: user.id,
         socketId: socket?.id,
         status: 'online',
         isMuted: isMicMuted,
         userType: room.host?.id === user.id ? 'Host' : 'Guest',
         verified: user.verified,
-        stream: localStream,
         isLocal: true,
+        isSpeaking: false,
+        name: user.name,
+        profilePhoto: user.profilePhoto,
       });
     }
   };

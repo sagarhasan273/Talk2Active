@@ -57,19 +57,23 @@ export type ReactionMessageData = {
 };
 
 // Updated participant type
-export type Participant = UserType & {
+export type Participant = {
   socketId: string;
-  status: UserType['status'];
-  isMuted?: boolean;
-  isSpeaking?: boolean;
-  userType?: string;
-  stream: MediaStream | null;
   isLocal: boolean;
+  userId: UserType['id'];
+  name: UserType['name'];
+  profilePhoto: UserType['profilePhoto'];
+  status: UserType['status'];
+  isSpeaking: boolean;
+  isMuted: boolean;
+  volume?: number;
+  userType?: string;
+  verified?: UserType['verified'];
 };
 
 export type PrivateParticipantProps = {
   socketId: string;
-  userId: UserType['userId'];
+  userId: UserType['id'];
   name: UserType['name'];
   profilePhoto?: UserType['profilePhoto'];
 };
