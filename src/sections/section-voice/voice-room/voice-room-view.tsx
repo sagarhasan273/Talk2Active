@@ -3,7 +3,7 @@ import React from 'react';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
-import VoiceRoomBodyView from './voice-room-body-view';
+import { VoiceRoomBodyView } from './voice-room-body-view';
 import { VoiceRoomEntryView } from './voice-room-entry-view';
 
 export function VoiceRoomView() {
@@ -15,7 +15,7 @@ export function VoiceRoomView() {
 
   const HandleJoinRoom = async () => {
     updateUserVoiceState({ hasJoined: true });
-    const isMic = await initializeMicrophone().catch((error) => {
+    const isMuted = await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
         errorMessage = 'Microphone access was denied. Please allow access and try again.';
@@ -30,7 +30,7 @@ export function VoiceRoomView() {
       return false;
     });
 
-    updateUserVoiceState({ isMuted: isMic, hasJoined: true });
+    updateUserVoiceState({ isMicMuted: isMuted, hasJoined: true });
   };
 
   return (

@@ -8,9 +8,10 @@ export type AppDispatch = typeof store.dispatch;
 
 export type UserVoiceStateProps = {
   hasJoined: boolean;
-  isMuted: boolean;
+  isMicMuted: boolean;
   isDeafened: boolean;
   volume: number;
+  micGain: number;
   isScreenSharing: boolean;
   statue: UserType['status'];
   micError?: string;

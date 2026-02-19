@@ -4,21 +4,49 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import HeadsetIcon from '@mui/icons-material/Headset';
 import SettingsIcon from '@mui/icons-material/Settings';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
-import { Box, Stack, Paper, Badge, Slider, Tooltip, Typography, IconButton } from '@mui/material'; // For input level visualization
+import { Box, Stack, Paper, Badge, Tooltip, Typography, IconButton } from '@mui/material'; // For input level visualization
 import { useSelector } from 'react-redux';
+
+import useWebRTC from 'src/hooks/use-web-rtc';
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 
 import { AvatarUser } from 'src/components/avatar-user';
+
+import { VoiceAudioControls } from '../voice-audio-controls';
 
 const VoiceUserProfileView = () => {
   const user = useSelector(selectAccount);
 
   const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
-  const { isMuted, isDeafened, volume } = userVoiceState;
+  const { isMicMuted, isDeafened, volume } = userVoiceState;
+
+  const { setMicrophoneGain, setMicrophoneVolume, toggleMicrophone } = useWebRTC();
+
+  const handleMicLevelChange = (level: number) => {
+    setMicrophoneGain(level);
+    updateUserVoiceState({ micGain: level });
+  };
+
+  const handleVolumeChange = (level: number) => {
+    setMicrophoneVolume(level);
+    updateUserVoiceState({ volume: level });
+  };
+
+  const handleDeafen = () => {
+    updateUserVoiceState({ isDeafened: !isDeafened });
+    if (!isDeafened) {
+      // Mute both mic and speaker when deafening
+      setMicrophoneVolume(0); // Mute speaker
+      if (!isMicMuted) toggleMicrophone(); // Mute mic
+    } else {
+      // Restore previous volumes when undeafening
+      setMicrophoneVolume(volume);
+      if (isMicMuted) toggleMicrophone(); // Unmute mic
+    }
+  };
 
   return (
     <Paper
@@ -79,16 +107,16 @@ const VoiceUserProfileView = () => {
             sx={{
               width: 4,
               height: h * 1.5,
-              bgcolor: !isMuted ? 'success.main' : 'error.main',
+              bgcolor: !isMicMuted ? 'success.main' : 'error.main',
               borderRadius: 1,
             }}
           />
         ))}
         <Typography
           variant="caption"
-          sx={{ ml: 1, color: !isMuted ? 'success.main' : 'error.main', fontSize: '0.65rem' }}
+          sx={{ ml: 1, color: !isMicMuted ? 'success.main' : 'error.main', fontSize: '0.65rem' }}
         >
-          {isMuted ? 'MUTED' : 'VOICE CONNECTED'}
+          {isMicMuted ? 'MUTED' : 'VOICE CONNECTED'}
         </Typography>
       </Box>
 
@@ -107,20 +135,23 @@ const VoiceUserProfileView = () => {
           <Tooltip title="Mute">
             <IconButton
               size="small"
-              onClick={() => updateUserVoiceState({ isMuted: !isMuted })}
+              onClick={() => updateUserVoiceState({ isMicMuted: !isMicMuted })}
               sx={{
-                color: isMuted ? 'error.main' : '#b5bac1',
-                '&:hover': { bgcolor: '#35373c', color: isMuted ? 'error.main' : 'primary.main' },
+                color: isMicMuted ? 'error.main' : '#b5bac1',
+                '&:hover': {
+                  bgcolor: '#35373c',
+                  color: isMicMuted ? 'error.main' : 'primary.main',
+                },
               }}
             >
-              {isMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
+              {isMicMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Deafen">
             <IconButton
               size="small"
-              onClick={() => updateUserVoiceState({ isDeafened: !isDeafened })}
+              onClick={handleDeafen}
               sx={{
                 color: isDeafened ? 'error.main' : '#b5bac1',
                 '&:hover': {
@@ -141,28 +172,11 @@ const VoiceUserProfileView = () => {
         </Tooltip>
       </Box>
 
-      {/* Volume Slider Drawer */}
-      <Box sx={{ p: '8px 16px' }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <GraphicEqIcon sx={{ color: '#b5bac1', fontSize: 18 }} />
-          <Slider
-            size="small"
-            value={volume}
-            onChange={(e, v) => updateUserVoiceState({ volume: v as number })}
-            sx={{
-              color: '#5865f2', // Discord Blue
-              height: 4,
-              '& .MuiSlider-thumb': {
-                width: 10,
-                height: 10,
-                boxShadow: 'none',
-                '&:hover, &.Mui-focusVisible': { boxShadow: 'none' },
-              },
-              '& .MuiSlider-rail': { bgcolor: '#4e5058' },
-            }}
-          />
-        </Stack>
-      </Box>
+      {/* Voice Audio Controls */}
+      <VoiceAudioControls
+        onMicLevelChange={handleMicLevelChange}
+        onVolumeChange={handleVolumeChange}
+      />
     </Paper>
   );
 };

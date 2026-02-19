@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 
+import { CONFIG } from 'src/config-global';
 import { useRoomTools } from 'src/core/slices';
 
 // Types for audio settings
@@ -45,8 +46,8 @@ export interface UseWebRTCReturn {
 }
 
 const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  volume: 80,
-  microphoneGain: 70,
+  volume: CONFIG.defaultMicVolume,
+  microphoneGain: CONFIG.defaultMicGain,
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
@@ -376,6 +377,7 @@ export default function useWebRTC(): UseWebRTCReturn {
     },
     [processIceQueue]
   );
+
   const handleIceCandidate = useCallback(async (data: any) => {
     const { candidate, sender } = data;
     const pc = peerConnectionsRef.current[sender];

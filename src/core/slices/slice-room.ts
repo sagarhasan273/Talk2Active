@@ -7,6 +7,8 @@ import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { CONFIG } from 'src/config-global';
+
 import type { RootState, UserVoiceStateProps } from '../types';
 
 // Define auth state interface
@@ -26,9 +28,10 @@ const initialState: RoomState = {
   remoteParticipants: {} as { [socketId: string]: Participant },
   userVoiceState: {
     hasJoined: false,
-    isMuted: false,
+    isMicMuted: false,
     isDeafened: false,
-    volume: 50,
+    volume: CONFIG.defaultMicVolume,
+    micGain: CONFIG.defaultMicGain,
     isScreenSharing: false,
     statue: 'online',
   },
