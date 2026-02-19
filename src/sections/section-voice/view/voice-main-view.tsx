@@ -4,8 +4,6 @@ import { useState } from 'react';
 
 import { Box, Button, Typography } from '@mui/material';
 
-import { varAlpha } from 'src/theme/styles';
-import { UserContent } from 'src/layouts/user';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
 
@@ -94,30 +92,21 @@ export function VoiceMainView() {
   );
 
   const rightSidebar = (
-    <Box sx={{ width: 200, backgroundColor: 'background.neutral', height: '100%' }} />
+    <Box sx={{ width: 1, backgroundColor: 'background.neutral', height: '100%' }} />
   );
 
   const mainContent =
     selectedTab === 'find' ? <VoiceRoomsView onJoinRoom={handleJoinRoom} /> : <VoiceRoomView />;
 
-  const footer = <Box sx={{ height: 1, backgroundColor: 'background.paper' }} />;
+  const footer = <Box sx={{ height: 1, backgroundColor: 'background.neutral' }} />;
 
   return (
-    <UserContent
-      maxWidth="lg"
-      sx={{
-        borderTop: (theme) => ({
-          lg: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)}`,
-        }),
-      }}
-    >
-      <VoiceRoomLayout
-        header={header}
-        leftSidebar={leftSidebar}
-        rightSidebar={rightSidebar}
-        mainContent={mainContent}
-        footer={footer}
-      />
-    </UserContent>
+    <VoiceRoomLayout
+      header={header}
+      leftSidebar={leftSidebar}
+      rightSidebar={rightSidebar}
+      mainContent={mainContent}
+      footer={footer}
+    />
   );
 }
