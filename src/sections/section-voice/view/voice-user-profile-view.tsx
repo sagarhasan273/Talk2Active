@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
@@ -9,16 +9,16 @@ import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
 import { Box, Stack, Paper, Badge, Slider, Tooltip, Typography, IconButton } from '@mui/material'; // For input level visualization
 import { useSelector } from 'react-redux';
 
-import { selectAccount } from 'src/core/slices';
+import { useRoomTools, selectAccount } from 'src/core/slices';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
 const VoiceUserProfileView = () => {
   const user = useSelector(selectAccount);
 
-  const [isMuted, setIsMuted] = useState(false);
-  const [isDeafened, setIsDeafened] = useState(false);
-  const [volume, setVolume] = useState(80);
+  const { userVoiceState, updateUserVoiceState } = useRoomTools();
+
+  const { isMuted, isDeafened, volume } = userVoiceState;
 
   return (
     <Paper
@@ -107,7 +107,7 @@ const VoiceUserProfileView = () => {
           <Tooltip title="Mute">
             <IconButton
               size="small"
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={() => updateUserVoiceState({ isMuted: !isMuted })}
               sx={{
                 color: isMuted ? 'error.main' : '#b5bac1',
                 '&:hover': { bgcolor: '#35373c', color: isMuted ? 'error.main' : 'primary.main' },
@@ -120,7 +120,7 @@ const VoiceUserProfileView = () => {
           <Tooltip title="Deafen">
             <IconButton
               size="small"
-              onClick={() => setIsDeafened(!isDeafened)}
+              onClick={() => updateUserVoiceState({ isDeafened: !isDeafened })}
               sx={{
                 color: isDeafened ? 'error.main' : '#b5bac1',
                 '&:hover': {
@@ -148,7 +148,7 @@ const VoiceUserProfileView = () => {
           <Slider
             size="small"
             value={volume}
-            onChange={(e, v) => setVolume(v as number)}
+            onChange={(e, v) => updateUserVoiceState({ volume: v as number })}
             sx={{
               color: '#5865f2', // Discord Blue
               height: 4,
