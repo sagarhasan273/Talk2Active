@@ -139,7 +139,7 @@ const VoiceUserProfileView = () => {
               sx={{
                 color: isMicMuted ? 'error.main' : '#b5bac1',
                 '&:hover': {
-                  bgcolor: '#35373c',
+                  bgcolor: 'divider',
                   color: isMicMuted ? 'error.main' : 'primary.main',
                 },
               }}
@@ -155,7 +155,7 @@ const VoiceUserProfileView = () => {
               sx={{
                 color: isDeafened ? 'error.main' : '#b5bac1',
                 '&:hover': {
-                  bgcolor: '#35373c',
+                  bgcolor: 'divider',
                   color: isDeafened ? 'error.main' : 'primary.main',
                 },
               }}
@@ -165,8 +165,8 @@ const VoiceUserProfileView = () => {
           </Tooltip>
         </Stack>
 
-        <Tooltip title="User Settings">
-          <IconButton size="small" sx={{ color: '#b5bac1', '&:hover': { bgcolor: '#35373c' } }}>
+        <Tooltip title="Audio Settings">
+          <IconButton size="small" sx={{ color: '#b5bac1', '&:hover': { bgcolor: 'divider' } }}>
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
