@@ -15,7 +15,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 interface RoomState {
   room: RoomResponse;
   loading: boolean;
-  remoteParticipants: { [socketId: string]: Participant };
+  participants: { [socketId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadChatRoomMessage: boolean;
@@ -25,7 +25,7 @@ interface RoomState {
 const initialState: RoomState = {
   room: {} as RoomResponse,
   loading: false,
-  remoteParticipants: {} as { [socketId: string]: Participant },
+  participants: {} as { [socketId: string]: Participant },
   userVoiceState: {
     hasJoined: false,
     isMicMuted: false,
@@ -51,36 +51,36 @@ export const roomSlice = createSlice({
       state.loading = action.payload;
     },
 
-    addRemoteParticipant: (state, action: PayloadAction<Participant>) => {
-      state.remoteParticipants[action.payload.socketId] = action.payload;
+    addParticipant: (state, action: PayloadAction<Participant>) => {
+      state.participants[action.payload.socketId] = action.payload;
     },
 
-    removeRemoteParticipant: (state, action: PayloadAction<string>) => {
-      delete state.remoteParticipants[action.payload];
+    removeParticipant: (state, action: PayloadAction<string>) => {
+      delete state.participants[action.payload];
     },
 
-    updateRemoteParticipantAudio: (
+    updateParticipantAudio: (
       state,
       action: PayloadAction<{ socketId: string; isMuted: boolean }>
     ) => {
-      const participant = state.remoteParticipants[action.payload.socketId];
+      const participant = state.participants[action.payload.socketId];
       if (participant) {
         participant.isMuted = action.payload.isMuted;
       }
     },
 
-    updateRemoteParticipantStatus: (
+    updateParticipantStatus: (
       state,
       action: PayloadAction<{ socketId: string; status: UserType['status'] }>
     ) => {
-      const participant = state.remoteParticipants[action.payload.socketId];
+      const participant = state.participants[action.payload.socketId];
       if (participant) {
         participant.status = action.payload.status;
       }
     },
 
-    resetRemoteParticipants: (state) => {
-      state.remoteParticipants = {};
+    resetParticipants: (state) => {
+      state.participants = {};
     },
 
     updateUserVoiceState: (state, action: PayloadAction<Partial<UserVoiceStateProps>>) => {
@@ -167,11 +167,11 @@ export const roomSlice = createSlice({
 const {
   setRoom,
   setRoomLoading,
-  addRemoteParticipant,
-  removeRemoteParticipant,
-  updateRemoteParticipantAudio,
-  updateRemoteParticipantStatus,
-  resetRemoteParticipants,
+  addParticipant,
+  removeParticipant,
+  updateParticipantAudio,
+  updateParticipantStatus,
+  resetParticipants,
   updateUserVoiceState,
   addChatRoomMessage,
   editChatRoomMessage,
@@ -184,7 +184,7 @@ const {
 // Selectors with proper typing
 const selectRoom = (state: RootState) => state.room.room;
 const selectRoomLoading = (state: RootState) => state.room.loading;
-const selectRemoteParticipants = (state: RootState) => state.room.remoteParticipants;
+const selectParticipants = (state: RootState) => state.room.participants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
 const selectIsUnreadChatRoomMessage = (state: RootState) => state.room.isUnreadChatRoomMessage;
 const selectUserVoiceState = (state: RootState) => state.room.userVoiceState;
@@ -194,7 +194,7 @@ export const useRoomTools = () => {
 
   const room = useSelector(selectRoom);
   const loading = useSelector(selectRoomLoading);
-  const remoteParticipants = useSelector(selectRemoteParticipants);
+  const participants = useSelector(selectParticipants);
   const chatRoomMessages = useSelector(selectChatRoomMessages);
   const isUnreadChatRoomMessage = useSelector(selectIsUnreadChatRoomMessage);
   const userVoiceState = useSelector(selectUserVoiceState);
@@ -203,20 +203,19 @@ export const useRoomTools = () => {
     () => ({
       room,
       loading,
-      remoteParticipants,
+      participants,
       chatRoomMessages,
       isUnreadChatRoomMessage,
       userVoiceState,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
-      addRemoteParticipant: (participant: Participant) =>
-        dispatch(addRemoteParticipant(participant)),
-      removeRemoteParticipant: (socketId: string) => dispatch(removeRemoteParticipant(socketId)),
-      updateRemoteParticipantAudio: (payload: { socketId: string; isMuted: boolean }) =>
-        dispatch(updateRemoteParticipantAudio(payload)),
-      updateRemoteParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
-        dispatch(updateRemoteParticipantStatus(payload)),
-      resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
+      addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
+      removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
+      updateParticipantAudio: (payload: { socketId: string; isMuted: boolean }) =>
+        dispatch(updateParticipantAudio(payload)),
+      updateParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
+        dispatch(updateParticipantStatus(payload)),
+      resetParticipants: () => dispatch(resetParticipants()),
       updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
         dispatch(updateUserVoiceState(payload)),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
@@ -237,7 +236,7 @@ export const useRoomTools = () => {
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room, loading, remoteParticipants, chatRoomMessages, isUnreadChatRoomMessage, userVoiceState]
+    [room, loading, participants, chatRoomMessages, isUnreadChatRoomMessage, userVoiceState]
   );
   return memoizedRoom;
 };

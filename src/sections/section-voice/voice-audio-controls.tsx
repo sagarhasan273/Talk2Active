@@ -14,12 +14,12 @@ export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioCo
   const { volume, micGain, isMicMuted, isDeafened } = userVoiceState;
 
   return (
-    <Paper sx={{ p: 2, maxWidth: 300 }}>
+    <Paper sx={{ p: 1.5, pb: 0.5, maxWidth: 1 }}>
       <Stack spacing={0.5}>
         {/* Microphone Control */}
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <MicIcon sx={{ color: 'grey.500', fontSize: 16 }} />
 
               <Typography variant="caption">Microphone</Typography>
@@ -42,6 +42,13 @@ export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioCo
                   ? 'grey.500'
                   : (theme) =>
                       `linear-gradient(90deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+              },
+              '& .MuiSlider-thumb': {
+                width: 16,
+                height: 16,
+                '&:hover, &.Mui-focusVisible': {
+                  boxShadow: (theme) => `0 0 0 6px ${theme.palette.primary.main}20`,
+                },
               },
             }}
           />
@@ -69,11 +76,18 @@ export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioCo
             sx={{
               p: '4px 0',
               '& .MuiSlider-track': {
-                height: 5,
-                background: isDeafened
+                height: 5, // Reduced track height
+                background: isMicMuted
                   ? 'grey.500'
                   : (theme) =>
                       `linear-gradient(90deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+              },
+              '& .MuiSlider-thumb': {
+                width: 16,
+                height: 16,
+                '&:hover, &.Mui-focusVisible': {
+                  boxShadow: (theme) => `0 0 0 6px ${theme.palette.primary.main}20`,
+                },
               },
             }}
           />

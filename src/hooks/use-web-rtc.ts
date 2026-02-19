@@ -55,7 +55,7 @@ const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
 };
 
 export default function useWebRTC(): UseWebRTCReturn {
-  const { removeRemoteParticipant } = useRoomTools();
+  const { removeParticipant } = useRoomTools();
 
   // Refs
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -180,7 +180,7 @@ export default function useWebRTC(): UseWebRTCReturn {
         if (state === 'failed') {
           // Trigger ICE Restart or cleanup
           console.warn(`Connection to ${socketId} failed. Attempting cleanup.`);
-          removeRemoteParticipant(socketId);
+          removeParticipant(socketId);
           pc.close();
           delete peerConnectionsRef.current[socketId];
         }
@@ -200,7 +200,7 @@ export default function useWebRTC(): UseWebRTCReturn {
       peerConnectionsRef.current[socketId] = pc;
       return pc;
     },
-    [getIceServers, removeRemoteParticipant]
+    [getIceServers, removeParticipant]
   );
 
   const initializeMicrophone = useCallback(

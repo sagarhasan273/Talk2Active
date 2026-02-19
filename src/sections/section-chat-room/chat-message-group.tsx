@@ -25,7 +25,7 @@ export const ChatMessageGroup = ({
   const {
     room,
     chatRoomMessages,
-    remoteParticipants,
+    participants,
     reactionChatRoomMessage,
     reactionPopChatRoomMessage,
     clearUnreadChatRoomMessages,
@@ -44,7 +44,7 @@ export const ChatMessageGroup = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
+  const participantsArray = useMemo(() => Object.values(participants), [participants]);
 
   const handleSendMessage = useCallback(
     (

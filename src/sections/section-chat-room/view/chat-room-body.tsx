@@ -47,7 +47,7 @@ export function ChatRoomChatBody({
               avatar: participant.profilePhoto,
               status: participant.status,
               isSpeaking: false,
-              isMuted: participant.isMuted,
+              isMuted: Boolean(participant.isMuted),
               userType: participant.userType,
               verified: participant.verified,
             }}

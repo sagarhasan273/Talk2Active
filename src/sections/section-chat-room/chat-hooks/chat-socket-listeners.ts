@@ -19,10 +19,10 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
   // Room management
   const {
     room,
-    addRemoteParticipant,
-    removeRemoteParticipant,
-    updateRemoteParticipantAudio,
-    updateRemoteParticipantStatus,
+    addParticipant,
+    removeParticipant,
+    updateParticipantAudio,
+    updateParticipantStatus,
     addChatRoomMessage,
     editChatRoomMessage,
     deleteChatRoomMessage,
@@ -49,7 +49,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       if (data.roomId !== roomId) return;
       data.participants.forEach((participant) => {
         if (participant.socketId !== socket.id) {
-          addRemoteParticipant(participant);
+          addParticipant(participant);
           createOffer(participant.socketId, socket);
         }
       });
@@ -58,7 +58,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     // User joined
     const handleUserJoined = (data: Participant) => {
       if (data.socketId !== socket?.id) {
-        addRemoteParticipant(data);
+        addParticipant(data);
         createOffer(data.socketId, socket);
       }
     };
@@ -70,7 +70,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
 
     // Audio toggled
     const handleAudioToggled = (data: { socketId: string; isMuted: boolean; roomId?: string }) => {
-      updateRemoteParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
+      updateParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
     };
 
     // Status updated
@@ -80,7 +80,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       roomId?: string;
     }) => {
       if (!data.roomId || data.roomId === roomId) {
-        updateRemoteParticipantStatus({ socketId: data.socketId, status: data.status });
+        updateParticipantStatus({ socketId: data.socketId, status: data.status });
       }
     };
 
@@ -200,11 +200,11 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
   }, [
     socket,
     roomId,
-    addRemoteParticipant,
+    addParticipant,
     createOffer,
-    removeRemoteParticipant,
-    updateRemoteParticipantAudio,
-    updateRemoteParticipantStatus,
+    removeParticipant,
+    updateParticipantAudio,
+    updateParticipantStatus,
     addChatRoomMessage,
     reactionChatRoomMessage,
     handleOffer,

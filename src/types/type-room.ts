@@ -60,9 +60,11 @@ export type ReactionMessageData = {
 export type Participant = UserType & {
   socketId: string;
   status: UserType['status'];
-  isMuted: boolean;
-  isSpeaking: boolean;
+  isMuted?: boolean;
+  isSpeaking?: boolean;
   userType?: string;
+  stream: MediaStream | null;
+  isLocal: boolean;
 };
 
 export type PrivateParticipantProps = {

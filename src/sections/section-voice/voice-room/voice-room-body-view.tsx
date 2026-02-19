@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 import MicIcon from '@mui/icons-material/Mic';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -13,34 +14,23 @@ import AddReactionIcon from '@mui/icons-material/AddReaction';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import {
   Box,
-  Badge,
   Paper,
   Stack,
-  Avatar,
   Slider,
   styled,
   Tooltip,
   Divider,
-  keyframes,
   Typography,
   IconButton,
 } from '@mui/material';
 
+import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+
 import { Scrollbar } from 'src/components/scrollbar';
 
-// Animation for the active speaker
-const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0px rgba(0, 255, 204, 0.7); }
-  70% { box-shadow: 0 0 0 15px rgba(0, 255, 204, 0); }
-  100% { box-shadow: 0 0 0 0px rgba(0, 255, 204, 0); }
-`;
-
-const ActiveAvatar = styled(Avatar)(({ theme }) => ({
-  width: 120,
-  height: 120,
-  border: '4px solid #00ffcc',
-  animation: `${pulse} 2s infinite`,
-}));
+import VoiceUserAudio from '../voice-user-audio';
+import { VoiceUserCard } from '../voice-user-card';
 
 const ControlBar = styled(Paper)(({ theme }) => ({
   position: 'absolute',
@@ -59,7 +49,17 @@ const ControlBar = styled(Paper)(({ theme }) => ({
   zIndex: 1000,
 }));
 
-export function VoiceRoomBodyView() {
+export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) {
+  const webRTC = useWebRTCContext();
+  const { localStream, remoteStreams } = webRTC;
+
+  const { room, participants, userVoiceState } = useRoomTools();
+  const user = useSelector(selectAccount);
+
+  const { isMicMuted } = userVoiceState;
+
+  const participantsArray = useMemo(() => Object.values(participants), [participants]);
+
   return (
     <Box
       sx={{
@@ -97,36 +97,21 @@ export function VoiceRoomBodyView() {
       {/* Main Content Area */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
         {/* The Speaker Stage (Viewing another user) */}
+        {localStream && (
+          <VoiceUserCard
+            user={{
+              id: user.id,
+              name: user.name,
+              avatar: user.profilePhoto,
+              status: 'online',
+              isSpeaking: false,
+              isMuted: isMicMuted,
+              userType: room.host.id === user.id ? 'Host' : 'Guest',
+              verified: user.verified,
+            }}
+          />
+        )}
         <Box sx={{ textAlign: 'center', mb: 1, width: '100%' }}>
-          <Box sx={{ display: 'inline-block', position: 'relative' }}>
-            <Badge
-              overlap="circular"
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              badgeContent={
-                <Box
-                  sx={{
-                    bgcolor: '#5865f2',
-                    p: 0.5,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    border: '2px solid #0f172a',
-                  }}
-                >
-                  <Typography
-                    sx={{ fontSize: '0.7rem', color: '#f2f3f5', fontWeight: 'bold', px: 0.3 }}
-                  >
-                    Owner
-                  </Typography>
-                </Box>
-              }
-            >
-              <ActiveAvatar src="https://i.pravatar.cc/150?u=otheruser" />
-            </Badge>
-          </Box>
-          <Typography variant="h6" sx={{ my: 1, color: 'primary.main', fontWeight: 600 }}>
-            Sarah Jenkins
-          </Typography>
-
           {/* User Interaction Strip */}
           <Box
             sx={{
@@ -194,16 +179,20 @@ export function VoiceRoomBodyView() {
               justifyItems: 'center',
             }}
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11, 13].map((user) => (
-              <Box key={user} sx={{ textAlign: 'center' }}>
-                <Avatar
-                  src={`https://i.pravatar.cc/150?u=${user}`}
-                  sx={{ width: 60, height: 60, border: '2px solid rgba(255,255,255,0.1)' }}
-                />
-                <Typography variant="caption" display="block">
-                  User {user}
-                </Typography>
-              </Box>
+            {participantsArray.map((participant) => (
+              <VoiceUserCard
+                key={participant.socketId}
+                user={{
+                  id: participant.id,
+                  name: participant.name,
+                  avatar: participant.profilePhoto,
+                  status: participant.status,
+                  isSpeaking: false,
+                  isMuted: Boolean(participant.isMuted),
+                  userType: participant.userType,
+                  verified: participant.verified,
+                }}
+              />
             ))}
           </Box>
         </Scrollbar>
@@ -257,12 +246,26 @@ export function VoiceRoomBodyView() {
         </Tooltip>
         <Tooltip title="Leave Room">
           <IconButton
+            onClick={onLeaveRoom}
             sx={{ bgcolor: '#ff4d4d', color: 'white', '&:hover': { bgcolor: '#ff0000' } }}
           >
             <ExitToAppIcon />
           </IconButton>
         </Tooltip>
       </ControlBar>
+
+      <VoiceUserAudio stream={localStream} isLocal userName={user.name || 'unknown'} />
+      {participantsArray?.map((participant) => {
+        if (participant.isLocal) return null;
+        return (
+          <VoiceUserAudio
+            key={participant.userId}
+            stream={remoteStreams[participant.socketId]}
+            isLocal={participant.isLocal}
+            userName={participant.name || 'unknown'}
+          />
+        );
+      })}
     </Box>
   );
 }

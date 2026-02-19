@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import HeadsetIcon from '@mui/icons-material/Headset';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
-import { Box, Stack, Paper, Badge, Tooltip, Typography, IconButton } from '@mui/material'; // For input level visualization
-import { useSelector } from 'react-redux';
+import {
+  Box,
+  Fade,
+  Stack,
+  Paper,
+  Badge,
+  Tooltip,
+  Collapse,
+  Typography,
+  IconButton,
+} from '@mui/material';
 
 import useWebRTC from 'src/hooks/use-web-rtc';
 
@@ -18,6 +28,7 @@ import { VoiceAudioControls } from '../voice-audio-controls';
 
 const VoiceUserProfileView = () => {
   const user = useSelector(selectAccount);
+  const [showAudioControls, setShowAudioControls] = useState(false);
 
   const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
@@ -48,16 +59,21 @@ const VoiceUserProfileView = () => {
     }
   };
 
+  const toggleAudioControls = () => {
+    setShowAudioControls(!showAudioControls);
+  };
+
   return (
     <Paper
       elevation={0}
       sx={{
         width: 1,
-        bgcolor: 'background.paper', // Discord-inspired background
+        bgcolor: 'background.paper',
         borderRadius: '12px',
         overflow: 'hidden',
         border: '1px solid divider',
         mb: 1,
+        transition: 'all 0.3s ease',
       }}
     >
       {/* Profile Header Container */}
@@ -109,12 +125,18 @@ const VoiceUserProfileView = () => {
               height: h * 1.5,
               bgcolor: !isMicMuted ? 'success.main' : 'error.main',
               borderRadius: 1,
+              transition: 'height 0.2s ease',
             }}
           />
         ))}
         <Typography
           variant="caption"
-          sx={{ ml: 1, color: !isMicMuted ? 'success.main' : 'error.main', fontSize: '0.65rem' }}
+          sx={{
+            ml: 1,
+            color: !isMicMuted ? 'success.main' : 'error.main',
+            fontSize: '0.65rem',
+            fontWeight: 600,
+          }}
         >
           {isMicMuted ? 'MUTED' : 'VOICE CONNECTED'}
         </Typography>
@@ -138,9 +160,11 @@ const VoiceUserProfileView = () => {
               onClick={() => updateUserVoiceState({ isMicMuted: !isMicMuted })}
               sx={{
                 color: isMicMuted ? 'error.main' : '#b5bac1',
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   bgcolor: 'divider',
                   color: isMicMuted ? 'error.main' : 'primary.main',
+                  transform: 'scale(1.1)',
                 },
               }}
             >
@@ -154,9 +178,11 @@ const VoiceUserProfileView = () => {
               onClick={handleDeafen}
               sx={{
                 color: isDeafened ? 'error.main' : '#b5bac1',
+                transition: 'all 0.2s ease',
                 '&:hover': {
                   bgcolor: 'divider',
                   color: isDeafened ? 'error.main' : 'primary.main',
+                  transform: 'scale(1.1)',
                 },
               }}
             >
@@ -165,18 +191,76 @@ const VoiceUserProfileView = () => {
           </Tooltip>
         </Stack>
 
-        <Tooltip title="Audio Settings">
-          <IconButton size="small" sx={{ color: '#b5bac1', '&:hover': { bgcolor: 'divider' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {/* Settings Toggle Button with Animation */}
+          <IconButton
+            size="small"
+            onClick={toggleAudioControls}
+            sx={{
+              color: showAudioControls ? 'primary.main' : 'grey.500',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: 'divider',
+                transform: 'rotate(90deg)',
+              },
+              transform: showAudioControls ? 'rotate(90deg)' : 'rotate(0deg)',
+            }}
+          >
             <SettingsIcon fontSize="small" />
           </IconButton>
-        </Tooltip>
+        </Box>
       </Box>
 
-      {/* Voice Audio Controls */}
-      <VoiceAudioControls
-        onMicLevelChange={handleMicLevelChange}
-        onVolumeChange={handleVolumeChange}
-      />
+      {/* Voice Audio Controls with Collapse Animation */}
+      <Collapse in={showAudioControls} timeout={400} easing="cubic-bezier(0.4, 0, 0.2, 1)">
+        <Box
+          sx={{
+            overflow: 'hidden',
+            animation: showAudioControls ? 'slideIn 0.4s ease' : 'none',
+            '@keyframes slideIn': {
+              '0%': {
+                opacity: 0,
+                transform: 'translateY(-10px)',
+              },
+              '100%': {
+                opacity: 1,
+                transform: 'translateY(0)',
+              },
+            },
+          }}
+        >
+          <VoiceAudioControls
+            onMicLevelChange={handleMicLevelChange}
+            onVolumeChange={handleVolumeChange}
+          />
+        </Box>
+      </Collapse>
+
+      {/* Optional: Add a subtle gradient border when controls are expanded */}
+      {showAudioControls && (
+        <Fade in={showAudioControls} timeout={500}>
+          <Box
+            sx={{
+              height: '15px',
+              background: 'linear-gradient(90deg, transparent, primary.main, transparent)',
+              opacity: 0.5,
+            }}
+          />
+        </Fade>
+      )}
+
+      {/* Optional: Add a subtle background highlight when controls are not expanded */}
+      {!showAudioControls && (
+        <Fade in={!showAudioControls} timeout={500}>
+          <Box
+            sx={{
+              height: '15px',
+              background: 'linear-gradient(90deg, transparent, success.main, transparent)',
+              opacity: 0.5,
+            }}
+          />
+        </Fade>
+      )}
     </Paper>
   );
 };

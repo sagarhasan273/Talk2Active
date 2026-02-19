@@ -32,7 +32,7 @@ export function VoiceRoomMessageGroupDrawer({
   const drawer = useBoolean();
 
   const user = useSelector(selectAccount);
-  const { isUnreadChatRoomMessage, remoteParticipants } = useRoomTools();
+  const { isUnreadChatRoomMessage, participants } = useRoomTools();
   const { socket } = useSocketContext();
 
   const renderHead = (
@@ -41,7 +41,7 @@ export function VoiceRoomMessageGroupDrawer({
         roomName="Group messages"
         users={[
           { _id: socket?.id || '$1', name: user.name, profilePhoto: user.profilePhoto },
-          ...(Object.values(remoteParticipants)?.map((participant) => ({
+          ...(Object.values(participants)?.map((participant) => ({
             _id: participant?.socketId,
             name: participant.name,
             profilePhoto: participant.profilePhoto,

@@ -60,7 +60,7 @@ export function VoiceRoomChat() {
   const user = useSelector(selectAccount);
 
   // Room management
-  const { room, remoteParticipants, resetRemoteParticipants } = useRoomTools();
+  const { room, participants, resetParticipants } = useRoomTools();
 
   // Socket
   const { socket, isSocketConnected } = useSocketContext();
@@ -100,7 +100,7 @@ export function VoiceRoomChat() {
   const [leaveRoomMutation, { isLoading: isLeaving }] = useLeaveRoomMutation();
 
   // Memoized values
-  const participantsArray = useMemo(() => Object.values(remoteParticipants), [remoteParticipants]);
+  const participantsArray = useMemo(() => Object.values(participants), [participants]);
 
   const isRoomReady = Boolean(roomId && user?.id && isSocketConnected);
   const isLoading = state.isInitializing || isJoining;
@@ -202,7 +202,7 @@ export function VoiceRoomChat() {
       setupChatSocketListenersRef.current?.();
 
       // Reset local state
-      resetRemoteParticipants();
+      resetParticipants();
 
       setState({
         isConnected: false,
@@ -220,7 +220,7 @@ export function VoiceRoomChat() {
       console.error('Error leaving room:', error);
       toast.error(ERROR_MESSAGES.LEAVE_ROOM);
     }
-  }, [socket, roomId, user, leaveRoomMutation, cleanupWebRTC, resetRemoteParticipants, dispatch]);
+  }, [socket, roomId, user, leaveRoomMutation, cleanupWebRTC, resetParticipants, dispatch]);
 
   // Microphone toggle handler
   const handleToggleMicrophone = useCallback(() => {

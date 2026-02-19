@@ -1,20 +1,34 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useSelector } from 'react-redux';
 
+import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+import { useSocketContext } from 'src/core/contexts/socket-context';
+
+import { useChatSocketListeners } from 'src/sections/section-chat-room/chat-hooks/chat-socket-listeners';
 
 import { VoiceRoomBodyView } from './voice-room-body-view';
 import { VoiceRoomEntryView } from './voice-room-entry-view';
 
 export function VoiceRoomView() {
-  const { userVoiceState, updateUserVoiceState } = useRoomTools();
+  const user = useSelector(selectAccount);
 
-  const { hasJoined } = userVoiceState;
+  const { room, userVoiceState, updateUserVoiceState, addParticipant } = useRoomTools();
 
-  const { initializeMicrophone } = useWebRTCContext();
+  const { socket } = useSocketContext();
 
-  const HandleJoinRoom = async () => {
-    updateUserVoiceState({ hasJoined: true });
+  const webRTC = useWebRTCContext();
+
+  const { hasJoined, isMicMuted } = userVoiceState;
+  const { initializeMicrophone, localStream } = webRTC;
+
+  // Socket listeners
+  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
+
+  const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
+
+  const handleJoinRoom = async () => {
     const isMuted = await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
@@ -30,14 +44,45 @@ export function VoiceRoomView() {
       return false;
     });
 
-    updateUserVoiceState({ isMicMuted: isMuted, hasJoined: true });
+    if (!setupChatSocketListenersRef.current)
+      setupChatSocketListenersRef.current = setupChatSocketListeners?.();
+
+    if (socket?.id) {
+      socket?.emit('join-voice-room', {
+        roomId: room.id,
+        userId: user.id,
+        name: user.name,
+        profilePhoto: user.profilePhoto,
+        isMuted: isMicMuted,
+        status: 'online',
+        userType: room.host?.id === user.id ? 'Host' : 'Guest',
+        verified: user.verified,
+      });
+
+      updateUserVoiceState({ isMicMuted: isMuted, hasJoined: true });
+
+      addParticipant({
+        ...user,
+        socketId: socket?.id,
+        status: 'online',
+        isMuted: isMicMuted,
+        userType: room.host?.id === user.id ? 'Host' : 'Guest',
+        verified: user.verified,
+        stream: localStream,
+        isLocal: true,
+      });
+    }
+  };
+
+  const handelLeaveRoom = async () => {
+    if (setupChatSocketListenersRef.current) setupChatSocketListenersRef.current?.();
   };
 
   return (
     <>
-      {!hasJoined && <VoiceRoomEntryView onJoinRoom={HandleJoinRoom} />}
+      {!hasJoined && <VoiceRoomEntryView onJoinRoom={handleJoinRoom} />}
 
-      {hasJoined && <VoiceRoomBodyView />}
+      {hasJoined && <VoiceRoomBodyView onLeaveRoom={handelLeaveRoom} />}
     </>
   );
 }
