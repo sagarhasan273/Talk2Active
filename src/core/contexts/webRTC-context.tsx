@@ -14,7 +14,9 @@ interface WebRTCProviderProps {
 export function WebRTCProvider({ children }: WebRTCProviderProps) {
   const webRTC = useWebRTC();
 
-  return <WebRTCContext.Provider value={webRTC}>{children}</WebRTCContext.Provider>;
+  const memoizedWebRTC = React.useMemo(() => webRTC, [webRTC]);
+
+  return <WebRTCContext.Provider value={memoizedWebRTC}>{children}</WebRTCContext.Provider>;
 }
 
 export function useWebRTCContext() {

@@ -59,7 +59,7 @@ const ControlBar = styled(Paper)(({ theme }) => ({
   zIndex: 1000,
 }));
 
-const VoiceRoomView = () => (
+const VoiceRoomBodyView = () => (
   <Box
     sx={{
       minHeight: 1,
@@ -80,7 +80,7 @@ const VoiceRoomView = () => (
           AI Ethics Discussion
         </Typography>
         <Typography variant="caption" sx={{ opacity: 0.6 }}>
-          Recording • 01:24:05
+          Ongoing • 01:24:05
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -263,4 +263,4 @@ const VoiceRoomView = () => (
   </Box>
 );
 
-export default VoiceRoomView;
+export default VoiceRoomBodyView;

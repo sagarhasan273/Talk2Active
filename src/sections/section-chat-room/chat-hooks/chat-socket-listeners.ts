@@ -3,7 +3,6 @@ import type { UseWebRTCReturn } from 'src/hooks/use-web-rtc';
 import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
 import { useCallback } from 'react';
-import { useParams } from 'react-router';
 
 import { useRoomTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -17,10 +16,9 @@ export type UseReturnChatSocketListeners = {
 };
 
 export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
-  const roomId = useParams().roomId as string;
-
   // Room management
   const {
+    room,
     addRemoteParticipant,
     removeRemoteParticipant,
     updateRemoteParticipantAudio,
@@ -31,6 +29,8 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     reactionChatRoomMessage,
     reactionPopChatRoomMessage,
   } = useRoomTools();
+
+  const roomId = room?.id || '';
 
   // WebRTC
   const { createOffer, handleOffer, handleAnswer, handleIceCandidate } = useWebRTC;

@@ -7,13 +7,14 @@ import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '../types';
+import type { RootState, UserVoiceStateProps } from '../types';
 
 // Define auth state interface
 interface RoomState {
   room: RoomResponse;
   loading: boolean;
   remoteParticipants: { [socketId: string]: Participant };
+  userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadChatRoomMessage: boolean;
 }
@@ -23,6 +24,14 @@ const initialState: RoomState = {
   room: {} as RoomResponse,
   loading: false,
   remoteParticipants: {} as { [socketId: string]: Participant },
+  userVoiceState: {
+    hasJoined: false,
+    isMuted: false,
+    isDeafened: false,
+    volume: 50,
+    isScreenSharing: false,
+    statue: 'online',
+  },
   chatRoomMessages: [],
   isUnreadChatRoomMessage: false,
 };
@@ -69,6 +78,10 @@ export const roomSlice = createSlice({
 
     resetRemoteParticipants: (state) => {
       state.remoteParticipants = {};
+    },
+
+    updateUserVoiceState: (state, action: PayloadAction<Partial<UserVoiceStateProps>>) => {
+      state.userVoiceState = { ...state.userVoiceState, ...action.payload };
     },
 
     addChatRoomMessage: (state, action: PayloadAction<Message>) => {
@@ -156,6 +169,7 @@ const {
   updateRemoteParticipantAudio,
   updateRemoteParticipantStatus,
   resetRemoteParticipants,
+  updateUserVoiceState,
   addChatRoomMessage,
   editChatRoomMessage,
   deleteChatRoomMessage,
@@ -170,6 +184,7 @@ const selectRoomLoading = (state: RootState) => state.room.loading;
 const selectRemoteParticipants = (state: RootState) => state.room.remoteParticipants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
 const selectIsUnreadChatRoomMessage = (state: RootState) => state.room.isUnreadChatRoomMessage;
+const selectUserVoiceState = (state: RootState) => state.room.userVoiceState;
 
 export const useRoomTools = () => {
   const dispatch = useDispatch();
@@ -179,6 +194,7 @@ export const useRoomTools = () => {
   const remoteParticipants = useSelector(selectRemoteParticipants);
   const chatRoomMessages = useSelector(selectChatRoomMessages);
   const isUnreadChatRoomMessage = useSelector(selectIsUnreadChatRoomMessage);
+  const userVoiceState = useSelector(selectUserVoiceState);
 
   const memoizedRoom = useMemo(
     () => ({
@@ -187,6 +203,7 @@ export const useRoomTools = () => {
       remoteParticipants,
       chatRoomMessages,
       isUnreadChatRoomMessage,
+      userVoiceState,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addRemoteParticipant: (participant: Participant) =>
@@ -197,6 +214,8 @@ export const useRoomTools = () => {
       updateRemoteParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
         dispatch(updateRemoteParticipantStatus(payload)),
       resetRemoteParticipants: () => dispatch(resetRemoteParticipants()),
+      updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
+        dispatch(updateUserVoiceState(payload)),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
       editChatRoomMessage: (payload: {
         messageId: Message['id'];
@@ -215,7 +234,7 @@ export const useRoomTools = () => {
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room, loading, remoteParticipants, chatRoomMessages, isUnreadChatRoomMessage]
+    [room, loading, remoteParticipants, chatRoomMessages, isUnreadChatRoomMessage, userVoiceState]
   );
   return memoizedRoom;
 };

@@ -84,7 +84,7 @@ const VoiceRoomCard = ({ room, onJoinRoom }: VoiceRoomCardProps) => (
 
       {/* Participant Group */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AvatarGroup max={1}>
+        <AvatarGroup max={2}>
           {room.currentParticipants.map((participant) => (
             <Avatar key={participant.user.id} src={participant.user.profilePhoto} />
           ))}

@@ -141,7 +141,6 @@ export function VoiceRoomChat() {
         setMicError(ERROR_MESSAGES.MIC_ACCESS);
       }
 
-      console.error('Error initializing voice room:', error);
       toast.error(`${ERROR_MESSAGES.INITIALIZATION} ${errorMessage}`);
 
       setState((prev) => ({ ...prev, isInitializing: false }));

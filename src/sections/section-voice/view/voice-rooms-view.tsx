@@ -33,7 +33,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
         }}
       >
         {rooms?.data.map((room) => (
-          <VoiceRoomCard room={room} onJoinRoom={onJoinRoom} />
+          <VoiceRoomCard key={room.id} room={room} onJoinRoom={onJoinRoom} />
         ))}
       </Box>
     </Scrollbar>

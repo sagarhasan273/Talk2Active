@@ -9,11 +9,11 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
-import VoiceRoomView from './voice-room-view';
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomFindButton from '../voice-room-find-button';
 import VoiceUserProfileView from './voice-user-profile-view';
 import VoiceRoomEntryButton from '../voice-room-entry-button';
+import { VoiceRoomView } from '../voice-room/voice-room-view';
 
 // ----------------------------------------------------------------------
 
@@ -26,7 +26,6 @@ export function VoiceMainView() {
 
   const handleJoinRoom = async (roomSelected: RoomResponse) => {
     setRoom(roomSelected);
-    // router.open(`/voice-room/${room.id}`);
     setSelectedTab('entry');
   };
 

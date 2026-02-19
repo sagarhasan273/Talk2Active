@@ -21,6 +21,7 @@ import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/route-components';
 import { SocketProvider } from './core/contexts/socket-context';
+import { WebRTCProvider } from './core/contexts/webRTC-context';
 
 // ----------------------------------------------------------------------
 
@@ -33,16 +34,18 @@ export default function App() {
         <UserProvider>
           <AuthProvider>
             <SocketProvider>
-              <SettingsProvider settings={defaultSettings}>
-                <ThemeProvider>
-                  <MotionLazy>
-                    <Snackbar />
-                    <ProgressBar />
-                    <SettingsDrawer />
-                    <Router />
-                  </MotionLazy>
-                </ThemeProvider>
-              </SettingsProvider>
+              <WebRTCProvider>
+                <SettingsProvider settings={defaultSettings}>
+                  <ThemeProvider>
+                    <MotionLazy>
+                      <Snackbar />
+                      <ProgressBar />
+                      <SettingsDrawer />
+                      <Router />
+                    </MotionLazy>
+                  </ThemeProvider>
+                </SettingsProvider>
+              </WebRTCProvider>
             </SocketProvider>
           </AuthProvider>
         </UserProvider>
