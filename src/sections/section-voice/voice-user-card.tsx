@@ -20,6 +20,9 @@ import {
 
 import { fUsername } from 'src/utils/helper';
 
+import VoiceUserAudio from './voice-user-audio';
+import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
+
 // Animation for the active speaker
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0px rgba(0, 255, 204, 0.7); }
@@ -109,6 +112,7 @@ const UserTypeBadge = styled(Box, {
 });
 
 type VoiceUserCardProps = {
+  stream: MediaStream | null;
   user: Partial<Participant> & {
     isSpeaking?: boolean;
     isActive?: boolean;
@@ -126,6 +130,7 @@ type VoiceUserCardProps = {
 };
 
 export function VoiceUserCard({
+  stream,
   user,
   size = 'medium',
   showName = true,
@@ -332,6 +337,8 @@ export function VoiceUserCard({
           </Box>
         </Fade>
       )}
+      <VoiceUserAudio stream={stream} isLocal={isLocal} userName={name || 'unknown'} />
+      <VoiceSpeakingIndicator stream={stream} />
     </Box>
   );
 }

@@ -1,6 +1,5 @@
 import type { Participant } from 'src/types/type-room';
 
-import { useSelector } from 'react-redux';
 import React, { useMemo, useState } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
@@ -34,12 +33,11 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useRoomTools } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
-import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
 
 const ControlBar = styled(Paper)(({ theme }) => ({
@@ -157,7 +155,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const { localStream, remoteStreams } = webRTC;
 
   const { room, participants, userVoiceState } = useRoomTools();
-  const user = useSelector(selectAccount);
 
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | undefined>(
     undefined
@@ -391,8 +388,14 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         isMuted: isMicMuted,
                         userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
                         verified: selectedParticipant.verified,
+                        isLocal: selectedParticipant.isLocal,
                       }}
                       size="large"
+                      stream={
+                        selectedParticipant.isLocal
+                          ? localStream
+                          : remoteStreams[selectedParticipant.socketId]
+                      }
                     />
 
                     {/* Enhanced User Interaction Strip */}
@@ -567,35 +570,13 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         isMuted: Boolean(participant.isMuted),
                         userType: participant.userType,
                         verified: participant.verified,
+                        isLocal: false,
                       }}
                       onClick={() => handleSelectedParticipant(participant)}
+                      stream={
+                        participant.isLocal ? localStream : remoteStreams[participant.socketId]
+                      }
                     />
-
-                    {/* Quick volume indicator on hover */}
-                    {/* {hoveredParticipant === participant.userId && !isMobile && (
-                      <Zoom in timeout={200}>
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 30,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            bgcolor: 'rgba(0,0,0,0.8)',
-                            borderRadius: 2,
-                            px: 1,
-                            py: 0.5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                          }}
-                        >
-                          <VolumeUpIcon sx={{ fontSize: 12, color: '#949ba4' }} />
-                          <Typography variant="caption" sx={{ color: '#fff' }}>
-                            {userVolumes[participant.userId] || 100}%
-                          </Typography>
-                        </Box>
-                      </Zoom>
-                    )} */}
                   </Box>
                 </Grow>
               ))}
@@ -694,20 +675,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </Tooltip>
         </ControlBar>
       </Slide>
-
-      {/* Audio elements */}
-      <VoiceUserAudio stream={localStream} isLocal userName={user.name || 'unknown'} />
-      {participantsArray?.map((participant) => {
-        if (participant.isLocal) return null;
-        return (
-          <VoiceUserAudio
-            key={participant.userId}
-            stream={remoteStreams[participant.socketId]}
-            isLocal={participant.isLocal}
-            userName={participant.name || 'unknown'}
-          />
-        );
-      })}
     </Box>
   );
 }
