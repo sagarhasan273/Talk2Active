@@ -140,6 +140,7 @@ export function VoiceUserCard({
   className,
 }: VoiceUserCardProps) {
   const theme = useTheme();
+
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHovered, setIsHovered] = useState(false);
 
@@ -155,10 +156,82 @@ export function VoiceUserCard({
     isMuted = false,
     isDeafened = false,
     isLocal = false,
+    connectionState = 'new',
   } = user;
 
   // Determine badge content based on priority
   const getBadgeContent = () => {
+    if (connectionState === 'disconnected') {
+      return (
+        <Box
+          sx={{
+            bgcolor: 'error.main',
+            color: 'white',
+            px: 1,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            border: `2px solid ${theme.palette.background.paper}`,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+              animation: 'slide 2s ease-in-out infinite',
+            },
+            '@keyframes slide': {
+              '0%': { left: '-100%' },
+              '100%': { left: '200%' },
+            },
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Disconnected
+          </Typography>
+        </Box>
+      );
+    }
+
+    if (connectionState === 'connecting') {
+      return (
+        <Box
+          sx={{
+            bgcolor: 'warning.main',
+            color: 'white',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            border: `2px solid ${theme.palette.background.paper}`,
+          }}
+        >
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderTopColor: 'white',
+              animation: 'spin 0.8s linear infinite',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' },
+              },
+            }}
+          />
+          <Typography variant="caption">Connecting...</Typography>
+        </Box>
+      );
+    }
+
     if (isDeafened) {
       return (
         <Tooltip title="Deafened">

@@ -389,6 +389,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
                         verified: selectedParticipant.verified,
                         isLocal: selectedParticipant.isLocal,
+                        connectionState: selectedParticipant.connectionState,
                       }}
                       size="large"
                       stream={
@@ -570,6 +571,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         isMuted: Boolean(participant.isMuted),
                         userType: participant.userType,
                         verified: participant.verified,
+                        connectionState: participant.connectionState,
                         isLocal: false,
                       }}
                       onClick={() => handleSelectedParticipant(participant)}

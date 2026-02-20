@@ -55,6 +55,17 @@ export const roomSlice = createSlice({
       state.participants[action.payload.socketId] = action.payload;
     },
 
+    updateParticipant: (state, action: PayloadAction<Partial<Participant>>) => {
+      if (!action.payload?.socketId) {
+        return;
+      }
+
+      state.participants[action.payload.socketId] = {
+        ...state.participants[action.payload.socketId],
+        ...action.payload,
+      };
+    },
+
     removeParticipant: (state, action: PayloadAction<string>) => {
       delete state.participants[action.payload];
     },
@@ -168,6 +179,7 @@ const {
   setRoom,
   setRoomLoading,
   addParticipant,
+  updateParticipant,
   removeParticipant,
   updateParticipantAudio,
   updateParticipantStatus,
@@ -210,6 +222,8 @@ export const useRoomTools = () => {
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
+      updateParticipant: (participant: Partial<Participant>) =>
+        dispatch(updateParticipant(participant)),
       removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
       updateParticipantAudio: (payload: { socketId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),

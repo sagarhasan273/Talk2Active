@@ -21,6 +21,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     room,
     addParticipant,
     removeParticipant,
+    updateParticipant,
     updateParticipantAudio,
     updateParticipantStatus,
     addChatRoomMessage,
@@ -65,7 +66,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
 
     // User left
     const handleUserLeft = (data: { socketId: string; roomId?: string }) => {
-      // setTimeout(() => removeRemoteParticipant(data.socketId), 2000);
+      updateParticipant({ socketId: data.socketId, hasJoin: false, connectionState: 'connecting' });
     };
 
     // Audio toggled

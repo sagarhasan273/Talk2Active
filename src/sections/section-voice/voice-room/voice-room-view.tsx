@@ -14,21 +14,22 @@ import { VoiceRoomEntryView } from './voice-room-entry-view';
 export function VoiceRoomView() {
   const user = useSelector(selectAccount);
 
-  const { room, userVoiceState, updateUserVoiceState, addParticipant } = useRoomTools();
+  const { room, userVoiceState, resetParticipants, updateUserVoiceState, addParticipant } =
+    useRoomTools();
 
   const { socket } = useSocketContext();
 
   const webRTC = useWebRTCContext();
 
   const { hasJoined, isMicMuted } = userVoiceState;
-  const { initializeMicrophone } = webRTC;
+  const { initializeMicrophone, cleanup: cleanupWebRTC } = webRTC;
 
   // Socket listeners
   const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
 
   const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
-  const handleJoinRoom = async () => {
+  const handleJoinChat = async () => {
     const isMuted = await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
@@ -76,15 +77,31 @@ export function VoiceRoomView() {
     }
   };
 
-  const handelLeaveRoom = async () => {
+  const handelLeaveChat = async () => {
     if (setupChatSocketListenersRef.current) setupChatSocketListenersRef.current?.();
+
+    socket?.emit('leave-voice-room', {
+      roomId: room?.id,
+      userId: user.id,
+      name: user.name,
+    });
+
+    cleanupWebRTC();
+
+    // chat listeners close
+    setupChatSocketListenersRef.current?.();
+
+    updateUserVoiceState({ hasJoined: false });
+
+    // Reset local state
+    resetParticipants();
   };
 
   return (
     <>
-      {!hasJoined && <VoiceRoomEntryView onJoinRoom={handleJoinRoom} />}
+      {!hasJoined && <VoiceRoomEntryView onJoinRoom={handleJoinChat} />}
 
-      {hasJoined && <VoiceRoomBodyView onLeaveRoom={handelLeaveRoom} />}
+      {hasJoined && <VoiceRoomBodyView onLeaveRoom={handelLeaveChat} />}
     </>
   );
 }
