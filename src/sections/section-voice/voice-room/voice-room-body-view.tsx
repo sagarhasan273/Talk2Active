@@ -12,7 +12,6 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import AddReactionIcon from '@mui/icons-material/AddReaction';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {
   Box,
@@ -444,7 +443,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                           </ActionButton>
                         </Tooltip>
 
-                        <Tooltip title="View Profile" placement="top" TransitionComponent={Zoom}>
+                        {/* <Tooltip title="View Profile" placement="top" TransitionComponent={Zoom}>
                           <ActionButton
                             size="small"
                             sx={{
@@ -456,7 +455,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                           >
                             <PersonSearchIcon fontSize={isMobile ? 'small' : 'medium'} />
                           </ActionButton>
-                        </Tooltip>
+                        </Tooltip> */}
 
                         <Tooltip title="Direct Message" placement="top" TransitionComponent={Zoom}>
                           <ActionButton
