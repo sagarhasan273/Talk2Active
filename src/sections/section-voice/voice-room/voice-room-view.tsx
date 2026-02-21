@@ -30,7 +30,7 @@ export function VoiceRoomView() {
   const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
   const handleJoinChat = async () => {
-    const isMuted = await initializeMicrophone().catch((error) => {
+    await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
         errorMessage = 'Microphone access was denied. Please allow access and try again.';
@@ -60,7 +60,7 @@ export function VoiceRoomView() {
         verified: user.verified,
       });
 
-      updateUserVoiceState({ isMicMuted: isMuted, hasJoined: true });
+      updateUserVoiceState({ hasJoined: true });
 
       addParticipant({
         userId: user.id,

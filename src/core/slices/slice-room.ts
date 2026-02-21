@@ -30,7 +30,7 @@ const initialState: RoomState = {
     hasJoined: false,
     isMicMuted: false,
     isDeafened: false,
-    volume: CONFIG.defaultMicVolume,
+    volume: CONFIG.defaultOutputGain,
     micGain: CONFIG.defaultMicGain,
     isScreenSharing: false,
     statue: 'online',

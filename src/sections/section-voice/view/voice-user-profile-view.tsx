@@ -18,9 +18,8 @@ import {
   IconButton,
 } from '@mui/material';
 
-import useWebRTC from 'src/hooks/use-web-rtc';
-
 import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
@@ -34,7 +33,12 @@ const VoiceUserProfileView = () => {
 
   const { isMicMuted, isDeafened, volume } = userVoiceState;
 
-  const { setMicrophoneGain, setMicrophoneVolume, toggleMicrophone } = useWebRTC();
+  const { setMicrophoneGain, setOutputGain, toggleMicrophone, onClickMicrophone } =
+    useWebRTCContext();
+
+  const handleMicMute = () => {
+    onClickMicrophone(!isMicMuted);
+  };
 
   const handleMicLevelChange = (level: number) => {
     setMicrophoneGain(level);
@@ -42,19 +46,19 @@ const VoiceUserProfileView = () => {
   };
 
   const handleVolumeChange = (level: number) => {
-    setMicrophoneVolume(level);
     updateUserVoiceState({ volume: level });
+    setOutputGain(level);
   };
 
   const handleDeafen = () => {
     updateUserVoiceState({ isDeafened: !isDeafened });
     if (!isDeafened) {
       // Mute both mic and speaker when deafening
-      setMicrophoneVolume(0); // Mute speaker
+      setOutputGain(0); // Mute speaker
       if (!isMicMuted) toggleMicrophone(); // Mute mic
     } else {
       // Restore previous volumes when undeafening
-      setMicrophoneVolume(volume);
+      setOutputGain(volume);
       if (isMicMuted) toggleMicrophone(); // Unmute mic
     }
   };
@@ -157,7 +161,7 @@ const VoiceUserProfileView = () => {
           <Tooltip title="Mute">
             <IconButton
               size="small"
-              onClick={() => updateUserVoiceState({ isMicMuted: !isMicMuted })}
+              onClick={handleMicMute}
               sx={{
                 color: isMicMuted ? 'error.main' : '#b5bac1',
                 transition: 'all 0.2s ease',

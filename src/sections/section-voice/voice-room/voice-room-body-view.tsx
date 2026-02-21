@@ -38,6 +38,7 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
+import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
 
 const ControlBar = styled(Paper)(({ theme }) => ({
@@ -186,8 +187,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     setTimeout(() => setIsSelectionAnimating(false), 500);
   };
 
-  const handleVolumeChange = (userId: string, volume: number) => {
-    setUserVolumes((prev) => ({ ...prev, [userId]: volume }));
+  const handleVolumeChange = (socketId: string, volume: number) => {
+    setUserVolumes((prev) => ({ ...prev, [socketId]: volume }));
   };
 
   const handleReaction = (reactionType: string) => {
@@ -401,16 +402,16 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
                     {/* Enhanced User Interaction Strip */}
                     <Fade in timeout={600}>
-                      <InteractionStrip sx={{ mt: 2 }}>
+                      <InteractionStrip sx={{ mt: 1 }}>
                         {/* Volume Control - Always visible on hover */}
                         <VolumeControl>
-                          <VolumeUpIcon sx={{ fontSize: 18, color: '#949ba4' }} />
+                          <VolumeUpIcon sx={{ fontSize: 16, color: '#949ba4' }} />
                           <Slider
                             className="volume-slider"
                             size="small"
-                            defaultValue={userVolumes[selectedParticipant.userId] || 100}
+                            defaultValue={userVolumes[selectedParticipant.socketId] || 100}
                             onChange={(_, value) =>
-                              handleVolumeChange(selectedParticipant.userId, value as number)
+                              handleVolumeChange(selectedParticipant.socketId, value as number)
                             }
                             sx={{
                               width: { xs: 60, sm: 80 },
@@ -549,7 +550,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           >
             <ParticipantGrid>
               {participantsArray.map((participant, index) => (
-                <Grow key={participant.userId} in timeout={200 + index * 50}>
+                <Grow key={participant.socketId} in timeout={200 + index * 50}>
                   <Box
                     onMouseEnter={() => setHoveredParticipant(participant.userId)}
                     onMouseLeave={() => setHoveredParticipant(null)}
@@ -572,7 +573,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         userType: participant.userType,
                         verified: participant.verified,
                         connectionState: participant.connectionState,
-                        isLocal: false,
+                        isLocal: participant.isLocal,
                       }}
                       onClick={() => handleSelectedParticipant(participant)}
                       stream={
@@ -677,6 +678,17 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </Tooltip>
         </ControlBar>
       </Slide>
+
+      {Object.values(participants).map((participant) => (
+        <VoiceUserAudio
+          key={participant.socketId}
+          stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
+          isLocal={participant.isLocal}
+          userName={participant.name || 'unknown'}
+          volume={userVolumes[participant.socketId]}
+          muted={participant.isMuted}
+        />
+      ))}
     </Box>
   );
 }

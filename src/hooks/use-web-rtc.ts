@@ -5,27 +5,44 @@ import { useRoomTools } from 'src/core/slices';
 
 // Types for audio settings
 export interface AudioSettings {
-  volume: number; // 0-100
-  microphoneGain: number; // 0-100
+  microphoneGain: number; // 0-100 (how sensitive your mic is)
+  outputGain: number; // 0-100 (how loud your voice is sent to others)
   echoCancellation: boolean;
   noiseSuppression: boolean;
   autoGainControl: boolean;
   isMicMuted: boolean;
+  isDeafened: boolean; // New: master speaker mute
+}
+
+export interface RemoteAudioSettings {
+  [socketId: string]: {
+    volume: number; // Individual remote stream volume (speaker volume per user)
+    isMuted: boolean; // Mute specific remote user
+  };
 }
 
 export interface AudioNodeManager {
-  microphoneGainNode: GainNode | null;
-  volumeGainNode: GainNode | null;
+  microphoneGainNode: GainNode | null; // Input gain (mic sensitivity)
+  outputGainNode: GainNode | null; // Output gain (what others hear from you)
   audioContext: AudioContext | null;
   sourceNode: MediaStreamAudioSourceNode | null;
   destinationNode: MediaStreamAudioDestinationNode | null;
+}
+
+export interface RemoteAudioNodeManager {
+  [socketId: string]: {
+    sourceNode: MediaStreamAudioSourceNode | null;
+    gainNode: GainNode | null; // This is the SPEAKER volume control per remote user
+  };
 }
 
 export interface UseWebRTCReturn {
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
   isMicMuted: boolean;
+  isDeafened: boolean;
   audioSettings: AudioSettings;
+  remoteAudioSettings: RemoteAudioSettings;
   connectionStatus: { [socketId: string]: string };
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
   createOffer: (targetSocketId: string, socket: any) => Promise<void>;
@@ -33,8 +50,11 @@ export interface UseWebRTCReturn {
   handleAnswer: (data: any) => Promise<void>;
   handleIceCandidate: (data: any) => Promise<void>;
   toggleMicrophone: () => boolean;
-  setMicrophoneVolume: (level: number) => void;
-  setMicrophoneGain: (gain: number) => void;
+  toggleDeafen: () => void; // New: master speaker mute
+  setMicrophoneGain: (gain: number) => void; // Input sensitivity
+  setOutputGain: (gain: number) => void; // How loud you are to others
+  setRemoteVolume: (socketId: string, level: number) => void; // Individual speaker volume
+  setRemoteMute: (socketId: string, muted: boolean) => void; // Mute specific user
   setEchoCancellation: (enabled: boolean) => void;
   setNoiseSuppression: (enabled: boolean) => void;
   setAutoGainControl: (enabled: boolean) => void;
@@ -46,16 +66,18 @@ export interface UseWebRTCReturn {
 }
 
 const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  volume: CONFIG.defaultMicVolume,
-  microphoneGain: CONFIG.defaultMicGain,
+  microphoneGain: CONFIG.defaultMicGain, // Input sensitivity
+  outputGain: CONFIG.defaultOutputGain || 100, // How loud you are to others
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
   isMicMuted: false,
+  isDeafened: false,
 };
 
 export default function useWebRTC(): UseWebRTCReturn {
-  const { removeParticipant, updateParticipant } = useRoomTools();
+  const { userVoiceState, removeParticipant, updateParticipant, updateUserVoiceState } =
+    useRoomTools();
 
   // Refs
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -63,22 +85,28 @@ export default function useWebRTC(): UseWebRTCReturn {
   const iceCandidatesQueue = useRef<{ [socketId: string]: RTCIceCandidateInit[] }>({});
   const pendingOffersRef = useRef<{ [socketId: string]: boolean }>({});
 
+  // Audio nodes for local stream
   const audioNodesRef = useRef<AudioNodeManager>({
-    microphoneGainNode: null,
-    volumeGainNode: null,
+    microphoneGainNode: null, // Input gain (mic sensitivity)
+    outputGainNode: null, // Output gain (what others hear)
     audioContext: null,
     sourceNode: null,
     destinationNode: null,
   });
+
+  // Audio nodes for remote streams (what YOU hear)
+  const remoteAudioNodesRef = useRef<RemoteAudioNodeManager>({});
   const audioAnalyserRef = useRef<AnalyserNode | null>(null);
   const audioAnimationRef = useRef<number | null>(null);
 
   // State
   const [remoteStreams, setRemoteStreams] = useState<{ [socketId: string]: MediaStream }>({});
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [isMicMuted, setIsMicMuted] = useState(false);
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(DEFAULT_AUDIO_SETTINGS);
+  const [remoteAudioSettings, setRemoteAudioSettings] = useState<RemoteAudioSettings>({});
   const [connectionStatus, setConnectionStatus] = useState<{ [socketId: string]: string }>({});
+
+  const { isMicMuted, isDeafened } = userVoiceState;
 
   const getIceServers = useCallback(
     () => ({
@@ -105,6 +133,51 @@ export default function useWebRTC(): UseWebRTCReturn {
     }
   }, []);
 
+  const setupRemoteAudioProcessing = useCallback(
+    (socketId: string, stream: MediaStream): MediaStream => {
+      try {
+        // Use the same audio context as local stream
+        if (!audioNodesRef.current.audioContext) {
+          audioNodesRef.current.audioContext = new (
+            window.AudioContext || (window as any).webkitAudioContext
+          )();
+        }
+
+        const { audioContext } = audioNodesRef.current;
+        if (audioContext.state === 'suspended') audioContext.resume();
+
+        // Create source node for remote stream
+        const sourceNode = audioContext.createMediaStreamSource(stream);
+
+        // Create gain node for volume control (THIS IS YOUR SPEAKER VOLUME CONTROL)
+        const gainNode = audioContext.createGain();
+
+        // Set initial volume based on saved settings or default
+        const initialVolume = remoteAudioSettings[socketId]?.volume ?? 100;
+
+        // Apply deafen state if active
+        const effectiveVolume = isDeafened ? 0 : initialVolume;
+        gainNode.gain.value = effectiveVolume / 100;
+
+        // Connect nodes: remote stream -> gain control -> your speakers
+        sourceNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Store nodes for later control
+        remoteAudioNodesRef.current[socketId] = {
+          sourceNode,
+          gainNode,
+        };
+
+        return stream;
+      } catch (error) {
+        console.error(`Remote Audio Setup Error for ${socketId}:`, error);
+        return stream;
+      }
+    },
+    [remoteAudioSettings, isDeafened]
+  );
+
   const setupAudioProcessing = useCallback(
     (stream: MediaStream): MediaStream => {
       try {
@@ -117,36 +190,45 @@ export default function useWebRTC(): UseWebRTCReturn {
         if (audioContext.state === 'suspended') audioContext.resume();
 
         const sourceNode = audioContext.createMediaStreamSource(stream);
+
+        // Microphone gain = input sensitivity (how sensitive your mic is)
         const microphoneGainNode = audioContext.createGain();
-        const volumeGainNode = audioContext.createGain();
+
+        // Output gain = how loud you are to others
+        const outputGainNode = audioContext.createGain();
+
         const destinationNode = audioContext.createMediaStreamDestination();
 
+        // Set initial values
         microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
-        volumeGainNode.gain.value = audioSettings.volume / 100;
+        outputGainNode.gain.value = audioSettings.outputGain / 100;
 
+        // Connect: mic -> input gain -> output gain -> destination (sent to others)
         sourceNode.connect(microphoneGainNode);
-        microphoneGainNode.connect(volumeGainNode);
-        volumeGainNode.connect(destinationNode);
+        microphoneGainNode.connect(outputGainNode);
+        outputGainNode.connect(destinationNode);
 
+        // Analyser for visualization (optional)
         const analyser = audioContext.createAnalyser();
-        volumeGainNode.connect(analyser);
+        outputGainNode.connect(analyser);
         analyser.fftSize = 256;
         audioAnalyserRef.current = analyser;
 
         audioNodesRef.current = {
           ...audioNodesRef.current,
           sourceNode,
-          microphoneGainNode,
-          volumeGainNode,
+          microphoneGainNode, // Input sensitivity
+          outputGainNode, // What others hear
           destinationNode,
         };
+
         return destinationNode.stream;
       } catch (error) {
         console.error('Audio Setup Error:', error);
         return stream;
       }
     },
-    [audioSettings.microphoneGain, audioSettings.volume]
+    [audioSettings.microphoneGain, audioSettings.outputGain]
   );
 
   const createPeerConnection = useCallback(
@@ -164,7 +246,26 @@ export default function useWebRTC(): UseWebRTCReturn {
       }
 
       pc.ontrack = (event) => {
-        setRemoteStreams((prev) => ({ ...prev, [socketId]: event.streams[0] }));
+        const remoteStream = event.streams[0];
+
+        // Set up audio processing for remote stream (speaker control)
+        const processedStream = setupRemoteAudioProcessing(socketId, remoteStream);
+
+        setRemoteStreams((prev) => ({ ...prev, [socketId]: processedStream }));
+
+        // Initialize remote audio settings if not exists
+        setRemoteAudioSettings((prev) => {
+          if (!prev[socketId]) {
+            return {
+              ...prev,
+              [socketId]: {
+                volume: 100,
+                isMuted: false,
+              },
+            };
+          }
+          return prev;
+        });
       };
 
       pc.onicecandidate = (event) => {
@@ -177,11 +278,23 @@ export default function useWebRTC(): UseWebRTCReturn {
         const state = pc.connectionState;
         setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
 
-        if (state === 'failed') {
-          // Trigger ICE Restart or cleanup
+        if (state === 'failed' || state === 'closed') {
+          // Clean up remote audio nodes
+          if (remoteAudioNodesRef.current[socketId]) {
+            const { sourceNode, gainNode } = remoteAudioNodesRef.current[socketId];
+            if (sourceNode) sourceNode.disconnect();
+            if (gainNode) gainNode.disconnect();
+            delete remoteAudioNodesRef.current[socketId];
+          }
+
           removeParticipant(socketId);
-          pc.close();
-          delete peerConnectionsRef.current[socketId];
+
+          // Clean up remote settings
+          setRemoteAudioSettings((prev) => {
+            const newSettings = { ...prev };
+            delete newSettings[socketId];
+            return newSettings;
+          });
         }
 
         if (['connecting', 'connected', 'disconnected'].includes(state)) {
@@ -189,17 +302,10 @@ export default function useWebRTC(): UseWebRTCReturn {
         }
       };
 
-      // Negotiate automatic ICE restart if needed
-      // pc.oniceconnectionstatechange = () => {
-      //   if (pc.iceConnectionState === 'failed') {
-      //     pc.restartIce();
-      //   }
-      // };
-
       peerConnectionsRef.current[socketId] = pc;
       return pc;
     },
-    [getIceServers, removeParticipant, updateParticipant]
+    [getIceServers, removeParticipant, updateParticipant, setupRemoteAudioProcessing]
   );
 
   const initializeMicrophone = useCallback(
@@ -218,14 +324,14 @@ export default function useWebRTC(): UseWebRTCReturn {
         localStreamRef.current = processedStream;
         setLocalStream(processedStream);
         const audioTrack = stream.getAudioTracks()[0];
-        setIsMicMuted(!audioTrack.enabled);
+        updateUserVoiceState({ isMicMuted: !audioTrack.enabled, isDeafened: false });
         return !audioTrack.enabled;
       } catch (error) {
         console.error('Microphone Access Error:', error);
         return false;
       }
     },
-    [audioSettings, setupAudioProcessing]
+    [audioSettings, setupAudioProcessing, updateUserVoiceState]
   );
 
   const createOffer = useCallback(
@@ -389,27 +495,101 @@ export default function useWebRTC(): UseWebRTCReturn {
   }, []);
 
   // Audio Controls
-  const setMicrophoneVolume = (level: number) => {
-    if (audioNodesRef.current.volumeGainNode)
-      audioNodesRef.current.volumeGainNode.gain.value = level / 100;
-    setAudioSettings((p) => ({ ...p, volume: level }));
-  };
 
+  // Input sensitivity (how sensitive your mic is)
   const setMicrophoneGain = (gain: number) => {
-    if (audioNodesRef.current.microphoneGainNode)
+    if (audioNodesRef.current.microphoneGainNode) {
       audioNodesRef.current.microphoneGainNode.gain.value = gain / 100;
+    }
     setAudioSettings((p) => ({ ...p, microphoneGain: gain }));
   };
 
+  // Output gain (how loud you are to others)
+  const setOutputGain = (gain: number) => {
+    if (audioNodesRef.current.outputGainNode) {
+      audioNodesRef.current.outputGainNode.gain.value = gain / 100;
+    }
+    setAudioSettings((p) => ({ ...p, outputGain: gain }));
+  };
+
+  // Individual remote volume (speaker volume per user)
+  const setRemoteVolume = (socketId: string, level: number) => {
+    const remoteNode = remoteAudioNodesRef.current[socketId];
+    if (remoteNode && remoteNode.gainNode) {
+      // If not deafened, apply volume, otherwise keep at 0
+      if (!isDeafened) {
+        remoteNode.gainNode.gain.value = level / 100;
+      }
+    }
+
+    setRemoteAudioSettings((prev) => ({
+      ...prev,
+      [socketId]: {
+        ...prev[socketId],
+        volume: level,
+      },
+    }));
+  };
+
+  // Mute specific remote user
+  const setRemoteMute = (socketId: string, muted: boolean) => {
+    const remoteNode = remoteAudioNodesRef.current[socketId];
+    if (remoteNode && remoteNode.gainNode) {
+      // If muted or deafened, set to 0, otherwise use saved volume
+      if (muted || isDeafened) {
+        remoteNode.gainNode.gain.value = 0;
+      } else {
+        remoteNode.gainNode.gain.value = (remoteAudioSettings[socketId]?.volume ?? 100) / 100;
+      }
+    }
+
+    setRemoteAudioSettings((prev) => ({
+      ...prev,
+      [socketId]: {
+        ...prev[socketId],
+        isMuted: muted,
+      },
+    }));
+  };
+
+  // Toggle microphone
   const toggleMicrophone = () => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       audioTrack.enabled = !audioTrack.enabled;
-      setIsMicMuted(!audioTrack.enabled);
+      updateUserVoiceState({ isMicMuted: !audioTrack.enabled });
       setAudioSettings((p) => ({ ...p, isMicMuted: !audioTrack.enabled }));
       return !audioTrack.enabled;
     }
     return isMicMuted;
+  };
+
+  // Toggle deafen (master speaker mute) - like Discord's deafen feature
+  const toggleDeafen = () => {
+    const newDeafenedState = !isDeafened;
+
+    // Apply to all remote audio nodes
+    Object.entries(remoteAudioNodesRef.current).forEach(([socketId, nodes]) => {
+      if (nodes.gainNode) {
+        if (newDeafenedState) {
+          // If deafening, mute all remote audio
+          nodes.gainNode.gain.value = 0;
+        } else {
+          // If undeafening, restore individual volumes (respecting per-user mute)
+          const settings = remoteAudioSettings[socketId];
+          if (settings && !settings.isMuted) {
+            nodes.gainNode.gain.value = settings.volume / 100;
+          } else if (settings && settings.isMuted) {
+            nodes.gainNode.gain.value = 0;
+          } else {
+            nodes.gainNode.gain.value = 1; // Default to 100%
+          }
+        }
+      }
+    });
+
+    updateUserVoiceState({ isDeafened: newDeafenedState });
+    setAudioSettings((p) => ({ ...p, isDeafened: newDeafenedState }));
   };
 
   const cleanup = useCallback(() => {
@@ -418,6 +598,13 @@ export default function useWebRTC(): UseWebRTCReturn {
       cancelAnimationFrame(audioAnimationRef.current);
       audioAnimationRef.current = null;
     }
+
+    // Clean up remote audio nodes
+    Object.entries(remoteAudioNodesRef.current).forEach(([socketId, nodes]) => {
+      if (nodes.sourceNode) nodes.sourceNode.disconnect();
+      if (nodes.gainNode) nodes.gainNode.disconnect();
+    });
+    remoteAudioNodesRef.current = {};
 
     // Close all peer connections
     Object.values(peerConnectionsRef.current).forEach((pc) => {
@@ -443,24 +630,21 @@ export default function useWebRTC(): UseWebRTCReturn {
     if (audioNodesRef.current.audioContext) {
       const { audioContext } = audioNodesRef.current;
 
-      // Check state before closing
       if (audioContext.state !== 'closed') {
         try {
-          // Disconnect all nodes first
           if (audioNodesRef.current.sourceNode) {
             audioNodesRef.current.sourceNode.disconnect();
           }
           if (audioNodesRef.current.microphoneGainNode) {
             audioNodesRef.current.microphoneGainNode.disconnect();
           }
-          if (audioNodesRef.current.volumeGainNode) {
-            audioNodesRef.current.volumeGainNode.disconnect();
+          if (audioNodesRef.current.outputGainNode) {
+            audioNodesRef.current.outputGainNode.disconnect();
           }
           if (audioNodesRef.current.destinationNode) {
             audioNodesRef.current.destinationNode.disconnect();
           }
 
-          // Close the context
           audioContext.close().catch((error) => {
             console.warn('Error closing AudioContext:', error);
           });
@@ -469,10 +653,9 @@ export default function useWebRTC(): UseWebRTCReturn {
         }
       }
 
-      // Reset audio nodes ref
       audioNodesRef.current = {
         microphoneGainNode: null,
-        volumeGainNode: null,
+        outputGainNode: null,
         audioContext: null,
         sourceNode: null,
         destinationNode: null,
@@ -491,16 +674,19 @@ export default function useWebRTC(): UseWebRTCReturn {
     // Reset state
     setRemoteStreams({});
     setLocalStream(null);
-    setIsMicMuted(false);
+    setRemoteAudioSettings({});
+    updateUserVoiceState({ isMicMuted: false, isDeafened: false });
     setAudioSettings(DEFAULT_AUDIO_SETTINGS);
     setConnectionStatus({});
-  }, []);
+  }, [updateUserVoiceState]);
 
   return {
     remoteStreams,
     localStream,
     isMicMuted,
+    isDeafened,
     audioSettings,
+    remoteAudioSettings,
     connectionStatus,
     initializeMicrophone,
     createOffer,
@@ -508,23 +694,26 @@ export default function useWebRTC(): UseWebRTCReturn {
     handleAnswer,
     handleIceCandidate,
     toggleMicrophone,
-    setMicrophoneVolume,
-    setMicrophoneGain,
+    toggleDeafen,
+    setMicrophoneGain, // Input sensitivity
+    setOutputGain, // How loud you are to others
+    setRemoteVolume, // Individual speaker volume
+    setRemoteMute, // Mute specific user
     cleanup,
     setEchoCancellation: (e) => setAudioSettings((p) => ({ ...p, echoCancellation: e })),
     setNoiseSuppression: (e) => setAudioSettings((p) => ({ ...p, noiseSuppression: e })),
     setAutoGainControl: (e) => setAudioSettings((p) => ({ ...p, autoGainControl: e })),
     muteMicrophone: () => {
       if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = false;
-      setIsMicMuted(true);
+      updateUserVoiceState({ isMicMuted: true });
     },
     unmuteMicrophone: () => {
       if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = true;
-      setIsMicMuted(false);
+      updateUserVoiceState({ isMicMuted: false });
     },
     onClickMicrophone: (v) => {
       if (localStreamRef.current) localStreamRef.current.getAudioTracks()[0].enabled = !v;
-      setIsMicMuted(v);
+      updateUserVoiceState({ isMicMuted: v });
     },
     applyAudioSettings: (s) => setAudioSettings((p) => ({ ...p, ...s })),
   };

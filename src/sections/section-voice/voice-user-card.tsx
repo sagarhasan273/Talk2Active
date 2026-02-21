@@ -20,7 +20,6 @@ import {
 
 import { fUsername } from 'src/utils/helper';
 
-import VoiceUserAudio from './voice-user-audio';
 import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
 
 // Animation for the active speaker
@@ -410,7 +409,6 @@ export function VoiceUserCard({
           </Box>
         </Fade>
       )}
-      <VoiceUserAudio stream={stream} isLocal={isLocal} userName={name || 'unknown'} />
       <VoiceSpeakingIndicator stream={stream} />
     </Box>
   );
