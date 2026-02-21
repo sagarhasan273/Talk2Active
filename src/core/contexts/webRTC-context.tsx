@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import type { UseWebRTCReturn } from 'src/hooks/use-web-rtc';
+import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
 
 import React, { useContext, createContext } from 'react';
 
-import useWebRTC from 'src/hooks/use-web-rtc';
+import { useWebRTC } from 'src/hooks/useWebRTC';
 
 const WebRTCContext = createContext<UseWebRTCReturn | null>(null);
 

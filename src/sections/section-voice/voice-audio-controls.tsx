@@ -3,15 +3,24 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { Box, Stack, Paper, Slider, Typography } from '@mui/material';
 
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
-interface AudioControlsProps {
-  onMicLevelChange: (level: number) => void;
-  onVolumeChange: (level: number) => void;
-}
+export function VoiceAudioControls() {
+  const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
-export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioControlsProps) {
-  const { userVoiceState } = useRoomTools();
   const { volume, micGain, isMicMuted, isDeafened } = userVoiceState;
+
+  const { setMicrophoneGain, setOutputGain } = useWebRTCContext();
+
+  const handleMicLevelChange = (level: number) => {
+    setMicrophoneGain(level);
+    updateUserVoiceState({ micGain: level });
+  };
+
+  const handleVolumeChange = (level: number) => {
+    updateUserVoiceState({ volume: level });
+    setOutputGain(level);
+  };
 
   return (
     <Paper sx={{ p: 1.5, pb: 0.5, maxWidth: 1 }}>
@@ -28,7 +37,7 @@ export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioCo
           </Box>
           <Slider
             value={micGain}
-            onChange={(_, value) => onMicLevelChange(value as number)}
+            onChange={(_, value) => handleMicLevelChange(value)}
             min={0}
             max={100}
             step={1}
@@ -67,7 +76,7 @@ export function VoiceAudioControls({ onMicLevelChange, onVolumeChange }: AudioCo
           </Box>
           <Slider
             value={volume}
-            onChange={(_, value) => onVolumeChange(value as number)}
+            onChange={(_, value) => handleVolumeChange(value)}
             min={0}
             max={100}
             step={1}

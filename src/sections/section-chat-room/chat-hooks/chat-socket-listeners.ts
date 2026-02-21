@@ -1,5 +1,5 @@
 import type { UserType } from 'src/types/type-user';
-import type { UseWebRTCReturn } from 'src/hooks/use-web-rtc';
+import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
 import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
 import { useCallback } from 'react';

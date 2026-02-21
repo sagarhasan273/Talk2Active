@@ -101,7 +101,7 @@ const InteractionStrip = styled(Paper)(({ theme }) => ({
   display: 'inline-flex',
   alignItems: 'center',
   gap: theme.spacing(1),
-  padding: theme.spacing(1, 1.5),
+  padding: theme.spacing(0.5, 1.5),
   borderRadius: 40,
   backgroundColor: 'rgba(30, 31, 34, 0.95)',
   backdropFilter: 'blur(10px)',
@@ -112,13 +112,16 @@ const InteractionStrip = styled(Paper)(({ theme }) => ({
     backgroundColor: 'rgba(40, 41, 44, 0.95)',
     border: '1px solid rgba(255, 255, 255, 0.15)',
   },
+  [theme.breakpoints.up('xs')]: {
+    padding: theme.spacing(0.35, 1),
+  },
 }));
 
 const VolumeControl = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1),
-  padding: theme.spacing(0.5, 1),
+  padding: theme.spacing(0.5, 2, 0.5, 1),
   borderRadius: 30,
   backgroundColor: 'rgba(0, 0, 0, 0.3)',
   transition: 'all 0.2s ease',
@@ -132,6 +135,7 @@ const VolumeControl = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     '& .volume-slider': {
       width: 60,
+      padding: theme.spacing(0.5, 2, 0.5, 1),
     },
   },
 }));
@@ -153,9 +157,10 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const webRTC = useWebRTCContext();
-  const { localStream, remoteStreams } = webRTC;
 
-  const { room, participants, userVoiceState } = useRoomTools();
+  const { localStream, remoteStreams, setRemoteVolume, isMicMuted } = webRTC;
+
+  const { room, participants } = useRoomTools();
 
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | undefined>(
     undefined
@@ -164,8 +169,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null);
   const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
   const [reaction, setReaction] = useState<string | null>(null);
-
-  const { isMicMuted } = userVoiceState;
 
   const participantsArray = useMemo(
     () =>
@@ -189,6 +192,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const handleVolumeChange = (socketId: string, volume: number) => {
     setUserVolumes((prev) => ({ ...prev, [socketId]: volume }));
+    setRemoteVolume(socketId, volume);
   };
 
   const handleReaction = (reactionType: string) => {
@@ -405,16 +409,17 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       <InteractionStrip sx={{ mt: 1 }}>
                         {/* Volume Control - Always visible on hover */}
                         <VolumeControl>
-                          <VolumeUpIcon sx={{ fontSize: 16, color: '#949ba4' }} />
+                          <VolumeUpIcon sx={{ fontSize: isMobile ? 14 : 16, color: '#949ba4' }} />
                           <Slider
+                            key={selectedParticipant.socketId}
                             className="volume-slider"
                             size="small"
-                            defaultValue={userVolumes[selectedParticipant.socketId] || 100}
+                            value={userVolumes[selectedParticipant.socketId] ?? 100}
                             onChange={(_, value) =>
                               handleVolumeChange(selectedParticipant.socketId, value as number)
                             }
                             sx={{
-                              width: { xs: 60, sm: 80 },
+                              width: { xs: 80, sm: 80 },
                               opacity: { xs: 1, sm: 0.7 },
                               transition: 'all 0.2s ease',
                               color: '#5865f2',
@@ -447,20 +452,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                             <FavoriteIcon fontSize={isMobile ? 'small' : 'medium'} />
                           </ActionButton>
                         </Tooltip>
-
-                        {/* <Tooltip title="View Profile" placement="top" TransitionComponent={Zoom}>
-                          <ActionButton
-                            size="small"
-                            sx={{
-                              '&:hover': {
-                                color: '#fff',
-                                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                              },
-                            }}
-                          >
-                            <PersonSearchIcon fontSize={isMobile ? 'small' : 'medium'} />
-                          </ActionButton>
-                        </Tooltip> */}
 
                         <Tooltip title="Direct Message" placement="top" TransitionComponent={Zoom}>
                           <ActionButton

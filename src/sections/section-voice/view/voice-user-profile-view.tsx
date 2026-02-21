@@ -31,23 +31,13 @@ const VoiceUserProfileView = () => {
 
   const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
-  const { isMicMuted, isDeafened, volume } = userVoiceState;
+  const { volume, isMicMuted, isDeafened } = userVoiceState;
 
-  const { setMicrophoneGain, setOutputGain, toggleMicrophone, onClickMicrophone } =
-    useWebRTCContext();
+  const { setOutputGain, onClickMicrophone } = useWebRTCContext();
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
-  };
-
-  const handleMicLevelChange = (level: number) => {
-    setMicrophoneGain(level);
-    updateUserVoiceState({ micGain: level });
-  };
-
-  const handleVolumeChange = (level: number) => {
-    updateUserVoiceState({ volume: level });
-    setOutputGain(level);
+    updateUserVoiceState({ isMicMuted: !isMicMuted });
   };
 
   const handleDeafen = () => {
@@ -55,11 +45,9 @@ const VoiceUserProfileView = () => {
     if (!isDeafened) {
       // Mute both mic and speaker when deafening
       setOutputGain(0); // Mute speaker
-      if (!isMicMuted) toggleMicrophone(); // Mute mic
     } else {
       // Restore previous volumes when undeafening
       setOutputGain(volume);
-      if (isMicMuted) toggleMicrophone(); // Unmute mic
     }
   };
 
@@ -233,10 +221,7 @@ const VoiceUserProfileView = () => {
             },
           }}
         >
-          <VoiceAudioControls
-            onMicLevelChange={handleMicLevelChange}
-            onVolumeChange={handleVolumeChange}
-          />
+          <VoiceAudioControls />
         </Box>
       </Collapse>
 
