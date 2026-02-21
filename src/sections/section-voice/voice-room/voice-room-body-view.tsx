@@ -158,7 +158,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
 
-  const { localStream, remoteStreams, setRemoteVolume, isMicMuted } = webRTC;
+  const { localStream, remoteStreams, setRemoteVolume, isMicMuted, isDeafened } = webRTC;
 
   const { room, participants } = useRoomTools();
 
@@ -677,7 +677,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           isLocal={participant.isLocal}
           userName={participant.name || 'unknown'}
           volume={userVolumes[participant.socketId]}
-          muted={participant.isMuted}
+          muted={participant.isMuted || isDeafened}
         />
       ))}
     </Box>

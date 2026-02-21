@@ -2,6 +2,8 @@ import React, { useRef, useEffect } from 'react';
 
 import { Box } from '@mui/material';
 
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+
 interface UserAudioProps {
   stream: MediaStream | null;
   isLocal: boolean;
@@ -21,6 +23,10 @@ export default function VoiceUserAudio({
   volume = 100,
   muted = false,
 }: UserAudioProps) {
+  const webRTC = useWebRTCContext();
+
+  const { isDeafened } = webRTC;
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Handle stream attachment
@@ -40,9 +46,9 @@ export default function VoiceUserAudio({
   useEffect(() => {
     if (audioRef.current) {
       // If muted, set volume to 0, otherwise use volume/100
-      audioRef.current.volume = muted ? 0 : volume / 100;
+      audioRef.current.volume = muted || isDeafened ? 0 : volume / 100;
     }
-  }, [volume, muted]);
+  }, [volume, muted, isDeafened]);
 
   return (
     <Box sx={{ position: 'relative' }}>

@@ -197,6 +197,7 @@ export function useRemoteAudio({
         if (nodes.gainNode) {
           const settings = remoteAudioSettings[socketId];
 
+          console.log(`Applying deafen: ${deafened} on ${socketId}`);
           if (deafened) {
             nodes.gainNode.gain.value = 0;
             console.log(`[${socketId}] Deafened -> 0`);

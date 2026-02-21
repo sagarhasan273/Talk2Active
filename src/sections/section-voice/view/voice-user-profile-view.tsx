@@ -31,9 +31,9 @@ const VoiceUserProfileView = () => {
 
   const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
-  const { volume, isMicMuted, isDeafened } = userVoiceState;
+  const { isMicMuted, isDeafened } = userVoiceState;
 
-  const { setOutputGain, onClickMicrophone } = useWebRTCContext();
+  const { toggleDeafen, onClickMicrophone } = useWebRTCContext();
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
@@ -41,14 +41,8 @@ const VoiceUserProfileView = () => {
   };
 
   const handleDeafen = () => {
+    toggleDeafen();
     updateUserVoiceState({ isDeafened: !isDeafened });
-    if (!isDeafened) {
-      // Mute both mic and speaker when deafening
-      setOutputGain(0); // Mute speaker
-    } else {
-      // Restore previous volumes when undeafening
-      setOutputGain(volume);
-    }
   };
 
   const toggleAudioControls = () => {
