@@ -2,13 +2,13 @@
 
 import { useRef, useCallback } from 'react';
 
-import type { PeerConnectionState } from './types';
+import type { ConnectionStatus, PeerConnectionState } from './types';
 
 interface UsePeerConnectionsProps {
   localStreamRef: React.MutableRefObject<MediaStream | null>;
   onRemoteStreamAdded: (socketId: string, stream: MediaStream) => void;
   onRemoteStreamRemoved: (socketId: string) => void;
-  onConnectionStateChange?: (socketId: string, state: string) => void;
+  onConnectionStateChange?: (socketId: string, state: ConnectionStatus[string]) => void;
 }
 
 export function usePeerConnections({

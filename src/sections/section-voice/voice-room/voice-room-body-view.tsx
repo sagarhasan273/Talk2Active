@@ -158,7 +158,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
 
-  const { localStream, remoteStreams, setRemoteVolume, isMicMuted, isDeafened } = webRTC;
+  const { localStream, remoteStreams, setRemoteVolume, isMicMuted, isDeafened, connectionStatus } =
+    webRTC;
 
   const { room, participants } = useRoomTools();
 
@@ -394,7 +395,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
                         verified: selectedParticipant.verified,
                         isLocal: selectedParticipant.isLocal,
-                        connectionState: selectedParticipant.connectionState,
+                        connectionStatus: connectionStatus[selectedParticipant.socketId],
+                        hasJoin: selectedParticipant.hasJoin,
                       }}
                       size="large"
                       stream={
@@ -563,8 +565,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         isMuted: Boolean(participant.isMuted),
                         userType: participant.userType,
                         verified: participant.verified,
-                        connectionState: participant.connectionState,
+                        connectionStatus: connectionStatus[participant.socketId],
                         isLocal: participant.isLocal,
+                        hasJoin: participant.hasJoin,
                       }}
                       onClick={() => handleSelectedParticipant(participant)}
                       stream={

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import { useRoomTools } from 'src/core/slices';
+
 import { useLocalAudio } from './use-local-audio';
 import { useRemoteAudio } from './use-remote-audio';
 import { useAudioSettings } from './use-audio-settings';
@@ -10,6 +12,8 @@ import { usePeerConnections } from './use-peer-connections';
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 
 export function useWebRTC(): UseWebRTCReturn {
+  const { removeParticipant } = useRoomTools();
+
   // Audio settings management
   const {
     audioSettings,
@@ -83,6 +87,9 @@ export function useWebRTC(): UseWebRTCReturn {
     },
     onConnectionStateChange: (socketId, state) => {
       setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
+      if (state === 'failed') {
+        removeParticipant(socketId);
+      }
     },
   });
 

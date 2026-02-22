@@ -1,5 +1,4 @@
 import MicIcon from '@mui/icons-material/Mic';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { Box, Stack, Paper, Slider, Typography } from '@mui/material';
 
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -8,18 +7,13 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 export function VoiceAudioControls() {
   const { userVoiceState, updateUserVoiceState } = useRoomTools();
 
-  const { volume, micGain, isMicMuted, isDeafened } = userVoiceState;
+  const { micGain, isMicMuted } = userVoiceState;
 
-  const { setMicrophoneGain, setOutputGain } = useWebRTCContext();
+  const { setMicrophoneGain } = useWebRTCContext();
 
   const handleMicLevelChange = (level: number) => {
     setMicrophoneGain(level);
     updateUserVoiceState({ micGain: level });
-  };
-
-  const handleVolumeChange = (level: number) => {
-    updateUserVoiceState({ volume: level });
-    setOutputGain(level);
   };
 
   return (
@@ -64,7 +58,7 @@ export function VoiceAudioControls() {
         </Box>
 
         {/* Speaker Volume Control */}
-        <Box>
+        {/* <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <VolumeUpIcon color="primary" sx={{ color: 'grey.500', fontSize: 16 }} />
@@ -100,7 +94,7 @@ export function VoiceAudioControls() {
               },
             }}
           />
-        </Box>
+        </Box> */}
 
         {/* Audio Settings Summary */}
         {/* <Box sx={{ mt: 1, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>

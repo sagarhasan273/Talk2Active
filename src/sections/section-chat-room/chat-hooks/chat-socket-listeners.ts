@@ -66,7 +66,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
 
     // User left
     const handleUserLeft = (data: { socketId: string; roomId?: string }) => {
-      updateParticipant({ socketId: data.socketId, hasJoin: false, connectionState: 'connecting' });
+      updateParticipant({ socketId: data.socketId, hasJoin: false });
     };
 
     // Audio toggled

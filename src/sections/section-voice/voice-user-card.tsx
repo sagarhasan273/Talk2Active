@@ -1,4 +1,5 @@
 import type { Participant } from 'src/types/type-room';
+import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
 import { useState } from 'react';
 
@@ -119,6 +120,8 @@ type VoiceUserCardProps = {
     isMuted?: boolean;
     isDeafened?: boolean;
     isLocal?: boolean;
+    connectionStatus?: ConnectionStatus[string];
+    hasJoin?: boolean;
   };
   size?: 'small' | 'medium' | 'large';
   showName?: boolean;
@@ -155,52 +158,55 @@ export function VoiceUserCard({
     isMuted = false,
     isDeafened = false,
     isLocal = false,
-    connectionState = 'new',
+    connectionStatus = null,
+    hasJoin = true,
   } = user;
 
-  // Determine badge content based on priority
-  const getBadgeContent = () => {
-    if (connectionState === 'disconnected') {
+  const getConnectionStatus = () => {
+    if (!hasJoin) {
       return (
         <Box
           sx={{
-            bgcolor: 'error.main',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bgcolor: 'grey.600',
             color: 'white',
             px: 1,
+            py: 0.5,
             borderRadius: 10,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 1,
             border: `2px solid ${theme.palette.background.paper}`,
-            position: 'relative',
             overflow: 'hidden',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-              animation: 'slide 2s ease-in-out infinite',
-            },
-            '@keyframes slide': {
-              '0%': { left: '-100%' },
-              '100%': { left: '200%' },
+            width: 'auto',
+            minWidth: 90,
+            zIndex: 10,
+            animation: 'fadeIn 0.3s ease',
+            '@keyframes fadeIn': {
+              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
+              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
             },
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
-            Disconnected
+            Voice Closed
           </Typography>
         </Box>
       );
     }
 
-    if (connectionState === 'connecting') {
+    if (connectionStatus === 'connecting') {
       return (
         <Box
           sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             bgcolor: 'warning.main',
             color: 'white',
             px: 1.5,
@@ -208,8 +214,17 @@ export function VoiceUserCard({
             borderRadius: 10,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 1,
             border: `2px solid ${theme.palette.background.paper}`,
+            width: 'auto',
+            minWidth: 90,
+            zIndex: 10,
+            animation: 'fadeIn 0.3s ease',
+            '@keyframes fadeIn': {
+              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
+              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
+            },
           }}
         >
           <Box
@@ -231,6 +246,61 @@ export function VoiceUserCard({
       );
     }
 
+    if (connectionStatus === 'disconnected') {
+      return (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bgcolor: 'error.main',
+            color: 'white',
+            px: 1,
+            py: 0.5,
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            border: `2px solid ${theme.palette.background.paper}`,
+            overflow: 'hidden',
+            width: 'auto',
+            minWidth: 90,
+            zIndex: 10,
+            animation: 'fadeIn 0.3s ease',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+              animation: 'slide 2s ease-in-out infinite',
+            },
+            '@keyframes slide': {
+              '0%': { left: '-100%' },
+              '100%': { left: '200%' },
+            },
+            '@keyframes fadeIn': {
+              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
+              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
+            },
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600, zIndex: 2 }}>
+            Disconnected
+          </Typography>
+        </Box>
+      );
+    }
+
+    return null;
+  };
+
+  // Determine badge content based on priority
+  const getBadgeContent = () => {
     if (isDeafened) {
       return (
         <Tooltip title="Deafened">
@@ -315,6 +385,8 @@ export function VoiceUserCard({
     }
   };
 
+  const connectionStatusElement = getConnectionStatus();
+
   return (
     <Box
       className={className}
@@ -345,6 +417,7 @@ export function VoiceUserCard({
                 ? 'scale(1) translate(20%, 20%)'
                 : 'scale(1) translate(30%, 30%)',
             transition: 'transform 0.2s ease',
+            zIndex: 20,
             ...(isHovered && {
               transform:
                 badgeContent && typeof badgeContent === 'object'
@@ -366,18 +439,25 @@ export function VoiceUserCard({
               borderRadius: '50%',
               backgroundColor: getStatusColor(),
               border: `2px solid ${theme.palette.background.paper}`,
-              zIndex: 2,
+              zIndex: 15,
             }}
           />
         )}
 
+        {/* Connection Status Overlay */}
+        {connectionStatusElement}
+
         <StyledAvatar
           src={profilePhoto}
-          isSpeaking={!isSpeaking}
+          isSpeaking={isSpeaking}
           isActive={isActive}
           isSelected={isSelected}
           size={isMobile && size === 'large' ? 'medium' : size}
           alt={fUsername(name)}
+          sx={{
+            opacity: connectionStatusElement ? 0.3 : 1,
+            transition: 'opacity 0.3s ease',
+          }}
         >
           {fUsername(name)}
         </StyledAvatar>

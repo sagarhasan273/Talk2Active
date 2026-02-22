@@ -47,7 +47,7 @@ export interface PeerConnectionState {
 }
 
 export interface ConnectionStatus {
-  [socketId: string]: string;
+  [socketId: string]: 'new' | 'connecting' | 'connected' | 'disconnected' | 'failed' | 'closed';
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {

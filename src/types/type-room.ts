@@ -69,7 +69,6 @@ export type Participant = {
   volume?: number;
   userType?: string;
   verified?: UserType['verified'];
-  connectionState?: 'new' | 'connecting' | 'connected' | 'disconnected' | 'failed' | 'closed';
   hasJoin?: boolean;
 };
 
