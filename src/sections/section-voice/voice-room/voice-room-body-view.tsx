@@ -1,6 +1,6 @@
 import type { Participant } from 'src/types/type-room';
 
-import React, { useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import PanToolIcon from '@mui/icons-material/PanTool';
@@ -163,31 +163,37 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const { room, participants } = useRoomTools();
 
-  const [selectedParticipant, setSelectedParticipant] = useState<Participant | undefined>(
-    undefined
-  );
   const [isSelectionAnimating, setIsSelectionAnimating] = useState(false);
   const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null);
   const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
   const [reaction, setReaction] = useState<string | null>(null);
+  const [participantId, setParticipantId] = useState<string | undefined>(undefined);
+
+  const viewParticipant = useRef<Participant | undefined>(undefined);
 
   const participantsArray = useMemo(
     () =>
-      Object.values(participants).filter(
-        (participant) => participant.userId !== selectedParticipant?.userId
-      ),
-    [participants, selectedParticipant]
+      Object.values(participants).filter((participant) => {
+        if (participant.userId === participantId) {
+          viewParticipant.current = participant;
+          return false;
+        }
+        return true;
+      }),
+    [participants, participantId]
   );
 
   const handleSelectedParticipant = (data: Participant) => {
     setIsSelectionAnimating(true);
-    setSelectedParticipant(data);
+    viewParticipant.current = data;
+    setParticipantId(data.userId);
     setTimeout(() => setIsSelectionAnimating(false), 200);
   };
 
   const handleBackToGrid = () => {
     setIsSelectionAnimating(true);
-    setSelectedParticipant(undefined);
+    viewParticipant.current = undefined;
+    setParticipantId(undefined);
     setTimeout(() => setIsSelectionAnimating(false), 500);
   };
 
@@ -200,6 +206,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     setReaction(reactionType);
     setTimeout(() => setReaction(null), 2000);
   };
+
+  const selectedParticipant = viewParticipant.current;
 
   return (
     <Box
@@ -391,7 +399,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         profilePhoto: selectedParticipant.profilePhoto,
                         status: 'online',
                         isSpeaking: false,
-                        isMuted: isMicMuted,
+                        isMuted: selectedParticipant.isMuted,
                         userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
                         verified: selectedParticipant.verified,
                         isLocal: selectedParticipant.isLocal,

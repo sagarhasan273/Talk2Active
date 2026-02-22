@@ -293,9 +293,9 @@ export function VoiceRoomLayout({
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
-            sm: '220px 1fr 60px',
-            md: '250px 1fr 60px',
-            lg: '250px 1fr 60px',
+            sm: '220px 1fr 0px',
+            md: '250px 1fr 0px',
+            lg: '250px 1fr 0px',
           },
           gridTemplateRows: {
             xs: '150px 1fr',

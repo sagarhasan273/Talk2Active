@@ -448,7 +448,7 @@ export function VoiceUserCard({
         {connectionStatusElement}
 
         <StyledAvatar
-          src={profilePhoto}
+          src={verified ? (profilePhoto ?? undefined) : 'TS'}
           isSpeaking={isSpeaking}
           isActive={isActive}
           isSelected={isSelected}

@@ -20,6 +20,7 @@ import {
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
@@ -29,7 +30,9 @@ const VoiceUserProfileView = () => {
   const user = useSelector(selectAccount);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
-  const { userVoiceState, updateUserVoiceState } = useRoomTools();
+  const { room, userVoiceState, updateUserVoiceState } = useRoomTools();
+
+  const { emit, socket } = useSocketContext();
 
   const { isMicMuted, isDeafened } = userVoiceState;
 
@@ -38,6 +41,14 @@ const VoiceUserProfileView = () => {
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
     updateUserVoiceState({ isMicMuted: !isMicMuted });
+    if (room.id) {
+      emit('user-audio-toggle', {
+        socketId: socket?.id,
+        roomId: room.id,
+        isMuted: !isMicMuted,
+        name: user.name,
+      });
+    }
   };
 
   const handleDeafen = () => {
