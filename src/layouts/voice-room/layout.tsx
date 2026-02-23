@@ -300,7 +300,7 @@ export function VoiceRoomLayout({
           gridTemplateRows: {
             xs: 'auto 1fr',
             sm: '120px 1fr',
-            md: '120px 1fr 20px',
+            md: '120px 1fr',
           },
           gap: 1,
           px: 1,
