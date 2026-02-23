@@ -3,7 +3,6 @@ import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
 import { useState } from 'react';
 
-import MicOffIcon from '@mui/icons-material/MicOff';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
 import {
@@ -287,26 +286,6 @@ export function VoiceUserCard({
       );
     }
 
-    // Priority 2: Muted
-    if (isMuted && !isDeafened) {
-      return (
-        <Tooltip title="Muted" arrow placement="top">
-          <Box
-            sx={{
-              bgcolor: '#f44336',
-              p: 0.5,
-              borderRadius: '50%',
-              display: 'flex',
-              border: `2px solid ${theme.palette.background.paper}`,
-              boxShadow: theme.shadows[2],
-            }}
-          >
-            <MicOffIcon sx={{ fontSize: isMobile ? 12 : 16, color: '#fff' }} />
-          </Box>
-        </Tooltip>
-      );
-    }
-
     // Priority 3: User type with verification
     if (userType === 'Host' || userType === 'Moderator' || userType === 'Speaker') {
       return (
@@ -400,6 +379,7 @@ export function VoiceUserCard({
           <VoiceSpeakingIndicator
             stream={stream}
             size={isMobile && size === 'large' ? 'medium' : size}
+            isMuted={isMuted && !isDeafened}
           />
         )}
 

@@ -170,6 +170,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('user-joined', handleUserJoined);
     on('user-left', handleUserLeft);
     on('user-audio-toggled', handleAudioToggled);
+    on('user-audio-toggled-self', handleAudioToggled);
     on('user-status-selected', handleStatusUpdated);
     on('receive-group-message', handleGroupMessage);
     on('receive-edit-group-message', handleEditedMessage);
@@ -187,6 +188,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       off('user-joined', handleUserJoined);
       off('user-left', handleUserLeft);
       off('user-audio-toggled', handleAudioToggled);
+      off('user-audio-toggled-self', handleAudioToggled);
       off('user-status-selected', handleStatusUpdated);
       off('receive-group-message', handleGroupMessage);
       off('receive-edit-group-message', handleEditedMessage);
