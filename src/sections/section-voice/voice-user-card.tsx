@@ -395,6 +395,7 @@ export function VoiceUserCard({
         {/* Connection Status Overlay */}
         {connectionStatusElement}
 
+        {/* Speaking Indicator */}
         {showSpeakingIndicator && (
           <VoiceSpeakingIndicator
             stream={stream}
@@ -416,7 +417,6 @@ export function VoiceUserCard({
           }}
         >
           {fUsername(name)}
-          {/* Speaking Indicator */}
         </StyledAvatar>
       </Badge>
 
