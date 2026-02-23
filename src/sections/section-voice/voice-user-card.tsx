@@ -174,7 +174,7 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
     position: 'absolute',
     top: 5,
     right: 5,
-    width: 20, // Increased size to accommodate icon
+    width: 20,
     height: 20,
     borderRadius: '50%',
     backgroundColor: theme.palette[statusOption?.bgColor]?.main || theme.palette.success.main,
@@ -431,12 +431,12 @@ export function VoiceUserCard({
         }}
       >
         {/* Status indicator dot */}
-        {showStatus && status && (
+        {showStatus && status !== 'online' && (
           <Tooltip title={STATUS_MAP[status || 'online']?.label}>
             <StatusDot status={status}>
               {(() => {
                 const IconComponent = STATUS_MAP[status || 'online']?.icon;
-                return IconComponent ? <IconComponent /> : null;
+                return IconComponent ? <IconComponent style={{ width: 14, height: 14 }} /> : null;
               })()}
             </StatusDot>
           </Tooltip>
