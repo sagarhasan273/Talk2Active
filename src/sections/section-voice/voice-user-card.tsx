@@ -71,8 +71,8 @@ const StyledAvatar = styled(Avatar, {
     transition: 'all 0.3s ease',
     cursor: 'pointer',
     '&:hover': {
-      transform: 'scale(1.05)',
-      boxShadow: theme.shadows[8],
+      transform: 'scale(1.02)',
+      boxShadow: theme.shadows[4],
     },
     [theme.breakpoints.down('sm')]: {
       ...(size === 'large' ? sizes.medium : sizes.small),
@@ -111,6 +111,61 @@ const UserTypeBadge = styled(Box, {
   };
 });
 
+// Status indicator styled component
+const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
+  const colors = {
+    online: '#43b581',
+    busy: '#faa61a',
+    offline: '#747f8d',
+    idle: '#faa61a',
+  };
+
+  return {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+    backgroundColor: colors[status as keyof typeof colors] || colors.online,
+    border: `2px solid ${theme.palette.background.paper}`,
+    zIndex: 15,
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  };
+});
+
+// Connection status overlay component
+const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) => {
+  const colors = {
+    connecting: theme.palette.warning.main,
+    disconnected: theme.palette.error.main,
+    failed: theme.palette.error.dark,
+    closed: theme.palette.grey[600],
+  };
+
+  return {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: colors[status as keyof typeof colors] || colors.closed,
+    color: 'white',
+    padding: theme.spacing(0.5, 1),
+    borderRadius: 10,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(0.5),
+    border: `2px solid ${theme.palette.background.paper}`,
+    zIndex: 10,
+    animation: 'fadeIn 0.3s ease',
+    '@keyframes fadeIn': {
+      '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
+      '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
+    },
+  };
+});
+
 type VoiceUserCardProps = {
   stream: MediaStream | null;
   user: Partial<Participant> & {
@@ -126,6 +181,7 @@ type VoiceUserCardProps = {
   size?: 'small' | 'medium' | 'large';
   showName?: boolean;
   showStatus?: boolean;
+  showSpeakingIndicator?: boolean;
   onClick?: () => void;
   onDoubleClick?: () => void;
   className?: string;
@@ -137,12 +193,12 @@ export function VoiceUserCard({
   size = 'medium',
   showName = true,
   showStatus = true,
+  showSpeakingIndicator = true,
   onClick,
   onDoubleClick,
   className,
 }: VoiceUserCardProps) {
   const theme = useTheme();
-
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHovered, setIsHovered] = useState(false);
 
@@ -162,71 +218,21 @@ export function VoiceUserCard({
     hasJoin = true,
   } = user;
 
+  // Memoize connection status display
   const getConnectionStatus = () => {
     if (!hasJoin) {
       return (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'grey.600',
-            color: 'white',
-            px: 1,
-            py: 0.5,
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            border: `2px solid ${theme.palette.background.paper}`,
-            overflow: 'hidden',
-            width: 'auto',
-            minWidth: 90,
-            zIndex: 10,
-            animation: 'fadeIn 0.3s ease',
-            '@keyframes fadeIn': {
-              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
-              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
-            },
-          }}
-        >
+        <ConnectionOverlay status="closed">
           <Typography variant="caption" sx={{ fontWeight: 600 }}>
             Voice Closed
           </Typography>
-        </Box>
+        </ConnectionOverlay>
       );
     }
 
     if (connectionStatus === 'connecting') {
       return (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'warning.main',
-            color: 'white',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            border: `2px solid ${theme.palette.background.paper}`,
-            width: 'auto',
-            minWidth: 90,
-            zIndex: 10,
-            animation: 'fadeIn 0.3s ease',
-            '@keyframes fadeIn': {
-              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
-              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
-            },
-          }}
-        >
+        <ConnectionOverlay status="connecting">
           <Box
             sx={{
               width: 12,
@@ -242,68 +248,29 @@ export function VoiceUserCard({
             }}
           />
           <Typography variant="caption">Connecting...</Typography>
-        </Box>
+        </ConnectionOverlay>
       );
     }
 
-    if (connectionStatus === 'disconnected') {
+    if (connectionStatus === 'disconnected' || connectionStatus === 'failed') {
       return (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'error.main',
-            color: 'white',
-            px: 1,
-            py: 0.5,
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            border: `2px solid ${theme.palette.background.paper}`,
-            overflow: 'hidden',
-            width: 'auto',
-            minWidth: 90,
-            zIndex: 10,
-            animation: 'fadeIn 0.3s ease',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-              animation: 'slide 2s ease-in-out infinite',
-            },
-            '@keyframes slide': {
-              '0%': { left: '-100%' },
-              '100%': { left: '200%' },
-            },
-            '@keyframes fadeIn': {
-              '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
-              '100%': { opacity: 1, transform: 'translate(-50%, -50%)' },
-            },
-          }}
-        >
+        <ConnectionOverlay status="disconnected">
           <Typography variant="caption" sx={{ fontWeight: 600, zIndex: 2 }}>
             Disconnected
           </Typography>
-        </Box>
+        </ConnectionOverlay>
       );
     }
 
     return null;
   };
 
-  // Determine badge content based on priority
+  // Memoize badge content
   const getBadgeContent = () => {
+    // Priority 1: Deafened
     if (isDeafened) {
       return (
-        <Tooltip title="Deafened">
+        <Tooltip title="Deafened" arrow placement="top">
           <Box
             sx={{
               bgcolor: '#f44336',
@@ -311,6 +278,7 @@ export function VoiceUserCard({
               borderRadius: '50%',
               display: 'flex',
               border: `2px solid ${theme.palette.background.paper}`,
+              boxShadow: theme.shadows[2],
             }}
           >
             <HeadsetOffIcon sx={{ fontSize: isMobile ? 12 : 16, color: '#fff' }} />
@@ -319,9 +287,10 @@ export function VoiceUserCard({
       );
     }
 
+    // Priority 2: Muted
     if (isMuted && !isDeafened) {
       return (
-        <Tooltip title="Muted">
+        <Tooltip title="Muted" arrow placement="top">
           <Box
             sx={{
               bgcolor: '#f44336',
@@ -329,6 +298,7 @@ export function VoiceUserCard({
               borderRadius: '50%',
               display: 'flex',
               border: `2px solid ${theme.palette.background.paper}`,
+              boxShadow: theme.shadows[2],
             }}
           >
             <MicOffIcon sx={{ fontSize: isMobile ? 12 : 16, color: '#fff' }} />
@@ -337,54 +307,51 @@ export function VoiceUserCard({
       );
     }
 
+    // Priority 3: User type with verification
     if (userType === 'Host' || userType === 'Moderator' || userType === 'Speaker') {
       return (
-        <UserTypeBadge userType={userType}>
-          {verified && <VerifiedIcon sx={{ fontSize: isMobile ? 10 : 12 }} />}
-          {userType}
-        </UserTypeBadge>
+        <Tooltip title={userType} arrow placement="top">
+          <UserTypeBadge userType={userType}>
+            {verified && <VerifiedIcon sx={{ fontSize: isMobile ? 10 : 12 }} />}
+            {userType}
+          </UserTypeBadge>
+        </Tooltip>
       );
     }
 
+    // Priority 4: Verified only
     if (verified) {
       return (
-        <Box
-          sx={{
-            bgcolor: '#5865f2',
-            p: 0.5,
-            borderRadius: '50%',
-            display: 'flex',
-            border: `2px solid ${theme.palette.background.paper}`,
-          }}
-        >
-          <VerifiedIcon sx={{ fontSize: isMobile ? 12 : 16, color: '#fff' }} />
-        </Box>
+        <Tooltip title="Verified" arrow placement="top">
+          <Box
+            sx={{
+              bgcolor: '#5865f2',
+              p: 0.5,
+              borderRadius: '50%',
+              display: 'flex',
+              border: `2px solid ${theme.palette.background.paper}`,
+              boxShadow: theme.shadows[2],
+            }}
+          >
+            <VerifiedIcon sx={{ fontSize: isMobile ? 12 : 16, color: '#fff' }} />
+          </Box>
+        </Tooltip>
       );
     }
 
+    // Priority 5: Local user indicator
     if (isLocal) {
-      return <UserTypeBadge userType="Guest">You</UserTypeBadge>;
+      return (
+        <Tooltip title="You" arrow placement="top">
+          <UserTypeBadge userType="Guest">You</UserTypeBadge>
+        </Tooltip>
+      );
     }
 
     return null;
   };
 
   const badgeContent = getBadgeContent();
-
-  // Status indicator (online/offline/idle)
-  const getStatusColor = () => {
-    switch (status) {
-      case 'online':
-        return '#43b581';
-      case 'busy':
-        return '#faa61a';
-      case 'offline':
-        return '#747f8d';
-      default:
-        return '#43b581';
-    }
-  };
-
   const connectionStatusElement = getConnectionStatus();
 
   return (
@@ -398,8 +365,9 @@ export function VoiceUserCard({
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease',
         width: '100%',
-        maxWidth: size === 'large' ? 160 : size === 'medium' ? 140 : 100,
+        maxWidth: size === 'large' ? 180 : size === 'medium' ? 140 : 100,
         mx: 'auto',
+        mt: 1,
       }}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
@@ -412,40 +380,27 @@ export function VoiceUserCard({
         badgeContent={badgeContent}
         sx={{
           '& .MuiBadge-badge': {
-            transform:
-              badgeContent && typeof badgeContent === 'object'
-                ? 'scale(1) translate(20%, 20%)'
-                : 'scale(1) translate(30%, 30%)',
+            transform: badgeContent ? 'scale(1) translate(20%, 20%)' : 'scale(0)',
             transition: 'transform 0.2s ease',
             zIndex: 20,
             ...(isHovered && {
-              transform:
-                badgeContent && typeof badgeContent === 'object'
-                  ? 'scale(1.1) translate(20%, 20%)'
-                  : 'scale(1.1) translate(30%, 30%)',
+              transform: badgeContent ? 'scale(1.1) translate(20%, 20%)' : 'scale(0)',
             }),
           },
         }}
       >
         {/* Status indicator dot */}
-        {showStatus && status && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 5,
-              right: 5,
-              width: isMobile ? 10 : 12,
-              height: isMobile ? 10 : 12,
-              borderRadius: '50%',
-              backgroundColor: getStatusColor(),
-              border: `2px solid ${theme.palette.background.paper}`,
-              zIndex: 15,
-            }}
-          />
-        )}
+        {showStatus && status && <StatusDot status={status} />}
 
         {/* Connection Status Overlay */}
         {connectionStatusElement}
+
+        {showSpeakingIndicator && (
+          <VoiceSpeakingIndicator
+            stream={stream}
+            size={isMobile && size === 'large' ? 'medium' : size}
+          />
+        )}
 
         <StyledAvatar
           src={verified ? (profilePhoto ?? undefined) : 'TS'}
@@ -457,39 +412,43 @@ export function VoiceUserCard({
           sx={{
             opacity: connectionStatusElement ? 0.3 : 1,
             transition: 'opacity 0.3s ease',
+            filter: connectionStatusElement ? 'blur(1px)' : 'none',
           }}
         >
           {fUsername(name)}
+          {/* Speaking Indicator */}
         </StyledAvatar>
       </Badge>
 
       {/* Name and additional info */}
       {showName && (
         <Fade in timeout={300}>
-          <Box sx={{ width: '100%', textAlign: 'center', mt: 1 }}>
-            <Typography
-              variant={isMobile ? 'body2' : 'body1'}
-              sx={{
-                color: isActive || isSelected ? 'primary.main' : 'text.primary',
-                fontWeight: isActive || isSelected ? 700 : 500,
-                transition: 'color 0.2s ease',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                px: 1,
-                cursor: 'pointer',
-                '&:hover': {
-                  color: 'primary.main',
-                },
-              }}
+          <Box sx={{ width: '100%', textAlign: 'center', mt: 1, px: 0.5 }}>
+            <Tooltip
+              title={name}
+              arrow
+              placement="top"
+              disableHoverListener={!name || name.length < 12}
             >
-              {name}
-              {isLocal && ' (You)'}
-            </Typography>
+              <Typography
+                variant={isMobile ? 'body2' : 'body1'}
+                sx={{
+                  color: isActive || isSelected ? 'primary.main' : 'text.primary',
+                  fontWeight: isActive || isSelected ? 700 : 500,
+                  transition: 'color 0.2s ease',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontSize: size === 'small' ? '0.8rem' : 'inherit',
+                }}
+              >
+                {name}
+                {isLocal && ' (You)'}
+              </Typography>
+            </Tooltip>
           </Box>
         </Fade>
       )}
-      <VoiceSpeakingIndicator stream={stream} />
     </Box>
   );
 }
