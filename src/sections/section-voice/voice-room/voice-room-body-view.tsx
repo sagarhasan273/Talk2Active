@@ -1,8 +1,10 @@
 import type { Participant } from 'src/types/type-room';
 
+import { useSelector } from 'react-redux';
 import React, { useMemo, useState } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -31,8 +33,9 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { useRoomTools } from 'src/core/slices';
+import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -41,13 +44,17 @@ import { VoiceUserCard } from '../voice-user-card';
 
 // Styled Components
 const ControlBar = styled(Paper)(({ theme }) => ({
-  position: 'absolute',
+  position: 'fixed',
   bottom: 20,
   left: '50%',
   transform: 'translateX(-50%)',
   padding: theme.spacing(1, 2),
   borderRadius: 50,
   display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 'auto',
+  minWidth: 250,
   gap: theme.spacing(1),
   backgroundColor: 'rgba(30, 31, 34, 0.95)',
   backdropFilter: 'blur(10px)',
@@ -55,6 +62,7 @@ const ControlBar = styled(Paper)(({ theme }) => ({
   zIndex: 1000,
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(0.5, 1),
+    minWidth: 200,
     bottom: 10,
   },
 }));
@@ -207,10 +215,33 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const webRTC = useWebRTCContext();
-  const { room, participants } = useRoomTools();
+  const { emit, socket } = useSocketContext();
+  const { room, participants, updateUserVoiceState } = useRoomTools();
 
-  const { localStream, remoteStreams, setRemoteVolume, isMicMuted, isDeafened, connectionStatus } =
-    webRTC;
+  const user = useSelector(selectAccount);
+
+  const {
+    localStream,
+    remoteStreams,
+    setRemoteVolume,
+    isMicMuted,
+    isDeafened,
+    connectionStatus,
+    onClickMicrophone,
+  } = webRTC;
+
+  const handleMicMute = () => {
+    onClickMicrophone(!isMicMuted);
+    updateUserVoiceState({ isMicMuted: !isMicMuted });
+    if (room.id) {
+      emit('user-audio-toggle', {
+        socketId: socket?.id,
+        roomId: room.id,
+        isMuted: !isMicMuted,
+        name: user.name,
+      });
+    }
+  };
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
@@ -470,30 +501,41 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             <IconButton
               sx={{
                 bgcolor: isMicMuted ? '#ff4d4d' : 'transparent',
-                color: isMicMuted ? 'white' : '#b5bac1',
+                color: isMicMuted ? 'white' : 'common.white',
                 '&:hover': {
                   bgcolor: isMicMuted ? '#ff0000' : '#3b3d44',
                 },
               }}
+              size="small"
+              onClick={handleMicMute}
             >
-              <MicIcon />
+              {!isMicMuted ? <MicIcon /> : <MicOffIcon />}
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Camera">
-            <IconButton sx={{ color: '#b5bac1', '&:hover': { bgcolor: '#3b3d44' } }}>
+            <IconButton
+              sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
+              size="small"
+            >
               <VideocamIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Share Screen">
-            <IconButton sx={{ color: '#b5bac1', '&:hover': { bgcolor: '#3b3d44' } }}>
+            <IconButton
+              sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
+              size="small"
+            >
               <ScreenShareIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Raise Hand">
-            <IconButton sx={{ color: '#b5bac1', '&:hover': { bgcolor: '#3b3d44' } }}>
+            <IconButton
+              sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
+              size="small"
+            >
               <PanToolIcon />
             </IconButton>
           </Tooltip>
@@ -510,6 +552,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                   bgcolor: '#ff0000',
                 },
               }}
+              size="small"
             >
               <ExitToAppIcon />
             </IconButton>
