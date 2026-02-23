@@ -1,19 +1,17 @@
+import type { UserType } from 'src/types/type-user';
 import type { Participant } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import VideocamIcon from '@mui/icons-material/Videocam';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import AddReactionIcon from '@mui/icons-material/AddReaction';
-import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {
   Box,
@@ -38,6 +36,8 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
+
+import { ChatStatusButton } from 'src/sections/section-chat-room/chat-status-button';
 
 import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
@@ -179,17 +179,17 @@ const BackToGridButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-const FullscreenButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  top: 16,
-  right: 16,
-  zIndex: 100,
-  backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  color: 'white',
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-}));
+// const FullscreenButton = styled(IconButton)(({ theme }) => ({
+//   position: 'absolute',
+//   top: 16,
+//   right: 16,
+//   zIndex: 100,
+//   backgroundColor: 'rgba(0, 0, 0, 0.6)',
+//   color: 'white',
+//   '&:hover': {
+//     backgroundColor: 'rgba(0, 0, 0, 0.8)',
+//   },
+// }));
 
 const VolumeSlider = styled(Slider)({
   width: 100,
@@ -216,7 +216,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const { room, participants, updateUserVoiceState } = useRoomTools();
+  const { room, participants, updateUserVoiceState, updateParticipantStatus } = useRoomTools();
 
   const user = useSelector(selectAccount);
 
@@ -246,7 +246,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
   const [reaction, setReaction] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // const [isFullscreen, setIsFullscreen] = useState(false);
 
   const selectedParticipant = useMemo(
     () => (selectedUserId ? participants[selectedUserId] : null),
@@ -276,9 +276,26 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     setTimeout(() => setReaction(null), 2000);
   };
 
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  // const toggleFullscreen = () => {
+  //   setIsFullscreen(!isFullscreen);
+  // };
+
+  // Status toggle handler
+  const handleToggleUserStatus = useCallback(
+    (selectedStatus: UserType['status']) => {
+      if (!socket) return;
+
+      socket.emit('user-status-select', {
+        roomId: room.id,
+        socketId: socket.id,
+        status: selectedStatus,
+        name: user.name,
+      });
+
+      if (socket.id) updateParticipantStatus({ socketId: socket.id, status: selectedStatus });
+    },
+    [socket, room.id, user?.name, updateParticipantStatus]
+  );
 
   const isSelected = Boolean(selectedParticipant);
 
@@ -328,11 +345,11 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                 )}
 
                 {/* Fullscreen toggle for desktop */}
-                {!isMobile && (
+                {/* {!isMobile && (
                   <FullscreenButton size="small" onClick={toggleFullscreen}>
                     {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
                   </FullscreenButton>
-                )}
+                )} */}
 
                 {/* Reaction animation */}
                 {reaction && (
@@ -513,13 +530,17 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Camera">
+          {/* <Tooltip title="Camera">
             <IconButton
               sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
               size="small"
             >
               <VideocamIcon />
             </IconButton>
+          </Tooltip> */}
+
+          <Tooltip title="Camera">
+            <ChatStatusButton onStatusChange={handleToggleUserStatus} />
           </Tooltip>
 
           <Tooltip title="Share Screen">

@@ -2,6 +2,7 @@ import type { Participant } from 'src/types/type-room';
 import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
 import { useState } from 'react';
+import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
 
 import VerifiedIcon from '@mui/icons-material/Verified';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
@@ -18,9 +19,11 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { fUsername } from 'src/utils/helper';
+import { fUsername } from 'src/utils/helper'; // or Nightlight
 
 import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
+
+import type { ChatUserStatus } from '../section-chat-room/type'; // or PersonOff
 
 // Animation for the active speaker
 const pulse = keyframes`
@@ -108,28 +111,87 @@ const UserTypeBadge = styled(Box, {
       fontSize: '0.6rem',
     },
   };
-});
+}); // or Cancel
 
-// Status indicator styled component
+const STATUS_OPTIONS: ChatUserStatus[] = [
+  {
+    name: 'online',
+    label: 'Online',
+    icon: CheckCircle,
+    color: 'success.main',
+    bgColor: 'success',
+    bgColorChannel: 'mainChannel',
+  },
+  {
+    name: 'busy',
+    label: 'Busy',
+    icon: Clock,
+    color: 'error.light',
+    bgColor: 'error',
+    bgColorChannel: 'lightChannel',
+  },
+  {
+    name: 'brb',
+    label: 'BRB',
+    icon: Pause,
+    color: 'yellow.main',
+    bgColor: 'yellow',
+    bgColorChannel: 'mainChannel',
+  },
+  {
+    name: 'afk',
+    label: 'AFK',
+    icon: UserX,
+    color: 'orange.main',
+    bgColor: 'orange',
+    bgColorChannel: 'mainChannel',
+  },
+  {
+    name: 'zzz',
+    label: 'Zzz',
+    icon: Moon,
+    color: 'stone.main',
+    bgColor: 'stone',
+    bgColorChannel: 'mainChannel',
+  },
+  {
+    name: 'offline',
+    label: 'Offline',
+    icon: CircleOff,
+    color: 'stone.dark',
+    bgColor: 'stone',
+    bgColorChannel: 'darkChannel',
+  },
+];
+
+const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.name, s]));
+
+// Enhanced StatusDot with icon
 const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
-  const colors = {
-    online: '#43b581',
-    busy: '#faa61a',
-    offline: '#747f8d',
-    idle: '#faa61a',
-  };
+  const statusOption = STATUS_MAP[status || 'online'];
 
   return {
     position: 'absolute',
     top: 5,
     right: 5,
-    width: 12,
-    height: 12,
+    width: 20, // Increased size to accommodate icon
+    height: 20,
     borderRadius: '50%',
-    backgroundColor: colors[status as keyof typeof colors] || colors.online,
+    backgroundColor: theme.palette[statusOption?.bgColor]?.main || theme.palette.success.main,
     border: `2px solid ${theme.palette.background.paper}`,
     zIndex: 15,
     boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.2s ease',
+    '&:hover': {
+      transform: 'scale(1.1)',
+    },
+    '& svg': {
+      fontSize: 12,
+      color: theme.palette.common.white,
+    },
   };
 });
 
@@ -369,7 +431,16 @@ export function VoiceUserCard({
         }}
       >
         {/* Status indicator dot */}
-        {showStatus && status && <StatusDot status={status} />}
+        {showStatus && status && (
+          <Tooltip title={STATUS_MAP[status || 'online']?.label}>
+            <StatusDot status={status}>
+              {(() => {
+                const IconComponent = STATUS_MAP[status || 'online']?.icon;
+                return IconComponent ? <IconComponent /> : null;
+              })()}
+            </StatusDot>
+          </Tooltip>
+        )}
 
         {/* Connection Status Overlay */}
         {connectionStatusElement}

@@ -64,7 +64,7 @@ export const STATUS_OPTIONS: ChatUserStatus[] = [
 const INITIAL_STATUS: ChatUserStatus = STATUS_OPTIONS[0];
 
 interface ChatStatusButtonProps {
-  onStatusChange: (status: UserType['status']) => void;
+  onStatusChange?: (status: UserType['status']) => void;
 }
 
 export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
@@ -155,17 +155,17 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
                       m: 0.5,
                       borderRadius: 1,
                       color: isSelected ? status.color : status.color,
-                      backgroundColor: isSelected
-                        ? varAlpha(
-                            (
-                              theme.vars.palette[status.bgColor] as unknown as Record<
-                                string,
-                                string
-                              >
-                            )[status.bgColorChannel],
-                            0.28
-                          )
-                        : 'transparent',
+                      // backgroundColor: isSelected
+                      //   ? varAlpha(
+                      //       (
+                      //         theme.vars.palette[status.bgColor] as unknown as Record<
+                      //           string,
+                      //           string
+                      //         >
+                      //       )[status.bgColorChannel],
+                      //       0.28
+                      //     )
+                      //   : 'transparent',
                       '&:hover': {
                         backgroundColor: varAlpha(
                           (theme.vars.palette[status.bgColor] as unknown as Record<string, string>)[
@@ -202,17 +202,10 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
         sx={{
           p: 1,
           borderRadius: 1,
-          border: `2px solid`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: currentStatus.color,
-          background: varAlpha(
-            (theme.vars.palette[currentStatus.bgColor] as unknown as Record<string, string>)[
-              currentStatus.bgColorChannel
-            ],
-            0.28
-          ),
           '&:hover': {
             color: currentStatus.color,
             background: varAlpha(
