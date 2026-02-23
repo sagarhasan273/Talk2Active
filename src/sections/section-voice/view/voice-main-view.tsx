@@ -33,6 +33,7 @@ export function VoiceMainView() {
     <Box
       sx={{
         p: 2,
+        pb: { xs: 1, sm: 2 },
         borderRadius: 2,
         height: '100%',
         backgroundColor: 'background.paper',

@@ -298,7 +298,7 @@ export function VoiceRoomLayout({
             lg: '250px 1fr 0px',
           },
           gridTemplateRows: {
-            xs: '150px 1fr',
+            xs: 'auto 1fr',
             sm: '120px 1fr',
             md: '120px 1fr 20px',
           },

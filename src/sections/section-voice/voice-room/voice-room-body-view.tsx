@@ -8,10 +8,12 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import SettingsIcon from '@mui/icons-material/Settings';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
-import AddReactionIcon from '@mui/icons-material/AddReaction';
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {
   Box,
@@ -20,6 +22,7 @@ import {
   Chip,
   Paper,
   Slide,
+  Stack,
   Slider,
   styled,
   Avatar,
@@ -48,7 +51,7 @@ const ControlBar = styled(Paper)(({ theme }) => ({
   bottom: 20,
   left: '50%',
   transform: 'translateX(-50%)',
-  padding: theme.spacing(1, 2),
+  padding: theme.spacing(0.5, 2),
   borderRadius: 50,
   display: 'flex',
   alignItems: 'center',
@@ -62,7 +65,9 @@ const ControlBar = styled(Paper)(({ theme }) => ({
   zIndex: 1000,
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(0.5, 1),
-    minWidth: 200,
+    minWidth: 250,
+    position: 'relative',
+    left: 0,
     bottom: 10,
   },
 }));
@@ -120,6 +125,7 @@ const GridSection = styled(Box)(({ theme, isSelected }: { theme?: any; isSelecte
   [theme.breakpoints.down('sm')]: {
     height: isSelected ? '50%' : '100%',
     padding: theme.spacing(1),
+    marginBottom: theme.spacing(2),
   },
 }));
 
@@ -146,20 +152,24 @@ const FeaturedCard = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   gap: theme.spacing(2),
+  padding: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1),
+  },
 }));
 
 const FeaturedControls = styled(Paper)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: theme.spacing(1),
+  gap: theme.spacing(0.5),
   padding: theme.spacing(1, 2),
   borderRadius: 40,
   backgroundColor: theme.palette.background.paper,
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
-  marginTop: theme.spacing(2),
+  marginTop: theme.spacing(1),
   [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(0.5, 1),
+    padding: theme.spacing(0.2, 1),
     gap: theme.spacing(0.5),
   },
 }));
@@ -331,185 +341,192 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
       </Box>
 
       {/* Main Content */}
-      <MainContent>
-        {/* Featured Speaker Section */}
-        <FeaturedSection isSelected={isSelected}>
-          {selectedParticipant && (
-            <Fade in={isSelected} timeout={500}>
-              <FeaturedCard>
-                {/* Back button for mobile */}
-                {isMobile && (
-                  <BackToGridButton size="small" onClick={handleBackToGrid}>
-                    <KeyboardBackspaceIcon />
-                  </BackToGridButton>
-                )}
+      <Scrollbar>
+        <MainContent>
+          {/* Featured Speaker Section */}
+          <FeaturedSection isSelected={isSelected}>
+            {selectedParticipant && (
+              <Fade in={isSelected} timeout={500}>
+                <FeaturedCard>
+                  {/* Back button for mobile */}
+                  {isMobile && (
+                    <BackToGridButton size="small" onClick={handleBackToGrid}>
+                      <KeyboardBackspaceIcon />
+                    </BackToGridButton>
+                  )}
 
-                {/* Fullscreen toggle for desktop */}
-                {/* {!isMobile && (
+                  {/* Fullscreen toggle for desktop */}
+                  {/* {!isMobile && (
                   <FullscreenButton size="small" onClick={toggleFullscreen}>
                     {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
                   </FullscreenButton>
                 )} */}
 
-                {/* Reaction animation */}
-                {reaction && (
-                  <Zoom in timeout={400}>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: '40%',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 20,
-                        animation: 'float 1s ease-out',
-                        '@keyframes float': {
-                          '0%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
-                          '100%': { transform: 'translateX(-50%) translateY(-50px)', opacity: 0 },
-                        },
+                  {/* Reaction animation */}
+                  {reaction && (
+                    <Zoom in timeout={400}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '40%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          zIndex: 20,
+                          animation: 'float 1s ease-out',
+                          '@keyframes float': {
+                            '0%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
+                            '100%': { transform: 'translateX(-50%) translateY(-50px)', opacity: 0 },
+                          },
+                        }}
+                      >
+                        <Avatar sx={{ bgcolor: reaction === '❤️' ? '#ff4d4d' : '#5865f2' }}>
+                          {reaction}
+                        </Avatar>
+                      </Box>
+                    </Zoom>
+                  )}
+
+                  {/* User Card */}
+                  <Box sx={{ transform: 'scale(1.2)' }}>
+                    <VoiceUserCard
+                      user={{
+                        userId: selectedParticipant.userId,
+                        name: selectedParticipant.name,
+                        profilePhoto: selectedParticipant.profilePhoto,
+                        status: selectedParticipant.status,
+                        isSpeaking: false,
+                        isMuted: Boolean(selectedParticipant.isMuted),
+                        userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
+                        verified: selectedParticipant.verified,
+                        isLocal: selectedParticipant.isLocal,
+                        connectionStatus: connectionStatus[selectedParticipant.socketId],
+                        hasJoin: selectedParticipant.hasJoin,
                       }}
+                      size="large"
+                      stream={
+                        selectedParticipant.isLocal
+                          ? localStream
+                          : remoteStreams[selectedParticipant.socketId]
+                      }
+                      showName={false}
+                    />
+                  </Box>
+
+                  {/* User Name and Role */}
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {selectedParticipant.name}
+                    {selectedParticipant.isLocal && ' (You)'}
+                  </Typography>
+
+                  {/* Controls for featured user */}
+                  <FeaturedControls>
+                    <Stack
+                      direction="row"
+                      sx={{ color: '#b5bac1', alignItems: 'center', gap: 0.5 }}
                     >
-                      <Avatar sx={{ bgcolor: reaction === '❤️' ? '#ff4d4d' : '#5865f2' }}>
-                        {reaction}
-                      </Avatar>
-                    </Box>
-                  </Zoom>
-                )}
+                      <VolumeOffIcon fontSize="small" />
+                      <VolumeSlider
+                        size="small"
+                        value={userVolumes[selectedParticipant.socketId] ?? 100}
+                        onChange={(_, value) =>
+                          handleVolumeChange(selectedParticipant.socketId, value as number)
+                        }
+                      />
+                      <VolumeUpIcon fontSize="small" />
+                    </Stack>
 
-                {/* User Card */}
-                <Box sx={{ transform: 'scale(1.2)' }}>
-                  <VoiceUserCard
-                    user={{
-                      userId: selectedParticipant.userId,
-                      name: selectedParticipant.name,
-                      profilePhoto: selectedParticipant.profilePhoto,
-                      status: 'online',
-                      isSpeaking: false,
-                      isMuted: Boolean(selectedParticipant.isMuted),
-                      userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
-                      verified: selectedParticipant.verified,
-                      isLocal: selectedParticipant.isLocal,
-                      connectionStatus: connectionStatus[selectedParticipant.socketId],
-                      hasJoin: selectedParticipant.hasJoin,
-                    }}
-                    size="large"
-                    stream={
-                      selectedParticipant.isLocal
-                        ? localStream
-                        : remoteStreams[selectedParticipant.socketId]
-                    }
-                    showName={false}
-                  />
-                </Box>
+                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 1 }} />
 
-                {/* User Name and Role */}
-                <Typography variant="h6" sx={{ mt: 2, fontWeight: 600 }}>
-                  {selectedParticipant.name}
-                  {selectedParticipant.isLocal && ' (You)'}
-                </Typography>
+                    <Tooltip title="React">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleReaction('❤️')}
+                        sx={{ color: '#b5bac1', '&:hover': { color: '#ff4d4d' } }}
+                      >
+                        <FavoriteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
 
-                <Chip
-                  label={room.host.id === selectedParticipant.userId ? 'Host' : 'Guest'}
-                  size="small"
-                  sx={{
-                    bgcolor: room.host.id === selectedParticipant.userId ? '#5865f2' : '#4e5058',
-                    color: 'white',
-                    fontWeight: 600,
-                  }}
-                />
+                    <Tooltip title="Message">
+                      <IconButton
+                        size="small"
+                        sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
+                      >
+                        <ChatBubbleIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
 
-                {/* Controls for featured user */}
-                <FeaturedControls>
-                  <VolumeSlider
-                    size="small"
-                    value={userVolumes[selectedParticipant.socketId] ?? 100}
-                    onChange={(_, value) =>
-                      handleVolumeChange(selectedParticipant.socketId, value as number)
-                    }
-                  />
+                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 0.5 }} />
 
-                  <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 1 }} />
-
-                  <Tooltip title="React">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleReaction('❤️')}
-                      sx={{ color: '#b5bac1', '&:hover': { color: '#ff4d4d' } }}
-                    >
-                      <FavoriteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Message">
-                    <IconButton
-                      size="small"
-                      sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
-                    >
-                      <ChatBubbleIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-
-                  {!isMobile && (
                     <Tooltip title="More">
                       <IconButton
                         size="small"
-                        sx={{ color: '#b5bac1', '&:hover': { color: '#43b581' } }}
+                        sx={{
+                          color: '#b5bac1',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            bgcolor: 'divider',
+                            transform: 'rotate(90deg)',
+                            color: '#43b581',
+                          },
+                        }}
                       >
-                        <AddReactionIcon fontSize="small" />
+                        <SettingsIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                  )}
-                </FeaturedControls>
-              </FeaturedCard>
-            </Fade>
-          )}
-        </FeaturedSection>
+                  </FeaturedControls>
+                </FeaturedCard>
+              </Fade>
+            )}
+          </FeaturedSection>
 
-        {/* Participants Grid Section */}
-        <GridSection isSelected={isSelected}>
-          <Typography variant="subtitle2" sx={{ mb: 2, opacity: 0.7 }}>
-            {isSelected ? 'Other Participants' : 'All Participants'} • {otherParticipants.length}
-          </Typography>
+          {/* Participants Grid Section */}
+          <GridSection isSelected={isSelected}>
+            <Typography variant="subtitle2" sx={{ mb: 1, opacity: 0.7 }}>
+              {isSelected ? 'Other Participants' : 'All Participants'} • {otherParticipants.length}
+            </Typography>
 
-          <Scrollbar sx={{ height: 'calc(100% - 40px)' }}>
-            <ParticipantsGrid>
-              {otherParticipants.map((participant, index) => (
-                <Zoom key={participant.socketId} in timeout={300 + index * 50}>
-                  <Box
-                    sx={{
-                      cursor: 'pointer',
-                      transition: 'transform 0.2s ease',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                      },
-                    }}
-                  >
-                    <VoiceUserCard
-                      user={{
-                        userId: participant.userId,
-                        name: participant.name,
-                        profilePhoto: participant.profilePhoto,
-                        status: participant.status,
-                        isSpeaking: false,
-                        isMuted: Boolean(participant.isMuted),
-                        userType: participant.userType,
-                        verified: participant.verified,
-                        connectionStatus: connectionStatus[participant.socketId],
-                        isLocal: participant.isLocal,
-                        hasJoin: participant.hasJoin,
+            <Scrollbar sx={{ minHeight: 'calc(100% - 40px)' }}>
+              <ParticipantsGrid>
+                {otherParticipants.map((participant, index) => (
+                  <Zoom key={participant.socketId} in timeout={300 + index * 50}>
+                    <Box
+                      sx={{
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                          transform: 'scale(1.02)',
+                        },
                       }}
-                      size={isMobile ? 'small' : 'medium'}
-                      stream={
-                        participant.isLocal ? localStream : remoteStreams[participant.socketId]
-                      }
-                      onClick={() => handleSelectParticipant(participant)}
-                    />
-                  </Box>
-                </Zoom>
-              ))}
-            </ParticipantsGrid>
-          </Scrollbar>
-        </GridSection>
-      </MainContent>
+                    >
+                      <VoiceUserCard
+                        user={{
+                          userId: participant.userId,
+                          name: participant.name,
+                          profilePhoto: participant.profilePhoto,
+                          status: participant.status,
+                          isSpeaking: false,
+                          isMuted: Boolean(participant.isMuted),
+                          userType: participant.userType,
+                          verified: participant.verified,
+                          connectionStatus: connectionStatus[participant.socketId],
+                          isLocal: participant.isLocal,
+                          hasJoin: participant.hasJoin,
+                        }}
+                        size={isMobile ? 'small' : 'medium'}
+                        stream={
+                          participant.isLocal ? localStream : remoteStreams[participant.socketId]
+                        }
+                        onClick={() => handleSelectParticipant(participant)}
+                      />
+                    </Box>
+                  </Zoom>
+                ))}
+              </ParticipantsGrid>
+            </Scrollbar>
+          </GridSection>
+        </MainContent>
+      </Scrollbar>
 
       {/* Control Bar */}
       <Slide direction="up" in timeout={500}>

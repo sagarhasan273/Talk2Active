@@ -459,7 +459,7 @@ export function VoiceUserCard({
           isSpeaking={isSpeaking}
           isActive={isActive}
           isSelected={isSelected}
-          size={isMobile && size === 'large' ? 'medium' : size}
+          size={isMobile && size === 'large' ? 'large' : size}
           alt={fUsername(name)}
           sx={{
             opacity: connectionStatusElement ? 0.3 : 1,
