@@ -1,11 +1,12 @@
 import type { Participant } from 'src/types/type-room';
 import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
 
 import VerifiedIcon from '@mui/icons-material/Verified';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
+import PanToolIcon from '@mui/icons-material/PanTool';
 import {
   Box,
   Fade,
@@ -18,15 +19,16 @@ import {
   Typography,
   useMediaQuery,
   Zoom,
+  Paper,
 } from '@mui/material';
 
-import { fUsername } from 'src/utils/helper'; // or Nightlight
+import { fUsername } from 'src/utils/helper';
 
 import { useRoomTools } from 'src/core/slices';
 
 import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
 
-import type { ChatUserStatus } from '../section-chat-room/type'; // or PersonOff
+import type { ChatUserStatus } from '../section-chat-room/type';
 
 // Animation for the active speaker
 const pulse = keyframes`
@@ -114,7 +116,7 @@ const UserTypeBadge = styled(Box, {
       fontSize: '0.6rem',
     },
   };
-}); // or Cancel
+});
 
 const STATUS_OPTIONS: ChatUserStatus[] = [
   {
@@ -268,6 +270,8 @@ export function VoiceUserCard({
   const { userActionsInVoice } = useRoomTools();
 
   const [isHovered, setIsHovered] = useState(false);
+  const [showHandToast, setShowHandToast] = useState(false);
+  const [handToastMessage, setHandToastMessage] = useState('');
 
   const {
     userId,
@@ -286,7 +290,22 @@ export function VoiceUserCard({
     hasJoin = true,
   } = participant;
 
-  console.log(userId, userActionsInVoice);
+  // Check for hand raise action from this user
+  useEffect(() => {
+    if (
+      userActionsInVoice?.type === 'raise-hand' &&
+      userActionsInVoice?.senderInfo?.userId === userId
+    ) {
+      // Show toast notification
+      setHandToastMessage(
+        `${userActionsInVoice.senderInfo.label || 'Raised hand'} ${userActionsInVoice.senderInfo.emoji || '🙌'}`
+      );
+      setShowHandToast(true);
+    } else {
+      setShowHandToast(false);
+    }
+    return undefined;
+  }, [userActionsInVoice, userId]);
 
   // Memoize connection status display
   const getConnectionStatus = () => {
@@ -510,6 +529,55 @@ export function VoiceUserCard({
         </Fade>
       )}
 
+      {/* Hand Raise Toast - Small and Centered */}
+      {showHandToast && (
+        <Zoom in timeout={300}>
+          <Paper
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 30,
+              bgcolor: '#ff9800',
+              color: 'white',
+              px: 1.5,
+              py: 0.75,
+              borderRadius: '16px 16px 16px 4px', // Speech bubble style
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              boxShadow: '0 4px 15px rgba(255, 152, 0, 0.4)',
+              border: '2px solid white',
+              animation: 'float 3s ease-in-out infinite',
+              whiteSpace: 'nowrap',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -8,
+                left: '20%',
+                width: 0,
+                height: 0,
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderTop: '8px solid #ff9800',
+              },
+              '@keyframes float': {
+                '0%': { transform: 'translateX(-50%) translateY(0px)' },
+                '50%': { transform: 'translateX(-50%) translateY(-5px)' },
+                '100%': { transform: 'translateX(-50%) translateY(0px)' },
+              },
+            }}
+          >
+            <PanToolIcon sx={{ fontSize: 16 }} />
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              {handToastMessage}
+            </Typography>
+          </Paper>
+        </Zoom>
+      )}
+
+      {/* Reaction Animation (existing) */}
       {userActionsInVoice?.type === 'reaction' &&
         userActionsInVoice?.senderInfo?.userId === userId && (
           <Zoom in timeout={4000}>

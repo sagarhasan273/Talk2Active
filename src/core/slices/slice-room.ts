@@ -3,8 +3,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RoomResponse } from 'src/types/type-chat';
 import type { Message, Reaction, Participant } from 'src/types/type-room';
 
-import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
+import { useRef, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CONFIG } from 'src/config-global';
@@ -220,6 +220,8 @@ export const useRoomTools = () => {
   const userVoiceState = useSelector(selectUserVoiceState);
   const userActionsInVoice = useSelector(selectUserActionInVoiceState);
 
+  const setTimeOutRef = useRef<NodeJS.Timeout>();
+
   const memoizedRoom = useMemo(
     () => ({
       room,
@@ -259,11 +261,21 @@ export const useRoomTools = () => {
         dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
       updateUserActionsInVoice: (payload: any) => {
-        dispatch(updateUserActionsInVoice(payload));
-
-        setTimeout(() => {
+        if (payload.type === 'raise-hand-off') {
           dispatch(updateUserActionsInVoice({}));
-        }, 3000);
+        } else {
+          dispatch(updateUserActionsInVoice(payload));
+        }
+
+        if (payload?.type === 'raise-hand') {
+          setTimeOutRef.current = setTimeout(() => {
+            dispatch(updateUserActionsInVoice({}));
+          }, 10000);
+        } else {
+          setTimeOutRef.current = setTimeout(() => {
+            dispatch(updateUserActionsInVoice({}));
+          }, 3000);
+        }
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -277,5 +289,15 @@ export const useRoomTools = () => {
       userActionsInVoice,
     ]
   );
+
+  useEffect(
+    () => () => {
+      if (setTimeOutRef.current) {
+        clearTimeout(setTimeOutRef.current);
+      }
+    },
+    []
+  );
+
   return memoizedRoom;
 };

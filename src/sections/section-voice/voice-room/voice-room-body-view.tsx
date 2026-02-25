@@ -6,7 +6,6 @@ import React, { useMemo, useState, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
-import PanToolIcon from '@mui/icons-material/PanTool';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -45,6 +44,7 @@ import { ChatMessageGroup } from 'src/sections/section-chat-room/chat-message-gr
 
 import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
+import { RaiseHandButton } from '../voice-raise-hand-button';
 
 // Styled Components
 const ControlBar = styled(Paper)(({ theme }) => ({
@@ -273,7 +273,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
   const [reaction, setReaction] = useState<string | null>(null);
-  // const [isFullscreen, setIsFullscreen] = useState(false);
 
   const selectedParticipant = useMemo(
     () => (selectedUserId ? participants[selectedUserId] : null),
@@ -314,10 +313,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
       },
     });
   };
-
-  // const toggleFullscreen = () => {
-  //   setIsFullscreen(!isFullscreen);
-  // };
 
   // Status toggle handler
   const handleToggleUserStatus = useCallback(
@@ -620,14 +615,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Raise Hand">
-            <IconButton
-              sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
-              size="small"
-            >
-              <PanToolIcon />
-            </IconButton>
-          </Tooltip>
+          <RaiseHandButton />
 
           <Divider orientation="vertical" flexItem sx={{ bgcolor: '#4e5058' }} />
 
