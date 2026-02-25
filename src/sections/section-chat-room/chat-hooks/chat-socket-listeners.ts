@@ -29,6 +29,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     deleteChatRoomMessage,
     reactionChatRoomMessage,
     reactionPopChatRoomMessage,
+    updateUserActionsInVoice,
   } = useRoomTools();
 
   const roomId = room?.id || '';
@@ -166,6 +167,10 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       handleIceCandidate(data);
     };
 
+    const handleDeliverUserActionsInVoice = (data: any) => {
+      updateUserActionsInVoice(data);
+    };
+
     // Register listeners
     on('existing-participants', handleExistingParticipants);
     on('user-joined', handleUserJoined);
@@ -179,6 +184,8 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('receive-reaction-group-message', handleReactionMessage);
     on('receive-reaction-pop-group-message', handleReactionPopMessage);
     on('receive-private-message', handlePrivateMessage);
+    on('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
+
     on('webrtc-offer', handleWebRTCOffer);
     on('webrtc-answer', handleWebRTCAnswer);
     on('webrtc-ice-candidate', handleWebRTCIceCandidate);
@@ -196,6 +203,8 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       off('receive-delete-group-message', handleDeleteGroupMessage);
       off('receive-reaction-group-message', handleReactionMessage);
       off('receive-private-message', handlePrivateMessage);
+      off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
+
       off('webrtc-offer', handleWebRTCOffer);
       off('webrtc-answer', handleWebRTCAnswer);
       off('webrtc-ice-candidate', handleWebRTCIceCandidate);

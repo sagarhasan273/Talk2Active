@@ -17,9 +17,12 @@ import {
   keyframes,
   Typography,
   useMediaQuery,
+  Zoom,
 } from '@mui/material';
 
 import { fUsername } from 'src/utils/helper'; // or Nightlight
+
+import { useRoomTools } from 'src/core/slices';
 
 import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
 
@@ -229,7 +232,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
 
 type VoiceUserCardProps = {
   stream: MediaStream | null;
-  user: Partial<Participant> & {
+  participant: Partial<Participant> & {
     isSpeaking?: boolean;
     isActive?: boolean;
     isSelected?: boolean;
@@ -250,7 +253,7 @@ type VoiceUserCardProps = {
 
 export function VoiceUserCard({
   stream,
-  user,
+  participant,
   size = 'medium',
   showName = true,
   showStatus = true,
@@ -261,9 +264,13 @@ export function VoiceUserCard({
 }: VoiceUserCardProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const { userActionsInVoice } = useRoomTools();
+
   const [isHovered, setIsHovered] = useState(false);
 
   const {
+    userId,
     name,
     profilePhoto,
     userType = 'Guest',
@@ -277,7 +284,9 @@ export function VoiceUserCard({
     isLocal = false,
     connectionStatus = null,
     hasJoin = true,
-  } = user;
+  } = participant;
+
+  console.log(userId, userActionsInVoice);
 
   // Memoize connection status display
   const getConnectionStatus = () => {
@@ -500,6 +509,34 @@ export function VoiceUserCard({
           </Box>
         </Fade>
       )}
+
+      {userActionsInVoice?.type === 'reaction' &&
+        userActionsInVoice?.senderInfo?.userId === userId && (
+          <Zoom in timeout={4000}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '40%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 20,
+                animation: 'float 1s ease-out',
+                '@keyframes float': {
+                  '0%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
+                  '100%': { transform: 'translateX(-50%) translateY(-50px)', opacity: 0 },
+                },
+              }}
+            >
+              <Avatar
+                sx={{
+                  bgcolor: userActionsInVoice?.senderInfo?.emoji === '❤️' ? '#dbdbdb' : '#5865f2',
+                }}
+              >
+                {userActionsInVoice?.senderInfo?.emoji}
+              </Avatar>
+            </Box>
+          </Zoom>
+        )}
     </Box>
   );
 }

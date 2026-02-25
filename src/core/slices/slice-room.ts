@@ -19,6 +19,7 @@ interface RoomState {
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadChatRoomMessage: boolean;
+  userActionsInVoice: any;
 }
 
 // Initial state
@@ -37,6 +38,7 @@ const initialState: RoomState = {
   },
   chatRoomMessages: [],
   isUnreadChatRoomMessage: false,
+  userActionsInVoice: {},
 };
 
 export const roomSlice = createSlice({
@@ -172,6 +174,10 @@ export const roomSlice = createSlice({
         msg.startOfUnread = false;
       });
     },
+
+    updateUserActionsInVoice: (state, action: PayloadAction<any>) => {
+      state.userActionsInVoice = action.payload;
+    },
   },
 });
 
@@ -191,6 +197,7 @@ const {
   reactionChatRoomMessage,
   reactionPopChatRoomMessage,
   clearUnreadChatRoomMessages,
+  updateUserActionsInVoice,
 } = roomSlice.actions;
 
 // Selectors with proper typing
@@ -200,6 +207,7 @@ const selectParticipants = (state: RootState) => state.room.participants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
 const selectIsUnreadChatRoomMessage = (state: RootState) => state.room.isUnreadChatRoomMessage;
 const selectUserVoiceState = (state: RootState) => state.room.userVoiceState;
+const selectUserActionInVoiceState = (state: RootState) => state.room.userActionsInVoice;
 
 export const useRoomTools = () => {
   const dispatch = useDispatch();
@@ -210,6 +218,7 @@ export const useRoomTools = () => {
   const chatRoomMessages = useSelector(selectChatRoomMessages);
   const isUnreadChatRoomMessage = useSelector(selectIsUnreadChatRoomMessage);
   const userVoiceState = useSelector(selectUserVoiceState);
+  const userActionsInVoice = useSelector(selectUserActionInVoiceState);
 
   const memoizedRoom = useMemo(
     () => ({
@@ -219,6 +228,7 @@ export const useRoomTools = () => {
       chatRoomMessages,
       isUnreadChatRoomMessage,
       userVoiceState,
+      userActionsInVoice,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
@@ -248,9 +258,24 @@ export const useRoomTools = () => {
       reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
         dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
+      updateUserActionsInVoice: (payload: any) => {
+        dispatch(updateUserActionsInVoice(payload));
+
+        setTimeout(() => {
+          dispatch(updateUserActionsInVoice({}));
+        }, 3000);
+      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room, loading, participants, chatRoomMessages, isUnreadChatRoomMessage, userVoiceState]
+    [
+      room,
+      loading,
+      participants,
+      chatRoomMessages,
+      isUnreadChatRoomMessage,
+      userVoiceState,
+      userActionsInVoice,
+    ]
   );
   return memoizedRoom;
 };

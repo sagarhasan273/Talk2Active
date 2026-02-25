@@ -299,8 +299,20 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   };
 
   const handleReaction = (type: string) => {
+    if (!socket) {
+      return;
+    }
     setReaction(type);
     setTimeout(() => setReaction(null), 2000);
+    emit('send-user-actions-in-voice', {
+      roomId: room.id,
+      type: 'reaction',
+      senderInfo: {
+        socketId: socket.id,
+        userId: user.id,
+        emoji: type,
+      },
+    });
   };
 
   // const toggleFullscreen = () => {
@@ -397,7 +409,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
                   {/* Reaction animation */}
                   {reaction && (
-                    <Zoom in timeout={400}>
+                    <Zoom in timeout={4000}>
                       <Box
                         sx={{
                           position: 'absolute',
@@ -412,7 +424,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                           },
                         }}
                       >
-                        <Avatar sx={{ bgcolor: reaction === '❤️' ? '#ff4d4d' : '#5865f2' }}>
+                        <Avatar sx={{ bgcolor: reaction === '❤️' ? '#dbdbdb' : '#5865f2' }}>
                           {reaction}
                         </Avatar>
                       </Box>
@@ -422,7 +434,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                   {/* User Card */}
                   <Box sx={{ transform: 'scale(1.2)' }}>
                     <VoiceUserCard
-                      user={{
+                      participant={{
                         userId: selectedParticipant.userId,
                         name: selectedParticipant.name,
                         profilePhoto: selectedParticipant.profilePhoto,
@@ -539,7 +551,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       }}
                     >
                       <VoiceUserCard
-                        user={{
+                        participant={{
                           userId: participant.userId,
                           name: participant.name,
                           profilePhoto: participant.profilePhoto,
