@@ -112,6 +112,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         reaction: data.reaction,
       });
     };
+
     const handleReactionPopMessage = (data: ReactionMessageData) => {
       reactionPopChatRoomMessage({
         messageId: data.messageId,

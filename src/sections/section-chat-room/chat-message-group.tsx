@@ -143,7 +143,6 @@ export const ChatMessageGroup = ({
   const handleReply = useCallback((messageReply: Message) => {
     setReplyMessage(messageReply);
     setIsPrivateMessage(!!messageReply.isPrivate);
-    console.log('private', messageReply);
     if (!!messageReply.isPrivate && messageReply.senderSocketId) {
       setPrivateRecipient({
         socketId: messageReply.senderSocketId,
@@ -217,7 +216,7 @@ export const ChatMessageGroup = ({
         }}
       >
         {/* Messages Display Area */}
-        <Box>
+        <Box sx={{ mx: 1 }}>
           {/* Date Separator */}
           <Box
             sx={{

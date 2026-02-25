@@ -19,7 +19,6 @@ import {
   Box,
   Zoom,
   Fade,
-  Chip,
   Paper,
   Slide,
   Stack,
@@ -39,8 +38,10 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
+import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { ChatStatusButton } from 'src/sections/section-chat-room/chat-status-button';
+import { ChatMessageGroup } from 'src/sections/section-chat-room/chat-message-group';
 
 import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
@@ -155,6 +156,22 @@ const FeaturedCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(1),
+  },
+}));
+
+const RoomControlers = styled(Paper)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+  padding: theme.spacing(1, 2),
+  borderRadius: 40,
+  backgroundColor: theme.palette.background.paper,
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  marginTop: theme.spacing(1),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(0.2, 1),
+    gap: theme.spacing(0.5),
   },
 }));
 
@@ -329,15 +346,31 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             {Object.keys(participants).length} participants • 01:24:05
           </Typography>
         </Box>
-        <Chip
-          label="Voice Channel"
-          size="small"
-          sx={{
-            bgcolor: '#5865f2',
-            color: 'white',
-            fontWeight: 600,
-          }}
-        />
+
+        <RoomControlers>
+          <VoiceRoomMessageGroupDrawer>
+            <ChatMessageGroup />
+          </VoiceRoomMessageGroupDrawer>
+
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 0.5 }} />
+
+          <Tooltip title="Room settings">
+            <IconButton
+              size="small"
+              sx={{
+                color: '#b5bac1',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'divider',
+                  transform: 'rotate(90deg)',
+                  color: '#43b581',
+                },
+              }}
+            >
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </RoomControlers>
       </Box>
 
       {/* Main Content */}
@@ -419,62 +452,68 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                   </Typography>
 
                   {/* Controls for featured user */}
-                  <FeaturedControls>
-                    <Stack
-                      direction="row"
-                      sx={{ color: '#b5bac1', alignItems: 'center', gap: 0.5 }}
-                    >
-                      <VolumeOffIcon fontSize="small" />
-                      <VolumeSlider
-                        size="small"
-                        value={userVolumes[selectedParticipant.socketId] ?? 100}
-                        onChange={(_, value) =>
-                          handleVolumeChange(selectedParticipant.socketId, value as number)
-                        }
+                  {!selectedParticipant.isLocal && (
+                    <FeaturedControls>
+                      <Stack
+                        direction="row"
+                        sx={{ color: '#b5bac1', alignItems: 'center', gap: 0.5 }}
+                      >
+                        <VolumeOffIcon fontSize="small" />
+                        <VolumeSlider
+                          size="small"
+                          value={userVolumes[selectedParticipant.socketId] ?? 100}
+                          onChange={(_, value) =>
+                            handleVolumeChange(selectedParticipant.socketId, value as number)
+                          }
+                        />
+                        <VolumeUpIcon fontSize="small" />
+                      </Stack>
+
+                      <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 1 }} />
+
+                      <Tooltip title="React">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleReaction('❤️')}
+                          sx={{ color: '#b5bac1', '&:hover': { color: '#ff4d4d' } }}
+                        >
+                          <FavoriteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Private Message">
+                        <IconButton
+                          size="small"
+                          sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
+                        >
+                          <ChatBubbleIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Divider
+                        orientation="vertical"
+                        flexItem
+                        sx={{ bgcolor: 'divider', mx: 0.5 }}
                       />
-                      <VolumeUpIcon fontSize="small" />
-                    </Stack>
 
-                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 1 }} />
-
-                    <Tooltip title="React">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleReaction('❤️')}
-                        sx={{ color: '#b5bac1', '&:hover': { color: '#ff4d4d' } }}
-                      >
-                        <FavoriteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Message">
-                      <IconButton
-                        size="small"
-                        sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
-                      >
-                        <ChatBubbleIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 0.5 }} />
-
-                    <Tooltip title="More">
-                      <IconButton
-                        size="small"
-                        sx={{
-                          color: '#b5bac1',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            bgcolor: 'divider',
-                            transform: 'rotate(90deg)',
-                            color: '#43b581',
-                          },
-                        }}
-                      >
-                        <SettingsIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </FeaturedControls>
+                      <Tooltip title="More">
+                        <IconButton
+                          size="small"
+                          sx={{
+                            color: '#b5bac1',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              bgcolor: 'divider',
+                              transform: 'rotate(90deg)',
+                              color: '#43b581',
+                            },
+                          }}
+                        >
+                          <SettingsIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </FeaturedControls>
+                  )}
                 </FeaturedCard>
               </Fade>
             )}

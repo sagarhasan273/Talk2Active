@@ -4,11 +4,11 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { useSelector } from 'react-redux';
 
-import { Badge } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
+import { Badge, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import { Message as MessageIcon } from '@mui/icons-material';
+import { Chat as ChatIcon } from '@mui/icons-material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -57,40 +57,31 @@ export function VoiceRoomMessageGroupDrawer({
 
   return (
     <>
-      <IconButton
-        onClick={drawer.onTrue}
-        sx={{
-          p: 1,
-          borderRadius: 1,
-          border: `2px solid`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'primary.main',
-          '&:hover': {
-            color: 'primary.dark',
-          },
-        }}
-        {...other}
-      >
-        <Badge
-          badgeContent="!"
-          color="error"
-          invisible={!isUnreadChatRoomMessage}
-          sx={{
-            '& .MuiBadge-badge': {
-              fontSize: 12,
-              minWidth: 16,
-              height: 16,
-              borderRadius: '50%',
-              top: -6,
-              right: -6,
-            },
-          }}
+      <Tooltip title="Group messages">
+        <IconButton
+          onClick={drawer.onTrue}
+          size="small"
+          sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
         >
-          <MessageIcon fontSize="small" />
-        </Badge>
-      </IconButton>
+          <Badge
+            badgeContent="!"
+            color="error"
+            invisible={!isUnreadChatRoomMessage}
+            sx={{
+              '& .MuiBadge-badge': {
+                fontSize: 12,
+                minWidth: 16,
+                height: 16,
+                borderRadius: '50%',
+                top: -6,
+                right: -6,
+              },
+            }}
+          >
+            <ChatIcon fontSize="small" />
+          </Badge>
+        </IconButton>
+      </Tooltip>
 
       <Drawer
         open={drawer.value}
