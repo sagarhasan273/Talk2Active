@@ -487,18 +487,16 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         </IconButton>
                       </Tooltip>
 
-                      <Tooltip title="Private Message">
-                        <VoiceRoomMessageGroupDrawer>
-                          <ChatMessageGroup
-                            privateMessage={{
-                              socketId: selectedParticipant.socketId,
-                              userId: selectedParticipant.userId,
-                              name: selectedParticipant.name,
-                              profilePhoto: selectedParticipant.profilePhoto,
-                            }}
-                          />
-                        </VoiceRoomMessageGroupDrawer>
-                      </Tooltip>
+                      <VoiceRoomMessageGroupDrawer title="Private Message">
+                        <ChatMessageGroup
+                          privateMessage={{
+                            socketId: selectedParticipant.socketId,
+                            userId: selectedParticipant.userId,
+                            name: selectedParticipant.name,
+                            profilePhoto: selectedParticipant.profilePhoto,
+                          }}
+                        />
+                      </VoiceRoomMessageGroupDrawer>
 
                       <Divider
                         orientation="vertical"

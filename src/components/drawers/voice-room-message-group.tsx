@@ -18,10 +18,12 @@ import { VoiceRoomMessageGroupHeader } from './voice-room-message-group-header';
 
 export type VoiceRoomMessageGroupDrawerProps = IconButtonProps & {
   children?: React.ReactNode;
+  title?: string;
 };
 
 export function VoiceRoomMessageGroupDrawer({
   children,
+  title,
   sx,
   ...other
 }: VoiceRoomMessageGroupDrawerProps) {
@@ -50,7 +52,7 @@ export function VoiceRoomMessageGroupDrawer({
 
   return (
     <>
-      <Tooltip title="Group messages">
+      <Tooltip title={title || 'Group messages'}>
         <IconButton
           onClick={drawer.onTrue}
           size="small"
