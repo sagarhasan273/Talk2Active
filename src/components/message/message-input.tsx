@@ -63,6 +63,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   setIsPrivateMessage,
   privateRecipient,
   setPrivateRecipient,
+  onCencelPrivateMessage,
 }) => {
   const user = useSelector(selectAccount);
   const { clearUnreadChatRoomMessages } = useRoomTools();
@@ -172,6 +173,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setIsPrivateMessage(false);
     setPrivateRecipient?.(null);
     setMessage('');
+    onCencelPrivateMessage?.();
   };
 
   // Send message

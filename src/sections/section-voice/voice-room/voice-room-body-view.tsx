@@ -11,7 +11,6 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {
@@ -489,12 +488,16 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       </Tooltip>
 
                       <Tooltip title="Private Message">
-                        <IconButton
-                          size="small"
-                          sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
-                        >
-                          <ChatBubbleIcon fontSize="small" />
-                        </IconButton>
+                        <VoiceRoomMessageGroupDrawer>
+                          <ChatMessageGroup
+                            privateMessage={{
+                              socketId: selectedParticipant.socketId,
+                              userId: selectedParticipant.userId,
+                              name: selectedParticipant.name,
+                              profilePhoto: selectedParticipant.profilePhoto,
+                            }}
+                          />
+                        </VoiceRoomMessageGroupDrawer>
                       </Tooltip>
 
                       <Divider

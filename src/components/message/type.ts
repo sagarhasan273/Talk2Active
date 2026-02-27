@@ -47,4 +47,5 @@ export type MessageInputProps = {
   setIsPrivateMessage: React.Dispatch<React.SetStateAction<boolean>>;
   privateRecipient?: PrivateParticipantProps | null;
   setPrivateRecipient?: React.Dispatch<React.SetStateAction<PrivateParticipantProps | null>>;
+  onCencelPrivateMessage?: () => void;
 };

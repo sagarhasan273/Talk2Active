@@ -19,8 +19,10 @@ import { MessageInput } from '../../components/message/message-input';
 
 export const ChatMessageGroup = ({
   onClose,
+  privateMessage,
 }: {
   onClose?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  privateMessage?: PrivateParticipantProps;
 }) => {
   const {
     room,
@@ -43,6 +45,7 @@ export const ChatMessageGroup = ({
   const [editMessage, setEditMessage] = useState<Message | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const privateMessageRef = useRef<PrivateParticipantProps | undefined>(privateMessage);
 
   const participantsArray = useMemo(() => Object.values(participants), [participants]);
 
@@ -181,6 +184,17 @@ export const ChatMessageGroup = ({
     setIsEditing(false);
   }, []);
 
+  const handleCencelPrivateMessage = useCallback(() => {
+    privateMessageRef.current = undefined;
+  }, []);
+
+  useEffect(() => {
+    if (privateMessageRef.current) {
+      setPrivateRecipient(privateMessageRef.current);
+      setIsPrivateMessage(true);
+    }
+  }, [privateMessage]);
+
   useEffect(() => {
     clearUnreadChatRoomMessages();
 
@@ -267,6 +281,7 @@ export const ChatMessageGroup = ({
         setIsPrivateMessage={setIsPrivateMessage}
         privateRecipient={privateRecipient}
         setPrivateRecipient={setPrivateRecipient}
+        onCencelPrivateMessage={handleCencelPrivateMessage}
       />
     </>
   );
