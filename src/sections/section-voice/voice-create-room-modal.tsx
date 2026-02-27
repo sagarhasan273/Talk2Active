@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Lock, Close, Public, RecordVoiceOver } from '@mui/icons-material';
+import { Close, Cancel, RecordVoiceOver } from '@mui/icons-material';
 import {
   Box,
-  Chip,
   Card,
-  Grid,
+  Chip,
   Dialog,
   Button,
   Select,
-  Switch,
   Slider,
   MenuItem,
   TextField,
   InputLabel,
   Typography,
-  IconButton,
   DialogTitle,
   FormControl,
   CardContent,
+  Autocomplete,
   DialogContent,
   DialogActions,
-  InputAdornment,
-  FormControlLabel,
 } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
@@ -37,6 +33,18 @@ interface CreateRoomModalProps {
   onCreateRoom: (roomData: any) => void;
 }
 
+// Room type options
+const roomTypes = [
+  { value: 'conversation', label: 'Conversation Practice' },
+  { value: 'pronunciation', label: 'Pronunciation Focus' },
+  { value: 'grammar', label: 'Grammar Workshop' },
+  { value: 'vocabulary', label: 'Vocabulary Building' },
+  { value: 'debate', label: 'Debate & Discussion' },
+  { value: 'storytelling', label: 'Storytelling' },
+  { value: 'business', label: 'Business Language' },
+  { value: 'exam-prep', label: 'Exam Preparation' },
+];
+
 export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   open,
   onClose,
@@ -47,24 +55,63 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [formData, setFormData] = useState({
     name: 'Basic Spanish Conversation',
     description: "Let's practice basic Spanish conversation skills together!",
-    language: 'en',
+    languages: ['en'], // Changed to array for multiple languages
+    roomType: 'conversation',
     level: 'mixed',
     maxParticipants: 8,
-    public: true,
-    password: '',
-    tags: ['helo'] as string[],
-    pushToTalk: false,
-    noiseSupression: true,
-    echoCancellation: true,
-    autoGainControl: true,
-    maxSimutaneousSpeakers: 4,
-    moderationMode: 'open',
     host: user.id,
   });
 
-  const [tagInput, setTagInput] = useState('');
+  const [inputValue, setInputValue] = useState('');
 
   const [createRoom] = useCreateRoomMutation();
+
+  const handleRemoveLanguage = (languageToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      languages: prev.languages.filter((lang) => lang !== languageToRemove),
+    }));
+  };
+
+  const handleAddLanguage = (languageCode: string) => {
+    if (languageCode && !formData.languages.includes(languageCode)) {
+      setFormData((prev) => ({
+        ...prev,
+        languages: [...prev.languages, languageCode],
+      }));
+    }
+    setInputValue('');
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && inputValue) {
+      event.preventDefault();
+
+      // Check if input matches any language name
+      const matchedLanguage = languages.find(
+        (lang) => lang.name.toLowerCase() === inputValue.toLowerCase()
+      );
+
+      if (matchedLanguage) {
+        handleAddLanguage(matchedLanguage.code);
+      } else {
+        // If no exact match, try to find partial matches or show error
+        const partialMatches = languages.filter((lang) =>
+          lang.name.toLowerCase().includes(inputValue.toLowerCase())
+        );
+
+        if (partialMatches.length === 1) {
+          // If only one match, add it
+          handleAddLanguage(partialMatches[0].code);
+        } else if (partialMatches.length > 1) {
+          // Multiple matches - you might want to show a dropdown or just the first match
+          // For now, add the first match
+          handleAddLanguage(partialMatches[0].code);
+        }
+        // If no matches, you might want to show an error toast here
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,31 +122,14 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     }
   };
 
-  const addTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim().toLowerCase())) {
-      setFormData((prev) => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim().toLowerCase()],
-      }));
-      setTagInput('');
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
-    }));
-  };
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Create Voice Learning Room
+          <Typography variant="h6" sx={{}}>
+            Create Voice Room
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="caption" color="text.secondary">
             Set up your interactive language learning space
           </Typography>
         </Box>
@@ -108,96 +138,145 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         </Button>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent sx={{ p: 2 }}>
         <Box
           component="form"
           onSubmit={handleSubmit}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
         >
           {/* Basic Information */}
           <Card variant="outlined">
-            <CardContent>
+            <CardContent sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Basic Information
               </Typography>
 
-              <Grid container spacing={2}>
-                <Grid sx={{ xs: 12 }}>
-                  <TextField
-                    fullWidth
-                    label="Room Name"
-                    required
-                    size="small"
-                    value={formData.name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Spanish Conversation Circle"
-                  />
-                </Grid>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Room Name"
+                  required
+                  size="small"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Spanish Conversation Circle"
+                />
 
-                <Grid sx={{ xs: 12 }}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    required
-                    size="small"
-                    multiline
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, description: e.target.value }))
-                    }
-                    placeholder="Describe what learners can expect in your room..."
-                  />
-                </Grid>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  required
+                  size="small"
+                  multiline
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="Describe what learners can expect in your room..."
+                />
 
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Language</InputLabel>
-                    <Select
-                      value={formData.language}
-                      label="Language"
-                      size="small"
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, language: e.target.value }))
+                {/* Multiple Language Selection with Search and Enter to Add */}
+                <Box>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>
+                    Languages (Type and press Enter to add)
+                  </Typography>
+
+                  {/* Selected Languages Chips */}
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>
+                    {formData.languages.map((code) => {
+                      const lang = languages.find((l) => l.code === code);
+                      return (
+                        <Chip
+                          key={code}
+                          label={lang ? `${lang.flag} ${lang.name}` : code}
+                          size="small"
+                          onDelete={() => handleRemoveLanguage(code)}
+                          deleteIcon={<Cancel />}
+                          sx={{
+                            color: 'text.primary',
+                            backgroundColor: 'background.neutral',
+                            '&:hover': {
+                              color: 'text.primary',
+                              backgroundColor: 'background.neutral',
+                            },
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+
+                  {/* Language Input Field */}
+                  <Autocomplete
+                    freeSolo
+                    size="small"
+                    options={languages.map((lang) => ({
+                      code: lang.code,
+                      label: `${lang.flag} ${lang.name}`,
+                    }))}
+                    inputValue={inputValue}
+                    onInputChange={(event, newInputValue) => {
+                      setInputValue(newInputValue);
+                    }}
+                    onChange={(event, newValue) => {
+                      if (newValue && typeof newValue === 'object') {
+                        handleAddLanguage(newValue.code);
                       }
-                    >
-                      {languages.map((lang) => (
-                        <MenuItem key={lang.code} value={lang.code}>
-                          {lang.flag} {lang.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        size="small"
+                        placeholder="Search or type language name and press Enter..."
+                        onKeyDown={handleKeyDown}
+                      />
+                    )}
+                    renderOption={(props, option) => <MenuItem {...props}>{option.label}</MenuItem>}
+                  />
+                </Box>
 
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Skill Level</InputLabel>
-                    <Select
-                      value={formData.level}
-                      label="Skill Level"
-                      size="small"
-                      onChange={(e) => setFormData((prev) => ({ ...prev, level: e.target.value }))}
-                    >
-                      <MenuItem value="beginner">Beginner</MenuItem>
-                      <MenuItem value="intermediate">Intermediate</MenuItem>
-                      <MenuItem value="advanced">Advanced</MenuItem>
-                      <MenuItem value="mixed">Mixed Levels</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+                {/* Room Type Selection */}
+                <FormControl fullWidth size="small">
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    value={formData.roomType}
+                    label="Room Type"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, roomType: e.target.value }))}
+                  >
+                    {roomTypes.map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>Skill Level</InputLabel>
+                  <Select
+                    value={formData.level}
+                    label="Skill Level"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, level: e.target.value }))}
+                  >
+                    <MenuItem value="beginner">Beginner</MenuItem>
+                    <MenuItem value="intermediate">Intermediate</MenuItem>
+                    <MenuItem value="advanced">Advanced</MenuItem>
+                    <MenuItem value="mixed">Mixed Levels</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </CardContent>
           </Card>
 
           {/* Room Settings */}
           <Card variant="outlined">
-            <CardContent>
+            <CardContent sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Room Settings
               </Typography>
 
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{}}>
                 <Typography gutterBottom>
                   Maximum Participants: {formData.maxParticipants}
                 </Typography>
@@ -211,233 +290,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   marks
                   valueLabelDisplay="auto"
                 />
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  p: 0,
-                  bgcolor: 'grey.50',
-                  borderRadius: 2,
-                }}
-              >
-                {formData.public ? <Lock color="warning" /> : <Public color="success" />}
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    {formData.public ? 'Private Room' : 'Public Room'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {formData.public ? 'Requires password to join' : 'Anyone can join'}
-                  </Typography>
-                </Box>
-                <Switch
-                  checked={formData.public}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, public: e.target.checked }))}
-                />
-              </Box>
-
-              {formData.public && (
-                <TextField
-                  fullWidth
-                  label="Room Password"
-                  type="password"
-                  size="small"
-                  value={formData.password}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                  sx={{ mt: 2 }}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Voice Settings */}
-          <Card variant="outlined">
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <RecordVoiceOver color="primary" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Voice Settings
-                </Typography>
-              </Box>
-
-              <Grid container spacing={2}>
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.pushToTalk}
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            voiceSettings: { ...prev, pushToTalk: e.target.checked },
-                          }))
-                        }
-                      />
-                    }
-                    label="Push to Talk"
-                  />
-                </Grid>
-
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.noiseSupression}
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            voiceSettings: {
-                              ...prev,
-                              noiseSupression: e.target.checked,
-                            },
-                          }))
-                        }
-                      />
-                    }
-                    label="Noise Suppression"
-                  />
-                </Grid>
-
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.echoCancellation}
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            voiceSettings: {
-                              ...prev,
-                              echoCancellation: e.target.checked,
-                            },
-                          }))
-                        }
-                      />
-                    }
-                    label="Echo Cancellation"
-                  />
-                </Grid>
-
-                <Grid sx={{ xs: 12, sm: 6 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.autoGainControl}
-                        size="small"
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            voiceSettings: {
-                              ...prev,
-                              autoGainControl: e.target.checked,
-                            },
-                          }))
-                        }
-                      />
-                    }
-                    label="Auto Gain Control"
-                  />
-                </Grid>
-
-                <Grid sx={{ xs: 12 }}>
-                  <Typography gutterBottom>
-                    Max Simultaneous Speakers: {formData.maxSimutaneousSpeakers}
-                  </Typography>
-                  <Slider
-                    value={formData.maxSimutaneousSpeakers}
-                    onChange={(e, value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        voiceSettings: { ...prev, maxSimutaneousSpeakers: value as number },
-                      }))
-                    }
-                    min={1}
-                    max={10}
-                    marks
-                    valueLabelDisplay="auto"
-                  />
-                </Grid>
-
-                <Grid sx={{ xs: 12 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Moderation Mode</InputLabel>
-                    <Select
-                      value={formData.moderationMode}
-                      label="Moderation Mode"
-                      size="small"
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          voiceSettings: {
-                            ...prev,
-                            moderationMode: e.target.value as any,
-                          },
-                        }))
-                      }
-                    >
-                      <MenuItem value="open">Open - Anyone can speak</MenuItem>
-                      <MenuItem value="moderated">Moderated - Host controls speaking</MenuItem>
-                      <MenuItem value="push-to-talk-only">Push-to-Talk Only</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-
-          {/* Tags */}
-          <Card variant="outlined">
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Tags
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Add tags"
-                  size="small"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyUp={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  placeholder="conversation, grammar, culture..."
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={addTag} edge="end" sx={{ m: 0 }}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24" // Adjusted for better alignment
-                            height="24"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              fill="currentColor"
-                              d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10s10-4.477 10-10S17.523 2 12 2m5 11h-4v4h-2v-4H7v-2h4V7h2v4h4z"
-                            />
-                          </svg>
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {formData.tags.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    label={tag}
-                    onDelete={() => removeTag(tag)}
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
               </Box>
             </CardContent>
           </Card>

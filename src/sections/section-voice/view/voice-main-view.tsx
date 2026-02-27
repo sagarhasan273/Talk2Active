@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { Box, Button, Typography } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
 
@@ -12,6 +14,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomFindButton from '../voice-room-find-button';
 import VoiceUserProfileView from './voice-user-profile-view';
+import { CreateRoomModal } from '../voice-create-room-modal';
 import VoiceRoomEntryButton from '../voice-room-entry-button';
 import { VoiceRoomView } from '../voice-room/voice-room-view';
 
@@ -21,6 +24,8 @@ type selectedTabType = 'find' | 'entry';
 
 export function VoiceMainView() {
   const { room, setRoom } = useRoomTools();
+
+  const editRoomBoolean = useBoolean();
 
   const [selectedTab, setSelectedTab] = useState<selectedTabType>('find');
 
@@ -59,13 +64,14 @@ export function VoiceMainView() {
             borderRadius: '20px',
             px: 1,
             color: 'text.secondary',
-            borderColor: 'divider',
+            borderColor: 'text.secondary',
             opacity: 0.7,
             '&:hover': {
               opacity: 1,
               borderColor: 'text.secondary',
             },
           }}
+          onClick={editRoomBoolean.onTrue}
         >
           Create New Room
         </Button>
@@ -101,12 +107,19 @@ export function VoiceMainView() {
   const footer = <Box sx={{ height: 1, backgroundColor: 'background.neutral' }} />;
 
   return (
-    <VoiceRoomLayout
-      header={header}
-      leftSidebar={leftSidebar}
-      rightSidebar={rightSidebar}
-      mainContent={mainContent}
-      footer={footer}
-    />
+    <>
+      <VoiceRoomLayout
+        header={header}
+        leftSidebar={leftSidebar}
+        rightSidebar={rightSidebar}
+        mainContent={mainContent}
+        footer={footer}
+      />
+      <CreateRoomModal
+        open={editRoomBoolean.value}
+        onClose={editRoomBoolean.onFalse}
+        onCreateRoom={() => {}}
+      />
+    </>
   );
 }
