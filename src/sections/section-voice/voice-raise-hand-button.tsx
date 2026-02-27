@@ -109,6 +109,7 @@ export const RaiseHandButton = () => {
       if (raiseHand) {
         setShowToast(false);
         showToastMessage('Hand auto-lowered ⏱️');
+        setRaiseHand(false);
       }
     }, 10000); // 10 seconds
   }, [raiseHand]);

@@ -6,11 +6,12 @@ import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react'
 
 import VerifiedIcon from '@mui/icons-material/Verified';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
-import PanToolIcon from '@mui/icons-material/PanTool';
 import {
   Box,
   Fade,
+  Zoom,
   Badge,
+  Paper,
   styled,
   Avatar,
   Tooltip,
@@ -18,8 +19,6 @@ import {
   keyframes,
   Typography,
   useMediaQuery,
-  Zoom,
-  Paper,
 } from '@mui/material';
 
 import { fUsername } from 'src/utils/helper';
@@ -539,15 +538,15 @@ export function VoiceUserCard({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 30,
-              bgcolor: '#ff9800',
-              color: 'white',
+              bgcolor: 'warning.lighter',
+              color: 'warning.darker',
               px: 1.5,
               py: 0.75,
               borderRadius: '16px 16px 16px 4px', // Speech bubble style
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              boxShadow: '0 4px 15px rgba(255, 152, 0, 0.4)',
+              boxShadow: '0 4px 15px rgba(255, 231, 194, 0.4)',
               border: '2px solid white',
               animation: 'float 3s ease-in-out infinite',
               whiteSpace: 'nowrap',
@@ -569,7 +568,6 @@ export function VoiceUserCard({
               },
             }}
           >
-            <PanToolIcon sx={{ fontSize: 16 }} />
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
               {handToastMessage}
             </Typography>
