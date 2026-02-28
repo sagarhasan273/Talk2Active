@@ -21,7 +21,7 @@ export function VoiceRoomView() {
 
   const webRTC = useWebRTCContext();
 
-  const { hasJoined, isMicMuted } = userVoiceState;
+  const { hasJoined, isMicMuted, roomId } = userVoiceState;
   const { initializeMicrophone, cleanup: cleanupWebRTC } = webRTC;
 
   // Socket listeners
@@ -30,6 +30,10 @@ export function VoiceRoomView() {
   const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
   const handleJoinChat = async () => {
+    if (roomId !== null) {
+      await handelLeaveChat();
+    }
+
     await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
@@ -60,7 +64,7 @@ export function VoiceRoomView() {
         verified: user.verified,
       });
 
-      updateUserVoiceState({ hasJoined: true });
+      updateUserVoiceState({ hasJoined: true, roomId: room.id });
 
       addParticipant({
         userId: user.id,
@@ -81,7 +85,7 @@ export function VoiceRoomView() {
     if (setupChatSocketListenersRef.current) setupChatSocketListenersRef.current?.();
 
     socket?.emit('leave-voice-room', {
-      roomId: room?.id,
+      roomId,
       userId: user.id,
       name: user.name,
     });
@@ -91,7 +95,7 @@ export function VoiceRoomView() {
     // chat listeners close
     setupChatSocketListenersRef.current?.();
 
-    updateUserVoiceState({ hasJoined: false });
+    updateUserVoiceState({ hasJoined: false, roomId: null });
 
     // Reset local state
     resetParticipants();
@@ -99,9 +103,9 @@ export function VoiceRoomView() {
 
   return (
     <>
-      {!hasJoined && <VoiceRoomEntryView onJoinRoom={handleJoinChat} />}
+      {room.id !== roomId && <VoiceRoomEntryView onJoinRoom={handleJoinChat} />}
 
-      {hasJoined && <VoiceRoomBodyView onLeaveRoom={handelLeaveChat} />}
+      {hasJoined && room.id === roomId && <VoiceRoomBodyView onLeaveRoom={handelLeaveChat} />}
     </>
   );
 }

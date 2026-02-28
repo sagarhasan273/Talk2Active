@@ -30,6 +30,7 @@ const initialState: RoomState = {
   loading: false,
   participants: {} as { [socketId: string]: Participant },
   userVoiceState: {
+    roomId: null,
     hasJoined: false,
     isMicMuted: false,
     isDeafened: false,

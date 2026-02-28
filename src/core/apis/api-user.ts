@@ -88,6 +88,15 @@ export const userApi = createApi({
       invalidatesTags: ['user-recall'],
     }),
 
+    updateUserRecentRooms: builder.mutation<ResponseType, { id: string; roomId: string }>({
+      query: (body) => ({
+        url: `user/recent-room/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['user-recall'],
+    }),
+
     updateUserAccountActivate: builder.mutation<ResponseType, UserAccountActivateUpdateType>({
       query: (body) => ({
         url: `user/profile/update/activate`,
@@ -120,6 +129,7 @@ export const {
   useGetUserByIdQuery,
   useUpdateUserMutation,
   useUpdateUserAccountMutation,
+  useUpdateUserRecentRoomsMutation,
   useUpdateUserAccountSessionMutation,
   useUpdateUserAccountActivateMutation,
   useUpdateUserStatusMutation,

@@ -7,6 +7,7 @@ export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export type UserVoiceStateProps = {
+  roomId: string | null;
   hasJoined: boolean;
   isMicMuted: boolean;
   isDeafened: boolean;

@@ -463,7 +463,7 @@ function RegularPostCard({ post }: PostCardProps) {
           />
         }
         action={
-          data.authorDetails.id !== user.id ? (
+          data.authorDetails?.id !== user.id ? (
             <Button
               variant={isFollowing ? 'outlined' : 'contained'}
               size="small"
@@ -531,12 +531,12 @@ function RegularPostCard({ post }: PostCardProps) {
         }
         title={
           <Typography variant="subtitle1" sx={{ cursor: 'pointer' }} fontWeight={600}>
-            {data.authorDetails.name}
+            {data.authorDetails?.name}
           </Typography>
         }
         subheader={
           <Typography variant="caption">
-            @{data.authorDetails.username} · {fToNow(new Date(data.createdAt))} ago
+            @{data.authorDetails?.username} · {fToNow(new Date(data.createdAt))} ago
           </Typography>
         }
         sx={{

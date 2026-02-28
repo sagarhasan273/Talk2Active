@@ -1,13 +1,18 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { Box, Button, Typography } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { toastErrorResponse } from 'src/utils/response';
+
+import { selectAccount } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -23,15 +28,36 @@ import { VoiceRoomView } from '../voice-room/voice-room-view';
 type selectedTabType = 'find' | 'entry';
 
 export function VoiceMainView() {
-  const { room, setRoom } = useRoomTools();
+  const { currentRooms, setRoom, setCurrentRooms } = useRoomTools();
+
+  const user = useSelector(selectAccount);
 
   const editRoomBoolean = useBoolean();
 
   const [selectedTab, setSelectedTab] = useState<selectedTabType>('find');
 
+  const [updateUserRecentRooms] = useUpdateUserRecentRoomsMutation();
+
   const handleJoinRoom = async (roomSelected: RoomResponse) => {
     setRoom(roomSelected);
     setSelectedTab('entry');
+
+    const roomExists = currentRooms.some((roomProp) => roomProp.id === roomSelected.id);
+
+    if (!roomExists) {
+      const formData = {
+        id: user.id,
+        roomId: roomSelected.id,
+      };
+
+      const response = await updateUserRecentRooms(formData);
+
+      if (response.data?.status) {
+        setCurrentRooms([roomSelected, ...currentRooms]);
+      } else {
+        toastErrorResponse(response);
+      }
+    }
   };
 
   const header = (
@@ -89,11 +115,13 @@ export function VoiceMainView() {
         }}
       />
 
-      <VoiceRoomEntryButton
-        selected={selectedTab === 'entry'}
-        room={room}
-        onClick={handleJoinRoom}
-      />
+      {currentRooms.map((recentRoom) => (
+        <VoiceRoomEntryButton
+          selected={selectedTab === 'entry'}
+          room={recentRoom}
+          onClick={handleJoinRoom}
+        />
+      ))}
     </Scrollbar>
   );
 

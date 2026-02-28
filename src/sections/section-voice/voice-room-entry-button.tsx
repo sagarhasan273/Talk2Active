@@ -25,6 +25,7 @@ const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntr
         borderRadius: '8px',
         display: 'flex',
         alignItems: 'center',
+        mb: 1,
         px: 1.5,
         gap: 1.5,
         textAlign: 'left',
