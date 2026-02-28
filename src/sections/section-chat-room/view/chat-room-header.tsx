@@ -52,7 +52,7 @@ export function ChatRoomHeader({ isConnected, editRoomBoolean }: ChatRoomHeaderP
         </Typography>
         <Stack direction="row" spacing={1} justifyContent="space-between">
           <Stack direction="row" spacing={0.5} alignItems="center">
-            <Chip label={room?.language || 'English'} color="secondary" size="small" />
+            <Chip label={room?.languages?.[0] || 'English'} color="secondary" size="small" />
             <Chip
               label={room?.level || 'Intermediate'}
               variant="outlined"

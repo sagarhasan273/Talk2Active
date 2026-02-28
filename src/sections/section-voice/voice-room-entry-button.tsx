@@ -59,7 +59,7 @@ const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntr
             <Typography
               sx={{ fontSize: '0.6rem', color: 'text.secondary', fontWeight: 'bold', px: 0.3 }}
             >
-              {room.language?.toUpperCase()}
+              {room.languages?.[0]?.toUpperCase()}
             </Typography>
           </Box>
         }
