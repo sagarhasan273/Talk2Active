@@ -1,10 +1,11 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import React from 'react';
+import { useState, useEffect } from 'react';
 
 import { Box } from '@mui/material';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -15,7 +16,28 @@ interface RoomListProps {
 }
 
 export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
-  const { data: rooms } = useGetRoomsQuery(null);
+  const { on, off } = useSocketContext();
+
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+
+  const { data: getRooms } = useGetRoomsQuery(null);
+
+  useEffect(() => {
+    const handleBroadcastNewRoom = (data: any) => {
+      setRooms((prev) => [data.room, ...prev]);
+    };
+
+    off('new-room-created', handleBroadcastNewRoom);
+    on('new-room-created', handleBroadcastNewRoom);
+
+    return () => off('new-room-created', handleBroadcastNewRoom);
+  }, [on, off]);
+
+  useEffect(() => {
+    if (getRooms) {
+      setRooms(getRooms?.data || []);
+    }
+  }, [getRooms]);
 
   return (
     <Scrollbar sx={{ height: '100%' }}>
@@ -32,7 +54,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
           px: 1,
         }}
       >
-        {rooms?.data.map((room) => (
+        {rooms.map((room) => (
           <VoiceRoomCard key={room.id} room={room} onJoinRoom={onJoinRoom} />
         ))}
       </Box>

@@ -171,6 +171,24 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       updateUserActionsInVoice(data);
     };
 
+    // Remove listeners to avoid duplicate calls
+    off('existing-participants', handleExistingParticipants);
+    off('user-joined', handleUserJoined);
+    off('user-left', handleUserLeft);
+    off('user-audio-toggled', handleAudioToggled);
+    off('user-audio-toggled-self', handleAudioToggled);
+    off('user-status-selected', handleStatusUpdated);
+    off('receive-group-message', handleGroupMessage);
+    off('receive-edit-group-message', handleEditedMessage);
+    off('receive-delete-group-message', handleDeleteGroupMessage);
+    off('receive-reaction-group-message', handleReactionMessage);
+    off('receive-private-message', handlePrivateMessage);
+    off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
+
+    off('webrtc-offer', handleWebRTCOffer);
+    off('webrtc-answer', handleWebRTCAnswer);
+    off('webrtc-ice-candidate', handleWebRTCIceCandidate);
+
     // Register listeners
     on('existing-participants', handleExistingParticipants);
     on('user-joined', handleUserJoined);

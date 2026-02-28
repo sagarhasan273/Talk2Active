@@ -274,14 +274,30 @@ class SocketManager {
   }
 
   // Remove event listener
+
   off(event: string, handler?: Function) {
+    // Remove from local handlers
     if (handler) {
       const handlers = this.eventHandlers.get(event);
       if (handlers) {
         handlers.delete(handler);
+        if (handlers.size === 0) {
+          this.eventHandlers.delete(event);
+        }
+      }
+
+      // Remove from socket if connected
+      if (this.socket) {
+        this.socket.off(event, handler as (...args: any[]) => void);
       }
     } else {
+      // Remove all handlers for this event
       this.eventHandlers.delete(event);
+
+      // Remove from socket if connected
+      if (this.socket) {
+        this.socket.off(event);
+      }
     }
   }
 
