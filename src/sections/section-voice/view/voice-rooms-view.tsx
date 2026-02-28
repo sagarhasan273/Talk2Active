@@ -16,7 +16,7 @@ interface RoomListProps {
 }
 
 export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
-  const { on, off } = useSocketContext();
+  const { on, off, socket } = useSocketContext();
 
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
 
@@ -32,6 +32,8 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
 
     return () => off('new-room-created', handleBroadcastNewRoom);
   }, [on, off]);
+
+  console.log(socket?.listeners('new-room-created'));
 
   useEffect(() => {
     if (getRooms) {
