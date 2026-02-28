@@ -14,6 +14,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 // Define auth state interface
 interface RoomState {
   room: RoomResponse;
+  currentRooms: RoomResponse[];
   loading: boolean;
   participants: { [socketId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
@@ -25,6 +26,7 @@ interface RoomState {
 // Initial state
 const initialState: RoomState = {
   room: {} as RoomResponse,
+  currentRooms: [] as RoomResponse[],
   loading: false,
   participants: {} as { [socketId: string]: Participant },
   userVoiceState: {
@@ -47,6 +49,10 @@ export const roomSlice = createSlice({
   reducers: {
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
       state.room = action.payload;
+    },
+
+    setCurrentRooms: (state, action: PayloadAction<RoomState['currentRooms']>) => {
+      state.currentRooms = action.payload;
     },
 
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
@@ -183,6 +189,7 @@ export const roomSlice = createSlice({
 
 const {
   setRoom,
+  setCurrentRooms,
   setRoomLoading,
   addParticipant,
   updateParticipant,
@@ -202,6 +209,7 @@ const {
 
 // Selectors with proper typing
 const selectRoom = (state: RootState) => state.room.room;
+const selectCurrentRooms = (state: RootState) => state.room.currentRooms;
 const selectRoomLoading = (state: RootState) => state.room.loading;
 const selectParticipants = (state: RootState) => state.room.participants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
@@ -213,6 +221,7 @@ export const useRoomTools = () => {
   const dispatch = useDispatch();
 
   const room = useSelector(selectRoom);
+  const currentRooms = useSelector(selectCurrentRooms);
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
   const chatRoomMessages = useSelector(selectChatRoomMessages);
@@ -225,6 +234,7 @@ export const useRoomTools = () => {
   const memoizedRoom = useMemo(
     () => ({
       room,
+      currentRooms,
       loading,
       participants,
       chatRoomMessages,
@@ -232,6 +242,7 @@ export const useRoomTools = () => {
       userVoiceState,
       userActionsInVoice,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
+      setCurrentRooms: (roomData: RoomResponse[]) => dispatch(setCurrentRooms(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<Participant>) =>
@@ -281,6 +292,7 @@ export const useRoomTools = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       room,
+      currentRooms,
       loading,
       participants,
       chatRoomMessages,
