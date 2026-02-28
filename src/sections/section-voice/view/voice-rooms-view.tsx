@@ -27,10 +27,20 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
       setRooms((prev) => [data.room, ...prev]);
     };
 
-    off('new-room-created', handleBroadcastNewRoom);
-    on('new-room-created', handleBroadcastNewRoom);
+    const handleBroadcastRemoveRoom = (data: any) => {
+      setRooms((prev) => prev.filter((room) => room.id !== data?.roomId));
+    };
 
-    return () => off('new-room-created', handleBroadcastNewRoom);
+    off('new-room-created', handleBroadcastNewRoom);
+    off('room-remove-from-list', handleBroadcastRemoveRoom);
+
+    on('new-room-created', handleBroadcastNewRoom);
+    on('room-remove-from-list', handleBroadcastRemoveRoom);
+
+    return () => {
+      off('new-room-created', handleBroadcastNewRoom);
+      off('room-remove-from-list', handleBroadcastRemoveRoom);
+    };
   }, [on, off]);
 
   useEffect(() => {
