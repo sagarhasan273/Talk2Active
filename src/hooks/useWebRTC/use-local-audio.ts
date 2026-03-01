@@ -1,4 +1,4 @@
-// src/hooks/useWebRTC/useLocalAudio.ts
+// src/hooks/useWebRTC/use-local-audio.ts
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 
@@ -24,7 +24,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     compressorNode: null,
   });
 
-  // Get audio constraints based on settings
   const getAudioConstraints = useCallback(
     (): MediaTrackConstraints => ({
       echoCancellation: audioSettings.echoCancellation,
@@ -34,31 +33,32 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     [audioSettings]
   );
 
-  // Setup audio processing chain
   const setupAudioProcessing = useCallback(
     (stream: MediaStream): MediaStream => {
       try {
-        if (!audioNodesRef.current.audioContext) {
+        // Create new audio context if needed
+        if (
+          !audioNodesRef.current.audioContext ||
+          audioNodesRef.current.audioContext.state === 'closed'
+        ) {
           audioNodesRef.current.audioContext = new (
             window.AudioContext || (window as any).webkitAudioContext
           )();
         }
 
         const { audioContext } = audioNodesRef.current;
-        if (audioContext.state === 'suspended') audioContext.resume();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(console.warn);
+        }
 
         const sourceNode = audioContext.createMediaStreamSource(stream);
 
-        // Microphone gain (input sensitivity)
         const microphoneGainNode = audioContext.createGain();
-
-        // High-pass filter (remove low frequency rumble)
         const highPassFilter = audioContext.createBiquadFilter();
         highPassFilter.type = 'highpass';
         highPassFilter.frequency.value = 80;
         highPassFilter.Q.value = 1;
 
-        // Compressor (smooth volume spikes)
         const compressor = audioContext.createDynamicsCompressor();
         compressor.threshold.value = -50;
         compressor.knee.value = 40;
@@ -66,15 +66,12 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
         compressor.attack.value = 0;
         compressor.release.value = 0.25;
 
-        // Output gain (how loud you are to others)
         const outputGainNode = audioContext.createGain();
         const destinationNode = audioContext.createMediaStreamDestination();
 
-        // Set initial values
         microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
         outputGainNode.gain.value = audioSettings.outputGain / 100;
 
-        // Build audio chain
         sourceNode.connect(microphoneGainNode);
         microphoneGainNode.connect(highPassFilter);
         highPassFilter.connect(compressor);
@@ -100,13 +97,16 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     [audioSettings.microphoneGain, audioSettings.outputGain]
   );
 
-  // Initialize microphone
   const initializeMicrophone = useCallback(
     async (customConstraints?: MediaStreamConstraints): Promise<boolean> => {
       try {
-        // Stop any existing stream
+        // Stop existing tracks but keep audio context alive
         if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach((track) => track.stop());
+          localStreamRef.current.getTracks().forEach((track) => {
+            track.stop();
+            track.enabled = false;
+          });
+          localStreamRef.current = null;
         }
 
         const constraints = customConstraints || {
@@ -114,7 +114,9 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
           video: false,
         };
 
+        console.log('Initializing microphone with constraints:', constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
         const processedStream = setupAudioProcessing(stream);
 
         localStreamRef.current = processedStream;
@@ -134,7 +136,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     [getAudioConstraints, setupAudioProcessing, onMicMutedChange]
   );
 
-  // Audio controls
   const setMicrophoneGain = useCallback((gain: number) => {
     if (audioNodesRef.current.microphoneGainNode) {
       audioNodesRef.current.microphoneGainNode.gain.value = gain / 100;
@@ -182,15 +183,13 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     }
   }, [onMicMutedChange]);
 
-  // Cleanup
-  const cleanup = useCallback(() => {
-    if (audioNodesRef.current.audioContext) {
-      const { audioContext } = audioNodesRef.current;
-      if (audioContext.state !== 'closed') {
-        audioContext.close().catch(console.warn);
-      }
-    }
+  const getAudioContext = useCallback(() => audioNodesRef.current.audioContext, []);
 
+  // MODIFIED: Selective cleanup - keep audio context alive
+  const cleanup = useCallback(() => {
+    console.log('Cleaning up local audio (keeping audio context)');
+
+    // Stop tracks but keep audio context for reuse
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
         track.stop();
@@ -199,14 +198,77 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
       localStreamRef.current = null;
     }
 
+    // Disconnect nodes but keep audio context
+    if (audioNodesRef.current.sourceNode) {
+      try {
+        audioNodesRef.current.sourceNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.sourceNode = null;
+    }
+    if (audioNodesRef.current.microphoneGainNode) {
+      try {
+        audioNodesRef.current.microphoneGainNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.microphoneGainNode = null;
+    }
+    if (audioNodesRef.current.outputGainNode) {
+      try {
+        audioNodesRef.current.outputGainNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.outputGainNode = null;
+    }
+    if (audioNodesRef.current.destinationNode) {
+      try {
+        audioNodesRef.current.destinationNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.destinationNode = null;
+    }
+    if (audioNodesRef.current.highPassFilterNode) {
+      try {
+        audioNodesRef.current.highPassFilterNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.highPassFilterNode = null;
+    }
+    if (audioNodesRef.current.compressorNode) {
+      try {
+        audioNodesRef.current.compressorNode.disconnect();
+      } catch (e) {
+        console.log(e);
+      }
+      audioNodesRef.current.compressorNode = null;
+    }
+
     setLocalStream(null);
     setIsMicMuted(false);
   }, []);
 
-  const getAudioContext = useCallback(() => audioNodesRef.current.audioContext, []);
+  // COMPLETE cleanup (only for unmount)
+  const completeCleanup = useCallback(() => {
+    console.log('Complete cleanup - closing audio context');
 
-  // Cleanup on unmount
-  useEffect(() => cleanup, [cleanup]);
+    cleanup();
+
+    if (audioNodesRef.current.audioContext) {
+      const { audioContext } = audioNodesRef.current;
+      if (audioContext.state !== 'closed') {
+        audioContext.close().catch(console.warn);
+      }
+      audioNodesRef.current.audioContext = null;
+    }
+  }, [cleanup]);
+
+  // Use completeCleanup only on unmount
+  useEffect(() => completeCleanup, [completeCleanup]);
 
   return {
     localStream,
@@ -219,6 +281,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     unmuteMicrophone,
     setMicrophoneGain,
     setOutputGain,
-    cleanup,
+    cleanup, // Export selective cleanup for room switching
   };
 }

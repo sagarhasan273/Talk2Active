@@ -100,16 +100,26 @@ export function useWebRTC(): UseWebRTCReturn {
     applyDeafen(newDeafenedState);
   }, [audioSettings.isDeafened, applyAudioSettings, applyDeafen]);
 
-  // Global cleanup
+  // MODIFIED: Selective cleanup - keeps audio context alive
   const cleanup = useCallback(() => {
+    console.log('Running selective cleanup (keeping audio context)');
     cleanupPeerConnections();
     cleanupRemoteAudio();
-    cleanupLocalAudio();
+    cleanupLocalAudio(); // This now only stops tracks, not audio context
     setConnectionStatus({});
   }, [cleanupPeerConnections, cleanupRemoteAudio, cleanupLocalAudio]);
 
-  // Cleanup on unmount
-  useEffect(() => cleanup, [cleanup]);
+  // COMPLETE cleanup only on unmount
+  useEffect(
+    () => () => {
+      console.log('Component unmounting - complete cleanup');
+      cleanupPeerConnections();
+      cleanupRemoteAudio();
+      // For unmount, we need a more aggressive cleanup
+      // But the useLocalAudio already handles this with its own useEffect
+    },
+    [cleanupPeerConnections, cleanupRemoteAudio]
+  );
 
   return {
     // Streams
@@ -150,7 +160,7 @@ export function useWebRTC(): UseWebRTCReturn {
     // Cleanup
     cleanup,
 
-    // Legacy methods (maintain compatibility)
+    // Legacy methods
     muteMicrophone,
     unmuteMicrophone,
     onClickMicrophone: (v: boolean) => {

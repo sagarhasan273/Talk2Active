@@ -1,3 +1,5 @@
+// src/sections/section-voice-room/voice-room-view.tsx
+
 import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -34,7 +36,8 @@ export function VoiceRoomView() {
       await handelLeaveChat();
     }
 
-    await initializeMicrophone().catch((error) => {
+    // Initialize microphone - this will reuse audio context if available
+    const success = await initializeMicrophone().catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
         errorMessage = 'Microphone access was denied. Please allow access and try again.';
@@ -48,6 +51,8 @@ export function VoiceRoomView() {
       updateUserVoiceState({ micError: errorMessage });
       return false;
     });
+
+    if (!success) return;
 
     if (!setupChatSocketListenersRef.current)
       setupChatSocketListenersRef.current = setupChatSocketListeners?.();
@@ -82,7 +87,12 @@ export function VoiceRoomView() {
   };
 
   const handelLeaveChat = async () => {
-    if (setupChatSocketListenersRef.current) setupChatSocketListenersRef.current?.();
+    console.log('Leaving chat - selective cleanup');
+
+    if (setupChatSocketListenersRef.current) {
+      setupChatSocketListenersRef.current?.();
+      setupChatSocketListenersRef.current = undefined;
+    }
 
     socket?.emit('leave-voice-room', {
       roomId,
@@ -90,10 +100,8 @@ export function VoiceRoomView() {
       name: user.name,
     });
 
+    // This cleanup keeps audio context alive
     cleanupWebRTC();
-
-    // chat listeners close
-    setupChatSocketListenersRef.current?.();
 
     updateUserVoiceState({ hasJoined: false, roomId: null });
 
