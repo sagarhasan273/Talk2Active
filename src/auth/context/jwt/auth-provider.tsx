@@ -5,7 +5,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
-import { setUsers, setAccount } from 'src/core/slices';
+import { setUsers, setAccount, useRoomTools } from 'src/core/slices';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -28,6 +28,8 @@ type Props = {
 export function AuthProvider({ children }: Props) {
   const dispatch = useDispatch();
 
+  const { currentRooms, setCurrentRooms } = useRoomTools();
+
   const { state, setState } = useSetState<AuthState>({
     authUser: {} as AuthState['authUser'],
     loading: true,
@@ -41,15 +43,20 @@ export function AuthProvider({ children }: Props) {
         setSession(accessToken);
 
         const res = await axios.get(endpoints.auth.me);
-
         const { data } = res.data;
-        setState({ authUser: { ...data, accessToken }, loading: false });
+        const { recentRooms, ...user } = data;
 
-        dispatch(setAccount(data));
+        if (recentRooms?.length > 0 && !currentRooms.length) {
+          setCurrentRooms(recentRooms);
+        }
+
+        setState({ authUser: { ...user, accessToken }, loading: false });
+
+        dispatch(setAccount(user));
         dispatch(
           setUsers([
             {
-              ...data,
+              ...user,
               relationShip: {
                 relationship: 'none',
                 following: false,
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: Props) {
       console.error(error);
       setState({ authUser: {} as AuthState['authUser'], loading: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setState, dispatch]);
 
   useEffect(() => {
