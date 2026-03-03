@@ -1,6 +1,6 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Box, Button, Typography } from '@mui/material';
@@ -23,6 +23,28 @@ import { CreateRoomModal } from '../voice-create-room-modal';
 import VoiceRoomEntryButton from '../voice-room-entry-button';
 import { VoiceRoomView } from '../voice-room/voice-room-view';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`voice-tabpanel-${index}`}
+      aria-labelledby={`voice-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 // ----------------------------------------------------------------------
 
 type selectedTabType = 'find' | 'entry';
@@ -42,7 +64,7 @@ export function VoiceMainView() {
     setRoom(roomSelected);
     setSelectedTab('entry');
 
-    const roomExists = currentRooms.some((roomProp) => roomProp.id === roomSelected.id);
+    const roomExists = currentRooms.some((roomProp) => roomProp.room?.id === roomSelected.id);
 
     if (!roomExists) {
       const formData = {
@@ -53,7 +75,7 @@ export function VoiceMainView() {
       const response = await updateUserRecentRooms(formData);
 
       if (response.data?.status) {
-        setCurrentRooms([roomSelected, ...currentRooms]);
+        setCurrentRooms([{ room: roomSelected, joinedAt: new Date() }, ...currentRooms]);
       } else {
         toastErrorResponse(response);
       }
@@ -118,7 +140,7 @@ export function VoiceMainView() {
       {currentRooms.map((recentRoom) => (
         <VoiceRoomEntryButton
           selected={selectedTab === 'entry'}
-          room={recentRoom}
+          room={recentRoom?.room}
           onClick={handleJoinRoom}
         />
       ))}
@@ -129,8 +151,17 @@ export function VoiceMainView() {
     <Box sx={{ width: 1, backgroundColor: 'background.neutral', height: '100%' }} />
   );
 
-  const mainContent =
-    selectedTab === 'find' ? <VoiceRoomsView onJoinRoom={handleJoinRoom} /> : <VoiceRoomView />;
+  const mainContent = (
+    <Box sx={{ width: '100%' }}>
+      <TabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
+        <VoiceRoomsView onJoinRoom={handleJoinRoom} />
+      </TabPanel>
+
+      <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
+        <VoiceRoomView />
+      </TabPanel>
+    </Box>
+  );
 
   const footer = <Box sx={{ height: 1, backgroundColor: 'background.neutral' }} />;
 

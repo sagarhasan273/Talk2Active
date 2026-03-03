@@ -14,7 +14,9 @@ type VoiceRoomEntryButtonProps = {
 };
 
 const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntryButtonProps) => {
-  if (!room.id) return null;
+  console.log(room);
+  if (!room?.id) return null;
+
   return (
     <ButtonBase
       onClick={() => onClick(room)}
