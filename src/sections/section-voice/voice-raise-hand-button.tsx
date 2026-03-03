@@ -48,6 +48,10 @@ export const RaiseHandButton = () => {
         clearTimeout(inactivityTimeoutRef.current);
       }
 
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+
       if (socket) {
         emit('send-user-actions-in-voice', {
           roomId: room.id,
