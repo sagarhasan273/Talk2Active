@@ -9,12 +9,17 @@ import { AvatarUser } from 'src/components/avatar-user';
 
 type VoiceRoomEntryButtonProps = {
   selected?: boolean;
+  isJoined?: boolean;
   room: RoomResponse;
   onClick: (room: RoomResponse) => void;
 };
 
-const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntryButtonProps) => {
-  console.log(room);
+const VoiceRoomEntryButton = ({
+  selected = false,
+  isJoined = false,
+  room,
+  onClick,
+}: VoiceRoomEntryButtonProps) => {
   if (!room?.id) return null;
 
   return (
@@ -41,6 +46,16 @@ const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntr
         '&:active': {
           transform: 'scale(0.98)',
         },
+        ...(isJoined && {
+          bgcolor: 'primary.dark',
+          color: 'text.primary',
+          '&:hover': {
+            bgcolor: 'primary.dark',
+          },
+          '&:active': {
+            transform: 'scale(0.98)',
+          },
+        }),
       }}
     >
       {/* Host Avatar with Language Badge */}
@@ -71,6 +86,11 @@ const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntr
           avatarUrl={room.host?.profilePhoto}
           verified={Boolean(room.host?.verified)}
           name={room.host?.name}
+          sx={{
+            ...(isJoined && {
+              color: 'text.primary',
+            }),
+          }}
         />
       </Badge>
 
@@ -80,7 +100,14 @@ const VoiceRoomEntryButton = ({ selected = false, room, onClick }: VoiceRoomEntr
           <Typography
             variant="body2"
             noWrap
-            sx={{ color: 'text.primary', fontWeight: 600, fontSize: '0.875rem' }}
+            sx={{
+              color: 'text.primary',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              ...(isJoined && {
+                color: 'common.white',
+              }),
+            }}
           >
             {room.name}
           </Typography>

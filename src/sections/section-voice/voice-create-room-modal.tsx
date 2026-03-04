@@ -25,6 +25,7 @@ import {
 import { selectAccount } from 'src/core/slices';
 import { useCreateRoomMutation } from 'src/core/apis/api-chat';
 
+import { Scrollbar } from 'src/components/scrollbar';
 import { languages } from '../../_mock/data/languages';
 
 interface CreateRoomModalProps {
@@ -138,162 +139,168 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         </Button>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 2 }}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-        >
-          {/* Basic Information */}
-          <Card variant="outlined">
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Basic Information
-              </Typography>
+      <DialogContent sx={{ p: 2, height: '50vh' }}>
+        <Scrollbar>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+          >
+            {/* Basic Information */}
+            <Card variant="outlined">
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  Basic Information
+                </Typography>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Room Name"
-                  required
-                  size="small"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Spanish Conversation Circle"
-                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Room Name"
+                    required
+                    size="small"
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Spanish Conversation Circle"
+                  />
 
-                <TextField
-                  fullWidth
-                  label="Description"
-                  required
-                  size="small"
-                  multiline
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  placeholder="Describe what learners can expect in your room..."
-                />
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    required
+                    size="small"
+                    multiline
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    placeholder="Describe what learners can expect in your room..."
+                  />
 
-                {/* Multiple Language Selection with Search and Enter to Add */}
-                <Box>
-                  <Typography variant="caption" color="text.secondary" gutterBottom>
-                    Languages (Type and press Enter to add)
-                  </Typography>
+                  {/* Multiple Language Selection with Search and Enter to Add */}
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" gutterBottom>
+                      Languages (Type and press Enter to add)
+                    </Typography>
 
-                  {/* Selected Languages Chips */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>
-                    {formData.languages.map((code) => {
-                      const lang = languages.find((l) => l.code === code);
-                      return (
-                        <Chip
-                          key={code}
-                          label={lang ? `${lang.flag} ${lang.name}` : code}
-                          size="small"
-                          onDelete={() => handleRemoveLanguage(code)}
-                          deleteIcon={<Cancel />}
-                          sx={{
-                            color: 'text.primary',
-                            backgroundColor: 'background.neutral',
-                            '&:hover': {
+                    {/* Selected Languages Chips */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, my: 1 }}>
+                      {formData.languages.map((code) => {
+                        const lang = languages.find((l) => l.code === code);
+                        return (
+                          <Chip
+                            key={code}
+                            label={lang ? `${lang.flag} ${lang.name}` : code}
+                            size="small"
+                            onDelete={() => handleRemoveLanguage(code)}
+                            deleteIcon={<Cancel />}
+                            sx={{
                               color: 'text.primary',
                               backgroundColor: 'background.neutral',
-                            },
-                          }}
+                              '&:hover': {
+                                color: 'text.primary',
+                                backgroundColor: 'background.neutral',
+                              },
+                            }}
+                          />
+                        );
+                      })}
+                    </Box>
+
+                    {/* Language Input Field */}
+                    <Autocomplete
+                      freeSolo
+                      size="small"
+                      options={languages.map((lang) => ({
+                        code: lang.code,
+                        label: `${lang.flag} ${lang.name}`,
+                      }))}
+                      inputValue={inputValue}
+                      onInputChange={(event, newInputValue) => {
+                        setInputValue(newInputValue);
+                      }}
+                      onChange={(event, newValue) => {
+                        if (newValue && typeof newValue === 'object') {
+                          handleAddLanguage(newValue.code);
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          fullWidth
+                          size="small"
+                          placeholder="Search or type language name and press Enter..."
+                          onKeyDown={handleKeyDown}
                         />
-                      );
-                    })}
+                      )}
+                      renderOption={(props, option) => (
+                        <MenuItem {...props}>{option.label}</MenuItem>
+                      )}
+                    />
                   </Box>
 
-                  {/* Language Input Field */}
-                  <Autocomplete
-                    freeSolo
-                    size="small"
-                    options={languages.map((lang) => ({
-                      code: lang.code,
-                      label: `${lang.flag} ${lang.name}`,
-                    }))}
-                    inputValue={inputValue}
-                    onInputChange={(event, newInputValue) => {
-                      setInputValue(newInputValue);
-                    }}
-                    onChange={(event, newValue) => {
-                      if (newValue && typeof newValue === 'object') {
-                        handleAddLanguage(newValue.code);
+                  {/* Room Type Selection */}
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Room Type</InputLabel>
+                    <Select
+                      value={formData.roomType}
+                      label="Room Type"
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, roomType: e.target.value }))
                       }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        size="small"
-                        placeholder="Search or type language name and press Enter..."
-                        onKeyDown={handleKeyDown}
-                      />
-                    )}
-                    renderOption={(props, option) => <MenuItem {...props}>{option.label}</MenuItem>}
+                    >
+                      {roomTypes.map((type) => (
+                        <MenuItem key={type.value} value={type.value}>
+                          {type.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Skill Level</InputLabel>
+                    <Select
+                      value={formData.level}
+                      label="Skill Level"
+                      onChange={(e) => setFormData((prev) => ({ ...prev, level: e.target.value }))}
+                    >
+                      <MenuItem value="beginner">Beginner</MenuItem>
+                      <MenuItem value="intermediate">Intermediate</MenuItem>
+                      <MenuItem value="advanced">Advanced</MenuItem>
+                      <MenuItem value="mixed">Mixed Levels</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Room Settings */}
+            <Card variant="outlined">
+              <CardContent sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  Room Settings
+                </Typography>
+
+                <Box sx={{}}>
+                  <Typography gutterBottom>
+                    Maximum Participants: {formData.maxParticipants}
+                  </Typography>
+                  <Slider
+                    value={formData.maxParticipants}
+                    onChange={(e, value) =>
+                      setFormData((prev) => ({ ...prev, maxParticipants: value as number }))
+                    }
+                    min={2}
+                    max={20}
+                    marks
+                    valueLabelDisplay="auto"
                   />
                 </Box>
-
-                {/* Room Type Selection */}
-                <FormControl fullWidth size="small">
-                  <InputLabel>Room Type</InputLabel>
-                  <Select
-                    value={formData.roomType}
-                    label="Room Type"
-                    onChange={(e) => setFormData((prev) => ({ ...prev, roomType: e.target.value }))}
-                  >
-                    {roomTypes.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth size="small">
-                  <InputLabel>Skill Level</InputLabel>
-                  <Select
-                    value={formData.level}
-                    label="Skill Level"
-                    onChange={(e) => setFormData((prev) => ({ ...prev, level: e.target.value }))}
-                  >
-                    <MenuItem value="beginner">Beginner</MenuItem>
-                    <MenuItem value="intermediate">Intermediate</MenuItem>
-                    <MenuItem value="advanced">Advanced</MenuItem>
-                    <MenuItem value="mixed">Mixed Levels</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Room Settings */}
-          <Card variant="outlined">
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                Room Settings
-              </Typography>
-
-              <Box sx={{}}>
-                <Typography gutterBottom>
-                  Maximum Participants: {formData.maxParticipants}
-                </Typography>
-                <Slider
-                  value={formData.maxParticipants}
-                  onChange={(e, value) =>
-                    setFormData((prev) => ({ ...prev, maxParticipants: value as number }))
-                  }
-                  min={2}
-                  max={20}
-                  marks
-                  valueLabelDisplay="auto"
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        </Scrollbar>
       </DialogContent>
 
       <DialogActions sx={{ p: 3 }}>

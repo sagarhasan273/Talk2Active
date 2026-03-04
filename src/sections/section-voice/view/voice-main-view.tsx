@@ -50,7 +50,7 @@ function TabPanel(props: TabPanelProps) {
 type selectedTabType = 'find' | 'entry';
 
 export function VoiceMainView() {
-  const { currentRooms, setRoom, setCurrentRooms } = useRoomTools();
+  const { room, userVoiceState, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
 
   const user = useSelector(selectAccount);
 
@@ -139,7 +139,8 @@ export function VoiceMainView() {
 
       {currentRooms.map((recentRoom) => (
         <VoiceRoomEntryButton
-          selected={selectedTab === 'entry'}
+          selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
+          isJoined={userVoiceState.roomId === recentRoom?.room?.id}
           room={recentRoom?.room}
           onClick={handleJoinRoom}
         />
