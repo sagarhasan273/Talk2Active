@@ -6,13 +6,15 @@ import {
   Box,
   List,
   Grid,
+  Chip,
+  Paper,
+  Stack,
   Button,
   Avatar,
   Divider,
   SvgIcon,
   ListItem,
   useTheme,
-  Container,
   Typography,
   CardContent,
   ListItemText,
@@ -22,10 +24,21 @@ import {
 import { fDateTime } from 'src/utils/format-time';
 
 import { useGetRoomByIdQuery } from 'src/core/apis';
+import { languages } from 'src/_mock/data/languages';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 type ParticipantsProps = { user: UserType; joinedAt: Date };
+
+// Room type configurations
+const ROOM_TYPES = {
+  public: { label: 'Public', color: 'success', icon: '🌐' },
+  private: { label: 'Private', color: 'warning', icon: '🔒' },
+  language: { label: 'Language Exchange', color: 'primary', icon: '🗣️' },
+  discussion: { label: 'Discussion', color: 'info', icon: '💬' },
+  practice: { label: 'Practice', color: 'secondary', icon: '🎯' },
+  social: { label: 'Social', color: 'error', icon: '🎉' },
+};
 
 export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
   const theme = useTheme();
@@ -73,172 +86,312 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
     }
   }, [roomData, room, setRoom]);
 
+  // Get language name from code
+  const getLanguageName = (code: string) => {
+    const language = languages.find(
+      (lang: { code: string; flag: string; name: string }) => lang.code === code
+    );
+    return language ? `${language.flag} ${language.name}` : code;
+  };
+
+  // Get room type display
+  const getRoomType = () => {
+    const roomType = room.roomType || 'public';
+    const type = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES] || ROOM_TYPES.public;
+    return (
+      <Chip
+        icon={<span>{type.icon}</span>}
+        label={type.label}
+        size="small"
+        color={type.color as any}
+        sx={{
+          borderRadius: 1,
+          '& .MuiChip-icon': { ml: 0.5, fontSize: '1rem' },
+        }}
+      />
+    );
+  };
+
+  // Truncate room name to 3-4 words
+  const getTruncatedName = (name: string) => {
+    if (!name) return '';
+    const words = name.split(' ');
+    if (words.length <= 4) return name;
+    return `${words.slice(0, 4).join(' ')}...`;
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, backgroundColor: 'transparent' }}>
-      <CardContent sx={{ p: { xs: 1, sm: 4 } }}>
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 1,
+        overflow: 'hidden',
+        background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 2 } }}>
         <Grid container spacing={4}>
           {/* Left Column - Main Content */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography
-                variant="h1"
-                gutterBottom
-                sx={{ fontWeight: 'bold', color: 'primary.main' }}
-              >
-                Talk
-                <Box
-                  component="span"
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Room Header */}
+              <Box sx={{ mb: 3 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  {getRoomType()}
+                  <Chip
+                    label={room.level || 'All Levels'}
+                    size="small"
+                    variant="outlined"
+                    sx={{ borderRadius: 1 }}
+                  />
+                  <Chip
+                    label={`👥 ${participants.length}/${room.maxParticipants}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{ borderRadius: 1 }}
+                  />
+                </Stack>
+
+                <Typography
+                  variant="h3"
                   sx={{
-                    ml: 0.5,
-                    transform: 'scale(1.3)',
-                    display: 'inline-block',
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? theme.palette.grey['400']
-                        : theme.palette.grey['700'],
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    mb: 1,
+                    lineHeight: 1.2,
                   }}
                 >
-                  2
-                </Box>
-                Active
-              </Typography>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Join the conversation
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                {participants.length === 0
-                  ? 'Room is empty now. Be the first to join!'
-                  : participants.length < room.maxParticipants
-                    ? `${participants.length} people are waiting for you to get started. Join now and be part of the conversation!`
-                    : `Room is full with ${participants.length} participants.`}
-              </Typography>
+                  {getTruncatedName(room.name)}
+                </Typography>
 
+                {/* Language Chips */}
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                  {room.languages ? (
+                    room.languages?.map((language) => (
+                      <Chip
+                        key={language}
+                        label={getLanguageName(language)}
+                        size="small"
+                        color="primary"
+                        variant="filled"
+                        sx={{ borderRadius: 1, fontWeight: 500 }}
+                      />
+                    ))
+                  ) : (
+                    <Chip
+                      label="Multiple Languages"
+                      size="small"
+                      color="primary"
+                      variant="filled"
+                      sx={{ borderRadius: 1 }}
+                    />
+                  )}
+                </Stack>
+              </Box>
+
+              {/* Host Info */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 3,
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Avatar
+                  src={room.host?.profilePhoto}
+                  alt={room.host?.name}
+                  sx={{ width: 48, height: 48 }}
+                />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Hosted by
+                  </Typography>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    {room.host?.name || 'Unknown'}
+                  </Typography>
+                </Box>
+              </Paper>
+
+              {/* Room Description */}
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  mb: 3,
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  flex: 1,
+                }}
+              >
+                <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                  {room.description}
+                </Typography>
+              </Paper>
+
+              {/* Join Button */}
               <Button
                 startIcon={
-                  <SvgIcon sx={{ fontSize: '16px!important' }}>
-                    <g
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                    >
-                      <path strokeWidth="3" d="M12.005 11h.008M8.01 11h.009" />
-                      <path
-                        strokeWidth="2.5"
-                        d="M12 3c-1.48 0-2.905.03-4.244.088c-2.44.105-3.66.157-4.626 1.13c-.965.972-1.007 2.159-1.09 4.532a64 64 0 0 0 0 4.5c.083 2.373.125 3.56 1.09 4.532c.965.973 2.186 1.025 4.626 1.13l.244.01v2.348a.73.73 0 0 0 1.205.554l2.18-1.869c.547-.47.821-.704 1.147-.828s.696-.131 1.437-.145q1.171-.023 2.275-.07c2.44-.105 3.66-.157 4.626-1.13c.965-.972 1.007-2.159 1.09-4.532a64 64 0 0 0 .032-3.25"
-                      />
-                      <path strokeWidth="2.5" d="M19 2s3 2.21 3 3s-3 3-3 3m2.5-3H15" />
-                    </g>
+                  <SvgIcon sx={{ fontSize: '20px' }}>
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
+                      fill="currentColor"
+                    />
                   </SvgIcon>
                 }
                 size="large"
                 variant="contained"
                 onClick={onJoinRoom}
+                fullWidth
                 sx={{
-                  bgcolor: 'primary',
-                  color: 'white',
                   py: 1.5,
-                  px: 4,
-                  borderRadius: 1,
-                  width: 'fit-content',
+                  borderRadius: 2,
                   textTransform: 'none',
-                  fontWeight: 'semibold',
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
                   boxShadow: 3,
                   '&:hover': {
                     boxShadow: 6,
-                    bgcolor: 'primary.dark',
                   },
                 }}
               >
-                Join Now
+                Join Voice Room
               </Button>
             </Box>
           </Grid>
 
           {/* Right Column - Participants */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  sx={{
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    mb: 2,
-                  }}
-                >
-                  Participants Online
-                </Typography>
-
-                <List sx={{ py: 0 }}>
-                  {participants.map(({ user, joinedAt }) => (
-                    <ListItem key={user.id} sx={{ px: 0, py: 1 }}>
-                      <ListItemAvatar>
-                        <Box sx={{ position: 'relative' }}>
-                          <Avatar
-                            src={user.profilePhoto}
-                            alt={user.username}
-                            sx={{ width: 40, height: 40 }}
-                          />
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              bottom: 0,
-                              right: 0,
-                              width: 12,
-                              height: 12,
-                              bgcolor: 'success.main',
-                              borderRadius: '50%',
-                              border: '2px solid white',
-                            }}
-                          />
-                        </Box>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2" fontWeight="medium">
-                            {user.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            {typeof joinedAt === 'string'
-                              ? fDateTime(joinedAt)
-                              : joinedAt.toLocaleString()}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                {participants.length === 0 && (
-                  <Typography variant="body2" color="text.secondary" textAlign="center">
-                    No participants are currently online.
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                height: '100%',
+                bgcolor: alpha(theme.palette.background.default, 0.6),
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {/* Participants Header */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6" fontWeight={600}>
+                    Participants
                   </Typography>
-                )}
-              </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {participants.length} {participants.length === 1 ? 'person' : 'people'} in room
+                  </Typography>
+                </Box>
 
-              <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: 2 }} />
 
-              <Box sx={{ pt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
-                  This is a live collaboration room. Everyone here can see, hear, and interact with
-                  each other in real-time.
-                </Typography>
+                {/* Participants List */}
+                <List sx={{ py: 0, flex: 1, maxHeight: 350, overflow: 'auto' }}>
+                  {participants.length > 0 ? (
+                    participants.map(({ user, joinedAt }) => (
+                      <ListItem
+                        key={user.id}
+                        sx={{
+                          px: 1,
+                          py: 1,
+                          borderRadius: 1,
+                          '&:hover': { bgcolor: 'action.hover' },
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <Box sx={{ position: 'relative' }}>
+                            <Avatar
+                              src={user.profilePhoto}
+                              alt={user.name}
+                              sx={{ width: 40, height: 40 }}
+                            />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                bottom: 0,
+                                right: 0,
+                                width: 10,
+                                height: 10,
+                                bgcolor: 'success.main',
+                                borderRadius: '50%',
+                                border: '2px solid white',
+                              }}
+                            />
+                          </Box>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Typography variant="body2" fontWeight={500}>
+                              {user.name}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography variant="caption" color="text.secondary">
+                              Joined {fDateTime(joinedAt)}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    ))
+                  ) : (
+                    <Box
+                      sx={{
+                        py: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary" align="center">
+                        No participants yet
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" align="center">
+                        Be the first to join!
+                      </Typography>
+                    </Box>
+                  )}
+                </List>
+
+                <Divider sx={{ mt: 2, mb: 1 }} />
+
+                {/* Room Info */}
+                <Box sx={{ pt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {room.roomType === 'private' ? (
+                      <>🔒 This is a private room. Join with password.</>
+                    ) : (
+                      <>🌐 Public voice room - Everyone can join and speak.</>
+                    )}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </Paper>
           </Grid>
         </Grid>
       </CardContent>
-    </Container>
+    </Paper>
   );
+}
+
+// Alpha helper function
+function alpha(color: string, value: number): string {
+  // Simple hex to rgb conversion for common colors
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${value})`;
+  }
+  return color;
 }
