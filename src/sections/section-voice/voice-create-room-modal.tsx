@@ -141,7 +141,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       </DialogTitle>
 
       <DialogContent sx={{ p: 2, height: '50vh' }}>
-        <Scrollbar>
+        <Scrollbar sx={{ overflowY: 'scroll' }}>
           <Box
             component="form"
             onSubmit={handleSubmit}

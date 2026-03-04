@@ -1,6 +1,6 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import LockIcon from '@mui/icons-material/Lock';
 import { Box, Avatar, Button, Typography, AvatarGroup } from '@mui/material';
@@ -17,8 +17,8 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
 
   const [room, setRoom] = useState<RoomResponse>(roomData);
 
-  useEffect(() => {
-    const handleBroadcastNewRoom = (data: any) => {
+  const handleBroadcastNewRoom = useCallback(
+    (data: any) => {
       if (room.id === data?.joinInfo?.roomId) {
         setRoom((prev) => {
           const newRoom = {
@@ -31,6 +31,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           return newRoom;
         });
       }
+
       if (room.id === data?.leaveInfo?.roomId) {
         setRoom((prev) => {
           const newRoom = {
@@ -42,12 +43,16 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           return newRoom;
         });
       }
-    };
+    },
+    [room.id]
+  );
 
+  useEffect(() => {
     off('room-updated-with-participant', handleBroadcastNewRoom);
     on('room-updated-with-participant', handleBroadcastNewRoom);
 
     return () => off('room-updated-with-participant', handleBroadcastNewRoom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, off, room.id]);
 
   return (

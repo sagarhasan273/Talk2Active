@@ -1,7 +1,7 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { Box, Button, Typography } from '@mui/material';
 
@@ -13,6 +13,7 @@ import { selectAccount } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -50,9 +51,11 @@ function TabPanel(props: TabPanelProps) {
 type selectedTabType = 'find' | 'entry';
 
 export function VoiceMainView() {
-  const { room, userVoiceState, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
-
   const user = useSelector(selectAccount);
+
+  const { on, off } = useSocketContext();
+
+  const { room, userVoiceState, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
 
   const editRoomBoolean = useBoolean();
 
@@ -81,6 +84,52 @@ export function VoiceMainView() {
       }
     }
   };
+
+  const handleBroadcastNewRoom = useCallback(
+    (data: any) => {
+      const recentRoomIds = currentRooms?.map((currentRoom) => currentRoom?.room?.id);
+      const hasJoinRecentRoom = recentRoomIds.includes(data?.joinInfo?.roomId);
+      const hasLeaveRecentRoom = recentRoomIds.includes(data?.leaveInfo?.roomId);
+
+      if (hasJoinRecentRoom || hasLeaveRecentRoom)
+        setCurrentRooms(
+          currentRooms.map((currentRoom) => {
+            if (currentRoom?.room?.id === data?.joinInfo?.roomId) {
+              return {
+                ...currentRoom,
+                room: {
+                  ...currentRoom.room,
+                  currentParticipants: [
+                    ...(currentRoom.room.currentParticipants || []),
+                    { user: data.joinInfo.participant, joinedAt: new Date() },
+                  ],
+                },
+              };
+            }
+            if (currentRoom?.room?.id === data?.leaveInfo?.roomId) {
+              return {
+                ...currentRoom,
+                room: {
+                  ...currentRoom.room,
+                  currentParticipants: (currentRoom.room.currentParticipants || []).filter(
+                    (participant) => participant?.user?.id === data?.leaveInfo?.participant?.userId
+                  ),
+                },
+              };
+            }
+            return currentRoom;
+          })
+        );
+    },
+    [currentRooms, setCurrentRooms]
+  );
+
+  useEffect(() => {
+    off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    on('recent-room-updated-with-participant', handleBroadcastNewRoom);
+
+    return () => off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+  }, [on, off, handleBroadcastNewRoom]);
 
   const header = (
     <Box

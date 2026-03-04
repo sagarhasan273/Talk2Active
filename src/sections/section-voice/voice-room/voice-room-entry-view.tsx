@@ -1,6 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import {
   Box,
@@ -19,25 +19,50 @@ import {
   ListItemAvatar,
 } from '@mui/material';
 
-import { useParams } from 'src/routes/route-hooks';
-
 import { fDateTime } from 'src/utils/format-time';
 
 import { useGetRoomByIdQuery } from 'src/core/apis';
 import { useRoomTools } from 'src/core/slices/slice-room';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 
 type ParticipantsProps = { user: UserType; joinedAt: Date };
 
 export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
   const theme = useTheme();
 
-  const { roomId } = useParams();
+  const { on, off } = useSocketContext();
 
   const { setRoom, room } = useRoomTools();
 
   const [participants, setParticipants] = useState<ParticipantsProps[]>([]);
 
-  const { data: roomData } = useGetRoomByIdQuery(roomId!, { skip: !!room.id });
+  const { data: roomData } = useGetRoomByIdQuery(room.id!, { skip: !!room.id });
+
+  const handleBroadcastNewRoom = useCallback(
+    (data: any) => {
+      if (room.id === data?.joinInfo?.roomId) {
+        setParticipants((prev) => [
+          ...(prev || []),
+          { user: data.joinInfo.participant, joinedAt: new Date() },
+        ]);
+      }
+      if (room.id === data?.leaveInfo?.roomId) {
+        setParticipants((prev) =>
+          prev.filter(
+            (participant) => participant?.user?.id === data?.leaveInfo?.participant?.userId
+          )
+        );
+      }
+    },
+    [room.id, setParticipants]
+  );
+
+  useEffect(() => {
+    off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    on('recent-room-updated-with-participant', handleBroadcastNewRoom);
+
+    return () => off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+  }, [on, off, handleBroadcastNewRoom]);
 
   useEffect(() => {
     if (roomData?.status) {

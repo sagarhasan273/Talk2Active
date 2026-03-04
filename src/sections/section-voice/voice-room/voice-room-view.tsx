@@ -1,5 +1,6 @@
 // src/sections/section-voice-room/voice-room-view.tsx
 
+import { toast } from 'sonner';
 import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -7,6 +8,7 @@ import { selectAccount } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
+import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis';
 
 import { useChatSocketListeners } from 'src/sections/section-chat-room/chat-hooks/chat-socket-listeners';
 
@@ -30,6 +32,9 @@ export function VoiceRoomView() {
   const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
 
   const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
+
+  const [joinRoom] = useJoinRoomMutation();
+  const [leaveRoom] = useLeaveRoomMutation();
 
   const handleJoinChat = async () => {
     if (roomId !== null) {
@@ -57,56 +62,66 @@ export function VoiceRoomView() {
     if (!setupChatSocketListenersRef.current)
       setupChatSocketListenersRef.current = setupChatSocketListeners?.();
 
-    if (socket?.id) {
-      socket?.emit('join-voice-room', {
-        roomId: room.id,
-        userId: user.id,
-        name: user.name,
-        profilePhoto: user.profilePhoto,
-        isMuted: isMicMuted,
-        status: 'online',
-        userType: room.host?.id === user.id ? 'Host' : 'Guest',
-        verified: user.verified,
-      });
+    const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
 
-      updateUserVoiceState({ hasJoined: true, roomId: room.id });
+    if (response.status) {
+      if (socket?.id) {
+        socket?.emit('join-voice-room', {
+          roomId: room.id,
+          userId: user.id,
+          name: user.name,
+          profilePhoto: user.profilePhoto,
+          isMuted: isMicMuted,
+          status: 'online',
+          userType: room.host?.id === user.id ? 'Host' : 'Guest',
+          verified: user.verified,
+        });
 
-      addParticipant({
-        userId: user.id,
-        socketId: socket?.id,
-        status: 'online',
-        isMuted: isMicMuted,
-        userType: room.host?.id === user.id ? 'Host' : 'Guest',
-        verified: user.verified,
-        isLocal: true,
-        isSpeaking: false,
-        name: user.name,
-        profilePhoto: user.profilePhoto,
-      });
+        updateUserVoiceState({ hasJoined: true, roomId: room.id });
+
+        addParticipant({
+          userId: user.id,
+          socketId: socket?.id,
+          status: 'online',
+          isMuted: isMicMuted,
+          userType: room.host?.id === user.id ? 'Host' : 'Guest',
+          verified: user.verified,
+          isLocal: true,
+          isSpeaking: false,
+          name: user.name,
+          profilePhoto: user.profilePhoto,
+        });
+      }
+    } else {
+      toast.info(response.message);
     }
   };
 
   const handelLeaveChat = async () => {
-    console.log('Leaving chat - selective cleanup');
-
     if (setupChatSocketListenersRef.current) {
       setupChatSocketListenersRef.current?.();
       setupChatSocketListenersRef.current = undefined;
     }
 
-    socket?.emit('leave-voice-room', {
-      roomId,
-      userId: user.id,
-      name: user.name,
-    });
+    const response = await leaveRoom({ roomId: room.id, userId: user.id }).unwrap();
 
-    // This cleanup keeps audio context alive
-    cleanupWebRTC();
+    if (response.status) {
+      socket?.emit('leave-voice-room', {
+        roomId,
+        userId: user.id,
+        name: user.name,
+      });
 
-    updateUserVoiceState({ hasJoined: false, roomId: null });
+      // This cleanup keeps audio context alive
+      cleanupWebRTC();
 
-    // Reset local state
-    resetParticipants();
+      updateUserVoiceState({ hasJoined: false, roomId: null });
+
+      // Reset local state
+      resetParticipants();
+    } else {
+      console.error(response.message);
+    }
   };
 
   return (
