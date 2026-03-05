@@ -44,7 +44,45 @@ import { ChatMessageGroup } from 'src/sections/section-chat-room/chat-message-gr
 import { VoiceUserCard } from '../voice-user-card';
 import { RaiseHandButton } from '../voice-raise-hand-button';
 
-// Styled Components
+// Styled Components - FIXED: Remove isSelected from DOM
+const FeaturedSection = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isSelected', // Prevent isSelected from reaching DOM
+})<{ isSelected: boolean }>(({ theme, isSelected }) => ({
+  width: '100%',
+  height: isSelected ? '60%' : '0%',
+  minHeight: isSelected ? '300px' : '0',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  overflow: 'hidden',
+  position: 'relative',
+  backgroundColor: theme.palette.background.neutral,
+  borderRadius: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    height: isSelected ? '50%' : '0%',
+    minHeight: isSelected ? '250px' : '0',
+  },
+}));
+
+const GridSection = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isSelected', // Prevent isSelected from reaching DOM
+})<{ isSelected: boolean }>(({ theme, isSelected }) => ({
+  width: '100%',
+  height: isSelected ? '40%' : '100%',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  overflow: 'hidden',
+  borderRadius: theme.spacing(2),
+  backgroundColor: theme.palette.background.neutral,
+  padding: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    height: isSelected ? '50%' : '100%',
+    padding: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+  },
+}));
+
+// Rest of your styled components (no changes needed)
 const ControlBar = styled(Paper)(({ theme }) => ({
   position: 'fixed',
   bottom: 20,
@@ -90,53 +128,6 @@ const MainContent = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(1),
-  },
-}));
-
-const FeaturedSection = styled(Box)(
-  ({ theme, isSelected }: { theme?: any; isSelected: boolean }) => ({
-    width: '100%',
-    height: isSelected ? '60%' : '0%',
-    minHeight: isSelected ? '300px' : '0',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: theme.palette.background.neutral,
-    borderRadius: theme.spacing(2),
-    [theme.breakpoints.down('sm')]: {
-      height: isSelected ? '50%' : '0%',
-      minHeight: isSelected ? '250px' : '0',
-    },
-  })
-);
-
-const GridSection = styled(Box)(({ theme, isSelected }: { theme?: any; isSelected: boolean }) => ({
-  width: '100%',
-  height: isSelected ? '40%' : '100%',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  overflow: 'hidden',
-  borderRadius: theme.spacing(2),
-  backgroundColor: theme.palette.background.neutral,
-  padding: theme.spacing(2),
-  [theme.breakpoints.down('sm')]: {
-    height: isSelected ? '50%' : '100%',
-    padding: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  },
-}));
-
-const ParticipantsGrid = styled(Box)(({ theme }) => ({
-  display: 'grid',
-  gap: theme.spacing(2),
-  height: '100%',
-  width: '100%',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-  [theme.breakpoints.down('sm')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: theme.spacing(1),
   },
 }));
 
@@ -223,6 +214,15 @@ const VolumeSlider = styled(Slider)({
   },
 });
 
+// FIXED: Wrapped components that need refs for Tooltip
+const TooltipIconButton = React.forwardRef<HTMLButtonElement, any>((props, ref) => (
+  <IconButton {...props} ref={ref} />
+));
+
+const TooltipBox = React.forwardRef<HTMLDivElement, any>((props, ref) => (
+  <Box {...props} ref={ref} />
+));
+
 export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -276,8 +276,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     () => Object.values(participants).filter((p) => p.socketId !== selectedUserId),
     [participants, selectedUserId]
   );
-
-  console.log(participants);
 
   const handleSelectParticipant = (participant: Participant) => {
     setSelectedUserId(participant.socketId);
@@ -354,8 +352,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
           <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 0.5 }} />
 
+          {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
           <Tooltip title="Room settings">
-            <IconButton
+            <TooltipIconButton
               size="small"
               sx={{
                 color: '#b5bac1',
@@ -368,7 +367,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               }}
             >
               <SettingsIcon fontSize="small" />
-            </IconButton>
+            </TooltipIconButton>
           </Tooltip>
         </RoomControlers>
       </Box>
@@ -383,22 +382,17 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                 <FeaturedCard>
                   {/* Back button for mobile */}
                   {isMobile && (
-                    <BackToGridButton size="small" onClick={handleBackToGrid}>
-                      <KeyboardBackspaceIcon />
-                    </BackToGridButton>
+                    <Tooltip title="Back to grid">
+                      <BackToGridButton size="small" onClick={handleBackToGrid}>
+                        <KeyboardBackspaceIcon />
+                      </BackToGridButton>
+                    </Tooltip>
                   )}
-
-                  {/* Fullscreen toggle for desktop */}
-                  {/* {!isMobile && (
-                  <FullscreenButton size="small" onClick={toggleFullscreen}>
-                    {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
-                  </FullscreenButton>
-                )} */}
 
                   {/* Reaction animation */}
                   {reaction && (
                     <Zoom in timeout={4000}>
-                      <Box
+                      <TooltipBox
                         sx={{
                           position: 'absolute',
                           top: '40%',
@@ -415,7 +409,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         <Avatar sx={{ bgcolor: reaction === '❤️' ? '#dbdbdb' : '#5865f2' }}>
                           {reaction}
                         </Avatar>
-                      </Box>
+                      </TooltipBox>
                     </Zoom>
                   )}
 
@@ -471,14 +465,15 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
                       <Divider orientation="vertical" flexItem sx={{ bgcolor: 'divider', mx: 1 }} />
 
+                      {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
                       <Tooltip title="React">
-                        <IconButton
+                        <TooltipIconButton
                           size="small"
                           onClick={() => handleReaction('❤️')}
                           sx={{ color: '#b5bac1', '&:hover': { color: '#ff4d4d' } }}
                         >
                           <FavoriteIcon fontSize="small" />
-                        </IconButton>
+                        </TooltipIconButton>
                       </Tooltip>
 
                       <VoiceRoomMessageGroupDrawer title="Private Message">
@@ -498,8 +493,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         sx={{ bgcolor: 'divider', mx: 0.5 }}
                       />
 
+                      {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
                       <Tooltip title="More">
-                        <IconButton
+                        <TooltipIconButton
                           size="small"
                           sx={{
                             color: '#b5bac1',
@@ -512,7 +508,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                           }}
                         >
                           <SettingsIcon fontSize="small" />
-                        </IconButton>
+                        </TooltipIconButton>
                       </Tooltip>
                     </FeaturedControls>
                   )}
@@ -532,7 +528,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               <ParticipantsGrid>
                 {otherParticipants.map((participant, index) => (
                   <Zoom key={participant.socketId} in timeout={300 + index * 50}>
-                    <Box
+                    <TooltipBox
                       sx={{
                         cursor: 'pointer',
                         transition: 'transform 0.2s ease',
@@ -561,7 +557,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         }
                         onClick={() => handleSelectParticipant(participant)}
                       />
-                    </Box>
+                    </TooltipBox>
                   </Zoom>
                 ))}
               </ParticipantsGrid>
@@ -573,8 +569,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
       {/* Control Bar */}
       <Slide direction="up" in timeout={500}>
         <ControlBar>
+          {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
           <Tooltip title={isMicMuted ? 'Unmute' : 'Mute'}>
-            <IconButton
+            <TooltipIconButton
               sx={{
                 bgcolor: isMicMuted ? '#ff4d4d' : 'transparent',
                 color: isMicMuted ? 'white' : 'common.white',
@@ -586,37 +583,33 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               onClick={handleMicMute}
             >
               {!isMicMuted ? <MicIcon /> : <MicOffIcon />}
-            </IconButton>
+            </TooltipIconButton>
           </Tooltip>
 
-          {/* <Tooltip title="Camera">
-            <IconButton
-              sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
-              size="small"
-            >
-              <VideocamIcon />
-            </IconButton>
-          </Tooltip> */}
-
+          {/* FIXED: ChatStatusButton might need ref forwarding - check if it accepts refs */}
           <Tooltip title="Camera">
-            <ChatStatusButton onStatusChange={handleToggleUserStatus} />
+            <Box sx={{ display: 'inline-flex' }}>
+              <ChatStatusButton onStatusChange={handleToggleUserStatus} />
+            </Box>
           </Tooltip>
 
+          {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
           <Tooltip title="Share Screen">
-            <IconButton
+            <TooltipIconButton
               sx={{ color: 'common.white', '&:hover': { bgcolor: '#3b3d44' } }}
               size="small"
             >
               <ScreenShareIcon />
-            </IconButton>
+            </TooltipIconButton>
           </Tooltip>
 
           <RaiseHandButton />
 
           <Divider orientation="vertical" flexItem sx={{ bgcolor: '#4e5058' }} />
 
+          {/* FIXED: Wrapped IconButton in Tooltip with forwardRef */}
           <Tooltip title="Leave Room">
-            <IconButton
+            <TooltipIconButton
               onClick={onLeaveRoom}
               sx={{
                 bgcolor: '#ff4d4d',
@@ -628,10 +621,23 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               size="small"
             >
               <ExitToAppIcon />
-            </IconButton>
+            </TooltipIconButton>
           </Tooltip>
         </ControlBar>
       </Slide>
     </StageContainer>
   );
 }
+
+// Add missing ParticipantsGrid styled component
+const ParticipantsGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gap: theme.spacing(2),
+  height: '100%',
+  width: '100%',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+  [theme.breakpoints.down('sm')]: {
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: theme.spacing(1),
+  },
+}));

@@ -114,7 +114,8 @@ export function VoiceMainView() {
                 room: {
                   ...currentRoom.room,
                   currentParticipants: (currentRoom.room.currentParticipants || []).filter(
-                    (participant) => participant?.user?.id === data?.leaveInfo?.participant?.userId
+                    (participant) =>
+                      participant?.user?.userId !== data?.leaveInfo?.participant?.userId
                   ),
                 },
               };
