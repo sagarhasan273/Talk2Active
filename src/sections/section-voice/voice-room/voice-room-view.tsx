@@ -13,7 +13,7 @@ import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis';
 import { VoiceRoomBodyView } from './voice-room-body-view';
 import { VoiceRoomEntryView } from './voice-room-entry-view';
 
-export function VoiceRoomView({ onLeave }: { onLeave?: () => void }) {
+export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
   const user = useSelector(selectAccount);
 
   const { room, userVoiceState, resetParticipants, updateUserVoiceState, addParticipant } =
@@ -116,7 +116,7 @@ export function VoiceRoomView({ onLeave }: { onLeave?: () => void }) {
     <>
       {room.id !== roomId && <VoiceRoomEntryView onJoinRoom={handleJoinChat} />}
 
-      {hasJoined && room.id === roomId && <VoiceRoomBodyView onLeaveRoom={handelLeaveChat} />}
+      {hasJoined && room.id === roomId && <VoiceRoomBodyView onLeaveRoom={onLeave} />}
     </>
   );
 }

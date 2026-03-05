@@ -77,7 +77,7 @@ export function VoiceRoomChat() {
   } = webRTC;
 
   // Socket listeners
-  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
+  useChatSocketListeners(webRTC);
 
   // State
   const editRoomBoolean = useBoolean(false);
@@ -160,9 +160,6 @@ export function VoiceRoomChat() {
       if (response.status) {
         const initialized = await initializeVoiceRoom();
 
-        if (!setupChatSocketListenersRef.current)
-          setupChatSocketListenersRef.current = setupChatSocketListeners?.();
-
         if (initialized) {
           toast.success('Joined the room successfully');
         }
@@ -174,7 +171,7 @@ export function VoiceRoomChat() {
     } finally {
       initializationAttempted.current = false;
     }
-  }, [canJoin, roomId, user?.id, setupChatSocketListeners, joinRoomMutation, initializeVoiceRoom]);
+  }, [canJoin, roomId, user?.id, joinRoomMutation, initializeVoiceRoom]);
 
   // Leave room
   const leaveRoom = useCallback(async () => {

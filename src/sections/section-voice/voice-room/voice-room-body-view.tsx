@@ -249,15 +249,15 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     onClickMicrophone,
   } = webRTC;
 
-  const { userVolumes } = userVoiceState;
+  const { userVolumes, roomId } = userVoiceState;
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
     updateUserVoiceState({ isMicMuted: !isMicMuted });
-    if (room.id) {
+    if (roomId) {
       emit('user-audio-toggle', {
         socketId: socket?.id,
-        roomId: room.id,
+        roomId,
         isMuted: !isMicMuted,
         name: user.name,
       });
@@ -276,6 +276,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     () => Object.values(participants).filter((p) => p.socketId !== selectedUserId),
     [participants, selectedUserId]
   );
+
+  console.log(participants);
 
   const handleSelectParticipant = (participant: Participant) => {
     setSelectedUserId(participant.socketId);
@@ -313,7 +315,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
       if (!socket) return;
 
       socket.emit('user-status-select', {
-        roomId: room.id,
+        roomId,
         socketId: socket.id,
         status: selectedStatus,
         name: user.name,
@@ -321,10 +323,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
       if (socket.id) updateParticipantStatus({ socketId: socket.id, status: selectedStatus });
     },
-    [socket, room.id, user?.name, updateParticipantStatus]
+    [socket, roomId, user?.name, updateParticipantStatus]
   );
-
-  const isSelected = Boolean(selectedParticipant);
 
   return (
     <StageContainer>
@@ -377,9 +377,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
       <Scrollbar>
         <MainContent>
           {/* Featured Speaker Section */}
-          <FeaturedSection isSelected={isSelected}>
+          <FeaturedSection isSelected={Boolean(selectedParticipant)}>
             {selectedParticipant && (
-              <Fade in={isSelected} timeout={500}>
+              <Fade in={Boolean(selectedParticipant)} timeout={500}>
                 <FeaturedCard>
                   {/* Back button for mobile */}
                   {isMobile && (
@@ -522,9 +522,10 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </FeaturedSection>
 
           {/* Participants Grid Section */}
-          <GridSection isSelected={isSelected}>
+          <GridSection isSelected={Boolean(selectedParticipant)}>
             <Typography variant="subtitle2" sx={{ mb: 1, opacity: 0.7 }}>
-              {isSelected ? 'Other Participants' : 'All Participants'} • {otherParticipants.length}
+              {selectedParticipant ? 'Other Participants' : 'All Participants'} •{' '}
+              {otherParticipants.length}
             </Typography>
 
             <Scrollbar sx={{ minHeight: 'calc(100% - 40px)' }}>

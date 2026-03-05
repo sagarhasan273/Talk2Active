@@ -75,7 +75,7 @@ export function VoiceMainView() {
   const { cleanup: cleanupWebRTC } = webRTC;
 
   // Socket listeners
-  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
+  useChatSocketListeners(webRTC);
 
   const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
@@ -128,10 +128,6 @@ export function VoiceMainView() {
 
   const handleJoinRoom = useCallback(
     async (roomSelected: RoomResponse) => {
-      if (!setupChatSocketListenersRef.current) {
-        setupChatSocketListenersRef.current = setupChatSocketListeners?.();
-      }
-
       setRoom(roomSelected);
       setSelectedTab('entry');
 
@@ -155,14 +151,7 @@ export function VoiceMainView() {
         }
       }
     },
-    [
-      user.id,
-      currentRooms,
-      setupChatSocketListeners,
-      setCurrentRooms,
-      updateUserRecentRooms,
-      setRoom,
-    ]
+    [user.id, currentRooms, setCurrentRooms, updateUserRecentRooms, setRoom]
   );
 
   const handelLeaveChat = useCallback(async () => {
@@ -303,7 +292,7 @@ export function VoiceMainView() {
       </TabPanel>
 
       <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
-        <VoiceRoomView onLeave={undefined} />
+        <VoiceRoomView onLeave={handelLeaveChat} />
       </TabPanel>
     </Box>
   );

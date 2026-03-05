@@ -2,7 +2,7 @@ import type { UserType } from 'src/types/type-user';
 import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
 import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
-import { useCallback } from 'react';
+import { useEffect } from 'react';
 
 import { useRoomTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -15,10 +15,10 @@ export type UseReturnChatSocketListeners = {
   setupChatSocketListeners: () => () => void;
 };
 
-export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
+export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
   // Room management
   const {
-    room,
+    userVoiceState,
     addParticipant,
     removeParticipant,
     updateParticipant,
@@ -32,7 +32,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     updateUserActionsInVoice,
   } = useRoomTools();
 
-  const roomId = room?.id || '';
+  const { roomId } = userVoiceState;
 
   // WebRTC
   const { createOffer, handleOffer, handleAnswer, handleIceCandidate } = useWebRTC;
@@ -40,8 +40,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
   // Socket
   const { socket, on, off } = useSocketContext();
 
-  // WebRTC and socket event handlers
-  const setupChatSocketListeners = useCallback(() => {
+  useEffect(() => {
     if (!socket) {
       return () => {};
     }
@@ -242,6 +241,4 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     handleAnswer,
     handleIceCandidate,
   ]);
-
-  return { setupChatSocketListeners };
 }
