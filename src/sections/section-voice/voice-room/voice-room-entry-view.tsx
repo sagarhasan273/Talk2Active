@@ -166,9 +166,10 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                 </Stack>
 
                 <Typography
-                  variant="h3"
+                  variant="body1"
                   sx={{
                     fontWeight: 700,
+                    fontSize: '1.4rem',
                     color: 'text.primary',
                     mb: 1,
                     lineHeight: 1.2,
