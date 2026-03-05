@@ -38,6 +38,7 @@ const initialState: RoomState = {
     micGain: CONFIG.defaultMicGain,
     isScreenSharing: false,
     statue: 'online',
+    userVolumes: {},
   },
   chatRoomMessages: [],
   isUnreadChatRoomMessage: false,
@@ -105,6 +106,19 @@ export const roomSlice = createSlice({
 
     updateUserVoiceState: (state, action: PayloadAction<Partial<UserVoiceStateProps>>) => {
       state.userVoiceState = { ...state.userVoiceState, ...action.payload };
+    },
+
+    updateUserVolumesState: (
+      state,
+      action: PayloadAction<{ socketId: string; volume: number }>
+    ) => {
+      state.userVoiceState = {
+        ...state.userVoiceState,
+        userVolumes: {
+          ...state.userVoiceState.userVolumes,
+          [action.payload.socketId]: action.payload.volume,
+        },
+      };
     },
 
     addChatRoomMessage: (state, action: PayloadAction<Message>) => {
@@ -199,6 +213,7 @@ const {
   updateParticipantStatus,
   resetParticipants,
   updateUserVoiceState,
+  updateUserVolumesState,
   addChatRoomMessage,
   editChatRoomMessage,
   deleteChatRoomMessage,
@@ -257,6 +272,8 @@ export const useRoomTools = () => {
       resetParticipants: () => dispatch(resetParticipants()),
       updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
         dispatch(updateUserVoiceState(payload)),
+      updateUserVolumesState: (payload: { socketId: string; volume: number }) =>
+        dispatch(updateUserVolumesState(payload)),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
       editChatRoomMessage: (payload: {
         messageId: Message['id'];

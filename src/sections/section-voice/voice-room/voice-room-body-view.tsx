@@ -41,7 +41,6 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 import { ChatStatusButton } from 'src/sections/section-chat-room/chat-status-button';
 import { ChatMessageGroup } from 'src/sections/section-chat-room/chat-message-group';
 
-import VoiceUserAudio from '../voice-user-audio';
 import { VoiceUserCard } from '../voice-user-card';
 import { RaiseHandButton } from '../voice-raise-hand-button';
 
@@ -205,18 +204,6 @@ const BackToGridButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-// const FullscreenButton = styled(IconButton)(({ theme }) => ({
-//   position: 'absolute',
-//   top: 16,
-//   right: 16,
-//   zIndex: 100,
-//   backgroundColor: 'rgba(0, 0, 0, 0.6)',
-//   color: 'white',
-//   '&:hover': {
-//     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-//   },
-// }));
-
 const VolumeSlider = styled(Slider)({
   width: 100,
   color: '#5865f2',
@@ -242,7 +229,14 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const { room, participants, updateUserVoiceState, updateParticipantStatus } = useRoomTools();
+  const {
+    room,
+    participants,
+    userVoiceState,
+    updateUserVoiceState,
+    updateUserVolumesState,
+    updateParticipantStatus,
+  } = useRoomTools();
 
   const user = useSelector(selectAccount);
 
@@ -251,10 +245,11 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     remoteStreams,
     setRemoteVolume,
     isMicMuted,
-    isDeafened,
     connectionStatus,
     onClickMicrophone,
   } = webRTC;
+
+  const { userVolumes } = userVoiceState;
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
@@ -270,7 +265,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   };
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [userVolumes, setUserVolumes] = useState<Record<string, number>>({});
   const [reaction, setReaction] = useState<string | null>(null);
 
   const selectedParticipant = useMemo(
@@ -292,7 +286,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   };
 
   const handleVolumeChange = (socketId: string, volume: number) => {
-    setUserVolumes((prev) => ({ ...prev, [socketId]: volume }));
+    updateUserVolumesState({ socketId, volume });
     setRemoteVolume(socketId, volume);
   };
 
@@ -637,18 +631,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </Tooltip>
         </ControlBar>
       </Slide>
-
-      {/* Audio Elements */}
-      {Object.values(participants).map((participant) => (
-        <VoiceUserAudio
-          key={participant.socketId}
-          stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
-          isLocal={participant.isLocal}
-          userName={participant.name || 'unknown'}
-          volume={userVolumes[participant.socketId]}
-          muted={participant.isMuted || isDeafened}
-        />
-      ))}
     </StageContainer>
   );
 }

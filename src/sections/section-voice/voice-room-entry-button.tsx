@@ -3,7 +3,7 @@ import type { RoomResponse } from 'src/types/type-chat';
 import React from 'react';
 
 import LockIcon from '@mui/icons-material/Lock';
-import { Box, Badge, Avatar, Typography, ButtonBase, AvatarGroup } from '@mui/material';
+import { Box, Badge, Typography, ButtonBase, AvatarGroup } from '@mui/material';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
@@ -128,7 +128,11 @@ const VoiceRoomEntryButton = ({
             }}
           >
             {room?.currentParticipants?.map((participant) => (
-              <Avatar key={participant.user.id} src={participant.user.profilePhoto} />
+              <AvatarUser
+                key={participant.user.id}
+                avatarUrl={participant.user.profilePhoto}
+                name={participant.user.name}
+              />
             ))}
           </AvatarGroup>
           <Typography sx={{ color: '#949ba4', fontSize: '0.75rem', ml: 1 }}>

@@ -429,6 +429,7 @@ export function VoiceUserCard({
         display: 'inline-flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         position: 'relative',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease',

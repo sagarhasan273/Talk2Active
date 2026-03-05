@@ -24,19 +24,21 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
+import VoiceUserAudio from '../voice-user-audio';
 import { VoiceAudioControls } from '../voice-audio-controls';
 
 const VoiceUserProfileView = () => {
   const user = useSelector(selectAccount);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
-  const { room, userVoiceState, updateUserVoiceState } = useRoomTools();
+  const { room, userVoiceState, participants, updateUserVoiceState } = useRoomTools();
 
   const { emit, socket } = useSocketContext();
 
-  const { isMicMuted, isDeafened } = userVoiceState;
+  const { userVolumes } = userVoiceState;
 
-  const { toggleDeafen, onClickMicrophone } = useWebRTCContext();
+  const { localStream, remoteStreams, isMicMuted, isDeafened, toggleDeafen, onClickMicrophone } =
+    useWebRTCContext();
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
@@ -255,6 +257,18 @@ const VoiceUserProfileView = () => {
           />
         </Fade>
       )}
+
+      {/* Audio Elements */}
+      {Object.values(participants).map((participant) => (
+        <VoiceUserAudio
+          key={participant.socketId}
+          stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
+          isLocal={participant.isLocal}
+          userName={participant.name || 'unknown'}
+          volume={userVolumes[participant.socketId]}
+          muted={participant.isMuted || isDeafened}
+        />
+      ))}
     </Paper>
   );
 };

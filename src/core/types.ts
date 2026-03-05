@@ -16,4 +16,5 @@ export type UserVoiceStateProps = {
   isScreenSharing: boolean;
   statue: UserType['status'];
   micError?: string;
+  userVolumes: Record<string, number>;
 };
