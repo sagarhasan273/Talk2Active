@@ -43,6 +43,6 @@ export const CONFIG: ConfigValue = {
   youtubeApiKey: import.meta.env.VITE_YOUTUBE_API_KEY ?? 'YOUTUBE_API_KEY',
 
   // Default Voice Settings
-  defaultMicGain: Number(import.meta.env.VITE_DEFAULT_MIC_GAIN) || 70,
-  defaultOutputGain: Number(import.meta.env.VITE_DEFAULT_MIC_VOLUME) || 80,
+  defaultMicGain: Number(import.meta.env.VITE_DEFAULT_MIC_GAIN) || 50,
+  defaultOutputGain: Number(import.meta.env.VITE_DEFAULT_MIC_VOLUME) || 60,
 };

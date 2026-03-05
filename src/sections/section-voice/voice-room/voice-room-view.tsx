@@ -1,7 +1,7 @@
 // src/sections/section-voice-room/voice-room-view.tsx
 
+import React from 'react';
 import { toast } from 'sonner';
-import React, { useRef } from 'react';
 import { useSelector } from 'react-redux';
 
 import { selectAccount } from 'src/core/slices';
@@ -10,12 +10,10 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis';
 
-import { useChatSocketListeners } from 'src/sections/section-chat-room/chat-hooks/chat-socket-listeners';
-
 import { VoiceRoomBodyView } from './voice-room-body-view';
 import { VoiceRoomEntryView } from './voice-room-entry-view';
 
-export function VoiceRoomView() {
+export function VoiceRoomView({ onLeave }: { onLeave?: () => void }) {
   const user = useSelector(selectAccount);
 
   const { room, userVoiceState, resetParticipants, updateUserVoiceState, addParticipant } =
@@ -27,11 +25,6 @@ export function VoiceRoomView() {
 
   const { hasJoined, isMicMuted, roomId } = userVoiceState;
   const { initializeMicrophone, cleanup: cleanupWebRTC } = webRTC;
-
-  // Socket listeners
-  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
-
-  const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
   const [joinRoom] = useJoinRoomMutation();
   const [leaveRoom] = useLeaveRoomMutation();
@@ -58,9 +51,6 @@ export function VoiceRoomView() {
     });
 
     if (!success) return;
-
-    if (!setupChatSocketListenersRef.current)
-      setupChatSocketListenersRef.current = setupChatSocketListeners?.();
 
     const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
 
@@ -98,11 +88,7 @@ export function VoiceRoomView() {
   };
 
   const handelLeaveChat = async () => {
-    if (setupChatSocketListenersRef.current) {
-      setupChatSocketListenersRef.current?.();
-      setupChatSocketListenersRef.current = undefined;
-    }
-
+    if (onLeave) onLeave();
     const response = await leaveRoom({ roomId: room.id, userId: user.id }).unwrap();
 
     if (response.status) {

@@ -20,7 +20,7 @@ export default function VoiceUserAudio({
   stream,
   isLocal,
   userName,
-  volume = 100,
+  volume = 50,
   muted = false,
 }: UserAudioProps) {
   const webRTC = useWebRTCContext();

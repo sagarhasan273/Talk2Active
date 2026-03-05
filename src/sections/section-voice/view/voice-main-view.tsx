@@ -1,7 +1,7 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
 import { useSelector } from 'react-redux';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 
 import { Box, Button, Typography } from '@mui/material';
 
@@ -12,10 +12,13 @@ import { toastErrorResponse } from 'src/utils/response';
 import { selectAccount } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
-import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 import { useSocketContext } from 'src/core/contexts/socket-context';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+import { useLeaveRoomMutation, useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
+
+import { useChatSocketListeners } from 'src/sections/section-chat-room/chat-hooks/chat-socket-listeners';
 
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomFindButton from '../voice-room-find-button';
@@ -53,37 +56,33 @@ type selectedTabType = 'find' | 'entry';
 export function VoiceMainView() {
   const user = useSelector(selectAccount);
 
-  const { on, off } = useSocketContext();
-
-  const { room, userVoiceState, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
-
   const editRoomBoolean = useBoolean();
+
+  const { on, off, emit } = useSocketContext();
+
+  const {
+    room,
+    userVoiceState,
+    currentRooms,
+    setRoom,
+    setCurrentRooms,
+    updateUserVoiceState,
+    resetParticipants,
+  } = useRoomTools();
+  const { roomId, hasJoined } = userVoiceState;
+
+  const webRTC = useWebRTCContext();
+  const { cleanup: cleanupWebRTC } = webRTC;
+
+  // Socket listeners
+  const { setupChatSocketListeners } = useChatSocketListeners(webRTC);
+
+  const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
 
   const [selectedTab, setSelectedTab] = useState<selectedTabType>('find');
 
   const [updateUserRecentRooms] = useUpdateUserRecentRoomsMutation();
-
-  const handleJoinRoom = async (roomSelected: RoomResponse) => {
-    setRoom(roomSelected);
-    setSelectedTab('entry');
-
-    const roomExists = currentRooms.some((roomProp) => roomProp.room?.id === roomSelected.id);
-
-    if (!roomExists) {
-      const formData = {
-        id: user.id,
-        roomId: roomSelected.id,
-      };
-
-      const response = await updateUserRecentRooms(formData);
-
-      if (response.data?.status) {
-        setCurrentRooms([{ room: roomSelected, joinedAt: new Date() }, ...currentRooms]);
-      } else {
-        toastErrorResponse(response);
-      }
-    }
-  };
+  const [leaveRoom] = useLeaveRoomMutation();
 
   const handleBroadcastNewRoom = useCallback(
     (data: any) => {
@@ -124,12 +123,96 @@ export function VoiceMainView() {
     [currentRooms, setCurrentRooms]
   );
 
+  const handleJoinRoom = useCallback(
+    async (roomSelected: RoomResponse) => {
+      if (!setupChatSocketListenersRef.current) {
+        setupChatSocketListenersRef.current = setupChatSocketListeners?.();
+      }
+
+      setRoom(roomSelected);
+      setSelectedTab('entry');
+
+      const roomExists = currentRooms.some((roomProp) => roomProp.room?.id === roomSelected.id);
+
+      if (!roomExists) {
+        const formData = {
+          id: user.id,
+          roomId: roomSelected.id,
+        };
+
+        const response = await updateUserRecentRooms(formData);
+
+        if (response.data?.status) {
+          setCurrentRooms([{ room: roomSelected, joinedAt: new Date() }, ...currentRooms]);
+        } else {
+          toastErrorResponse(response);
+        }
+      }
+    },
+    [
+      user.id,
+      currentRooms,
+      setupChatSocketListeners,
+      setCurrentRooms,
+      updateUserRecentRooms,
+      setRoom,
+    ]
+  );
+
+  const handelLeaveChat = useCallback(async () => {
+    if (setupChatSocketListenersRef.current) {
+      setupChatSocketListenersRef.current?.();
+      setupChatSocketListenersRef.current = undefined;
+    }
+
+    const response = await leaveRoom({ roomId: room.id, userId: user.id }).unwrap();
+
+    if (response.status) {
+      emit('leave-voice-room', {
+        roomId,
+        userId: user.id,
+        name: user.name,
+      });
+
+      // This cleanup keeps audio context alive
+      cleanupWebRTC();
+
+      updateUserVoiceState({ hasJoined: false, roomId: null });
+
+      // Reset local state
+      resetParticipants();
+    } else {
+      console.error(response.message);
+    }
+  }, [
+    cleanupWebRTC,
+    emit,
+    leaveRoom,
+    resetParticipants,
+    room.id,
+    roomId,
+    updateUserVoiceState,
+    user.id,
+    user.name,
+  ]);
+
   useEffect(() => {
     off('recent-room-updated-with-participant', handleBroadcastNewRoom);
     on('recent-room-updated-with-participant', handleBroadcastNewRoom);
 
-    return () => off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    return () => {
+      off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    };
   }, [on, off, handleBroadcastNewRoom]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    console.log('Clean up while component unmount.');
+    return () => {
+      handelLeaveChat();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const header = (
     <Box
@@ -178,7 +261,7 @@ export function VoiceMainView() {
 
   const leftSidebar = (
     <Scrollbar>
-      <VoiceUserProfileView />
+      <VoiceUserProfileView onLeave={handelLeaveChat} hasJoined={hasJoined} />
       <VoiceRoomFindButton
         selected={selectedTab === 'find'}
         onClick={() => {
@@ -208,7 +291,7 @@ export function VoiceMainView() {
       </TabPanel>
 
       <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
-        <VoiceRoomView />
+        <VoiceRoomView onLeave={undefined} />
       </TabPanel>
     </Box>
   );

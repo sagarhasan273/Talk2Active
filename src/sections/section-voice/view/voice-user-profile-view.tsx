@@ -5,6 +5,7 @@ import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import HeadsetIcon from '@mui/icons-material/Headset';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
 import {
   Box,
@@ -27,7 +28,13 @@ import { AvatarUser } from 'src/components/avatar-user';
 import VoiceUserAudio from '../voice-user-audio';
 import { VoiceAudioControls } from '../voice-audio-controls';
 
-const VoiceUserProfileView = () => {
+const VoiceUserProfileView = ({
+  onLeave,
+  hasJoined = false,
+}: {
+  onLeave: () => void;
+  hasJoined?: boolean;
+}) => {
   const user = useSelector(selectAccount);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
@@ -207,6 +214,25 @@ const VoiceUserProfileView = () => {
           >
             <SettingsIcon fontSize="small" />
           </IconButton>
+          {hasJoined && (
+            <Tooltip title="Leave From Chat">
+              <IconButton
+                size="small"
+                onClick={onLeave}
+                sx={{
+                  color: 'error.main',
+                  bgcolor: 'error.lighter',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: 'error.light',
+                    color: 'error.dark',
+                  },
+                }}
+              >
+                <ExitToAppIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Box>
 
@@ -265,7 +291,7 @@ const VoiceUserProfileView = () => {
           stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
           isLocal={participant.isLocal}
           userName={participant.name || 'unknown'}
-          volume={userVolumes[participant.socketId]}
+          volume={userVolumes[participant.socketId] || 50}
           muted={participant.isMuted || isDeafened}
         />
       ))}

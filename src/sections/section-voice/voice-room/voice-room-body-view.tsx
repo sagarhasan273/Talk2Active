@@ -461,7 +461,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         <VolumeOffIcon fontSize="small" />
                         <VolumeSlider
                           size="small"
-                          value={userVolumes[selectedParticipant.socketId] ?? 100}
+                          value={userVolumes[selectedParticipant.socketId] ?? 50}
                           onChange={(_, value) =>
                             handleVolumeChange(selectedParticipant.socketId, value as number)
                           }
