@@ -25,7 +25,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             ...prev,
             currentParticipants: [
               ...prev.currentParticipants,
-              { user: data.joinInfo.participant, joinedAt: new Date() },
+              { user: data.joinInfo.participant, joinedAt: new Date().toISOString() },
             ],
           };
           return newRoom;

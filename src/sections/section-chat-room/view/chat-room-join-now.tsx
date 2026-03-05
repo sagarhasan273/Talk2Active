@@ -26,7 +26,7 @@ import { fDateTime } from 'src/utils/format-time';
 import { useGetRoomByIdQuery } from 'src/core/apis';
 import { useRoomTools } from 'src/core/slices/slice-room';
 
-type ParticipantsProps = { user: UserType; joinedAt: Date };
+type ParticipantsProps = { user: UserType; joinedAt: string };
 
 export function ChatRoomChatJoinNow({
   onJoinRoom,
@@ -198,7 +198,7 @@ export function ChatRoomChatJoinNow({
                           <Typography variant="caption" color="text.secondary">
                             {typeof joinedAt === 'string'
                               ? fDateTime(joinedAt)
-                              : joinedAt.toLocaleString()}
+                              : new Date(joinedAt).toLocaleString()}
                           </Typography>
                         }
                       />

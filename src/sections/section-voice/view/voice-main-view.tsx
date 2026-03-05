@@ -100,7 +100,10 @@ export function VoiceMainView() {
                   ...currentRoom.room,
                   currentParticipants: [
                     ...(currentRoom.room.currentParticipants || []),
-                    { user: data.joinInfo.participant, joinedAt: new Date() },
+                    {
+                      user: data.joinInfo.participant,
+                      joinedAt: new Date().toISOString(),
+                    },
                   ],
                 },
               };
@@ -143,7 +146,10 @@ export function VoiceMainView() {
         const response = await updateUserRecentRooms(formData);
 
         if (response.data?.status) {
-          setCurrentRooms([{ room: roomSelected, joinedAt: new Date() }, ...currentRooms]);
+          setCurrentRooms([
+            { room: roomSelected, joinedAt: new Date().toISOString() as unknown as string },
+            ...currentRooms,
+          ]);
         } else {
           toastErrorResponse(response);
         }
@@ -165,11 +171,15 @@ export function VoiceMainView() {
       setupChatSocketListenersRef.current = undefined;
     }
 
-    const response = await leaveRoom({ roomId: room.id, userId: user.id }).unwrap();
+    const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
+    let response = null;
 
-    if (response.status) {
+    if (joinedRoomId)
+      response = await leaveRoom({ roomId: joinedRoomId, userId: user.id }).unwrap();
+
+    if (response?.status) {
       emit('leave-voice-room', {
-        roomId,
+        roomId: joinedRoomId,
         userId: user.id,
         name: user.name,
       });
@@ -181,15 +191,16 @@ export function VoiceMainView() {
 
       // Reset local state
       resetParticipants();
+
+      sessionStorage.removeItem('joinedRoomId');
     } else {
-      console.error(response.message);
+      console.error(response?.message);
     }
   }, [
     cleanupWebRTC,
     emit,
     leaveRoom,
     resetParticipants,
-    room.id,
     roomId,
     updateUserVoiceState,
     user.id,
@@ -207,7 +218,7 @@ export function VoiceMainView() {
 
   // Cleanup on unmount
   useEffect(() => {
-    console.log('Clean up while component unmount.');
+    console.log('User leave Clean up while component unmount.');
     return () => {
       handelLeaveChat();
     };
@@ -271,6 +282,7 @@ export function VoiceMainView() {
 
       {currentRooms.map((recentRoom) => (
         <VoiceRoomEntryButton
+          key={recentRoom?.room?.id}
           selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
           isJoined={userVoiceState.roomId === recentRoom?.room?.id}
           room={recentRoom?.room}

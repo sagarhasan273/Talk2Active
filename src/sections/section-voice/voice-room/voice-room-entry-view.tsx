@@ -29,7 +29,7 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
-type ParticipantsProps = { user: UserType; joinedAt: Date };
+type ParticipantsProps = { user: UserType; joinedAt: string };
 
 const ROOM_TYPES = {
   conversation: { value: 'conversation', label: 'Conversation Practice' },
@@ -62,7 +62,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
           ...(prev || []).filter(
             (participant) => participant?.user?.id === data?.leaveInfo?.participant?.userId
           ),
-          { user: data.joinInfo.participant, joinedAt: new Date() },
+          { user: data.joinInfo.participant, joinedAt: new Date().toISOString() },
         ]);
       }
       if (room.id === data?.leaveInfo?.roomId) {

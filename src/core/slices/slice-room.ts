@@ -14,7 +14,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 // Define auth state interface
 interface RoomState {
   room: RoomResponse;
-  currentRooms: { room: RoomResponse; joinedAt: Date }[];
+  currentRooms: { room: RoomResponse; joinedAt: string }[];
   loading: boolean;
   participants: { [socketId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
@@ -258,7 +258,7 @@ export const useRoomTools = () => {
       userVoiceState,
       userActionsInVoice,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
-      setCurrentRooms: (roomData: { room: RoomResponse; joinedAt: Date }[]) =>
+      setCurrentRooms: (roomData: { room: RoomResponse; joinedAt: string }[]) =>
         dispatch(setCurrentRooms(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),

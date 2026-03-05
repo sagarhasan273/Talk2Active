@@ -15,10 +15,7 @@ export const RoomBaseSchema = z.object({
     .array(
       z.object({
         user: z.string(),
-        joinedAt: z.preprocess(
-          (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
-          z.date()
-        ),
+        joinedAt: z.string().datetime(),
       })
     )
     .optional()
@@ -61,10 +58,7 @@ export const RoomResponseSchema = RoomBaseSchema.extend({
     .array(
       z.object({
         user: UserSchema,
-        joinedAt: z.preprocess(
-          (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
-          z.date()
-        ),
+        joinedAt: z.string().datetime(),
       })
     )
     .optional()

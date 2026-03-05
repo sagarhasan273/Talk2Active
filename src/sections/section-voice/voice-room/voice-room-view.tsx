@@ -55,6 +55,8 @@ export function VoiceRoomView({ onLeave }: { onLeave?: () => void }) {
     const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
 
     if (response.status) {
+      sessionStorage.setItem('joinedRoomId', room.id);
+
       if (socket?.id) {
         socket?.emit('join-voice-room', {
           roomId: room.id,

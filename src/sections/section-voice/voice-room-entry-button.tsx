@@ -127,9 +127,9 @@ const VoiceRoomEntryButton = ({
               },
             }}
           >
-            {room?.currentParticipants?.map((participant) => (
+            {room?.currentParticipants?.map((participant, index) => (
               <AvatarUser
-                key={participant.user.id}
+                key={`${participant.user.id}+${index}`}
                 avatarUrl={participant.user.profilePhoto}
                 name={participant.user.name}
               />
