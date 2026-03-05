@@ -18,14 +18,12 @@ function getAvatarText(fullName: string): string {
 export const AvatarUser = ({
   name,
   avatarUrl,
-  statusColor,
   verified,
   sx,
 }: {
   name: string;
   avatarUrl: string | null;
-  statusColor?: string;
-  verified: boolean;
+  verified?: boolean;
   sx?: Record<string, any>;
 }) => (
   <Avatar

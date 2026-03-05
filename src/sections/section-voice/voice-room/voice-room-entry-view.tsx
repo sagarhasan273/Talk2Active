@@ -1,6 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   Paper,
   Stack,
   Button,
-  Avatar,
   Divider,
   SvgIcon,
   ListItem,
@@ -28,16 +27,19 @@ import { languages } from 'src/_mock/data/languages';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
+import { AvatarUser } from 'src/components/avatar-user';
+
 type ParticipantsProps = { user: UserType; joinedAt: Date };
 
-// Room type configurations
 const ROOM_TYPES = {
-  public: { label: 'Public', color: 'success', icon: '🌐' },
-  private: { label: 'Private', color: 'warning', icon: '🔒' },
-  language: { label: 'Language Exchange', color: 'primary', icon: '🗣️' },
-  discussion: { label: 'Discussion', color: 'info', icon: '💬' },
-  practice: { label: 'Practice', color: 'secondary', icon: '🎯' },
-  social: { label: 'Social', color: 'error', icon: '🎉' },
+  conversation: { value: 'conversation', label: 'Conversation Practice' },
+  pronunciation: { value: 'pronunciation', label: 'Pronunciation Focus' },
+  grammar: { value: 'grammar', label: 'Grammar Workshop' },
+  vocabulary: { value: 'vocabulary', label: 'Vocabulary Building' },
+  debate: { value: 'debate', label: 'Debate & Discussion' },
+  storytelling: { value: 'storytelling', label: 'Storytelling' },
+  business: { value: 'business', label: 'Business Language' },
+  'exam-prep': { value: 'exam-prep', label: 'Exam Preparation' },
 };
 
 export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
@@ -49,13 +51,17 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
 
   const [participants, setParticipants] = useState<ParticipantsProps[]>([]);
 
-  const { data: roomData } = useGetRoomByIdQuery(room.id!, { skip: !!room.id });
+  const participantsRef = useRef(false);
+
+  const { data: roomData, refetch } = useGetRoomByIdQuery(room.id!, { skip: !room.id });
 
   const handleBroadcastNewRoom = useCallback(
     (data: any) => {
       if (room.id === data?.joinInfo?.roomId) {
         setParticipants((prev) => [
-          ...(prev || []),
+          ...(prev || []).filter(
+            (participant) => participant?.user?.id === data?.leaveInfo?.participant?.userId
+          ),
           { user: data.joinInfo.participant, joinedAt: new Date() },
         ]);
       }
@@ -66,8 +72,9 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
           )
         );
       }
+      refetch();
     },
-    [room.id, setParticipants]
+    [room.id, refetch, setParticipants]
   );
 
   useEffect(() => {
@@ -81,10 +88,9 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
     if (roomData?.status) {
       setParticipants(roomData.data.currentParticipants || []);
       setRoom(roomData.data);
-    } else {
-      setParticipants(room.currentParticipants || []);
+      participantsRef.current = true;
     }
-  }, [roomData, room, setRoom]);
+  }, [roomData, participants, setRoom]);
 
   // Get language name from code
   const getLanguageName = (code: string) => {
@@ -96,17 +102,24 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
 
   // Get room type display
   const getRoomType = () => {
-    const roomType = room.roomType || 'public';
-    const type = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES] || ROOM_TYPES.public;
+    const roomType = room.roomType || 'conversation';
+    const type = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES] || ROOM_TYPES.conversation;
+
     return (
       <Chip
-        icon={<span>{type.icon}</span>}
         label={type.label}
         size="small"
-        color={type.color as any}
         sx={{
+          bgcolor:
+            theme.palette.mode === 'dark' ? theme.palette.grey['700'] : theme.palette.grey['400'],
+          color: 'text.primary',
           borderRadius: 1,
           '& .MuiChip-icon': { ml: 0.5, fontSize: '1rem' },
+          '&:hover': {
+            bgcolor:
+              theme.palette.mode === 'dark' ? theme.palette.grey['700'] : theme.palette.grey['400'],
+            color: 'text.primary',
+          },
         }}
       />
     );
@@ -135,7 +148,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
           <Grid size={{ xs: 12, md: 7 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* Room Header */}
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   {getRoomType()}
                   <Chip
@@ -193,7 +206,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
               <Paper
                 elevation={0}
                 sx={{
-                  p: 2,
+                  p: 1,
                   mb: 3,
                   bgcolor: alpha(theme.palette.primary.main, 0.04),
                   borderRadius: 2,
@@ -204,10 +217,11 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                   gap: 2,
                 }}
               >
-                <Avatar
-                  src={room.host?.profilePhoto}
-                  alt={room.host?.name}
+                <AvatarUser
+                  avatarUrl={room.host?.profilePhoto}
+                  name={room.host?.name}
                   sx={{ width: 48, height: 48 }}
+                  verified={room.host?.verified}
                 />
                 <Box>
                   <Typography variant="caption" color="text.secondary">
@@ -309,10 +323,11 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                       >
                         <ListItemAvatar>
                           <Box sx={{ position: 'relative' }}>
-                            <Avatar
-                              src={user.profilePhoto}
-                              alt={user.name}
+                            <AvatarUser
+                              avatarUrl={user.profilePhoto}
+                              name={user.name}
                               sx={{ width: 40, height: 40 }}
+                              verified={user.verified}
                             />
                             <Box
                               sx={{
