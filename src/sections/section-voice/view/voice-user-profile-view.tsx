@@ -25,27 +25,19 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
-import VoiceUserAudio from '../voice-user-audio';
-import { VoiceAudioControls } from '../voice-audio-controls';
+import VoiceUserAudio from 'src/sections/section-voice/voice-user-audio';
+import { VoiceAudioControls } from 'src/sections/section-voice/voice-audio-controls';
 
-const VoiceUserProfileView = ({
-  onLeave,
-  hasJoined = false,
-}: {
-  onLeave: () => void;
-  hasJoined?: boolean;
-}) => {
+const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
+
+const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
   const user = useSelector(selectAccount);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   const { room, userVoiceState, participants, updateUserVoiceState } = useRoomTools();
-
   const { emit, socket } = useSocketContext();
-
-  const { userVolumes } = userVoiceState;
-
-  const { localStream, remoteStreams, isMicMuted, isDeafened, toggleDeafen, onClickMicrophone } =
-    useWebRTCContext();
+  const { userVolumes, isMicMuted, isDeafened, hasJoined } = userVoiceState;
+  const { localStream, remoteStreams, toggleDeafen, onClickMicrophone } = useWebRTCContext();
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
@@ -65,10 +57,6 @@ const VoiceUserProfileView = ({
     updateUserVoiceState({ isDeafened: !isDeafened });
   };
 
-  const toggleAudioControls = () => {
-    setShowAudioControls(!showAudioControls);
-  };
-
   return (
     <Paper
       elevation={0}
@@ -77,180 +65,246 @@ const VoiceUserProfileView = ({
         bgcolor: 'background.paper',
         borderRadius: '12px',
         overflow: 'hidden',
-        border: '1px solid divider',
+        border: '1px solid rgba(255,255,255,0.06)',
         mb: 1,
         transition: 'all 0.3s ease',
       }}
     >
-      {/* Profile Header Container */}
-      <Box sx={{ p: '16px 16px 8px 16px' }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            variant="dot"
+      {/* ── Header: avatar + name + live badge ─────────────────── */}
+      <Box
+        onClick={() => {}}
+        sx={{
+          px: 2,
+          pt: 1.5,
+          pb: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          cursor: 'pointer',
+        }}
+      >
+        <Badge
+          overlap="circular"
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          variant="dot"
+          sx={{
+            '& .MuiBadge-badge': {
+              bgcolor: '#43b581',
+              boxShadow: '0 0 0 2px #1e1f22, 0 0 6px #43b581',
+              width: 11,
+              height: 11,
+              borderRadius: '50%',
+            },
+          }}
+        >
+          <AvatarUser
+            avatarUrl={user?.profilePhoto}
+            verified={Boolean(user?.verified)}
+            name={user?.name}
+          />
+        </Badge>
+
+        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+          <Typography
+            sx={{ fontWeight: 700, fontSize: '0.88rem', color: 'text.primary', lineHeight: 1.2 }}
+            noWrap
+          >
+            {user.name}
+          </Typography>
+          <Typography sx={{ fontSize: '0.7rem', color: '#72767d' }} noWrap>
+            @{user.username}
+          </Typography>
+        </Box>
+
+        {/* Live pulse chip */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            bgcolor: 'rgba(67,181,129,0.12)',
+            border: '1px solid rgba(67,181,129,0.25)',
+            borderRadius: '20px',
+            px: 1,
+            py: 0.3,
+          }}
+        >
+          <Box
             sx={{
-              '& .MuiBadge-badge': {
-                backgroundColor: 'success.main',
-                color: 'success.main',
-                boxShadow: '0 0 0 2px #232428',
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              bgcolor: '#43b581',
+              boxShadow: '0 0 5px #43b581',
+              animation: 'livePulse 1.8s ease-in-out infinite',
+              '@keyframes livePulse': {
+                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                '50%': { opacity: 0.5, transform: 'scale(0.8)' },
               },
             }}
+          />
+          <Typography
+            sx={{ fontSize: '0.6rem', color: '#43b581', fontWeight: 700, letterSpacing: 0.6 }}
           >
-            <AvatarUser
-              avatarUrl={user?.profilePhoto}
-              verified={Boolean(user?.verified)}
-              name={user?.name}
-            />
-          </Badge>
-
-          <Box sx={{ overflow: 'hidden' }}>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: 'text.primary', fontWeight: 700, lineHeight: 1.2 }}
-            >
-              {user.name}
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#b5bac1', display: 'block' }}>
-              {user.username}
-            </Typography>
-          </Box>
-        </Stack>
+            LIVE
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Mic Input Visualization (Simulated) */}
-      <Box sx={{ px: 2, mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        {[2, 5, 8, 4, 3, 6, 4].map((h, i) => (
+      {/* ── Waveform visualizer ─────────────────────────────────── */}
+      <Box
+        sx={{
+          px: 2,
+          py: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5,
+        }}
+      >
+        {WAVE_HEIGHTS.map((h, i) => (
           <Box
             key={i}
             sx={{
-              width: 4,
-              height: h * 1.5,
-              bgcolor: !isMicMuted ? 'success.main' : 'error.main',
-              borderRadius: 1,
-              transition: 'height 0.2s ease',
+              width: 3,
+              height: isMicMuted ? 4 : h * 1.5,
+              bgcolor: isMicMuted ? '#ed4245' : '#43b581',
+              borderRadius: '2px',
+              transition: 'height 0.25s ease, background-color 0.3s ease',
+              animation: !isMicMuted
+                ? `waveAnim ${0.6 + i * 0.08}s ease-in-out infinite alternate`
+                : 'none',
+              '@keyframes waveAnim': {
+                from: { transform: 'scaleY(0.5)' },
+                to: { transform: 'scaleY(1)' },
+              },
             }}
           />
         ))}
         <Typography
-          variant="caption"
           sx={{
             ml: 1,
-            color: !isMicMuted ? 'success.main' : 'error.main',
-            fontSize: '0.65rem',
-            fontWeight: 600,
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            letterSpacing: 0.8,
+            color: isMicMuted ? '#ed4245' : '#43b581',
           }}
         >
-          {isMicMuted ? 'MUTED' : 'VOICE CONNECTED'}
+          {isMicMuted ? 'MUTED' : 'VOICE ACTIVE'}
         </Typography>
       </Box>
 
-      {/* Control Strip */}
+      {/* ── Control strip ──────────────────────────────────────── */}
       <Box
         sx={{
           bgcolor: 'background.neutral',
-          px: 1,
-          py: 0.5,
+          px: 0.5,
+          py: 0.75,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}
       >
+        {/* Left: mic + deafen */}
         <Stack direction="row" spacing={0.5}>
-          <Tooltip title="Mute">
+          <Tooltip title={isMicMuted ? 'Unmute' : 'Mute'}>
             <IconButton
               size="small"
               onClick={handleMicMute}
               sx={{
-                color: isMicMuted ? 'error.main' : '#b5bac1',
+                color: isMicMuted ? '#ed4245' : '#72767d',
+                borderRadius: '8px',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  bgcolor: 'divider',
-                  color: isMicMuted ? 'error.main' : 'primary.main',
-                  transform: 'scale(1.1)',
+                  bgcolor: 'rgba(255,255,255,0.07)',
+                  color: isMicMuted ? '#ed4245' : '#667eea',
+                  transform: 'scale(1.12)',
                 },
               }}
             >
-              {isMicMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
+              {isMicMuted ? (
+                <MicOffIcon sx={{ fontSize: '1rem' }} />
+              ) : (
+                <MicIcon sx={{ fontSize: '1rem' }} />
+              )}
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Deafen">
+          <Tooltip title={isDeafened ? 'Undeafen' : 'Deafen'}>
             <IconButton
               size="small"
               onClick={handleDeafen}
               sx={{
-                color: isDeafened ? 'error.main' : '#b5bac1',
+                color: isDeafened ? '#ed4245' : '#72767d',
+                borderRadius: '8px',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  bgcolor: 'divider',
-                  color: isDeafened ? 'error.main' : 'primary.main',
-                  transform: 'scale(1.1)',
+                  bgcolor: 'rgba(255,255,255,0.07)',
+                  color: isDeafened ? '#ed4245' : '#667eea',
+                  transform: 'scale(1.12)',
                 },
               }}
             >
-              {isDeafened ? <HeadsetOffIcon fontSize="small" /> : <HeadsetIcon fontSize="small" />}
+              {isDeafened ? (
+                <HeadsetOffIcon sx={{ fontSize: '1rem' }} />
+              ) : (
+                <HeadsetIcon sx={{ fontSize: '1rem' }} />
+              )}
             </IconButton>
           </Tooltip>
         </Stack>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {/* Settings Toggle Button with Animation */}
-          <IconButton
-            size="small"
-            onClick={toggleAudioControls}
-            sx={{
-              color: showAudioControls ? 'primary.main' : 'grey.500',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                bgcolor: 'divider',
-                transform: 'rotate(90deg)',
-              },
-              transform: showAudioControls ? 'rotate(90deg)' : 'rotate(0deg)',
-            }}
-          >
-            <SettingsIcon fontSize="small" />
-          </IconButton>
+        {/* Right: settings + leave */}
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Tooltip title="Audio settings">
+            <IconButton
+              size="small"
+              onClick={() => setShowAudioControls((p) => !p)}
+              sx={{
+                color: showAudioControls ? '#667eea' : '#72767d',
+                borderRadius: '8px',
+                transition: 'transform 0.35s ease, color 0.2s ease',
+                transform: showAudioControls ? 'rotate(90deg)' : 'rotate(0deg)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.07)' },
+              }}
+            >
+              <SettingsIcon sx={{ fontSize: '1rem' }} />
+            </IconButton>
+          </Tooltip>
+
           {hasJoined && (
-            <Tooltip title="Leave From Chat">
+            <Tooltip title="Leave voice">
               <IconButton
                 size="small"
                 onClick={onLeave}
                 sx={{
-                  color: 'error.main',
-                  bgcolor: 'error.lighter',
-                  transition: 'all 0.3s ease',
+                  color: '#ed4245',
+                  bgcolor: 'rgba(237,66,69,0.1)',
+                  border: '1px solid rgba(237,66,69,0.2)',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
                   '&:hover': {
-                    bgcolor: 'error.light',
-                    color: 'error.dark',
+                    bgcolor: 'rgba(237,66,69,0.22)',
+                    transform: 'scale(1.08)',
                   },
                 }}
               >
-                <ExitToAppIcon fontSize="small" />
+                <ExitToAppIcon sx={{ fontSize: '1rem' }} />
               </IconButton>
             </Tooltip>
           )}
-        </Box>
+        </Stack>
       </Box>
 
-      {/* Voice Audio Controls with Collapse Animation */}
-      <Collapse in={showAudioControls} timeout={400} easing="cubic-bezier(0.4, 0, 0.2, 1)">
+      {/* ── Collapsible audio controls ─────────────────────────── */}
+      <Collapse in={showAudioControls} timeout={380} easing="cubic-bezier(0.4,0,0.2,1)">
         <Box
           sx={{
-            overflow: 'hidden',
-            animation: showAudioControls ? 'slideIn 0.4s ease' : 'none',
-            '@keyframes slideIn': {
-              '0%': {
-                opacity: 0,
-                transform: 'translateY(-10px)',
-              },
-              '100%': {
-                opacity: 1,
-                transform: 'translateY(0)',
-              },
+            px: 2,
+            py: 1.5,
+            animation: showAudioControls ? 'fadeSlide 0.38s ease' : 'none',
+            '@keyframes fadeSlide': {
+              from: { opacity: 0, transform: 'translateY(-8px)' },
+              to: { opacity: 1, transform: 'translateY(0)' },
             },
           }}
         >
@@ -258,34 +312,19 @@ const VoiceUserProfileView = ({
         </Box>
       </Collapse>
 
-      {/* Optional: Add a subtle gradient border when controls are expanded */}
-      {showAudioControls && (
-        <Fade in={showAudioControls} timeout={500}>
-          <Box
-            sx={{
-              height: '15px',
-              background: 'linear-gradient(90deg, transparent, primary.main, transparent)',
-              opacity: 0.5,
-            }}
-          />
-        </Fade>
-      )}
+      {/* ── Bottom accent line ─────────────────────────────────── */}
+      <Fade in timeout={600}>
+        <Box
+          sx={{
+            height: '6px',
+            opacity: 0.55,
+            transition: 'background 0.5s ease',
+          }}
+        />
+      </Fade>
 
-      {/* Optional: Add a subtle background highlight when controls are not expanded */}
-      {!showAudioControls && (
-        <Fade in={!showAudioControls} timeout={500}>
-          <Box
-            sx={{
-              height: '15px',
-              background: 'linear-gradient(90deg, transparent, success.main, transparent)',
-              opacity: 0.5,
-            }}
-          />
-        </Fade>
-      )}
-
-      {/* Audio Elements */}
-      {Object.values(participants).map((participant) => (
+      {/* ── Hidden audio elements ──────────────────────────────── */}
+      {Object.values(participants).map((participant: any) => (
         <VoiceUserAudio
           key={participant.socketId}
           stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}

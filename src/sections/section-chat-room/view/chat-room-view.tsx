@@ -190,7 +190,7 @@ export function VoiceRoomChat() {
       setStatus('online');
 
       // Update API
-      await leaveRoomMutation({ roomId, userId: user.id }).unwrap();
+      await leaveRoomMutation({ roomId, userId: user.id, name: user.name }).unwrap();
 
       // Cleanup WebRTC
       cleanupWebRTC();

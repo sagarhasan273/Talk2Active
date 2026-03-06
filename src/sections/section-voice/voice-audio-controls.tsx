@@ -17,7 +17,7 @@ export function VoiceAudioControls() {
   };
 
   return (
-    <Paper sx={{ p: 1.5, pb: 0.5, maxWidth: 1 }}>
+    <Paper sx={{ p: 1.5, pb: 0.5, backgroundColor: 'background.neutral', maxWidth: 1 }}>
       <Stack spacing={0.5}>
         {/* Microphone Control */}
         <Box>

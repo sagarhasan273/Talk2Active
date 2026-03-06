@@ -14,10 +14,9 @@ import { VoiceRoomsEmptyState } from './voice-no-rooms-view';
 
 interface RoomListProps {
   onJoinRoom: (room: RoomResponse) => void;
-  onCreateRoom?: () => void; // Add this prop
 }
 
-export default function VoiceRoomsView({ onJoinRoom, onCreateRoom }: RoomListProps) {
+export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
   const { on, off } = useSocketContext();
 
   const [rooms, setRooms] = useState<RoomResponse[]>([]);

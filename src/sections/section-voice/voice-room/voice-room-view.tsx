@@ -91,7 +91,11 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
 
   const handelLeaveChat = async () => {
     if (onLeave) onLeave();
-    const response = await leaveRoom({ roomId: room.id, userId: user.id }).unwrap();
+    const response = await leaveRoom({
+      roomId: room.id,
+      userId: user.id,
+      name: user.name,
+    }).unwrap();
 
     if (response.status) {
       socket?.emit('leave-voice-room', {

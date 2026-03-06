@@ -23,10 +23,10 @@ export interface ExistingParticipantsData {
 }
 
 export type UseReturnChatSocketListeners = {
-  setupChatSocketListeners: () => () => void;
+  onLeaveRoom: () => Promise<void>;
 };
 
-export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
+export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
   const user = useSelector(selectAccount);
   // Room management
   const {
@@ -60,46 +60,27 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
   } = useWebRTC;
 
   // Socket
-  const { socket, on, off, emit } = useSocketContext();
+  const { socket, on, off } = useSocketContext();
 
   const [leaveRoom] = useLeaveRoomMutation();
 
   const handelLeaveChat = useCallback(async () => {
     const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
-    let response = null;
+    const userId = user.id || (sessionStorage.getItem('userId') as string);
+    const name = user.id || (sessionStorage.getItem('username') as string);
 
-    if (joinedRoomId)
-      response = await leaveRoom({ roomId: joinedRoomId, userId: user.id }).unwrap();
+    if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name }).unwrap();
 
-    if (response?.status) {
-      emit('leave-voice-room', {
-        roomId: joinedRoomId,
-        userId: user.id,
-        name: user.name,
-      });
+    // This cleanup keeps audio context alive
+    cleanupWebRTC();
 
-      // This cleanup keeps audio context alive
-      cleanupWebRTC();
+    updateUserVoiceState({ hasJoined: false, roomId: null });
 
-      updateUserVoiceState({ hasJoined: false, roomId: null });
+    // Reset local state
+    resetParticipants();
 
-      // Reset local state
-      resetParticipants();
-
-      sessionStorage.removeItem('joinedRoomId');
-    } else {
-      console.error(response?.message || 'Failed to leave chat');
-    }
-  }, [
-    cleanupWebRTC,
-    emit,
-    leaveRoom,
-    resetParticipants,
-    roomId,
-    updateUserVoiceState,
-    user.id,
-    user.name,
-  ]);
+    sessionStorage.removeItem('joinedRoomId');
+  }, [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -223,7 +204,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
       deleteChatRoomMessage(data);
     };
 
-    const handleBroadcastNewRoom = (data: any) => {
+    const handleBroadcastRoomUpdate = (data: any) => {
       const recentRoomIds = currentRooms?.map((currentRoom) => currentRoom?.room?.id);
       const hasJoinRecentRoom = recentRoomIds.includes(data?.joinInfo?.roomId);
       const hasLeaveRecentRoom = recentRoomIds.includes(data?.leaveInfo?.roomId);
@@ -293,7 +274,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
     off('receive-reaction-group-message', handleReactionMessage);
     off('receive-private-message', handlePrivateMessage);
     off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-    off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    off('room-updated-with-participant', handleBroadcastRoomUpdate);
 
     off('webrtc-offer', handleWebRTCOffer);
     off('webrtc-answer', handleWebRTCAnswer);
@@ -313,7 +294,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
     on('receive-reaction-pop-group-message', handleReactionPopMessage);
     on('receive-private-message', handlePrivateMessage);
     on('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-    on('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    on('room-updated-with-participant', handleBroadcastRoomUpdate);
 
     on('webrtc-offer', handleWebRTCOffer);
     on('webrtc-answer', handleWebRTCAnswer);
@@ -333,7 +314,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
       off('receive-reaction-group-message', handleReactionMessage);
       off('receive-private-message', handlePrivateMessage);
       off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-      off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+      off('room-updated-with-participant', handleBroadcastRoomUpdate);
 
       off('webrtc-offer', handleWebRTCOffer);
       off('webrtc-answer', handleWebRTCAnswer);
@@ -354,4 +335,6 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn) {
     handleAnswer,
     handleIceCandidate,
   ]);
+
+  return { onLeaveRoom: handelLeaveChat };
 }

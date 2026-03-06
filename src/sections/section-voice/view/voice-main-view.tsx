@@ -67,7 +67,7 @@ export function VoiceMainView() {
     updateUserVoiceState,
     resetParticipants,
   } = useRoomTools();
-  const { roomId, hasJoined } = userVoiceState;
+  const { roomId } = userVoiceState;
 
   const webRTC = useWebRTCContext();
   const { cleanup: cleanupWebRTC } = webRTC;
@@ -110,7 +110,11 @@ export function VoiceMainView() {
     let response = null;
 
     if (joinedRoomId)
-      response = await leaveRoom({ roomId: joinedRoomId, userId: user.id }).unwrap();
+      response = await leaveRoom({
+        roomId: joinedRoomId,
+        userId: user.id,
+        name: user.name,
+      }).unwrap();
 
     if (response?.status) {
       emit('leave-voice-room', {
@@ -189,7 +193,7 @@ export function VoiceMainView() {
 
   const leftSidebar = (
     <Scrollbar>
-      <VoiceUserProfileView onLeave={handelLeaveChat} hasJoined={hasJoined} />
+      <VoiceUserProfileView onLeave={handelLeaveChat} />
       <VoiceRoomFindButton
         selected={selectedTab === 'find'}
         onClick={() => {

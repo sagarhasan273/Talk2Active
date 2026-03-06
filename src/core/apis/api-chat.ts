@@ -53,7 +53,7 @@ export const chatApi = createApi({
 
     leaveRoom: builder.mutation<
       { message: string; status: boolean },
-      { roomId: string; userId: string }
+      { roomId: string; userId: string; name: string }
     >({
       query: ({ roomId, userId }) => ({
         url: `room/${roomId}/leave`,

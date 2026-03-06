@@ -68,6 +68,8 @@ export function AuthProvider({ children }: Props) {
             },
           ])
         );
+        sessionStorage.setItem('userId', user.id);
+        sessionStorage.setItem('username', user.name);
       } else {
         setState({ authUser: {} as AuthState['authUser'], loading: false });
       }

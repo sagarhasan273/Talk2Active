@@ -15,9 +15,9 @@ interface WebRTCProviderProps {
 export function WebRTCProvider({ children }: WebRTCProviderProps) {
   const webRTC = useWebRTC();
 
-  useChatSocketListeners(webRTC);
+  const { onLeaveRoom } = useChatSocketListeners(webRTC);
 
-  const memoizedWebRTC = React.useMemo(() => webRTC, [webRTC]);
+  const memoizedWebRTC = React.useMemo(() => ({ ...webRTC, onLeaveRoom }), [webRTC, onLeaveRoom]);
 
   return <WebRTCContext.Provider value={memoizedWebRTC}>{children}</WebRTCContext.Provider>;
 }

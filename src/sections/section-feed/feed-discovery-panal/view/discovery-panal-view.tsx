@@ -25,6 +25,8 @@ import { useGetNewUsersQuery } from 'src/core/apis';
 import { Iconify } from 'src/components/iconify';
 import { ButtonRelationshipToggle } from 'src/components/buttons';
 
+import VoiceUserProfileView from 'src/sections/section-voice/view/voice-user-profile-view';
+
 import EngagementProfileCard from '../engagement-profile-card';
 
 export const DiscoveryPanel: React.FC = () => {
@@ -69,6 +71,7 @@ export const DiscoveryPanel: React.FC = () => {
     >
       {/* Engagement Profile Card */}
       <EngagementProfileCard />
+      <VoiceUserProfileView onLeave={() => {}} />
 
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
