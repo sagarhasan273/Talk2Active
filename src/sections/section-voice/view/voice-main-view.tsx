@@ -1,7 +1,7 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
 import { useSelector } from 'react-redux';
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import { Box, Button, Typography } from '@mui/material';
 
@@ -17,8 +17,6 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useLeaveRoomMutation, useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
-
-import { useChatSocketListeners } from 'src/sections/section-chat-room/chat-hooks/chat-socket-listeners';
 
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomFindButton from '../voice-room-find-button';
@@ -58,7 +56,7 @@ export function VoiceMainView() {
 
   const editRoomBoolean = useBoolean();
 
-  const { on, off, emit } = useSocketContext();
+  const { emit } = useSocketContext();
 
   const {
     room,
@@ -74,58 +72,10 @@ export function VoiceMainView() {
   const webRTC = useWebRTCContext();
   const { cleanup: cleanupWebRTC } = webRTC;
 
-  // Socket listeners
-  useChatSocketListeners(webRTC);
-
-  const setupChatSocketListenersRef = useRef<(() => void) | undefined>();
-
   const [selectedTab, setSelectedTab] = useState<selectedTabType>('find');
 
   const [updateUserRecentRooms] = useUpdateUserRecentRoomsMutation();
   const [leaveRoom] = useLeaveRoomMutation();
-
-  const handleBroadcastNewRoom = useCallback(
-    (data: any) => {
-      const recentRoomIds = currentRooms?.map((currentRoom) => currentRoom?.room?.id);
-      const hasJoinRecentRoom = recentRoomIds.includes(data?.joinInfo?.roomId);
-      const hasLeaveRecentRoom = recentRoomIds.includes(data?.leaveInfo?.roomId);
-
-      if (hasJoinRecentRoom || hasLeaveRecentRoom)
-        setCurrentRooms(
-          currentRooms.map((currentRoom) => {
-            if (currentRoom?.room?.id === data?.joinInfo?.roomId) {
-              return {
-                ...currentRoom,
-                room: {
-                  ...currentRoom.room,
-                  currentParticipants: [
-                    ...(currentRoom.room.currentParticipants || []),
-                    {
-                      user: data.joinInfo.participant,
-                      joinedAt: new Date().toISOString(),
-                    },
-                  ],
-                },
-              };
-            }
-            if (currentRoom?.room?.id === data?.leaveInfo?.roomId) {
-              return {
-                ...currentRoom,
-                room: {
-                  ...currentRoom.room,
-                  currentParticipants: (currentRoom.room.currentParticipants || []).filter(
-                    (participant) =>
-                      participant?.user?.userId !== data?.leaveInfo?.participant?.userId
-                  ),
-                },
-              };
-            }
-            return currentRoom;
-          })
-        );
-    },
-    [currentRooms, setCurrentRooms]
-  );
 
   const handleJoinRoom = useCallback(
     async (roomSelected: RoomResponse) => {
@@ -156,11 +106,6 @@ export function VoiceMainView() {
   );
 
   const handelLeaveChat = useCallback(async () => {
-    if (setupChatSocketListenersRef.current) {
-      setupChatSocketListenersRef.current?.();
-      setupChatSocketListenersRef.current = undefined;
-    }
-
     const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
     let response = null;
 
@@ -184,7 +129,7 @@ export function VoiceMainView() {
 
       sessionStorage.removeItem('joinedRoomId');
     } else {
-      console.error(response?.message);
+      console.error(response?.message || 'Failed to leave chat');
     }
   }, [
     cleanupWebRTC,
@@ -196,24 +141,6 @@ export function VoiceMainView() {
     user.id,
     user.name,
   ]);
-
-  useEffect(() => {
-    off('recent-room-updated-with-participant', handleBroadcastNewRoom);
-    on('recent-room-updated-with-participant', handleBroadcastNewRoom);
-
-    return () => {
-      off('recent-room-updated-with-participant', handleBroadcastNewRoom);
-    };
-  }, [on, off, handleBroadcastNewRoom]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    console.log('User leave Clean up while component unmount.');
-    return () => {
-      handelLeaveChat();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const header = (
     <Box

@@ -16,12 +16,11 @@
     "contrastText": "#FFFFFF"
   },
   "blue": {
-    "lighter": "#CDE9FD",
-    "light": "#6BB1F8",
-    "main": "#0C68E9",
-    "dark": "#063BA7",
-    "darker": "#021D6F",
-    "contrastText": "#FFFFFF"
+    "lighter": "#c5cef8",
+    "light": "#99a8f0",
+    "main": "#667eea",
+    "dark": "#4a62d8",
+    "darker": "#2f47b8"
   },
   "orange": {
     "lighter": "#FEF4D4",

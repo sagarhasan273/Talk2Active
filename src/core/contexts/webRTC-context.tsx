@@ -4,6 +4,7 @@ import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
 import React, { useContext, createContext } from 'react';
 
 import { useWebRTC } from 'src/hooks/useWebRTC';
+import { useChatSocketListeners } from 'src/hooks/use-chat-socket-listeners';
 
 const WebRTCContext = createContext<UseWebRTCReturn | null>(null);
 
@@ -13,6 +14,8 @@ interface WebRTCProviderProps {
 
 export function WebRTCProvider({ children }: WebRTCProviderProps) {
   const webRTC = useWebRTC();
+
+  useChatSocketListeners(webRTC);
 
   const memoizedWebRTC = React.useMemo(() => webRTC, [webRTC]);
 
