@@ -23,7 +23,7 @@ import VoiceRoomFindButton from '../voice-room-find-button';
 import VoiceUserProfileView from './voice-user-profile-view';
 import { CreateRoomModal } from '../voice-create-room-modal';
 import VoiceRoomEntryButton from '../voice-room-entry-button';
-import { VoiceRoomView } from '../voice-room/voice-room-view';
+import { VoiceRoomView } from '../voice-room-view/voice-room-view';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -218,7 +218,7 @@ export function VoiceMainView() {
   );
 
   const mainContent = (
-    <Box sx={{ width: '100%' }}>
+    <Scrollbar sx={{ height: 1 }}>
       <TabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
         <VoiceRoomsView onJoinRoom={handleJoinRoom} />
       </TabPanel>
@@ -226,7 +226,7 @@ export function VoiceMainView() {
       <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
         <VoiceRoomView onLeave={handelLeaveChat} />
       </TabPanel>
-    </Box>
+    </Scrollbar>
   );
 
   const footer = <Box sx={{ height: 1, backgroundColor: 'background.neutral' }} />;

@@ -61,6 +61,9 @@ export const UserSchema = zod
     verified: zod.boolean().optional(),
     accountActive: zod.boolean().optional(),
     sessionTimeOut: zod.number().int().nonnegative().optional(),
+
+    accountType: zod.enum(['admin', 'supporter', 'vip', 'moderator', 'member']),
+
     followerCount: zod.number().int().nonnegative(),
     friendCount: zod.number().int().nonnegative(),
     followingCount: zod.number().int().nonnegative(),

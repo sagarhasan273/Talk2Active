@@ -3,9 +3,11 @@ import type { RoomResponse } from 'src/types/type-chat';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import LockIcon from '@mui/icons-material/Lock';
-import { Box, Avatar, Button, Typography, AvatarGroup } from '@mui/material';
+import { Box, Avatar, Button, useTheme, Typography, AvatarGroup } from '@mui/material';
 
 import { useSocketContext } from 'src/core/contexts/socket-context';
+
+import { AvatarUser } from 'src/components/avatar-user';
 
 type VoiceRoomCardProps = {
   roomData: RoomResponse;
@@ -13,6 +15,8 @@ type VoiceRoomCardProps = {
 };
 
 const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
+  const theme = useTheme();
+
   const { on, off } = useSocketContext();
 
   const [room, setRoom] = useState<RoomResponse>(roomData);
@@ -114,14 +118,17 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
       >
         {/* Host Avatar */}
         <Box sx={{ position: 'relative' }}>
-          <Avatar
-            src={room.host.profilePhoto}
+          <AvatarUser
+            avatarUrl={room.host.profilePhoto}
+            name={room.host.name}
             sx={{
               width: 100,
               height: 100,
-              border: (theme) => `3px solid ${theme.palette.primary.main}`,
-              boxShadow: (theme) => `0 0 15px ${theme.palette.primary.main}`,
+              border: `2px solid ${theme.palette.primary.main}`,
+              boxShadow: `0 0 10px ${theme.palette.primary.main}`,
             }}
+            verified={room.host.verified}
+            accountType={room.host?.accountType}
           />
           <Typography variant="caption" display="block" sx={{ mt: 1, opacity: 0.8 }}>
             {room.host.name}
@@ -153,14 +160,12 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           px: 3,
           fontSize: '1rem',
           textTransform: 'none',
-          background: (theme) =>
-            `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${
-              theme.palette.primary.dark
-            } 100%)`,
+          background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${
+            theme.palette.primary.dark
+          } 100%)`,
           // boxShadow: (theme) => `0 4px 5px ${theme.palette.primary.main}`,
           '&:hover': {
-            background: (theme) =>
-              `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+            background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
           },
         }}
         onClick={() => onJoinRoom(room)}

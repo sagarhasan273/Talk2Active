@@ -7,8 +7,6 @@ import { Box, Typography } from '@mui/material';
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import { Scrollbar } from 'src/components/scrollbar';
-
 import VoiceRoomCard from '../voice-room-card';
 import { VoiceRoomsEmptyState } from './voice-no-rooms-view';
 
@@ -95,24 +93,22 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
 
   // Normal room list
   return (
-    <Scrollbar sx={{ height: '100%' }}>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          color: 'white',
-          position: 'relative',
-          gap: 2,
-          px: 1,
-        }}
-      >
-        {rooms.map((room) => (
-          <VoiceRoomCard key={room.id} roomData={room} onJoinRoom={onJoinRoom} />
-        ))}
-      </Box>
-    </Scrollbar>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        color: 'white',
+        position: 'relative',
+        gap: 2,
+        px: 1,
+      }}
+    >
+      {rooms.map((room) => (
+        <VoiceRoomCard key={room.id} roomData={room} onJoinRoom={onJoinRoom} />
+      ))}
+    </Box>
   );
 }
