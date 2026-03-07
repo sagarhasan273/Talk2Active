@@ -5,12 +5,9 @@ import { useState } from 'react';
 import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
 
-import { _notifications } from 'src/_mock';
 import { getUserStatus } from 'src/assets/data/status';
 
 import { Logo } from 'src/components/logo';
-
-import { useMockedUser } from 'src/auth/hooks';
 
 import { UserMain } from './main';
 import { layoutClasses } from '../classes';
@@ -20,9 +17,7 @@ import { HeaderSection } from '../core/header-section';
 import { FeedButton } from '../components/feed-button';
 import { SocialDrawer } from '../components/social-drawer';
 import { AccountDrawer } from '../components/account-drawer';
-import { LanguageViewer } from '../components/language-viewer';
 import { VoiceRoomButton } from '../components/voice-room-button';
-import { NotificationsDrawer } from '../components/notifications-drawer';
 
 export type UserLayoutProps = {
   sx?: SxProps<Theme>;
@@ -37,8 +32,6 @@ export type UserLayoutProps = {
 
 export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
   const theme = useTheme();
-
-  const { user } = useMockedUser();
 
   const [active, setActive] = useState<string>('');
 
@@ -64,23 +57,18 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
-                {/* -- Language popover -- */}
-                <LanguageViewer language={user.secondaryLanguage} />
-
-                {/* -- Notifications popover -- */}
-                <NotificationsDrawer data={_notifications} sx={{ mt: 0.5 }} />
-
-                {/* --Feed Page */}
-                <FeedButton
-                  active={active}
-                  onClickActive={() => setActive('home')}
-                  sx={{ mt: 0.5 }}
-                />
                 {/* --Voice Chat Page */}
                 <VoiceRoomButton
                   active={active}
                   onClickActive={() => setActive('voice-room')}
                   sx={{ mt: 0.5, mx: 0 }}
+                />
+
+                {/* --Feed Page */}
+                <FeedButton
+                  active={active}
+                  onClickActive={() => setActive('feed')}
+                  sx={{ mt: 0.5 }}
                 />
 
                 {/* -- Social popover -- */}

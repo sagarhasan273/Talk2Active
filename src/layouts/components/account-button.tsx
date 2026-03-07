@@ -11,12 +11,10 @@ import SvgIcon from '@mui/material/SvgIcon';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 
-import { selectAccount } from 'src/core/slices';
+import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AnimateAvatar } from 'src/components/animate';
-
-import { useSocialSocketListeners } from './social-drawer/social-listeners';
 
 // ----------------------------------------------------------------------
 
@@ -31,15 +29,16 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
   const user = useSelector(selectAccount);
 
   const { socket, isSocketConnected } = useSocketContext();
-
-  const { setupSocialSocketListeners } = useSocialSocketListeners();
+  const { currentRooms } = useRoomTools();
 
   useEffect(() => {
     if (!socket) return undefined;
 
     const onConnect = () => {
-      setupSocialSocketListeners?.();
-      socket.emit('join-room', { userId: user.id });
+      socket.emit('join-room', {
+        userId: user.id,
+        roomIds: currentRooms?.map((room) => room?.room?.id),
+      });
     };
 
     const onDisconnect = () => {
@@ -52,7 +51,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
       socket?.off('connect', onConnect);
       socket?.off('disconnect', onDisconnect);
     };
-  }, [socket, user.id, setupSocialSocketListeners]);
+  }, [socket, user.id, currentRooms]);
 
   const renderFallback = (
     <Avatar
