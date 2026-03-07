@@ -15,6 +15,11 @@ const spin = keyframes`
   to   { transform: rotate(360deg); }
 `;
 
+const spinReverse = keyframes`
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+`;
+
 type AccountType = 'admin' | 'supporter' | 'vip' | 'moderator' | 'member';
 
 const gradients: Record<string, string> = {
@@ -27,11 +32,12 @@ const staticBorders: Record<string, string> = {
   moderator: 'linear-gradient(135deg, #00e676, #1de9b6, #00b0ff)',
 };
 
+// Enhanced glows with better colors
 const glows: Record<string, string> = {
-  admin: '0 0 0 3px #fff, 0 0 14px 4px rgba(255,80,0,0.8)',
-  supporter: '0 0 0 3px #fff, 0 0 14px 4px rgba(120,0,255,0.7)',
-  vip: '0 0 0 3px #fff, 0 0 12px 3px rgba(255,200,0,0.7)',
-  moderator: '0 0 0 3px #fff, 0 0 12px 3px rgba(0,230,118,0.6)',
+  admin: '0 0 0 3px #fff, 0 0 20px 6px rgba(255, 23, 68, 0.7)',
+  supporter: '0 0 0 3px #fff, 0 0 20px 6px rgba(213, 0, 249, 0.6)',
+  vip: '0 0 0 3px #fff, 0 0 20px 6px rgba(255, 215, 0, 0.7)',
+  moderator: '0 0 0 3px #fff, 0 0 20px 6px rgba(0, 230, 118, 0.5)',
   member: 'none',
 };
 
@@ -40,10 +46,10 @@ const roleColors: Record<AccountType, string> = {
   supporter: '#d500f9',
   vip: '#ff8f00',
   moderator: '#00c853',
-  member: '#78909c',
+  member: '#90a4ae', // Changed from 'none' to a proper color
 };
 
-// Outer container
+// Outer container with proper positioning
 const AvatarWrapper = styled('div')({
   position: 'relative',
   display: 'inline-flex',
@@ -55,7 +61,7 @@ const AvatarWrapper = styled('div')({
 const SpinRing = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => {
   if (accounttype === 'member') return { display: 'none' };
 
-  const isAnimated = ['admin', 'supporter', 'vip', 'moderator'].includes(accounttype);
+  const isAnimated = ['admin', 'supporter'].includes(accounttype);
   const bg = gradients[accounttype] ?? staticBorders[accounttype] ?? 'transparent';
 
   return {
@@ -64,9 +70,25 @@ const SpinRing = styled('div')<{ accounttype: AccountType }>(({ accounttype }) =
     borderRadius: '50%',
     background: bg,
     animation: isAnimated
-      ? `${spin} ${accounttype === 'admin' ? '2s' : '3s'} linear infinite`
+      ? `${spin} ${accounttype === 'admin' ? '3s' : '4s'} linear infinite`
       : 'none',
     boxShadow: glows[accounttype],
+  };
+});
+
+// Enhanced inner ring for better definition
+const InnerRing = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => {
+  if (accounttype === 'member' || accounttype === 'vip' || accounttype === 'moderator') {
+    return { display: 'none' };
+  }
+
+  return {
+    position: 'absolute',
+    inset: '-2px',
+    borderRadius: '50%',
+    background: 'transparent',
+    border: '2px dotted rgba(255, 255, 255, 0.5)',
+    animation: `${spinReverse} ${accounttype === 'admin' ? '4s' : '6s'} linear infinite`,
   };
 });
 
@@ -84,6 +106,7 @@ const AvatarInner = styled('div')({
   borderRadius: '50%',
   overflow: 'hidden',
   display: 'flex',
+  border: '2px solid #fff', // Added white border for definition
 });
 
 export const AvatarUser = ({
@@ -101,16 +124,20 @@ export const AvatarUser = ({
 }) => (
   <AvatarWrapper>
     <SpinRing accounttype={accountType} />
+    <InnerRing accounttype={accountType} />
     <WhiteMask />
     <AvatarInner>
       <Avatar
         src={verified ? (avatarUrl ?? undefined) : undefined}
         alt={name}
         sx={{
-          bgcolor: accountType !== 'member' ? roleColors[accountType] : 'none',
+          bgcolor: roleColors[accountType],
+          color: '#fff',
           fontWeight: 800,
           fontSize: '0.875rem',
           letterSpacing: '0.04em',
+          width: 40,
+          height: 40,
           ...sx,
         }}
       >
