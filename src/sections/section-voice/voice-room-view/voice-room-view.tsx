@@ -82,6 +82,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
           isSpeaking: false,
           name: user.name,
           profilePhoto: user.profilePhoto,
+          accountType: user.accountType,
         });
       }
     } else {

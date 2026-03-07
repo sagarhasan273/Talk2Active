@@ -63,6 +63,7 @@ export type Participant = {
   userId: UserType['id'];
   name: UserType['name'];
   profilePhoto: UserType['profilePhoto'];
+  accountType: UserType['accountType'];
   status: UserType['status'];
   isSpeaking: boolean;
   isMuted: boolean;

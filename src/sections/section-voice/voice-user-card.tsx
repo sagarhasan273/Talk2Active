@@ -278,6 +278,7 @@ export function VoiceUserCard({
     profilePhoto,
     userType = 'Guest',
     verified,
+    accountType,
     status,
     isSpeaking = false,
     isActive = false,
@@ -493,6 +494,8 @@ export function VoiceUserCard({
             opacity: connectionStatusElement ? 0.3 : 1,
             transition: 'opacity 0.3s ease',
             filter: connectionStatusElement ? 'blur(1px)' : 'none',
+            border:
+              accountType === 'supporter' ? `2px solid ${theme.palette.primary.light}` : 'none',
           }}
         >
           {fUsername(name)}

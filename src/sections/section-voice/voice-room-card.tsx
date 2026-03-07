@@ -127,6 +127,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             }}
             verified={room.host.verified}
             accountType={room.host?.accountType}
+            showShadow
           />
           <Typography variant="caption" display="block" sx={{ mt: 1, opacity: 0.8 }}>
             {room.host.name}

@@ -150,7 +150,7 @@ export const AvatarUser = ({
   avatarUrl,
   verified,
   accountType = 'member',
-  showShadow = true,
+  showShadow = false,
   shouldSpin = true,
   spinSpeed = '3s',
   innerRingSpinSpeed = '4s',
