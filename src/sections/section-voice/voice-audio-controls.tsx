@@ -19,7 +19,6 @@ export function VoiceAudioControls() {
   return (
     <Paper sx={{ p: 1.5, pb: 0.5, backgroundColor: 'background.neutral', maxWidth: 1 }}>
       <Stack spacing={0.5}>
-        {/* Microphone Control */}
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
