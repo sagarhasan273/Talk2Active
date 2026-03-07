@@ -25,20 +25,19 @@ type AccountType = 'admin' | 'supporter' | 'vip' | 'moderator' | 'member';
 const gradients: Record<string, string> = {
   admin: 'conic-gradient(#ff1744, #ff6d00, #ffd600, #ff6d00, #ff1744)',
   supporter: 'conic-gradient(#d500f9, #2979ff, #00e5ff, #00e676, #2979ff, #d500f9)',
+  vip: 'conic-gradient(#ffd700, #ffaa00, #ff8c00, #ffaa00, #ffd700)',
+  moderator: 'conic-gradient(#00e676, #1de9b6, #00b0ff, #1de9b6, #00e676)',
 };
 
-const staticBorders: Record<string, string> = {
-  vip: 'linear-gradient(135deg, #ffd700, #ff8c00, #ffd700)',
-  moderator: 'linear-gradient(135deg, #00e676, #1de9b6, #00b0ff)',
-};
-
-// Enhanced glows with better colors
-const glows: Record<string, string> = {
-  admin: '0 0 0 3px #fff, 0 0 20px 6px rgba(255, 23, 68, 0.7)',
-  supporter: '0 0 0 3px #fff, 0 0 20px 6px rgba(213, 0, 249, 0.6)',
-  vip: '0 0 0 3px #fff, 0 0 20px 6px rgba(255, 215, 0, 0.7)',
-  moderator: '0 0 0 3px #fff, 0 0 20px 6px rgba(0, 230, 118, 0.5)',
-  member: 'none',
+// Shadow configurations that spin with the border
+const shadowGradients: Record<string, string> = {
+  admin:
+    'conic-gradient(rgba(255, 23, 68, 0.6), rgba(255, 109, 0, 0.6), rgba(255, 214, 0, 0.6), rgba(255, 109, 0, 0.6), rgba(255, 23, 68, 0.6))',
+  supporter:
+    'conic-gradient(rgba(213, 0, 249, 0.5), rgba(41, 121, 255, 0.5), rgba(0, 229, 255, 0.5), rgba(0, 230, 118, 0.5), rgba(41, 121, 255, 0.5), rgba(213, 0, 249, 0.5))',
+  vip: 'conic-gradient(rgba(255, 215, 0, 0.6), rgba(255, 170, 0, 0.6), rgba(255, 140, 0, 0.6), rgba(255, 170, 0, 0.6), rgba(255, 215, 0, 0.6))',
+  moderator:
+    'conic-gradient(rgba(0, 230, 118, 0.5), rgba(29, 233, 182, 0.5), rgba(0, 176, 255, 0.5), rgba(29, 233, 182, 0.5), rgba(0, 230, 118, 0.5))',
 };
 
 const roleColors: Record<AccountType, string> = {
@@ -46,7 +45,7 @@ const roleColors: Record<AccountType, string> = {
   supporter: '#d500f9',
   vip: '#ff8f00',
   moderator: '#00c853',
-  member: '#90a4ae', // Changed from 'none' to a proper color
+  member: '#90a4ae',
 };
 
 // Outer container with proper positioning
@@ -57,42 +56,87 @@ const AvatarWrapper = styled('div')({
   justifyContent: 'center',
 });
 
-// Spinning gradient ring — absolutely positioned behind avatar
+// Spinning shadow layer
+const ShadowLayer = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => {
+  if (accounttype === 'member') return { display: 'none' };
+
+  const spinSpeeds = {
+    admin: '3s',
+    supporter: '4s',
+    vip: '5s',
+    moderator: '4.5s',
+  };
+
+  return {
+    position: 'absolute',
+    inset: '-12px',
+    borderRadius: '50%',
+    background: shadowGradients[accounttype],
+    filter: 'blur(8px)',
+    animation: `${spin} ${spinSpeeds[accounttype]} linear infinite`,
+  };
+});
+
+// Spinning gradient ring
 const SpinRing = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => {
   if (accounttype === 'member') return { display: 'none' };
 
-  const isAnimated = ['admin', 'supporter'].includes(accounttype);
-  const bg = gradients[accounttype] ?? staticBorders[accounttype] ?? 'transparent';
+  const spinSpeeds = {
+    admin: '3s',
+    supporter: '4s',
+    vip: '5s',
+    moderator: '4.5s',
+  };
 
   return {
     position: 'absolute',
     inset: '-4px',
     borderRadius: '50%',
-    background: bg,
-    animation: isAnimated
-      ? `${spin} ${accounttype === 'admin' ? '3s' : '4s'} linear infinite`
-      : 'none',
-    boxShadow: glows[accounttype],
+    background: gradients[accounttype],
+    animation: `${spin} ${spinSpeeds[accounttype]} linear infinite`,
+    boxShadow: '0 0 20px rgba(0,0,0,0.3)',
   };
 });
 
-// Enhanced inner ring for better definition
+// Inner ring for additional effect
 const InnerRing = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => {
-  if (accounttype === 'member' || accounttype === 'vip' || accounttype === 'moderator') {
-    return { display: 'none' };
-  }
+  if (accounttype === 'member') return { display: 'none' };
+
+  const spinSpeeds = {
+    admin: '4s',
+    supporter: '6s',
+    vip: '7s',
+    moderator: '6s',
+  };
+
+  // Different styles for different account types
+  const ringStyles = {
+    admin: {
+      border: '2px dotted rgba(255, 255, 255, 0.7)',
+    },
+    supporter: {
+      border: '2px dashed rgba(255, 255, 255, 0.6)',
+    },
+    vip: {
+      border: '2px solid rgba(255, 215, 0, 0.4)',
+      boxShadow: '0 0 10px rgba(255, 215, 0, 0.3)',
+    },
+    moderator: {
+      border: '2px double rgba(255, 255, 255, 0.5)',
+    },
+  };
 
   return {
     position: 'absolute',
     inset: '-2px',
     borderRadius: '50%',
     background: 'transparent',
-    border: '2px dotted rgba(255, 255, 255, 0.5)',
-    animation: `${spinReverse} ${accounttype === 'admin' ? '4s' : '6s'} linear infinite`,
+    ...ringStyles[accounttype],
+    animation: `${spinReverse} ${spinSpeeds[accounttype]} linear infinite`,
   };
 });
 
-// White mask that punches a hole — only the 4px ring stays visible
+// White mask that punches a hole
 const WhiteMask = styled('div')({
   position: 'absolute',
   inset: '3px',
@@ -106,14 +150,15 @@ const AvatarInner = styled('div')({
   borderRadius: '50%',
   overflow: 'hidden',
   display: 'flex',
-  border: '2px solid #fff', // Added white border for definition
+  border: '2px solid #fff',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 });
 
 export const AvatarUser = ({
   name,
   avatarUrl,
   verified,
-  accountType = 'member',
+  accountType = 'admin',
   sx,
 }: {
   name: string;
@@ -123,6 +168,7 @@ export const AvatarUser = ({
   sx?: Record<string, any>;
 }) => (
   <AvatarWrapper>
+    <ShadowLayer accounttype={accountType} />
     <SpinRing accounttype={accountType} />
     <InnerRing accounttype={accountType} />
     <WhiteMask />
