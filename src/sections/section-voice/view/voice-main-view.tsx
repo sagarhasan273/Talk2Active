@@ -22,7 +22,7 @@ import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomFindButton from '../voice-room-find-button';
 import VoiceUserProfileView from './voice-user-profile-view';
 import { CreateRoomModal } from '../voice-create-room-modal';
-import VoiceRoomEntryButton from '../voice-room-entry-button';
+import VoiceRoomSelectButton from '../voice-room-select-button';
 import { VoiceRoomView } from '../voice-room-view/voice-room-view';
 
 interface TabPanelProps {
@@ -202,7 +202,7 @@ export function VoiceMainView() {
       />
 
       {currentRooms.map((recentRoom) => (
-        <VoiceRoomEntryButton
+        <VoiceRoomSelectButton
           key={recentRoom?.room?.id}
           selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
           isJoined={userVoiceState.roomId === recentRoom?.room?.id}

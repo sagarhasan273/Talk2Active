@@ -24,7 +24,7 @@ type AccountType = 'admin' | 'supporter' | 'vip' | 'moderator' | 'member';
 
 const gradients: Record<string, string> = {
   admin: 'conic-gradient(#ff0000, #ff3300, #ff6600, #ff3300, #ff0000, #cc0000, #ff0000)',
-  supporter: 'conic-gradient(#d500f9, #2979ff, #00e5ff, #0051e6b6, #2979ff, #d500f9)',
+  supporter: 'conic-gradient(#00e5ff, #bfff29cc, #00e5ff,  #dfff29da, #00e5ff)',
   vip: 'conic-gradient(#ffd700, #ffaa00, #ff8c00, #ffaa00, #ffd700)',
   moderator: 'conic-gradient(#00e676, #1de9b6, #00b0ff, #1de9b6, #00e676)',
 };
@@ -106,7 +106,7 @@ const InnerRing = styled('div')<{
       border: '4px dotted rgba(255, 255, 255, 0.7)',
     },
     supporter: {
-      border: '2px dashed rgba(255, 255, 255, 0.6)',
+      border: '2px dashed rgba(66, 65, 65, 0.6)',
     },
     vip: {
       border: '2px dashed rgba(255, 215, 0, 0.4)',
@@ -135,13 +135,12 @@ const WhiteMask = styled('div')({
   background: '#fff',
 });
 
-// Avatar sits on top
+// Avatar sits on top - removed border
 const AvatarInner = styled('div')({
   position: 'relative',
   borderRadius: '50%',
   overflow: 'hidden',
   display: 'flex',
-  border: '2px solid #fff',
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 });
 
@@ -176,7 +175,7 @@ export const AvatarUser = ({
         src={verified ? (avatarUrl ?? undefined) : undefined}
         alt={name}
         sx={{
-          bgcolor: roleColors[accountType],
+          bgcolor: accountType !== 'member' ? roleColors[accountType] : 'none',
           color: '#fff',
           fontWeight: 800,
           fontSize: '0.875rem',

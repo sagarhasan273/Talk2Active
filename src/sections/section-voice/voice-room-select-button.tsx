@@ -3,23 +3,23 @@ import type { RoomResponse } from 'src/types/type-chat';
 import React from 'react';
 
 import LockIcon from '@mui/icons-material/Lock';
-import { Box, Badge, Typography, ButtonBase, AvatarGroup } from '@mui/material';
+import { Box, Badge, Tooltip, Typography, ButtonBase, AvatarGroup } from '@mui/material';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
-type VoiceRoomEntryButtonProps = {
+type VoiceRoomSelectButtonProps = {
   selected?: boolean;
   isJoined?: boolean;
   room: RoomResponse;
   onClick: (room: RoomResponse) => void;
 };
 
-const VoiceRoomEntryButton = ({
+const VoiceRoomSelectButton = ({
   selected = false,
   isJoined = false,
   room,
   onClick,
-}: VoiceRoomEntryButtonProps) => {
+}: VoiceRoomSelectButtonProps) => {
   if (!room?.id) return null;
 
   return (
@@ -63,34 +63,50 @@ const VoiceRoomEntryButton = ({
         overlap="circular"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         badgeContent={
-          <Box
-            sx={{
-              bgcolor: selected ? 'background.paper' : 'background.default',
-              borderRadius: '50%',
-              p: 0.2,
-              display: 'flex',
-              border: selected
-                ? (theme) => `1.5px solid ${theme.palette.primary.main}`
-                : '1.5px solid #2b2d31',
-            }}
-          >
-            <Typography
-              sx={{ fontSize: '0.6rem', color: 'text.secondary', fontWeight: 'bold', px: 0.3 }}
+          <Tooltip title={room.languages?.map((lang) => lang.toUpperCase()).join(', ')} arrow>
+            <Box
+              sx={{
+                bgcolor: selected ? 'background.paper' : 'background.default',
+                borderRadius: '12px',
+                p: 0.1,
+                px: 0.5,
+                display: 'flex',
+                border: selected
+                  ? (theme) => `1.5px solid ${theme.palette.primary.main}`
+                  : (theme) => `1.5px solid ${theme.palette.divider}`,
+                maxWidth: '70px', // Reduced max width
+                cursor: 'default', // Shows it's interactive
+              }}
             >
-              {room.languages?.[0]?.toUpperCase()}
-            </Typography>
-          </Box>
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  color: 'text.secondary',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {room.languages?.length > 2
+                  ? `${room.languages
+                      .slice(0, 2)
+                      .map((lang) => lang.toUpperCase())
+                      .join(', ')} +${room.languages.length - 2}`
+                  : room.languages?.map((lang) => lang.toUpperCase()).join(', ')}
+              </Typography>
+            </Box>
+          </Tooltip>
         }
       >
         <AvatarUser
           avatarUrl={room.host?.profilePhoto}
-          verified={Boolean(room.host?.verified)}
+          verified={room.host?.verified}
           name={room.host?.name}
           sx={{
             ...(isJoined && {
               color: 'text.primary',
             }),
           }}
+          accountType={room.host?.accountType}
         />
       </Badge>
 
@@ -132,6 +148,8 @@ const VoiceRoomEntryButton = ({
                 key={`${participant.user.id}+${index}`}
                 avatarUrl={participant.user.profilePhoto}
                 name={participant.user.name}
+                verified={participant.user?.verified}
+                shouldSpin={false}
               />
             ))}
           </AvatarGroup>
@@ -155,4 +173,4 @@ const VoiceRoomEntryButton = ({
   );
 };
 
-export default VoiceRoomEntryButton;
+export default VoiceRoomSelectButton;
