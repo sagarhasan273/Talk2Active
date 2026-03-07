@@ -124,8 +124,6 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             sx={{
               width: 100,
               height: 100,
-              border: `2px solid ${theme.palette.primary.main}`,
-              boxShadow: `0 0 10px ${theme.palette.primary.main}`,
             }}
             verified={room.host.verified}
             accountType={room.host?.accountType}
