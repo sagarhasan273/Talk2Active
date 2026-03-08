@@ -67,6 +67,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
           status: 'online',
           userType: room.host?.id === user.id ? 'Host' : 'Guest',
           verified: user.verified,
+          accountType: user.accountType,
         });
 
         updateUserVoiceState({ hasJoined: true, roomId: room.id });

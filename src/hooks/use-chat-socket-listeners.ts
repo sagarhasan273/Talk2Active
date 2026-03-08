@@ -204,6 +204,30 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       deleteChatRoomMessage(data);
     };
 
+    const handleExistingRoomParticipant = (data: any) => {
+      setCurrentRooms(
+        currentRooms?.map((currentRoom) => {
+          if (data?.participants?.[currentRoom?.room?.id]?.length) {
+            const participants =
+              data?.participants?.[currentRoom?.room?.id]?.map((participant: any) => ({
+                user: participant,
+                joinedAt: new Date().toDateString(),
+              })) || [];
+
+            return {
+              ...currentRoom,
+              room: {
+                ...currentRoom.room,
+                currentParticipants: participants,
+              },
+            };
+          }
+
+          return currentRoom;
+        })
+      );
+    };
+
     const handleBroadcastRoomUpdate = (data: any) => {
       const recentRoomIds = currentRooms?.map((currentRoom) => currentRoom?.room?.id);
       const hasJoinRecentRoom = recentRoomIds.includes(data?.joinInfo?.roomId);
@@ -275,6 +299,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     off('receive-private-message', handlePrivateMessage);
     off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
     off('room-updated-with-participant', handleBroadcastRoomUpdate);
+    off('receive-rooms-existing-participants', handleExistingRoomParticipant);
 
     off('webrtc-offer', handleWebRTCOffer);
     off('webrtc-answer', handleWebRTCAnswer);
@@ -295,6 +320,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     on('receive-private-message', handlePrivateMessage);
     on('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
     on('room-updated-with-participant', handleBroadcastRoomUpdate);
+    on('receive-rooms-existing-participants', handleExistingRoomParticipant);
 
     on('webrtc-offer', handleWebRTCOffer);
     on('webrtc-answer', handleWebRTCAnswer);
@@ -315,6 +341,7 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       off('receive-private-message', handlePrivateMessage);
       off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
       off('room-updated-with-participant', handleBroadcastRoomUpdate);
+      off('receive-rooms-existing-participants', handleExistingRoomParticipant);
 
       off('webrtc-offer', handleWebRTCOffer);
       off('webrtc-answer', handleWebRTCAnswer);

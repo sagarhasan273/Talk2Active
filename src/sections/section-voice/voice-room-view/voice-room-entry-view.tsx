@@ -78,10 +78,10 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
   );
 
   useEffect(() => {
-    off('recent-room-updated-with-participant', handleBroadcastNewRoom);
-    on('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    off('room-updated-with-participant', handleBroadcastNewRoom);
+    on('room-updated-with-participant', handleBroadcastNewRoom);
 
-    return () => off('recent-room-updated-with-participant', handleBroadcastNewRoom);
+    return () => off('room-updated-with-participant', handleBroadcastNewRoom);
   }, [on, off, handleBroadcastNewRoom]);
 
   useEffect(() => {

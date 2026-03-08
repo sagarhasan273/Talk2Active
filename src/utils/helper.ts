@@ -3,6 +3,8 @@
  * https://github.com/you-dont-need-x/you-dont-need-lodash
  */
 
+import { languages } from 'src/_mock/data/languages';
+
 import axiosInstance, { endpoints } from './axios';
 
 // ----------------------------------------------------------------------
@@ -214,3 +216,10 @@ export function fUsername(fullName?: string): string {
   // Only first name → take first two chars
   return fullName.substring(0, 2).toUpperCase();
 }
+
+export const fgetLanguageName = (code: string) => {
+  const language = languages.find(
+    (lang: { code: string; flag: string; name: string }) => lang.code === code
+  );
+  return language ? `${language.flag} ${language.name}` : code;
+};

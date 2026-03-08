@@ -106,7 +106,7 @@ const InnerRing = styled('div')<{
       border: '4px dotted rgba(255, 255, 255, 0.7)',
     },
     supporter: {
-      border: '2px dashed rgba(66, 65, 65, 0.6)',
+      border: '4px dashed rgb(252, 252, 252)',
     },
     vip: {
       border: '2px dashed rgba(255, 215, 0, 0.4)',
