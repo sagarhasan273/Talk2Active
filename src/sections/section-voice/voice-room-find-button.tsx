@@ -43,7 +43,7 @@ export function VoiceRoomFindButton({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        mb: 0.5,
+        mb: 1,
         textAlign: 'left',
         overflow: 'hidden',
         transition: 'all 0.22s ease',
