@@ -30,11 +30,21 @@ import { AvatarUser } from 'src/components/avatar-user';
 
 const RoomTypeIcon = ({ type }: { type: string }) => {
   const icons: Record<string, string> = {
+    // Existing
     conversation: '💬',
     lecture: '🎙️',
     debate: '⚔️',
     study: '📚',
+
+    // New additions
+    pronunciation: '🔤',
+    grammar: '📝',
+    vocabulary: '📖',
+    storytelling: '📖',
+    business: '💼',
+    'exam-prep': '📋',
   };
+
   return <span style={{ fontSize: 13 }}>{icons[type] ?? '🔊'}</span>;
 };
 
