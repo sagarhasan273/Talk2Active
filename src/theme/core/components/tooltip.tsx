@@ -12,15 +12,15 @@ const MuiTooltip: Components<Theme>['MuiTooltip'] = {
    *************************************** */
   styleOverrides: {
     tooltip: ({ theme }) => ({
-      backgroundColor: theme.vars.palette.grey[800],
+      backgroundColor: theme.vars.palette.grey[700],
       [stylesMode.dark]: {
-        backgroundColor: theme.vars.palette.grey[700],
+        backgroundColor: theme.vars.palette.grey[500],
       },
     }),
     arrow: ({ theme }) => ({
-      color: theme.vars.palette.grey[800],
+      color: theme.vars.palette.grey[700],
       [stylesMode.dark]: {
-        color: theme.vars.palette.grey[700],
+        color: theme.vars.palette.grey[900],
       },
     }),
     popper: {

@@ -21,9 +21,9 @@ import { useLeaveRoomMutation, useUpdateUserRecentRoomsMutation } from 'src/core
 import { Scrollbar } from 'src/components/scrollbar';
 
 import VoiceRoomsView from './voice-rooms-view';
-import VoiceRoomFindButton from '../voice-room-find-button';
 import VoiceUserProfileView from './voice-user-profile-view';
 import { CreateRoomModal } from '../voice-create-room-modal';
+import { VoiceRoomFindButton } from '../voice-room-find-button';
 import VoiceRoomSelectButton from '../voice-room-select-button';
 import { VoiceRoomView } from '../voice-room-view/voice-room-view';
 
@@ -222,7 +222,7 @@ export function VoiceMainView() {
   );
 
   const leftSidebar = (
-    <Scrollbar>
+    <Scrollbar sx={{ height: 1 }}>
       <VoiceUserProfileView onLeave={handelLeaveChat} />
       <VoiceRoomFindButton
         selected={selectedTab === 'find'}

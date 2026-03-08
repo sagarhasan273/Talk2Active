@@ -312,7 +312,9 @@ export function VoiceRoomLayout({
         <Box sx={{ gridArea: { xs: '1 / 1 / 2 / 2', sm: '1 / 1 / 2 / 4' }, mt: 1 }}>{header}</Box>
 
         {/* Left Sidebar - Hidden on mobile, shown as Drawer */}
-        {!isMobile && <Box sx={{ gridArea: '2 / 1 / 3 / 2' }}>{leftSidebar}</Box>}
+        {!isMobile && (
+          <Box sx={{ gridArea: '2 / 1 / 3 / 2', overflow: 'hidden' }}>{leftSidebar}</Box>
+        )}
 
         {/* Main Content */}
         <Box

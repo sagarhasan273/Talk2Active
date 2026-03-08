@@ -53,8 +53,22 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
   };
 
   const handleDeafen = () => {
+    const newDeafenedState = !isDeafened;
+    const newMicMutedState = newDeafenedState ? true : isMicMuted;
+
+    // Update local state
     toggleDeafen();
-    updateUserVoiceState({ isDeafened: !isDeafened });
+
+    // Update mic if needed
+    if (newDeafenedState && !isMicMuted) {
+      onClickMicrophone(true);
+    }
+
+    // Update server/global state
+    updateUserVoiceState({
+      isDeafened: newDeafenedState,
+      isMicMuted: newMicMutedState,
+    });
   };
 
   return (
