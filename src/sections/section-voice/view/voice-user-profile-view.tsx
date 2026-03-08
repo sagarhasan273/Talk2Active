@@ -101,6 +101,7 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
             avatarUrl={user?.profilePhoto}
             verified={Boolean(user?.verified)}
             name={user?.name}
+            accountType={user.accountType}
           />
         </Badge>
 
@@ -117,38 +118,40 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
         </Box>
 
         {/* Live pulse chip */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            bgcolor: 'rgba(67,181,129,0.12)',
-            border: '1px solid rgba(67,181,129,0.25)',
-            borderRadius: '20px',
-            px: 1,
-            py: 0.3,
-          }}
-        >
+        {hasJoined && (
           <Box
             sx={{
-              width: 5,
-              height: 5,
-              borderRadius: '50%',
-              bgcolor: '#43b581',
-              boxShadow: '0 0 5px #43b581',
-              animation: 'livePulse 1.8s ease-in-out infinite',
-              '@keyframes livePulse': {
-                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-                '50%': { opacity: 0.5, transform: 'scale(0.8)' },
-              },
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              bgcolor: 'rgba(67,181,129,0.12)',
+              border: '1px solid rgba(67,181,129,0.25)',
+              borderRadius: '20px',
+              px: 1,
+              py: 0.3,
             }}
-          />
-          <Typography
-            sx={{ fontSize: '0.6rem', color: '#43b581', fontWeight: 700, letterSpacing: 0.6 }}
           >
-            LIVE
-          </Typography>
-        </Box>
+            <Box
+              sx={{
+                width: 5,
+                height: 5,
+                borderRadius: '50%',
+                bgcolor: '#43b581',
+                boxShadow: '0 0 5px #43b581',
+                animation: 'livePulse 1.8s ease-in-out infinite',
+                '@keyframes livePulse': {
+                  '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                  '50%': { opacity: 0.5, transform: 'scale(0.8)' },
+                },
+              }}
+            />
+            <Typography
+              sx={{ fontSize: '0.6rem', color: '#43b581', fontWeight: 700, letterSpacing: 0.6 }}
+            >
+              LIVE
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* ── Waveform visualizer ─────────────────────────────────── */}

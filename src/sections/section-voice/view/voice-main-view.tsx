@@ -1,9 +1,11 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
 import { useSelector } from 'react-redux';
+import { VerifiedIcon } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
-import { Box, Button, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { Box, Button, Tooltip, Typography } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -166,21 +168,49 @@ export function VoiceMainView() {
       <Box
         sx={{ my: 1, display: 'flex', gap: 1, justifyContent: 'flex-start', flexDirection: 'row' }}
       >
-        <Button variant="contained" size="small" sx={{ borderRadius: '20px', px: 2 }}>
-          Quick Join
-        </Button>
+        <Tooltip
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <VerifiedIcon style={{ fontSize: 12 }} />
+              <span>Verified accounts only</span>
+            </Box>
+          }
+          arrow
+          placement="top"
+        >
+          <span>
+            {' '}
+            {/* Span needed for disabled button tooltip to work */}
+            <Button
+              variant="contained"
+              size="small"
+              sx={{
+                borderRadius: '20px',
+                px: 2,
+                opacity: 0.6,
+                cursor: 'not-allowed',
+              }}
+              disabled
+            >
+              Quick Join
+            </Button>
+          </span>
+        </Tooltip>
+
         <Button
           variant="outlined"
           size="small"
+          startIcon={<AddIcon />}
           sx={{
             borderRadius: '20px',
             px: 1,
-            color: 'text.secondary',
-            borderColor: 'text.secondary',
-            opacity: 0.7,
+            color: 'primary.main',
+            borderColor: 'primary.main',
+            '& .MuiButton-startIcon': {
+              mr: 0.3,
+            },
             '&:hover': {
-              opacity: 1,
-              borderColor: 'text.secondary',
+              borderColor: 'primary.light',
             },
           }}
           onClick={editRoomBoolean.onTrue}
