@@ -243,12 +243,15 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
               fontSize: 9,
               fontWeight: 800,
               letterSpacing: 0.7,
+              border: '1px solid',
               bgcolor: acCfg.bg,
               color: acCfg.color,
-              border: '1px solid',
               borderColor: alpha(acCfg.color, 0.3),
               px: 0.25,
               '& .MuiChip-label': { px: 0.75 },
+              '&:hover': {
+                bgcolor: acCfg.bg,
+              },
             }}
           />
         </Box>
