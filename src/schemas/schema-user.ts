@@ -202,6 +202,8 @@ export const UsersSchema = UserSchema.pick({
   followerCount: true,
   followingCount: true,
   friendCount: true,
+  verified: true,
+  accountType: true,
 }).extend({
   relationShip: RelationshipWithUserSchema,
 });
