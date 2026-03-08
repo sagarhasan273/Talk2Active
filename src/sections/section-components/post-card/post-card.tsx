@@ -2,7 +2,6 @@ import type { PostResponseType } from 'src/types/type-post';
 
 import YouTube from 'react-youtube';
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 import { Pause, MoreHoriz, PlayArrow, NavigateNext, NavigateBefore } from '@mui/icons-material';
 import {
@@ -25,7 +24,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { fToNow } from 'src/utils/format-time';
 import { extractYouTubeId } from 'src/utils/helper';
 
-import { setUsers, selectAccount } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 import { AccountTypeConfig } from 'src/layouts/components/account-drawer';
 import {
   useDeletePostMutation,
@@ -46,10 +45,10 @@ import type { PostCardProps } from './types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function RegularPostCard({ post }: PostCardProps) {
-  const dispatch = useDispatch();
   const theme = useTheme();
-  const user = useSelector(selectAccount);
   const isDark = theme.palette.mode === 'dark';
+
+  const { user, setSelectedUser } = useCredentials();
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
@@ -415,7 +414,7 @@ function RegularPostCard({ post }: PostCardProps) {
         }}
         onClick={(e) => {
           e.stopPropagation();
-          dispatch(setUsers([{ ...data.authorDetails, relationShip: data.authorRelationship }]));
+          setSelectedUser({ ...data.authorDetails, relationShip: data.authorRelationship });
         }}
       >
         {/* Avatar + author info */}

@@ -5,7 +5,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
-import { setUsers, setAccount, useRoomTools } from 'src/core/slices';
+import { setAccount, useRoomTools, useCredentials } from 'src/core/slices';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -27,6 +27,8 @@ type Props = {
 
 export function AuthProvider({ children }: Props) {
   const dispatch = useDispatch();
+
+  const { setSelectedUser } = useCredentials();
 
   const { currentRooms, setCurrentRooms } = useRoomTools();
 
@@ -53,21 +55,18 @@ export function AuthProvider({ children }: Props) {
         setState({ authUser: { ...user, accessToken }, loading: false });
 
         dispatch(setAccount(user));
-        dispatch(
-          setUsers([
-            {
-              ...user,
-              relationShip: {
-                relationship: 'none',
-                following: false,
-                followers: false,
-                friends: false,
-                blocked: false,
-                pending: false,
-              },
-            },
-          ])
-        );
+
+        setSelectedUser({
+          ...user,
+          relationShip: {
+            relationship: 'none',
+            following: false,
+            followers: false,
+            friends: false,
+            blocked: false,
+            pending: false,
+          },
+        });
         sessionStorage.setItem('userId', user.id);
         sessionStorage.setItem('username', user.name);
       } else {

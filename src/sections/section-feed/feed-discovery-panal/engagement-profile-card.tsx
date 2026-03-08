@@ -1,8 +1,3 @@
-import type { UsersType } from 'src/types/type-user';
-
-import { useSelector } from 'react-redux';
-import { useState, useEffect } from 'react';
-
 import { useTheme } from '@mui/material/styles';
 import PersonAdd from '@mui/icons-material/PersonAdd';
 import VerifiedIcon from '@mui/icons-material/Verified';
@@ -19,15 +14,11 @@ import {
   CardContent,
 } from '@mui/material';
 
-import { useCounter } from 'src/hooks/use-counter';
-
-import { selectUsers, selectAccount } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
 import { AvatarUser } from 'src/components/avatar-user';
-
-import EngagementProfileShift from './engagement-profile-shift';
 
 // ── tiny stat cell ────────────────────────────────────────────────────
 const Stat = ({ value, label }: { value: number; label: string }) => (
@@ -61,47 +52,40 @@ interface ProfileCardProps {
 
 export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
   const theme = useTheme();
-  const user = useSelector(selectAccount);
-  const users = useSelector(selectUsers);
-  const counter = useCounter(users.length > 0 ? users.length - 1 : 0);
-  const [profile, setProfile] = useState<UsersType>(users[0] as UsersType);
+
+  const { user, selectedUser, setSelectedUser } = useCredentials();
 
   const [followMutate] = useFollowMutation();
   const [unfollowMutate] = useUnfollowMutation();
 
   const handleFollow = () => {
-    const newFollowing = !profile.relationShip?.following;
-    setProfile((prev) => ({
-      ...prev,
-      relationShip: { ...prev.relationShip, following: newFollowing },
-      followerCount: prev.followerCount + (newFollowing ? 1 : -1),
-    }));
+    const newFollowing = !selectedUser.relationShip?.following;
+    setSelectedUser({
+      ...selectedUser,
+      relationShip: { ...selectedUser.relationShip, following: newFollowing },
+      followerCount: selectedUser.followerCount + (newFollowing ? 1 : -1),
+    });
 
     if (!newFollowing) {
       unfollowMutate({
         requester: user.id,
-        recipient: profile.id,
+        recipient: selectedUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     } else {
       followMutate({
         requester: user.id,
-        recipient: profile.id,
+        recipient: selectedUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       });
     }
   };
 
-  useEffect(() => {
-    if (users.length === 0) return;
-    setProfile(users[counter.value % users.length]);
-  }, [counter.value, users]);
+  const isFollowing = selectedUser.relationShip?.following ?? false;
+  const isSelfProfile = selectedUser.id === user.id;
+  const followersCount = selectedUser.followerCount ?? 0;
 
-  const isFollowing = profile.relationShip?.following ?? false;
-  const isSelfProfile = profile.id === user.id;
-  const followersCount = profile.followerCount ?? 0;
-
-  const accountType = profile.accountType ?? 'member';
+  const accountType = selectedUser.accountType ?? 'member';
   const AccountTypeColors: Record<string, { label: string; color: string; bg: string }> = {
     admin: { label: 'Admin', color: '#ff1744', bg: alpha('#ff1744', 0.1) },
     supporter: { label: 'Supporter', color: '#d500f9', bg: alpha('#d500f9', 0.1) },
@@ -128,8 +112,8 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
           height: 108,
           position: 'relative',
           overflow: 'hidden',
-          background: profile.coverPhoto
-            ? `url(${profile.coverPhoto}) center/cover no-repeat`
+          background: selectedUser.coverPhoto
+            ? `url(${selectedUser.coverPhoto}) center/cover no-repeat`
             : [
                 `radial-gradient(ellipse at 25% 65%, ${alpha(theme.palette.primary.main, 0.65)} 0%, transparent 55%)`,
                 `radial-gradient(ellipse at 78% 25%, ${alpha(acCfg.color, 0.5)} 0%, transparent 50%)`,
@@ -167,9 +151,9 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         >
           {/* Avatar */}
           <AvatarUser
-            avatarUrl={profile.profilePhoto ?? null}
-            name={profile.name}
-            verified={profile.verified}
+            avatarUrl={selectedUser.profilePhoto ?? null}
+            name={selectedUser.name}
+            verified={selectedUser.verified}
             accountType={accountType}
             sx={{
               width: 82,
@@ -241,10 +225,10 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
             fontWeight={800}
             sx={{ color: 'text.primary', lineHeight: 1.25, letterSpacing: -0.3 }}
           >
-            {profile.name}
+            {selectedUser.name}
           </Typography>
 
-          {profile.verified && (
+          {selectedUser.verified && (
             <Tooltip title="Verified" arrow>
               <VerifiedIcon sx={{ fontSize: 16, color: '#2979ff', flexShrink: 0 }} />
             </Tooltip>
@@ -274,13 +258,13 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         {/* ── Username ───────────────────────────────────────── */}
         <Typography
           variant="caption"
-          sx={{ color: 'text.disabled', display: 'block', mb: profile.bio ? 1 : 1.5 }}
+          sx={{ color: 'text.disabled', display: 'block', mb: selectedUser.bio ? 1 : 1.5 }}
         >
-          @{profile.username}
+          @{selectedUser.username}
         </Typography>
 
         {/* ── Bio ────────────────────────────────────────────── */}
-        {profile.bio && (
+        {selectedUser.bio && (
           <Typography
             variant="body2"
             sx={{
@@ -294,7 +278,7 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
               overflow: 'hidden',
             }}
           >
-            {profile.bio}
+            {selectedUser.bio}
           </Typography>
         )}
 
@@ -311,13 +295,11 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         >
           <Stat value={followersCount} label="Followers" />
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-          <Stat value={profile.followingCount ?? 0} label="Following" />
+          <Stat value={selectedUser.followingCount ?? 0} label="Following" />
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-          <Stat value={profile.friendCount ?? 0} label="Friends" />
+          <Stat value={selectedUser.friendCount ?? 0} label="Friends" />
         </Box>
       </CardContent>
-
-      <EngagementProfileShift counter={counter} />
     </Card>
   );
 }

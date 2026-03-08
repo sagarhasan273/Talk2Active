@@ -186,7 +186,7 @@ export const UserAccountSessionUpdateSchema = UserSchema.pick({
   sessionTimeOut: true,
 });
 
-export const UsersSchema = UserSchema.pick({
+export const SelectedUserSchema = UserSchema.pick({
   id: true,
   userId: true,
   name: true,

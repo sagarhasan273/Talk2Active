@@ -1,6 +1,5 @@
 import type { UserType } from 'src/types/type-user';
 
-import { useSelector } from 'react-redux';
 import { CheckCircle } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
@@ -19,8 +18,8 @@ import {
   ListItemButton,
 } from '@mui/material';
 
-import { selectAccount } from 'src/core/slices';
 import { useGetNewUsersQuery } from 'src/core/apis';
+import { useRoomTools, useCredentials } from 'src/core/slices';
 
 import { Iconify } from 'src/components/iconify';
 import { ButtonRelationshipToggle } from 'src/components/buttons';
@@ -32,17 +31,20 @@ import EngagementProfileCard from '../engagement-profile-card';
 export const DiscoveryPanel: React.FC = () => {
   const theme = useTheme();
 
-  const user = useSelector(selectAccount);
+  const { user, selectedUser } = useCredentials();
+  const { userVoiceState } = useRoomTools();
+
+  const { hasJoined } = userVoiceState;
 
   const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
 
   const { data } = useGetNewUsersQuery(user.id);
 
   useEffect(() => {
-    if (data?.data) {
+    if (!suggestedUsers) {
       setSuggestedUsers(data?.data || []);
     }
-  }, [data]);
+  }, [suggestedUsers, data]);
 
   return (
     <Box
@@ -55,8 +57,8 @@ export const DiscoveryPanel: React.FC = () => {
       }}
     >
       {/* Engagement Profile Card */}
-      <EngagementProfileCard />
-      <VoiceUserProfileView onLeave={() => {}} />
+      {Boolean(selectedUser?.id) && <EngagementProfileCard />}
+      {hasJoined && <VoiceUserProfileView onLeave={() => {}} />}
 
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
@@ -70,8 +72,8 @@ export const DiscoveryPanel: React.FC = () => {
         <Divider />
         <CardContent sx={{ p: 1 }}>
           <List disablePadding>
-            {suggestedUsers.map((userDetails: any) => (
-              <ListItem key={userDetails.username} disablePadding sx={{ p: 0 }}>
+            {suggestedUsers.map((userDetails: UserType) => (
+              <ListItem key={userDetails.id} disablePadding sx={{ p: 0 }}>
                 <ListItemButton
                   sx={{ borderRadius: 2, p: 1 }}
                   onClick={(event) => {
@@ -104,7 +106,7 @@ export const DiscoveryPanel: React.FC = () => {
                   <ButtonRelationshipToggle
                     targetUser={{
                       name: userDetails.name,
-                      id: userDetails._id,
+                      id: userDetails.id,
                     }}
                   />
                 </ListItemButton>
