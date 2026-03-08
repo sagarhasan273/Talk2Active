@@ -98,7 +98,7 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
   }, [counter.value, users]);
 
   const isFollowing = profile.relationShip?.following ?? false;
-  const isSelfProfile = profile.id === user?.id;
+  const isSelfProfile = profile.id === user.id;
   const followersCount = profile.followerCount ?? 0;
 
   const accountType = profile.accountType ?? 'member';

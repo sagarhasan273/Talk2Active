@@ -391,21 +391,11 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
 
           {/* Row 2: Type + description */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <RoomTypeIcon type={room.roomType} />
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', textTransform: 'capitalize', fontWeight: 600 }}
-            >
-              {room.roomType}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'divider' }}>
-              ·
-            </Typography>
             <Tooltip title={room.description} arrow placement="top" enterDelay={400}>
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'text.secondary',
+                  color: 'text.primary',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -416,6 +406,13 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
                 {room.description}
               </Typography>
             </Tooltip>
+            <RoomTypeIcon type={room.roomType} />
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', textTransform: 'capitalize', fontWeight: 600 }}
+            >
+              {room.roomType}
+            </Typography>
           </Box>
 
           {/* Row 3: Languages */}
