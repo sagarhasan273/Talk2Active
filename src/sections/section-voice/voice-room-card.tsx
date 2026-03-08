@@ -632,20 +632,25 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
                 gap: 0.5,
               }}
             >
-              {allUsers.map((entry, i) => (
-                <ParticipantTile
-                  key={entry.user.id ?? i}
-                  user={{
-                    ...entry.user,
-                    verified: entry.user.verified ?? false,
-                  }}
-                  isHost={entry.isHost}
-                  onImageClick={(src, name) => {
-                    setParticipantsOpen(false);
-                    setLightbox({ src, name });
-                  }}
-                />
-              ))}
+              {allUsers
+                .filter(
+                  (entry, index, self) =>
+                    index === self.findIndex((e) => e.user.id === entry.user.id)
+                )
+                .map((entry, i) => (
+                  <ParticipantTile
+                    key={entry.user.id ?? i}
+                    user={{
+                      ...entry.user,
+                      verified: entry.user.verified ?? false,
+                    }}
+                    isHost={entry.isHost}
+                    onImageClick={(src, name) => {
+                      setParticipantsOpen(false);
+                      setLightbox({ src, name });
+                    }}
+                  />
+                ))}
             </Box>
           )}
 

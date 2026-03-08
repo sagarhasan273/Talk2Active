@@ -155,46 +155,48 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
       </Box>
 
       {/* ── Waveform visualizer ─────────────────────────────────── */}
-      <Box
-        sx={{
-          px: 2,
-          py: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.5,
-        }}
-      >
-        {WAVE_HEIGHTS.map((h, i) => (
-          <Box
-            key={i}
-            sx={{
-              width: 3,
-              height: isMicMuted ? 4 : h * 1.5,
-              bgcolor: isMicMuted ? '#ed4245' : '#43b581',
-              borderRadius: '2px',
-              transition: 'height 0.25s ease, background-color 0.3s ease',
-              animation: !isMicMuted
-                ? `waveAnim ${0.6 + i * 0.08}s ease-in-out infinite alternate`
-                : 'none',
-              '@keyframes waveAnim': {
-                from: { transform: 'scaleY(0.5)' },
-                to: { transform: 'scaleY(1)' },
-              },
-            }}
-          />
-        ))}
-        <Typography
+      {hasJoined && (
+        <Box
           sx={{
-            ml: 1,
-            fontSize: '0.62rem',
-            fontWeight: 700,
-            letterSpacing: 0.8,
-            color: isMicMuted ? '#ed4245' : '#43b581',
+            px: 2,
+            py: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
           }}
         >
-          {isMicMuted ? 'MUTED' : 'VOICE ACTIVE'}
-        </Typography>
-      </Box>
+          {WAVE_HEIGHTS.map((h, i) => (
+            <Box
+              key={i}
+              sx={{
+                width: 3,
+                height: isMicMuted ? 4 : h * 1.5,
+                bgcolor: isMicMuted ? '#ed4245' : '#43b581',
+                borderRadius: '2px',
+                transition: 'height 0.25s ease, background-color 0.3s ease',
+                animation: !isMicMuted
+                  ? `waveAnim ${0.6 + i * 0.08}s ease-in-out infinite alternate`
+                  : 'none',
+                '@keyframes waveAnim': {
+                  from: { transform: 'scaleY(0.5)' },
+                  to: { transform: 'scaleY(1)' },
+                },
+              }}
+            />
+          ))}
+          <Typography
+            sx={{
+              ml: 1,
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: 0.8,
+              color: isMicMuted ? '#ed4245' : '#43b581',
+            }}
+          >
+            {isMicMuted ? 'MUTED' : 'VOICE ACTIVE'}
+          </Typography>
+        </Box>
+      )}
 
       {/* ── Control strip ──────────────────────────────────────── */}
       <Box

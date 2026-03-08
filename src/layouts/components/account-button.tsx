@@ -14,7 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import { AnimateAvatar } from 'src/components/animate';
+import { AvatarUser } from 'src/components/avatar-user';
 
 // ----------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
         }}
       >
         <NoSsr fallback={renderFallback}>
-          <AnimateAvatar
+          {/* <AnimateAvatar
             sx={{ width: 40, height: 40 }}
             slotProps={{
               avatar: { src: photoURL, alt: displayName },
@@ -105,7 +105,14 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
             }}
           >
             {displayName?.charAt(0).toUpperCase()}
-          </AnimateAvatar>
+          </AnimateAvatar> */}
+
+          <AvatarUser
+            avatarUrl={user.profilePhoto}
+            name={user.name}
+            verified={user.verified}
+            accountType={user.accountType}
+          />
         </NoSsr>
       </Badge>
     </IconButton>
