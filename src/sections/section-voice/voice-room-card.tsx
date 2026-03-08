@@ -296,7 +296,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
       >
         {/* Capacity bar */}
         <Box
-          sx={{ height: 4, bgcolor: alpha(theme.palette.primary.main, 0.12), position: 'relative' }}
+          sx={{ height: 4, bgcolor: alpha(theme.palette.primary.main, 0.32), position: 'relative' }}
         >
           <Box
             sx={{
