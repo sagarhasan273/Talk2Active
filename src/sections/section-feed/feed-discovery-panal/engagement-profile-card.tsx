@@ -22,6 +22,8 @@ import {
 import { useCounter } from 'src/hooks/use-counter';
 
 import { selectUsers, selectAccount } from 'src/core/slices';
+import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
@@ -64,6 +66,9 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
   const counter = useCounter(users.length > 0 ? users.length - 1 : 0);
   const [profile, setProfile] = useState<UsersType>(users[0] as UsersType);
 
+  const [followMutate] = useFollowMutation();
+  const [unfollowMutate] = useUnfollowMutation();
+
   const handleFollow = () => {
     const newFollowing = !profile.relationShip?.following;
     setProfile((prev) => ({
@@ -71,7 +76,20 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
       relationShip: { ...prev.relationShip, following: newFollowing },
       followerCount: prev.followerCount + (newFollowing ? 1 : -1),
     }));
-    onFollow?.(profile.id);
+
+    if (!newFollowing) {
+      unfollowMutate({
+        requester: user.id,
+        recipient: profile.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    } else {
+      followMutate({
+        requester: user.id,
+        recipient: profile.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    }
   };
 
   useEffect(() => {
@@ -102,9 +120,6 @@ export default function EngagementProfileCard({ onFollow }: ProfileCardProps) {
         borderColor: 'divider',
         boxShadow: 'none',
         transition: 'box-shadow 0.25s',
-        '&:hover': {
-          boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.12)}`,
-        },
       }}
     >
       {/* ── Cover ──────────────────────────────────────────────── */}

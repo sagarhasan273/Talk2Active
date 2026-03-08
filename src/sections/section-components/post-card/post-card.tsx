@@ -9,17 +9,15 @@ import {
   Box,
   Card,
   Menu,
+  Chip,
   Stack,
   Alert,
-  Avatar,
-  Button,
+  alpha,
   MenuItem,
   useTheme,
   CardMedia,
-  CardHeader,
   IconButton,
   Typography,
-  CardContent,
 } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -27,10 +25,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { fToNow } from 'src/utils/format-time';
 import { extractYouTubeId } from 'src/utils/helper';
 
-import { varAlpha } from 'src/theme/styles';
 import { setUsers, selectAccount } from 'src/core/slices';
-import { RelationshipTypeEnum } from 'src/enums/enum-social';
-import { useFollowMutation, useUnfollowMutation } from 'src/core/apis/api-social';
+import { AccountTypeConfig } from 'src/layouts/components/account-drawer';
 import {
   useDeletePostMutation,
   useUpdatePostEngagementPinMutation,
@@ -40,16 +36,20 @@ import {
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
+import { AvatarUser } from 'src/components/avatar-user';
 
 import { CreatePost } from '../create-post';
 import { InteractionButton } from '../interaction-button';
 
 import type { PostCardProps } from './types';
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 function RegularPostCard({ post }: PostCardProps) {
   const dispatch = useDispatch();
-
+  const theme = useTheme();
   const user = useSelector(selectAccount);
+  const isDark = theme.palette.mode === 'dark';
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
@@ -59,55 +59,21 @@ function RegularPostCard({ post }: PostCardProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoPlayer, setVideoPlayer] = useState<any>(null);
-
-  const [isFollowing, setIsFollowing] = useState(post.authorRelationship.following || false);
+  const [imgHovered, setImgHovered] = useState(false);
 
   const [deletePost] = useDeletePostMutation();
-  const [followMutate] = useFollowMutation();
-  const [unfollowMutate] = useUnfollowMutation();
-
-  const theme = useTheme();
+  const [updatePostLike] = useUpdatePostEngagementLikeMutation();
+  const [updatePostDislike] = useUpdatePostEngagementDisikeMutation();
+  const [updatePinpost] = useUpdatePostEngagementPinMutation();
 
   const images = data.media.urls || [];
   const hasMultipleImages = images.length > 1;
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    if (isFollowing) {
-      unfollowMutate({
-        requester: user.id,
-        recipient: data.authorDetails.id,
-        type: RelationshipTypeEnum.FOLLOW,
-      });
-    } else {
-      followMutate({
-        requester: user.id,
-        recipient: data.authorDetails.id,
-        type: RelationshipTypeEnum.FOLLOW,
-      });
-    }
-  };
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  // Extract YouTube ID from URL
   const youtubeId = data.media.videoUrl ? extractYouTubeId(data.media.videoUrl) : '';
+  const isOwner = data.authorDetails?.id === user.id;
 
-  // YouTube player options
+  const nextImage = () => setCurrentImageIndex((p) => (p + 1) % images.length);
+  const prevImage = () => setCurrentImageIndex((p) => (p - 1 + images.length) % images.length);
+
   const youtubeOpts = {
     height: '390',
     width: '100%',
@@ -123,36 +89,6 @@ function RegularPostCard({ post }: PostCardProps) {
     },
   };
 
-  const onYouTubeReady = (event: any) => {
-    setVideoPlayer(event.target);
-  };
-
-  const onYouTubePlay = () => {
-    setIsPlaying(true);
-  };
-
-  const onYouTubePause = () => {
-    setIsPlaying(false);
-  };
-
-  const onYouTubeEnd = () => {
-    setIsPlaying(false);
-  };
-
-  const togglePlayPause = () => {
-    if (videoPlayer) {
-      if (isPlaying) {
-        videoPlayer.pauseVideo();
-      } else {
-        videoPlayer.playVideo();
-      }
-    }
-  };
-
-  const [updatePostLike] = useUpdatePostEngagementLikeMutation();
-  const [updatePostDislike] = useUpdatePostEngagementDisikeMutation();
-  const [updatePinpost] = useUpdatePostEngagementPinMutation();
-
   const handleLike = async (postId: string) => {
     setData((prev) => ({
       ...prev,
@@ -164,14 +100,10 @@ function RegularPostCard({ post }: PostCardProps) {
         dislikes: prev.isDisliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes,
       },
     }));
-
     try {
-      await updatePostLike({
-        postId,
-        userId: user?.id,
-      }).unwrap();
-    } catch (error) {
-      console.error('Failed to update like status:', error);
+      await updatePostLike({ postId, userId: user?.id }).unwrap();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -186,14 +118,10 @@ function RegularPostCard({ post }: PostCardProps) {
         dislikes: prev.isDisliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes + 1,
       },
     }));
-
     try {
-      await updatePostDislike({
-        postId,
-        userId: user?.id,
-      }).unwrap();
-    } catch (error) {
-      console.error('Failed to update like status:', error);
+      await updatePostDislike({ postId, userId: user?.id }).unwrap();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -206,22 +134,27 @@ function RegularPostCard({ post }: PostCardProps) {
         pins: prev.isPinned ? prev.engagement.pins - 1 : prev.engagement.pins + 1,
       },
     }));
-
     try {
-      await updatePinpost({
-        postId,
-        userId: user?.id,
-      }).unwrap();
-    } catch (error) {
-      console.error('Failed to update Pin status:', error);
+      await updatePinpost({ postId, userId: user?.id }).unwrap();
+    } catch (e) {
+      console.error(e);
     }
   };
+
+  const accountCfg =
+    AccountTypeConfig[data.authorDetails?.accountType ?? 'member'] ?? AccountTypeConfig.member;
+
+  // ── Media renderers ───────────────────────────────────────────────────────
 
   const renderContent = () => {
     switch (data.media.type) {
       case 'image':
         return (
-          <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'grey.50' }}>
+          <Box
+            onMouseEnter={() => setImgHovered(true)}
+            onMouseLeave={() => setImgHovered(false)}
+            sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'black', lineHeight: 0 }}
+          >
             <CardMedia
               component="img"
               src={images[currentImageIndex]}
@@ -229,57 +162,51 @@ function RegularPostCard({ post }: PostCardProps) {
               sx={{
                 width: '100%',
                 height: 'auto',
-                maxHeight: 600,
+                maxHeight: 560,
                 objectFit: 'cover',
+                transition: 'transform 0.4s ease',
+                transform: imgHovered ? 'scale(1.015)' : 'scale(1)',
+              }}
+            />
+
+            {/* Dark gradient overlay */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 40%)',
+                pointerEvents: 'none',
               }}
             />
 
             {hasMultipleImages && (
               <>
-                <IconButton
-                  onClick={prevImage}
-                  sx={{
-                    position: 'absolute',
-                    left: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    },
-                    opacity: 0,
-                    '&:hover, &:focus': {
-                      opacity: 1,
-                    },
-                  }}
-                  aria-label="Previous image"
-                >
-                  <NavigateBefore />
-                </IconButton>
+                {/* Prev / Next */}
+                {[
+                  { fn: prevImage, icon: <NavigateBefore />, side: 'left' },
+                  { fn: nextImage, icon: <NavigateNext />, side: 'right' },
+                ].map(({ fn, icon, side }) => (
+                  <IconButton
+                    key={side}
+                    onClick={fn}
+                    sx={{
+                      position: 'absolute',
+                      [side]: 10,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(0,0,0,0.55)',
+                      backdropFilter: 'blur(4px)',
+                      color: 'white',
+                      opacity: imgHovered ? 1 : 0,
+                      transition: 'opacity 0.2s, background 0.2s',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                    }}
+                  >
+                    {icon}
+                  </IconButton>
+                ))}
 
-                <IconButton
-                  onClick={nextImage}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    },
-                    opacity: 0,
-                    '&:hover, &:focus': {
-                      opacity: 1,
-                    },
-                  }}
-                  aria-label="Next image"
-                >
-                  <NavigateNext />
-                </IconButton>
-
+                {/* Dot indicators */}
                 <Box
                   sx={{
                     position: 'absolute',
@@ -287,29 +214,46 @@ function RegularPostCard({ post }: PostCardProps) {
                     left: '50%',
                     transform: 'translateX(-50%)',
                     display: 'flex',
-                    gap: 0.5,
+                    gap: 0.6,
+                    alignItems: 'center',
                   }}
                 >
-                  {images.map((_, index) => (
-                    <Button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
+                  {images.map((_, i) => (
+                    <Box
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
                       sx={{
-                        minWidth: 'auto',
-                        width: index === currentImageIndex ? 24 : 6,
+                        width: i === currentImageIndex ? 20 : 6,
                         height: 6,
                         borderRadius: 3,
-                        backgroundColor:
-                          index === currentImageIndex ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                        },
+                        bgcolor: i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
+                        cursor: 'pointer',
                         transition: 'all 0.3s ease',
-                        p: 0,
+                        '&:hover': { bgcolor: 'white' },
                       }}
-                      aria-label={`View image ${index + 1}`}
                     />
                   ))}
+                </Box>
+
+                {/* Counter badge */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    bgcolor: 'rgba(0,0,0,0.55)',
+                    backdropFilter: 'blur(6px)',
+                    borderRadius: 10,
+                    px: 1.25,
+                    py: 0.35,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}
+                >
+                  <Typography
+                    sx={{ fontSize: 11, fontWeight: 700, color: 'white', letterSpacing: 0.5 }}
+                  >
+                    {currentImageIndex + 1} / {images.length}
+                  </Typography>
                 </Box>
               </>
             )}
@@ -318,19 +262,13 @@ function RegularPostCard({ post }: PostCardProps) {
 
       case 'video':
         return (
-          <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'black' }}>
+          <Box sx={{ position: 'relative', bgcolor: 'black', lineHeight: 0 }}>
             <Box
               component="video"
               src={post.media.videoUrl}
               controls
-              sx={{
-                width: '100%',
-                height: 'auto',
-                maxHeight: 600,
-              }}
-            >
-              Your browser does not support the video tag.
-            </Box>
+              sx={{ width: '100%', height: 'auto', maxHeight: 560, display: 'block' }}
+            />
           </Box>
         );
 
@@ -346,84 +284,97 @@ function RegularPostCard({ post }: PostCardProps) {
                   : `linear-gradient(135deg, ${theme.palette.grey[900]}, ${theme.palette.grey[900]})`,
             }}
           >
-            <Box sx={{ maxWidth: 'lg', mx: 'auto' }}>
-              <Iconify
-                icon="fontisto:quote-left"
-                sx={{
-                  width: 28,
-                  height: 28,
-                  color: 'grey.500',
-                  mb: 2,
-                }}
-              />
+            <Iconify
+              icon="fontisto:quote-left"
+              sx={{
+                width: 28,
+                height: 28,
+                color: 'grey.500',
+                mb: 1,
+              }}
+            />
 
-              <Typography
-                component="blockquote"
-                sx={{
-                  fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
-                  lineHeight: 1.6,
-                  fontSize: 28,
-                  mb: 2,
-                }}
-              >
-                {data.media.content}
-              </Typography>
-              {data.media.authorName && (
-                <Typography
-                  variant="body1"
+            <Typography
+              component="blockquote"
+              sx={{
+                fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+                lineHeight: 1.7,
+                fontSize: { xs: 18, sm: 22 },
+                color: 'text.primary',
+                fontStyle: 'italic',
+                mb: data.media.authorName ? 2 : 0,
+                position: 'relative',
+              }}
+            >
+              {data.media.content}
+            </Typography>
+
+            {data.media.authorName && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
                   sx={{
-                    fontWeight: 500,
+                    width: 24,
+                    height: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.5),
+                    borderRadius: 1,
                   }}
+                />
+                <Typography
+                  variant="body2"
+                  fontWeight={700}
+                  sx={{ color: 'text.secondary', letterSpacing: 0.4 }}
                 >
-                  — {data.media.authorName}
+                  {data.media.authorName}
                 </Typography>
-              )}
-            </Box>
+              </Box>
+            )}
           </Box>
         );
 
       case 'youtube':
-        if (!youtubeId) {
+        if (!youtubeId)
           return (
             <Alert severity="error" sx={{ m: 2 }}>
               Invalid YouTube URL
             </Alert>
           );
-        }
-
         return (
-          <Box sx={{ position: 'relative', overflow: 'hidden', bgcolor: 'black' }}>
+          <Box sx={{ position: 'relative', bgcolor: 'black', lineHeight: 0 }}>
             <YouTube
               videoId={youtubeId}
               opts={youtubeOpts}
-              onReady={onYouTubeReady}
-              onPlay={onYouTubePlay}
-              onPause={onYouTubePause}
-              onEnd={onYouTubeEnd}
-              style={{
-                width: '100%',
-                height: 'auto',
-              }}
+              onReady={(e: any) => setVideoPlayer(e.target)}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnd={() => setIsPlaying(false)}
+              style={{ width: '100%' }}
             />
-
-            {/* Custom play/pause button overlay */}
             {!videoPlayer && (
               <IconButton
-                onClick={togglePlayPause}
+                onClick={() => {
+                  if (videoPlayer) {
+                    if (isPlaying) {
+                      videoPlayer.pauseVideo();
+                    } else {
+                      videoPlayer.playVideo();
+                    }
+                  }
+                }}
                 sx={{
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  bgcolor: 'rgba(0,0,0,0.7)',
                   color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                  },
                   width: 64,
                   height: 64,
+                  '&:hover': {
+                    bgcolor: 'rgba(0,0,0,0.9)',
+                    transform: 'translate(-50%, -50%) scale(1.1)',
+                  },
+                  transition: 'all 0.2s',
                 }}
-                aria-label={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause sx={{ fontSize: 32 }} /> : <PlayArrow sx={{ fontSize: 32 }} />}
               </IconButton>
@@ -431,156 +382,202 @@ function RegularPostCard({ post }: PostCardProps) {
           </Box>
         );
 
-      case 'caption':
       default:
         return null;
     }
   };
 
+  // ── Main card ─────────────────────────────────────────────────────────────
+
   return (
     <Card
       sx={{
         borderRadius: 1,
-        boxShadow: 1,
-        '&:hover': {
-          boxShadow: 4,
-        },
-        transition: 'box-shadow 0.3s ease-in-out',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: 'none',
         overflow: 'hidden',
+        transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
+        '&:hover': {
+          borderColor: alpha(theme.palette.primary.main, 0.2),
+        },
       }}
     >
-      <CardHeader
-        avatar={
-          <Avatar
-            src={data.authorDetails?.profilePhoto}
-            alt={data.authorDetails?.name}
-            sx={{
-              width: 48,
-              height: 48,
-              border: `2px solid ${varAlpha(theme.vars.palette.primary.mainChannel, 0.18)}`,
-            }}
-            onClick={imageOpen.onTrue}
-          />
-        }
-        action={
-          data.authorDetails?.id !== user.id ? (
-            <Button
-              variant={isFollowing ? 'outlined' : 'contained'}
-              size="small"
-              onClick={handleFollow}
-              sx={{
-                // mt: 7,
-                borderRadius: 1,
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 2,
-                ...(isFollowing
-                  ? {
-                      color: 'text.secondary',
-                      borderColor: 'divider',
-                      backgroundColor: 'background.paper',
-                      '&:hover': {
-                        backgroundColor: 'background.neutral',
-                        borderColor: 'divider',
-                      },
-                    }
-                  : {
-                      color: 'white !important',
-                      backgroundColor: 'primary.main',
-                      '&:hover': {
-                        backgroundColor: 'primary.dark',
-                      },
-                    }),
-              }}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
-          ) : (
-            <>
-              <IconButton onClick={handleMenuOpen} aria-label="More options" size="small">
-                <MoreHoriz />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              >
-                <MenuItem onClick={createOpen.onTrue} sx={{ gap: 1 }}>
-                  <Iconify icon="ri:edit-2-line" />
-                  <Typography variant="subtitle2">Edit</Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    deletePost({ postId: post?.id, author: user?.id });
-                  }}
-                  sx={{ gap: 1, color: 'error.main' }}
-                >
-                  <Iconify icon="material-symbols:delete-rounded" />
-                  <Typography variant="subtitle2">Delete</Typography>
-                </MenuItem>
-              </Menu>
-              <CreatePost
-                isOpen={createOpen.value}
-                onClose={() => createOpen.onFalse()}
-                editData={data}
-              />
-            </>
-          )
-        }
-        title={
-          <Typography variant="subtitle1" sx={{ cursor: 'pointer' }} fontWeight={600}>
-            {data.authorDetails?.name}
-          </Typography>
-        }
-        subheader={
-          <Typography variant="caption">
-            @{data.authorDetails?.username} · {fToNow(new Date(data.createdAt))} ago
-          </Typography>
-        }
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <Box
         sx={{
-          p: 1.5,
-          '& .MuiCardHeader-action': {
-            margin: 0,
-            alignSelf: 'center',
-          },
-          '& .MuiCardHeader-content': {
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0.25,
-          },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2,
+          py: 1.5,
+          cursor: 'pointer',
         }}
-        onClick={(event) => {
-          event.stopPropagation();
-          event.preventDefault();
+        onClick={(e) => {
+          e.stopPropagation();
           dispatch(setUsers([{ ...data.authorDetails, relationShip: data.authorRelationship }]));
         }}
-      />
+      >
+        {/* Avatar + author info */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            onClick={(e) => {
+              e.stopPropagation();
+              imageOpen.onTrue();
+            }}
+          >
+            <AvatarUser
+              avatarUrl={data.authorDetails?.profilePhoto ?? null}
+              name={data.authorDetails?.name ?? ''}
+              verified={data.authorDetails?.verified}
+              accountType={data.authorDetails?.accountType}
+              sx={{ width: 42, height: 42 }}
+            />
+          </Box>
 
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Typography
+                variant="h6"
+                fontWeight={800}
+                sx={{ color: 'text.primary', lineHeight: 1.2 }}
+              >
+                {data.authorDetails?.name}
+              </Typography>
+              {data.authorDetails?.verified && (
+                <Iconify
+                  icon="material-symbols:verified-rounded"
+                  width={18}
+                  sx={{ color: '#2979ff', flexShrink: 0 }}
+                />
+              )}
+              <Chip
+                label={accountCfg.label}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: 0.6,
+                  bgcolor: accountCfg.bg,
+                  color: accountCfg.color,
+                  border: '1px solid',
+                  borderColor: alpha(accountCfg.color, 0.35),
+                  px: 0.5,
+                  '&:hover': {
+                    bgcolor: accountCfg.bg,
+                    color: accountCfg.color,
+                  },
+                }}
+              />
+            </Box>
+            <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: 1 }}>
+              @{data.authorDetails?.username}
+              <Box component="span" sx={{ mx: 0.5, opacity: 0.5 }}>
+                ·
+              </Box>
+              {fToNow(new Date(data.createdAt))} ago
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Options menu (owner only) */}
+        {isOwner && (
+          <Box onClick={(e) => e.stopPropagation()}>
+            <IconButton
+              size="small"
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              sx={{
+                color: 'text.disabled',
+                borderRadius: 1.5,
+                '&:hover': {
+                  color: 'text.primary',
+                  bgcolor: alpha(theme.palette.primary.main, 0.07),
+                },
+              }}
+            >
+              <MoreHoriz fontSize="small" />
+            </IconButton>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              PaperProps={{
+                sx: {
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: `0 8px 28px ${alpha('#000', 0.14)}`,
+                  minWidth: 160,
+                },
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  createOpen.onTrue();
+                }}
+                sx={{ gap: 1.25, borderRadius: 1, mx: 0.5, my: 0.25 }}
+              >
+                <Iconify icon="ri:edit-2-line" width={18} />
+                <Typography variant="body2" fontWeight={600}>
+                  Edit post
+                </Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  deletePost({ postId: post?.id, author: user?.id });
+                }}
+                sx={{ gap: 1.25, color: 'error.main', borderRadius: 1, mx: 0.5, my: 0.25 }}
+              >
+                <Iconify icon="material-symbols:delete-rounded" width={18} />
+                <Typography variant="body2" fontWeight={600}>
+                  Delete post
+                </Typography>
+              </MenuItem>
+            </Menu>
+
+            <CreatePost isOpen={createOpen.value} onClose={createOpen.onFalse} editData={data} />
+          </Box>
+        )}
+      </Box>
+
+      {/* ── Text content ───────────────────────────────────────────────────── */}
       {data.media.content && data.media.type !== 'quote' && (
-        <CardContent sx={{ py: 1, px: 2 }}>
+        <Box sx={{ px: 2, pb: 1.5 }}>
           <Typography
             variant="body2"
             sx={{
-              lineHeight: 1.6,
+              lineHeight: 1.7,
               whiteSpace: 'pre-wrap',
               userSelect: 'text',
+              color: 'text.primary',
+              fontSize: '0.875rem',
             }}
           >
             {data.media.content}
           </Typography>
-        </CardContent>
+        </Box>
       )}
 
+      {/* ── Media block ────────────────────────────────────────────────────── */}
       {renderContent()}
 
-      {/* Interactions */}
+      {/* ── Interaction bar ────────────────────────────────────────────────── */}
       <Box
-        display="flex"
-        justifyContent="space-between"
         sx={{
-          py: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 1,
+          py: 0.75,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          bgcolor: isDark ? alpha('#fff', 0.015) : alpha('#000', 0.015),
         }}
       >
         <Stack direction="row">
@@ -602,7 +599,7 @@ function RegularPostCard({ post }: PostCardProps) {
             onClick={() => handleDislike(data.id)}
             activeColor="error"
             hoverColor="error"
-            label={`${data.isDisliked ? 'Unlike' : 'Like'} post`}
+            label={`${data.isDisliked ? 'Remove dislike' : 'Dislike'} post`}
           />
         </Stack>
         <InteractionButton
@@ -616,9 +613,11 @@ function RegularPostCard({ post }: PostCardProps) {
           label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
         />
       </Box>
+
+      {/* ── Profile photo lightbox ─────────────────────────────────────────── */}
       <ImageViewer
         open={imageOpen.value}
-        onClose={() => imageOpen.onFalse()}
+        onClose={imageOpen.onFalse}
         imageUrl={data.authorDetails?.profilePhoto}
       />
     </Card>

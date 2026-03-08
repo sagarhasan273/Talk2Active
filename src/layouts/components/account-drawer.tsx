@@ -42,7 +42,7 @@ export type AccountDrawerProps = IconButtonProps & {
   status?: { label: string; value: string }[];
 };
 
-const AccountTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
+export const AccountTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
   admin: { label: 'Admin', color: '#ff1744', bg: 'rgba(255,23,68,0.12)' },
   supporter: { label: 'Supporter', color: '#d500f9', bg: 'rgba(213,0,249,0.12)' },
   vip: { label: 'VIP', color: '#ff8f00', bg: 'rgba(255,143,0,0.12)' },
@@ -186,6 +186,10 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
             border: '1px solid',
             borderColor: alpha(accountCfg.color, 0.35),
             px: 0.5,
+            '&:hover': {
+              bgcolor: accountCfg.bg,
+              color: accountCfg.color,
+            },
           }}
         />
       </Box>

@@ -38,21 +38,6 @@ export const DiscoveryPanel: React.FC = () => {
 
   const { data } = useGetNewUsersQuery(user.id);
 
-  // const upcomingEvents = [
-  //   {
-  //     title: 'Wisdom Wednesday Live',
-  //     time: 'Today, 3:00 PM',
-  //     participants: 234,
-  //     type: 'live',
-  //   },
-  //   {
-  //     title: 'Quote of the Week Contest',
-  //     time: 'Ends in 2 days',
-  //     participants: 89,
-  //     type: 'contest',
-  //   },
-  // ];
-
   useEffect(() => {
     if (data?.data) {
       setSuggestedUsers(data?.data || []);
