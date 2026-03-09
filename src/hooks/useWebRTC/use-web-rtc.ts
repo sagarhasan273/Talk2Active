@@ -5,8 +5,8 @@ import { useRoomTools } from 'src/core/slices';
 import { useLocalAudio } from './use-local-audio';
 import { useRemoteAudio } from './use-remote-audio';
 import { useAudioSettings } from './use-audio-settings';
-import { useScreenShareWebRTC } from '../use-screen-share';
 import { usePeerConnections } from './use-peer-connections';
+import { useScreenShareWebRTC } from './use-screen-share-webRTC';
 
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 

@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import type { UseScreenShareWebRTCReturn } from '../use-screen-share';
+import type { UseScreenShareWebRTCReturn } from './use-screen-share-webRTC';
 
 export interface AudioSettings {
   microphoneGain: number;

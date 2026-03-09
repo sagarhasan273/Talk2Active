@@ -34,7 +34,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { useScreenShare } from 'src/hooks/use-share-screen';
+import { useScreenShare } from 'src/hooks/use-screen-share';
 
 // useScreenShare: getDisplayMedia only — no peer logic
 import { useRoomTools, selectAccount } from 'src/core/slices';
@@ -43,12 +43,11 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
-import { ChatMessageGroup } from 'src/sections/section-voice/voice-message-group';
-import { ChatStatusButton } from 'src/sections/section-voice/voice-user-status-button';
-
 import { VoiceUserCard } from '../voice-user-card';
+import { ChatMessageGroup } from '../voice-message-group';
 import { HostActionsMenu } from '../voice-host-action-menu';
 import { RaiseHandButton } from '../voice-raise-hand-button';
+import { ChatStatusButton } from '../voice-user-status-button';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
