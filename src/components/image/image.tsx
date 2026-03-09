@@ -1,7 +1,7 @@
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
 import { forwardRef } from 'react';
-import { LazyLoadImage as LazyLoadImageOriginal } from 'react-lazy-load-image-component';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -12,7 +12,6 @@ import { imageClasses } from './classes';
 
 import type { ImageProps } from './types';
 
-const LazyLoadImage = LazyLoadImageOriginal as any;
 // ----------------------------------------------------------------------
 
 const ImageWrapper = styled(Box)({
@@ -42,9 +41,9 @@ const Overlay = styled('span')({
 export const Image = forwardRef<HTMLSpanElement, ImageProps>(
   (
     {
+      // LazyLoadImage props
       alt,
       src,
-      ratio,
       delayTime,
       threshold,
       beforeLoad,
@@ -55,59 +54,56 @@ export const Image = forwardRef<HTMLSpanElement, ImageProps>(
       effect = 'blur',
       visibleByDefault,
       wrapperClassName,
-      disabledEffect = false,
       useIntersectionObserver,
-      //
-      sx,
+
+      // Custom props
+      ratio,
+      disabledEffect = false,
       slotProps,
+
+      // Box props
+      sx,
       className,
-      ...other
+      ...other // These go to the wrapper Box
     },
     ref
   ) => (
-    <ImageWrapper
-      ref={ref}
-      component="span"
-      className={imageClasses.root.concat(className ? ` ${className}` : '')}
-      sx={{ ...(!!ratio && { width: 1 }), ...sx }}
-      {...other}
-    >
-      {slotProps?.overlay && <Overlay className={imageClasses.overlay} sx={slotProps?.overlay} />}
+      <ImageWrapper
+        ref={ref}
+        component="span"
+        className={imageClasses.root.concat(className ? ` ${className}` : '')}
+        sx={{ ...(!!ratio && { width: 1 }), ...sx }}
+        {...other} // Box props like onClick, id, etc.
+      >
+        {slotProps?.overlay && <Overlay className={imageClasses.overlay} sx={slotProps?.overlay} />}
 
-      <LazyLoadImage
-        alt={alt}
-        src={src}
-        delayTime={delayTime}
-        threshold={threshold}
-        beforeLoad={beforeLoad}
-        delayMethod={delayMethod}
-        placeholder={placeholder}
-        wrapperProps={wrapperProps}
-        scrollPosition={scrollPosition}
-        visibleByDefault={visibleByDefault}
-        effect={visibleByDefault || disabledEffect ? undefined : effect}
-        useIntersectionObserver={useIntersectionObserver}
-        wrapperClassName={wrapperClassName || imageClasses.wrapper}
-        placeholderSrc={
-          visibleByDefault || disabledEffect
-            ? `${CONFIG.assetsDir}/assets/core/transparent.png`
-            : `${CONFIG.assetsDir}/assets/core/placeholder.svg`
-        }
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          verticalAlign: 'bottom',
-          ...(ratio && {
-            aspectRatio:
-              typeof ratio === 'string'
-                ? ratio
-                : ratio.width
-                  ? `${ratio.width} / ${ratio.height}`
-                  : undefined,
-          }),
-        }}
-      />
-    </ImageWrapper>
-  )
+        <LazyLoadImage
+          alt={alt}
+          src={src}
+          delayTime={delayTime}
+          threshold={threshold}
+          beforeLoad={beforeLoad}
+          delayMethod={delayMethod}
+          placeholder={placeholder}
+          wrapperProps={wrapperProps}
+          scrollPosition={scrollPosition}
+          visibleByDefault={visibleByDefault}
+          effect={visibleByDefault || disabledEffect ? undefined : effect}
+          useIntersectionObserver={useIntersectionObserver}
+          wrapperClassName={wrapperClassName || imageClasses.wrapper}
+          placeholderSrc={
+            visibleByDefault || disabledEffect
+              ? `${CONFIG.assetsDir}/assets/core/transparent.png`
+              : `${CONFIG.assetsDir}/assets/core/placeholder.svg`
+          }
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            verticalAlign: 'bottom',
+            aspectRatio: ratio as string | undefined,
+          }}
+        />
+      </ImageWrapper>
+    )
 );
