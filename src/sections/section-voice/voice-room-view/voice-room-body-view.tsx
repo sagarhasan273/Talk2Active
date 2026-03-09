@@ -43,8 +43,8 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
-import { ChatStatusButton } from 'src/sections/section-chat-room/chat-status-button';
-import { ChatMessageGroup } from 'src/sections/section-chat-room/chat-message-group';
+import { ChatMessageGroup } from 'src/sections/section-voice/voice-message-group';
+import { ChatStatusButton } from 'src/sections/section-voice/voice-user-status-button';
 
 import { VoiceUserCard } from '../voice-user-card';
 import { HostActionsMenu } from '../voice-host-action-menu';

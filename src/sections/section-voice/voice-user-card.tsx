@@ -1,4 +1,5 @@
 import type { Participant } from 'src/types/type-room';
+import type { ChatUserStatus } from 'src/types/type-chat';
 import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
 import { useState, useEffect } from 'react';
@@ -26,8 +27,6 @@ import { fUsername } from 'src/utils/helper';
 import { useRoomTools } from 'src/core/slices';
 
 import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
-
-import type { ChatUserStatus } from '../section-chat-room/type';
 
 // Animation for the active speaker
 const pulse = keyframes`

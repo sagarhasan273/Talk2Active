@@ -1,4 +1,5 @@
 import type { UserType } from 'src/types/type-user';
+import type { ChatUserStatus } from 'src/types/type-chat';
 
 import React, { useRef, useState, useEffect } from 'react';
 import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
@@ -16,8 +17,6 @@ import {
 } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
-
-import type { ChatUserStatus } from './type';
 
 export const STATUS_OPTIONS: ChatUserStatus[] = [
   {

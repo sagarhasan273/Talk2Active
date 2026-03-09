@@ -32,7 +32,7 @@ import {
 
 import { useRoomTools, selectAccount, useMessagesTools } from 'src/core/slices';
 
-import { STATUS_OPTIONS } from 'src/sections/section-chat-room/chat-status-button';
+import { STATUS_OPTIONS } from 'src/sections/section-voice/voice-user-status-button';
 
 import { MessageReplyInfo } from './message-reply-info';
 
