@@ -1,7 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { useTheme } from '@mui/material/styles';
 import BlockIcon from '@mui/icons-material/Block';
@@ -21,7 +20,7 @@ import {
   ListItemIcon,
 } from '@mui/material';
 
-import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useRoomTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
