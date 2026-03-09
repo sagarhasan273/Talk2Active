@@ -49,7 +49,7 @@ class SocketManager {
 
   private constructor(options: SocketManagerOptions = {}) {
     this.options = {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,

@@ -1,3 +1,5 @@
+import 'react-lazy-load-image-component/src/effects/blur.css';
+
 import { forwardRef } from 'react';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
@@ -95,7 +97,7 @@ export const Image = forwardRef<HTMLSpanElement, ImageProps>(
           height: '100%',
           objectFit: 'cover',
           verticalAlign: 'bottom',
-          aspectRatio: typeof ratio === 'string' ? ratio : undefined,
+          ...(ratio && { aspectRatio: typeof ratio === 'string' ? ratio : ratio.width ? `${ratio.width} / ${ratio.height}` : undefined }),
         }}
       />
     </ImageWrapper>
