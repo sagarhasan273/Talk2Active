@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import checker from 'vite-plugin-checker';
+import path from 'path';
 
 export default defineConfig({
   plugins: [
@@ -12,6 +13,11 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      'src': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 3000,
   },
@@ -21,7 +27,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
+    minify: 'esbuild', // Changed from 'terser' to 'esbuild'
     rollupOptions: {
       output: {
         manualChunks: {
