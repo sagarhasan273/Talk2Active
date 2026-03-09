@@ -1,11 +1,6 @@
-import path from 'path';
-import checker from 'vite-plugin-checker';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-
-// ----------------------------------------------------------------------
-
-const PORT = 8081;
+import checker from 'vite-plugin-checker';
 
 export default defineConfig({
   plugins: [
@@ -13,27 +8,27 @@ export default defineConfig({
     checker({
       typescript: true,
       eslint: {
-        lintCommand: 'eslint "./src/**/*.{js,jsx,ts,tsx}"',
-        dev: { logLevel: ['error'] },
-      },
-      overlay: {
-        position: 'tl',
-        initialIsOpen: false,
+        lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
       },
     }),
   ],
-  resolve: {
-    alias: [
-      {
-        find: /^~(.+)/,
-        replacement: path.join(process.cwd(), 'node_modules/$1'),
-      },
-      {
-        find: /^src(.+)/,
-        replacement: path.join(process.cwd(), 'src/$1'),
-      },
-    ],
+  server: {
+    port: 3000,
   },
-  server: { port: PORT, host: true },
-  preview: { port: PORT, host: true },
+  preview: {
+    port: 3000,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          mui: ['@mui/material', '@mui/icons-material', '@mui/lab'],
+        },
+      },
+    },
+  },
 });
