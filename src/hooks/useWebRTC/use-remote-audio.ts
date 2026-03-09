@@ -1,6 +1,6 @@
 // src/hooks/useWebRTC/useRemoteAudio.ts
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 import type { RemoteAudioSettings, RemoteAudioNodeManager } from './types';
 
@@ -25,76 +25,83 @@ export function useRemoteAudio({
   const remoteAudioNodesRef = useRef<RemoteAudioNodeManager>({});
   const pendingStreamsRef = useRef<{ [socketId: string]: MediaStream }>({});
 
-  // Setup audio processing for remote stream
+  // FIX: process any pending streams when audioContext becomes available
+  useEffect(() => {
+    if (!audioContext) return;
+    const pending = Object.entries(pendingStreamsRef.current);
+    if (!pending.length) return;
+
+    pending.forEach(([socketId, stream]) => {
+      console.log(`[RemoteAudio] Processing pending stream for ${socketId}`);
+      setupRemoteAudio(socketId, stream);
+    });
+    pendingStreamsRef.current = {};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioContext]);
+
   const setupRemoteAudio = useCallback(
     (socketId: string, stream: MediaStream): MediaStream | null => {
-      // If audioContext isn't ready yet, store the stream for later
       if (!audioContext) {
-        console.log(`[${socketId}] AudioContext not ready, queueing remote stream`);
+        console.log(`[RemoteAudio] ${socketId} — AudioContext not ready, queuing`);
         pendingStreamsRef.current[socketId] = stream;
-        return stream; // Return original stream, will be processed later
+        return stream;
+      }
+
+      // FIX: resume suspended context (critical — browsers suspend on page load)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch((e) => console.warn('[RemoteAudio] Context resume:', e));
       }
 
       try {
-        console.log(`[${socketId}] Setting up remote audio with AudioContext`);
-
-        // Clean up existing nodes if any
-        if (remoteAudioNodesRef.current[socketId]) {
-          const oldNodes = remoteAudioNodesRef.current[socketId];
-          if (oldNodes.sourceNode) oldNodes.sourceNode.disconnect();
-          if (oldNodes.gainNode) oldNodes.gainNode.disconnect();
+        // Disconnect old nodes for this peer
+        const old = remoteAudioNodesRef.current[socketId];
+        if (old) {
+          try {
+            old.sourceNode?.disconnect();
+          } catch (error) {
+            console.log(error);
+          }
+          try {
+            old.gainNode?.disconnect();
+          } catch (error) {
+            console.log(error);
+          }
         }
 
         const sourceNode = audioContext.createMediaStreamSource(stream);
         const gainNode = audioContext.createGain();
 
-        // Set initial volume based on settings
         const settings = remoteAudioSettings[socketId];
         const baseVolume = settings?.volume ?? 100;
         const isMuted = settings?.isMuted ?? false;
 
-        // Apply deafen and mute states
-        let finalVolume = baseVolume / 100;
-        if (isDeafened || isMuted) {
-          finalVolume = 0;
-        }
+        gainNode.gain.value = isDeafened || isMuted ? 0 : baseVolume / 100;
 
-        gainNode.gain.value = finalVolume;
-        console.log(
-          `[${socketId}] Initial volume: ${finalVolume} (deafened: ${isDeafened}, muted: ${isMuted})`
-        );
-
-        // Connect: remote stream -> gain control -> speakers
         sourceNode.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        // Store nodes
-        remoteAudioNodesRef.current[socketId] = {
-          sourceNode,
-          gainNode,
-        };
+        remoteAudioNodesRef.current[socketId] = { sourceNode, gainNode };
 
-        console.log(`[${socketId}] Remote audio setup complete`);
+        console.log(
+          `[RemoteAudio] ${socketId} — audio graph connected, volume: ${gainNode.gain.value}`
+        );
         return stream;
       } catch (error) {
-        console.error(`Failed to setup remote audio for ${socketId}:`, error);
+        console.error(`[RemoteAudio] ${socketId} — setup failed:`, error);
         return stream;
       }
     },
     [audioContext, isDeafened, remoteAudioSettings]
   );
 
-  // Add remote stream
   const addRemoteStream = useCallback(
     (socketId: string, stream: MediaStream) => {
-      console.log(`[${socketId}] Adding remote stream`);
+      console.log(`[RemoteAudio] addRemoteStream ${socketId}`);
 
-      const processedStream = setupRemoteAudio(socketId, stream);
-      if (processedStream) {
-        setRemoteStreams((prev) => ({ ...prev, [socketId]: processedStream }));
-      }
+      // FIX: always update the stream in state even if audio setup is deferred
+      setRemoteStreams((prev) => ({ ...prev, [socketId]: stream }));
+      setupRemoteAudio(socketId, stream);
 
-      // Initialize settings if not exists
       if (!remoteAudioSettings[socketId]) {
         onRemoteSettingsChange?.(socketId, { volume: 100, isMuted: false });
       }
@@ -102,64 +109,41 @@ export function useRemoteAudio({
     [setupRemoteAudio, remoteAudioSettings, onRemoteSettingsChange]
   );
 
-  // Remove remote stream
   const removeRemoteStream = useCallback((socketId: string) => {
-    console.log(`[${socketId}] Removing remote stream`);
+    console.log(`[RemoteAudio] removeRemoteStream ${socketId}`);
 
-    // Clean up audio nodes
     const nodes = remoteAudioNodesRef.current[socketId];
     if (nodes) {
-      if (nodes.sourceNode) {
-        try {
-          nodes.sourceNode.disconnect();
-        } catch (e) {
-          // failed to disconnect
-        }
+      try {
+        nodes.sourceNode?.disconnect();
+      } catch (error) {
+        console.log(error);
       }
-      if (nodes.gainNode) {
-        try {
-          nodes.gainNode.disconnect();
-        } catch (e) {
-          // failed to disconnect
-        }
+      try {
+        nodes.gainNode?.disconnect();
+      } catch (error) {
+        console.log(error);
       }
       delete remoteAudioNodesRef.current[socketId];
     }
 
-    // Remove from pending streams if present
-    if (pendingStreamsRef.current[socketId]) {
-      delete pendingStreamsRef.current[socketId];
-    }
+    delete pendingStreamsRef.current[socketId];
 
     setRemoteStreams((prev) => {
-      const newStreams = { ...prev };
-      delete newStreams[socketId];
-      return newStreams;
+      const next = { ...prev };
+      delete next[socketId];
+      return next;
     });
   }, []);
 
-  // Control functions
   const setRemoteVolume = useCallback(
     (socketId: string, level: number) => {
-      console.log(`[${socketId}] Setting volume to ${level}, isDeafened: ${isDeafened}`);
-
       const nodes = remoteAudioNodesRef.current[socketId];
       const settings = remoteAudioSettings[socketId];
 
-      if (nodes?.gainNode) {
-        // Only apply volume if not deafened and not muted
-        if (!isDeafened && !settings?.isMuted) {
-          nodes.gainNode.gain.value = level / 100;
-          console.log(`[${socketId}] Volume applied: ${level / 100}`);
-        } else {
-          console.log(
-            `[${socketId}] Volume not applied - deafened: ${isDeafened}, muted: ${settings?.isMuted}`
-          );
-        }
-      } else {
-        console.log(`[${socketId}] Gain node not found, nodes:`, nodes);
+      if (nodes?.gainNode && !isDeafened && !settings?.isMuted) {
+        nodes.gainNode.gain.value = level / 100;
       }
-
       onRemoteSettingsChange?.(socketId, { volume: level });
     },
     [isDeafened, remoteAudioSettings, onRemoteSettingsChange]
@@ -167,75 +151,45 @@ export function useRemoteAudio({
 
   const setRemoteMute = useCallback(
     (socketId: string, muted: boolean) => {
-      console.log(`[${socketId}] Setting mute to ${muted}, isDeafened: ${isDeafened}`);
-
       const nodes = remoteAudioNodesRef.current[socketId];
       const settings = remoteAudioSettings[socketId];
 
       if (nodes?.gainNode) {
-        if (muted || isDeafened) {
-          nodes.gainNode.gain.value = 0;
-          console.log(`[${socketId}] Muted (value: 0)`);
-        } else {
-          const volume = settings?.volume ?? 100;
-          nodes.gainNode.gain.value = volume / 100;
-          console.log(`[${socketId}] Unmuted with volume: ${volume / 100}`);
-        }
+        nodes.gainNode.gain.value = muted || isDeafened ? 0 : (settings?.volume ?? 100) / 100;
       }
-
       onRemoteSettingsChange?.(socketId, { isMuted: muted });
     },
     [isDeafened, remoteAudioSettings, onRemoteSettingsChange]
   );
 
-  // Handle deafen toggle
   const applyDeafen = useCallback(
     (deafened: boolean) => {
-      console.log(`Applying deafen: ${deafened}`);
-
       Object.entries(remoteAudioNodesRef.current).forEach(([socketId, nodes]) => {
-        if (nodes.gainNode) {
-          const settings = remoteAudioSettings[socketId];
-
-          console.log(`Applying deafen: ${deafened} on ${socketId}`);
-          if (deafened) {
-            nodes.gainNode.gain.value = 0;
-            console.log(`[${socketId}] Deafened -> 0`);
-          } else if (settings?.isMuted) {
-            nodes.gainNode.gain.value = 0;
-            console.log(`[${socketId}] Undeafened but muted -> 0`);
-          } else {
-            const volume = settings?.volume ?? 100;
-            nodes.gainNode.gain.value = volume / 100;
-            console.log(`[${socketId}] Undeafened with volume: ${volume / 100}`);
-          }
+        if (!nodes.gainNode) return;
+        const settings = remoteAudioSettings[socketId];
+        if (deafened || settings?.isMuted) {
+          nodes.gainNode.gain.value = 0;
+        } else {
+          nodes.gainNode.gain.value = (settings?.volume ?? 100) / 100;
         }
       });
     },
     [remoteAudioSettings]
   );
 
-  // Get audio nodes for debugging
   const getAudioNodes = useCallback(() => remoteAudioNodesRef.current, []);
 
-  // Cleanup
   const cleanup = useCallback(() => {
-    console.log('Cleaning up remote audio');
-
     Object.values(remoteAudioNodesRef.current).forEach((nodes) => {
-      if (nodes.sourceNode) {
-        try {
-          nodes.sourceNode.disconnect();
-        } catch (e) {
-          // failed to disconnect
-        }
+      try {
+        nodes.sourceNode?.disconnect();
+      } catch (error) {
+        console.log(error);
       }
-      if (nodes.gainNode) {
-        try {
-          nodes.gainNode.disconnect();
-        } catch (e) {
-          // failed to disconnect
-        }
+      try {
+        nodes.gainNode?.disconnect();
+      } catch (error) {
+        console.log(error);
       }
     });
     remoteAudioNodesRef.current = {};

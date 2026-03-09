@@ -4,16 +4,28 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 
 import type { AudioSettings, AudioNodeManager } from './types';
 
+export type NCMode = 'off' | 'basic' | 'aggressive';
+
 interface UseLocalAudioProps {
   audioSettings: AudioSettings;
   onMicMutedChange?: (muted: boolean) => void;
 }
 
+interface NCNodes {
+  highPass2: BiquadFilterNode | null;
+  notch: BiquadFilterNode | null; // aggressive only: 50Hz hum
+  gate: DynamicsCompressorNode | null; // aggressive only: soft noise gate
+}
+
 export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudioProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
+  const [ncMode, setNcModeState] = useState<NCMode>('basic');
 
   const localStreamRef = useRef<MediaStream | null>(null);
+  const rawStreamRef = useRef<MediaStream | null>(null);
+  const ncModeRef = useRef<NCMode>('basic');
+
   const audioNodesRef = useRef<AudioNodeManager>({
     microphoneGainNode: null,
     outputGainNode: null,
@@ -24,256 +36,351 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     compressorNode: null,
   });
 
-  const getAudioConstraints = useCallback(
-    (): MediaTrackConstraints => ({
-      echoCancellation: audioSettings.echoCancellation,
-      noiseSuppression: audioSettings.noiseSuppression,
-      autoGainControl: audioSettings.autoGainControl,
+  const ncNodesRef = useRef<NCNodes>({ highPass2: null, notch: null, gate: null });
+
+  // ── AudioContext ─────────────────────────────────────────────────────────
+
+  const ensureAudioContext = useCallback((): AudioContext => {
+    if (
+      !audioNodesRef.current.audioContext ||
+      audioNodesRef.current.audioContext.state === 'closed'
+    ) {
+      audioNodesRef.current.audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )({ sampleRate: 48000 });
+    }
+    const ctx = audioNodesRef.current.audioContext;
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch((e) => console.warn('[LocalAudio] ctx resume:', e));
+    }
+    return ctx;
+  }, []);
+
+  // ── Disconnect all nodes ─────────────────────────────────────────────────
+
+  const disconnectAll = useCallback(() => {
+    const n = audioNodesRef.current;
+    const nc = ncNodesRef.current;
+    [
+      n.sourceNode,
+      n.microphoneGainNode,
+      n.highPassFilterNode,
+      n.compressorNode,
+      n.outputGainNode,
+      n.destinationNode,
+      nc.highPass2,
+      nc.notch,
+      nc.gate,
+    ].forEach((node) => {
+      try {
+        node?.disconnect();
+      } catch (error) {
+        console.log(error);
+      }
+    });
+  }, []);
+
+  // ── Build NC nodes ───────────────────────────────────────────────────────
+  //
+  // basic:      second HPF at 100Hz — cuts low-frequency rumble & desk noise
+  // aggressive: HPF 120Hz + 50Hz notch (power hum) + soft gate compressor
+  //
+  // NOTE: lowShelf removed — was cutting voice presence above 8kHz, making
+  // speech sound muffled. The gate ratio is 8 (not 20) to avoid crushing
+  // natural speech pauses.
+
+  const buildNCNodes = useCallback((ctx: AudioContext, mode: NCMode): NCNodes => {
+    const nodes: NCNodes = { highPass2: null, notch: null, gate: null };
+    if (mode === 'off') return nodes;
+
+    const hp2 = ctx.createBiquadFilter();
+    hp2.type = 'highpass';
+    hp2.frequency.value = mode === 'aggressive' ? 120 : 100;
+    hp2.Q.value = 0.7;
+    nodes.highPass2 = hp2;
+
+    if (mode === 'aggressive') {
+      // Notch for power-line hum — Q:3 wide enough to also catch 60Hz variants
+      const notch = ctx.createBiquadFilter();
+      notch.type = 'notch';
+      notch.frequency.value = 50;
+      notch.Q.value = 3;
+      nodes.notch = notch;
+
+      // Soft gate — ratio:8 suppresses background noise without chopping
+      // voice during natural pauses (was ratio:20 → brutal, choppy)
+      const gate = ctx.createDynamicsCompressor();
+      gate.threshold.value = -45; // raised from -55 so soft speech is never gated
+      gate.knee.value = 10; // wide knee = smooth transition, no hard cutoff
+      gate.ratio.value = 8; // was 20 → caused robotic choppy sound
+      gate.attack.value = 0.003; // slightly slower so consonant transients pass
+      gate.release.value = 0.2; // was 0.1 → less pumping between words
+      nodes.gate = gate;
+    }
+
+    return nodes;
+  }, []);
+
+  // ── Build full WebAudio graph ────────────────────────────────────────────
+  //
+  // Signal path:
+  //   raw mic → source → micGain → HPF(80Hz)
+  //     → [HP2(100-120Hz)]    (NC basic/aggressive)
+  //     → [notch(50Hz)]       (NC aggressive)
+  //     → compressor
+  //     → [gate]              (NC aggressive)
+  //     → outputGain → destination → WebRTC peers
+
+  const buildGraph = useCallback(
+    (stream: MediaStream, mode: NCMode): MediaStream => {
+      const ctx = ensureAudioContext();
+      disconnectAll();
+
+      const sourceNode = ctx.createMediaStreamSource(stream);
+      const microphoneGainNode = ctx.createGain();
+      const highPassFilter = ctx.createBiquadFilter();
+      const compressor = ctx.createDynamicsCompressor();
+      const outputGainNode = ctx.createGain();
+      const destinationNode = ctx.createMediaStreamDestination();
+
+      highPassFilter.type = 'highpass';
+      highPassFilter.frequency.value = 80;
+      highPassFilter.Q.value = 1;
+
+      compressor.threshold.value = -50;
+      compressor.knee.value = 40;
+      compressor.ratio.value = 12;
+      compressor.attack.value = 0;
+      compressor.release.value = 0.25;
+
+      microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
+      outputGainNode.gain.value = audioSettings.outputGain / 100;
+
+      const nc = buildNCNodes(ctx, mode);
+      ncNodesRef.current = nc;
+
+      let tail: AudioNode = sourceNode;
+      const pipe = (node: AudioNode | null) => {
+        if (!node) return;
+        tail.connect(node);
+        tail = node;
+      };
+
+      pipe(microphoneGainNode);
+      pipe(highPassFilter);
+      pipe(nc.highPass2); // basic + aggressive
+      pipe(nc.notch); // aggressive only
+      pipe(compressor);
+      pipe(nc.gate); // aggressive only
+      pipe(outputGainNode);
+      pipe(destinationNode);
+
+      audioNodesRef.current = {
+        audioContext: ctx,
+        sourceNode,
+        microphoneGainNode,
+        highPassFilterNode: highPassFilter,
+        compressorNode: compressor,
+        outputGainNode,
+        destinationNode,
+      };
+
+      console.log(`[LocalAudio] Graph built — NC: ${mode}`);
+      return destinationNode.stream;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      audioSettings.microphoneGain,
+      audioSettings.outputGain,
+      ensureAudioContext,
+      disconnectAll,
+      buildNCNodes,
+    ]
+  );
+
+  // ── getUserMedia constraints ─────────────────────────────────────────────
+
+  const getConstraintsForMode = useCallback(
+    (mode: NCMode): MediaStreamConstraints => ({
+      audio: {
+        echoCancellation: audioSettings.echoCancellation,
+        noiseSuppression: mode !== 'off' || audioSettings.noiseSuppression,
+        autoGainControl: audioSettings.autoGainControl ?? true,
+        ...(mode === 'aggressive' &&
+          ({
+            googNoiseSuppression: true,
+            googNoiseSuppression2: true,
+            googEchoCancellation: true,
+            googEchoCancellation2: true,
+            googHighpassFilter: true,
+          } as any)),
+      },
+      video: false,
     }),
     [audioSettings]
   );
 
-  const setupAudioProcessing = useCallback(
-    (stream: MediaStream): MediaStream => {
-      try {
-        // Create new audio context if needed
-        if (
-          !audioNodesRef.current.audioContext ||
-          audioNodesRef.current.audioContext.state === 'closed'
-        ) {
-          audioNodesRef.current.audioContext = new (
-            window.AudioContext || (window as any).webkitAudioContext
-          )();
-        }
-
-        const { audioContext } = audioNodesRef.current;
-        if (audioContext.state === 'suspended') {
-          audioContext.resume().catch(console.warn);
-        }
-
-        const sourceNode = audioContext.createMediaStreamSource(stream);
-
-        const microphoneGainNode = audioContext.createGain();
-        const highPassFilter = audioContext.createBiquadFilter();
-        highPassFilter.type = 'highpass';
-        highPassFilter.frequency.value = 80;
-        highPassFilter.Q.value = 1;
-
-        const compressor = audioContext.createDynamicsCompressor();
-        compressor.threshold.value = -50;
-        compressor.knee.value = 40;
-        compressor.ratio.value = 12;
-        compressor.attack.value = 0;
-        compressor.release.value = 0.25;
-
-        const outputGainNode = audioContext.createGain();
-        const destinationNode = audioContext.createMediaStreamDestination();
-
-        microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
-        outputGainNode.gain.value = audioSettings.outputGain / 100;
-
-        sourceNode.connect(microphoneGainNode);
-        microphoneGainNode.connect(highPassFilter);
-        highPassFilter.connect(compressor);
-        compressor.connect(outputGainNode);
-        outputGainNode.connect(destinationNode);
-
-        audioNodesRef.current = {
-          ...audioNodesRef.current,
-          sourceNode,
-          microphoneGainNode,
-          outputGainNode,
-          destinationNode,
-          highPassFilterNode: highPassFilter,
-          compressorNode: compressor,
-        };
-
-        return destinationNode.stream;
-      } catch (error) {
-        console.error('Audio Setup Error:', error);
-        return stream;
-      }
-    },
-    [audioSettings.microphoneGain, audioSettings.outputGain]
-  );
+  // ── Init microphone ──────────────────────────────────────────────────────
 
   const initializeMicrophone = useCallback(
     async (customConstraints?: MediaStreamConstraints): Promise<boolean> => {
       try {
-        // Stop existing tracks but keep audio context alive
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach((track) => {
-            track.stop();
-            track.enabled = false;
-          });
-          localStreamRef.current = null;
-        }
+        rawStreamRef.current?.getTracks().forEach((t) => {
+          t.stop();
+          t.enabled = false;
+        });
+        rawStreamRef.current = null;
 
-        const constraints = customConstraints || {
-          audio: getAudioConstraints(),
-          video: false,
-        };
+        const constraints = customConstraints ?? getConstraintsForMode(ncModeRef.current);
+        console.log('[LocalAudio] getUserMedia:', constraints);
+        const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
+        rawStreamRef.current = rawStream;
 
-        console.log('Initializing microphone with constraints:', constraints);
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const processed = buildGraph(rawStream, ncModeRef.current);
+        localStreamRef.current = processed;
+        setLocalStream(processed);
 
-        const processedStream = setupAudioProcessing(stream);
-
-        localStreamRef.current = processedStream;
-        setLocalStream(processedStream);
-
-        const audioTrack = stream.getAudioTracks()[0];
-        const isMuted = !audioTrack.enabled;
-        setIsMicMuted(isMuted);
-        onMicMutedChange?.(isMuted);
+        const track = rawStream.getAudioTracks()[0];
+        const muted = track ? !track.enabled : false;
+        setIsMicMuted(muted);
+        onMicMutedChange?.(muted);
 
         return true;
-      } catch (error) {
-        console.error('Microphone Access Error:', error);
+      } catch (err) {
+        console.error('[LocalAudio] Init error:', err);
         return false;
       }
     },
-    [getAudioConstraints, setupAudioProcessing, onMicMutedChange]
+    [getConstraintsForMode, buildGraph, onMicMutedChange]
   );
 
+  // ── Set NC mode ──────────────────────────────────────────────────────────
+  //
+  // FIX: capture previousMode BEFORE mutating ncModeRef, otherwise the
+  // off↔on boundary check always compares the new value against itself.
+
+  const setNCMode = useCallback(
+    async (mode: NCMode) => {
+      const previousMode = ncModeRef.current; // ← capture FIRST
+      if (mode === previousMode) return;
+
+      ncModeRef.current = mode; // ← THEN mutate
+      setNcModeState(mode);
+
+      const raw = rawStreamRef.current;
+      if (!raw) return;
+
+      // Crossing off↔on boundary requires new getUserMedia call with updated
+      // browser-level noiseSuppression constraint
+      const wasOff = previousMode === 'off';
+      const nowOff = mode === 'off';
+      const crossingBoundary = wasOff !== nowOff;
+
+      if (crossingBoundary) {
+        await initializeMicrophone();
+      } else {
+        // Same off/on side — just rewire the WebAudio graph
+        const processed = buildGraph(raw, mode);
+        localStreamRef.current = processed;
+        setLocalStream(processed);
+      }
+    },
+    [initializeMicrophone, buildGraph]
+  );
+
+  const toggleNC = useCallback(() => {
+    const next: NCMode =
+      ncModeRef.current === 'off' ? 'basic' : ncModeRef.current === 'basic' ? 'aggressive' : 'off';
+    setNCMode(next);
+  }, [setNCMode]);
+
+  // ── Gain controls ────────────────────────────────────────────────────────
+
   const setMicrophoneGain = useCallback((gain: number) => {
-    if (audioNodesRef.current.microphoneGainNode) {
+    if (audioNodesRef.current.microphoneGainNode)
       audioNodesRef.current.microphoneGainNode.gain.value = gain / 100;
-    }
   }, []);
 
   const setOutputGain = useCallback((gain: number) => {
-    if (audioNodesRef.current.outputGainNode) {
+    if (audioNodesRef.current.outputGainNode)
       audioNodesRef.current.outputGainNode.gain.value = gain / 100;
-    }
   }, []);
 
+  // ── Mute — toggle RAW hardware track ────────────────────────────────────
+
   const toggleMicrophone = useCallback(() => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMicMuted(!audioTrack.enabled);
-        onMicMutedChange?.(!audioTrack.enabled);
-        return !audioTrack.enabled;
-      }
+    const track = rawStreamRef.current?.getAudioTracks()[0];
+    if (track) {
+      track.enabled = !track.enabled;
+      setIsMicMuted(!track.enabled);
+      onMicMutedChange?.(!track.enabled);
+      return !track.enabled;
     }
     return isMicMuted;
   }, [isMicMuted, onMicMutedChange]);
 
   const muteMicrophone = useCallback(() => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = false;
-        setIsMicMuted(true);
-        onMicMutedChange?.(true);
-      }
+    const track = rawStreamRef.current?.getAudioTracks()[0];
+    if (track) {
+      track.enabled = false;
+      setIsMicMuted(true);
+      onMicMutedChange?.(true);
     }
   }, [onMicMutedChange]);
 
   const unmuteMicrophone = useCallback(() => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = true;
-        setIsMicMuted(false);
-        onMicMutedChange?.(false);
-      }
+    const track = rawStreamRef.current?.getAudioTracks()[0];
+    if (track) {
+      track.enabled = true;
+      setIsMicMuted(false);
+      onMicMutedChange?.(false);
     }
   }, [onMicMutedChange]);
 
   const getAudioContext = useCallback(() => audioNodesRef.current.audioContext, []);
 
-  // MODIFIED: Selective cleanup - keep audio context alive
+  // ── Cleanup ──────────────────────────────────────────────────────────────
+
   const cleanup = useCallback(() => {
-    console.log('Cleaning up local audio (keeping audio context)');
-
-    // Stop tracks but keep audio context for reuse
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        track.stop();
-        track.enabled = false;
-      });
-      localStreamRef.current = null;
-    }
-
-    // Disconnect nodes but keep audio context
-    if (audioNodesRef.current.sourceNode) {
-      try {
-        audioNodesRef.current.sourceNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.sourceNode = null;
-    }
-    if (audioNodesRef.current.microphoneGainNode) {
-      try {
-        audioNodesRef.current.microphoneGainNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.microphoneGainNode = null;
-    }
-    if (audioNodesRef.current.outputGainNode) {
-      try {
-        audioNodesRef.current.outputGainNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.outputGainNode = null;
-    }
-    if (audioNodesRef.current.destinationNode) {
-      try {
-        audioNodesRef.current.destinationNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.destinationNode = null;
-    }
-    if (audioNodesRef.current.highPassFilterNode) {
-      try {
-        audioNodesRef.current.highPassFilterNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.highPassFilterNode = null;
-    }
-    if (audioNodesRef.current.compressorNode) {
-      try {
-        audioNodesRef.current.compressorNode.disconnect();
-      } catch (e) {
-        console.log(e);
-      }
-      audioNodesRef.current.compressorNode = null;
-    }
-
+    rawStreamRef.current?.getTracks().forEach((t) => {
+      t.stop();
+      t.enabled = false;
+    });
+    rawStreamRef.current = null;
+    disconnectAll();
+    audioNodesRef.current = {
+      ...audioNodesRef.current,
+      sourceNode: null,
+      microphoneGainNode: null,
+      outputGainNode: null,
+      destinationNode: null,
+      highPassFilterNode: null,
+      compressorNode: null,
+    };
+    ncNodesRef.current = { highPass2: null, notch: null, gate: null };
     setLocalStream(null);
     setIsMicMuted(false);
-  }, []);
+    localStreamRef.current = null;
+  }, [disconnectAll]);
 
-  // COMPLETE cleanup (only for unmount)
   const completeCleanup = useCallback(() => {
-    console.log('Complete cleanup - closing audio context');
-
     cleanup();
-
-    if (audioNodesRef.current.audioContext) {
-      const { audioContext } = audioNodesRef.current;
-      if (audioContext.state !== 'closed') {
-        audioContext.close().catch(console.warn);
-      }
+    const ctx = audioNodesRef.current.audioContext;
+    if (ctx && ctx.state !== 'closed') {
+      ctx.close().catch(console.warn);
       audioNodesRef.current.audioContext = null;
     }
   }, [cleanup]);
 
-  // Use completeCleanup only on unmount
   useEffect(() => completeCleanup, [completeCleanup]);
 
   return {
     localStream,
     localStreamRef,
     isMicMuted,
+    ncMode,
+    setNCMode,
+    toggleNC,
     getAudioContext,
     initializeMicrophone,
     toggleMicrophone,
@@ -281,6 +388,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     unmuteMicrophone,
     setMicrophoneGain,
     setOutputGain,
-    cleanup, // Export selective cleanup for room switching
+    cleanup,
   };
 }

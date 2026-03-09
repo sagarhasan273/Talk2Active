@@ -3,13 +3,22 @@ import type { UserType } from 'src/types/type-user';
 import React, { useRef, useState, useEffect } from 'react';
 import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
 
-import { Box, Fade, Paper, Stack, Button, useTheme, Typography, IconButton } from '@mui/material';
+import {
+  Box,
+  Fade,
+  Paper,
+  Stack,
+  alpha,
+  Button,
+  useTheme,
+  Typography,
+  IconButton,
+} from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
 import type { ChatUserStatus } from './type';
 
-// 2. Strongly Typed Status Options Array
 export const STATUS_OPTIONS: ChatUserStatus[] = [
   {
     name: 'online',
@@ -61,7 +70,7 @@ export const STATUS_OPTIONS: ChatUserStatus[] = [
   },
 ];
 
-const INITIAL_STATUS: ChatUserStatus = STATUS_OPTIONS[0];
+const INITIAL_STATUS = STATUS_OPTIONS[0];
 
 interface ChatStatusButtonProps {
   onStatusChange?: (status: UserType['status']) => void;
@@ -69,55 +78,60 @@ interface ChatStatusButtonProps {
 
 export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [currentStatus, setCurrentStatus] = useState<ChatUserStatus>(INITIAL_STATUS);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleStatusChange = async (status: ChatUserStatus) => {
+  const handleStatusChange = (status: ChatUserStatus) => {
     setCurrentStatus(status);
     setIsOpen(false);
     onStatusChange?.(status.name);
   };
 
-  const PrimaryIcon = currentStatus.icon;
-
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
+        !dropdownRef.current.contains(e.target as Node) &&
         buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
+        !buttonRef.current.contains(e.target as Node)
+      )
         setIsOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getChannelValue = (status: ChatUserStatus): string => {
+    const palette = theme.vars.palette[status.bgColor] as unknown as Record<string, string>;
+    return palette?.[status.bgColorChannel] ?? '';
+  };
+
+  const PrimaryIcon = currentStatus.icon;
+  const currentChannel = getChannelValue(currentStatus);
+
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
-      {/* Popover */}
+      {/* ── Status picker popover ────────────────────────────────────── */}
       <Fade in={isOpen}>
         <Paper
           ref={dropdownRef}
           sx={{
             position: 'absolute',
             zIndex: theme.zIndex.tooltip,
-            mb: 2,
-            width: 300,
-            bottom: '100%',
+            bottom: 'calc(100% + 10px)',
             left: '50%',
             transform: 'translateX(-50%)',
+            width: 290,
             bgcolor: 'background.paper',
-            border: 1,
+            border: '1px solid',
             borderColor: 'divider',
-            borderRadius: 2,
-            boxShadow: 8,
+            borderRadius: 2.5,
+            boxShadow: `0 8px 28px ${alpha('#000', isDark ? 0.5 : 0.14)}`,
             overflow: 'hidden',
           }}
         >
@@ -126,62 +140,58 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
               variant="caption"
               sx={{
                 color: 'text.secondary',
-                fontWeight: 'bold',
+                fontWeight: 800,
                 textTransform: 'uppercase',
+                letterSpacing: 0.8,
+                fontSize: '0.6rem',
                 px: 1,
                 py: 0.5,
-                borderBottom: 1,
+                borderBottom: '1px solid',
                 borderColor: 'divider',
-                mb: 1,
+                mb: 0.75,
                 display: 'block',
               }}
             >
               Set Your Status
             </Typography>
 
-            <Stack direction="row" flexWrap="wrap">
-              {STATUS_OPTIONS.map((status: ChatUserStatus) => {
+            <Stack direction="row" flexWrap="wrap" sx={{ gap: 0.25 }}>
+              {STATUS_OPTIONS.map((status) => {
                 const Icon = status.icon;
-                const isSelected: boolean = status.name === currentStatus.name;
+                const isSelected = status.name === currentStatus.name;
+                const channel = getChannelValue(status);
 
                 return (
                   <Button
                     key={status.name}
                     onClick={() => handleStatusChange(status)}
-                    title={status.name}
                     sx={{
-                      minWidth: 'calc(33.333% - 8px)',
-                      width: 'calc(33.333% - 8px)',
-                      m: 0.5,
-                      borderRadius: 1,
-                      color: isSelected ? status.color : status.color,
-                      // backgroundColor: isSelected
-                      //   ? varAlpha(
-                      //       (
-                      //         theme.vars.palette[status.bgColor] as unknown as Record<
-                      //           string,
-                      //           string
-                      //         >
-                      //       )[status.bgColorChannel],
-                      //       0.28
-                      //     )
-                      //   : 'transparent',
-                      '&:hover': {
-                        backgroundColor: varAlpha(
-                          (theme.vars.palette[status.bgColor] as unknown as Record<string, string>)[
-                            status.bgColorChannel
-                          ],
-                          0.28
-                        ),
-                      },
+                      minWidth: 'calc(33.333% - 3px)',
+                      width: 'calc(33.333% - 3px)',
+                      borderRadius: 1.5,
+                      flexDirection: 'column',
+                      gap: 0.3,
+                      py: 0.85,
+                      px: 0.5,
+                      color: status.color,
+                      // ── Restored selected state ────────────────────────────
+                      bgcolor: isSelected && channel ? varAlpha(channel, 0.16) : 'transparent',
+                      border: '1px solid',
+                      borderColor: isSelected && channel ? varAlpha(channel, 0.35) : 'transparent',
+                      transition: 'all 0.14s',
+                      '&:hover': channel
+                        ? { bgcolor: varAlpha(channel, 0.2), borderColor: varAlpha(channel, 0.38) }
+                        : {},
                     }}
-                    startIcon={<Icon style={{ width: 20 }} />}
                   >
+                    <Icon style={{ width: 17, height: 17 }} />
                     <Typography
                       variant="caption"
                       sx={{
-                        fontWeight: isSelected ? 'bold' : 'medium',
-                        fontSize: '0.7rem',
+                        fontWeight: isSelected ? 800 : 500,
+                        fontSize: '0.63rem',
+                        letterSpacing: 0.2,
+                        color: 'inherit',
                       }}
                     >
                       {status.label}
@@ -194,30 +204,29 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
         </Paper>
       </Fade>
 
-      {/* Main Button */}
-
+      {/* ── Trigger button ───────────────────────────────────────────── */}
       <IconButton
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
+        size="small"
+        onClick={() => setIsOpen((p) => !p)}
         sx={{
-          p: 1,
-          borderRadius: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          borderRadius: '10px',
+          p: 0.75,
+          // ── Fix: theme color, not hardcoded white ─────────────────────
           color: currentStatus.color,
-          '&:hover': {
-            color: currentStatus.color,
-            background: varAlpha(
-              (theme.vars.palette[currentStatus.bgColor] as unknown as Record<string, string>)[
-                currentStatus.bgColorChannel
-              ],
-              0.5
-            ),
-          },
+          border: '1px solid',
+          borderColor: isOpen && currentChannel ? varAlpha(currentChannel, 0.4) : 'transparent',
+          bgcolor: isOpen && currentChannel ? varAlpha(currentChannel, 0.12) : 'transparent',
+          transition: 'all 0.18s',
+          '&:hover': currentChannel
+            ? {
+                bgcolor: varAlpha(currentChannel, 0.18),
+                borderColor: varAlpha(currentChannel, 0.35),
+              }
+            : {},
         }}
       >
-        <PrimaryIcon style={{ width: 20 }} />
+        <PrimaryIcon style={{ width: 18, height: 18 }} />
       </IconButton>
     </Box>
   );

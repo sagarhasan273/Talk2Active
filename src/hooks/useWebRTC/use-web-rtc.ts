@@ -1,5 +1,3 @@
-// src/hooks/useWebRTC/useWebRTC.ts
-
 import { useState, useEffect, useCallback } from 'react';
 
 import { useRoomTools } from 'src/core/slices';
@@ -7,6 +5,7 @@ import { useRoomTools } from 'src/core/slices';
 import { useLocalAudio } from './use-local-audio';
 import { useRemoteAudio } from './use-remote-audio';
 import { useAudioSettings } from './use-audio-settings';
+import { useScreenShareWebRTC } from '../use-screen-share';
 import { usePeerConnections } from './use-peer-connections';
 
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
@@ -14,7 +13,6 @@ import type { UseWebRTCReturn, ConnectionStatus } from './types';
 export function useWebRTC(): UseWebRTCReturn {
   const { removeParticipant } = useRoomTools();
 
-  // Audio settings management
   const {
     audioSettings,
     remoteAudioSettings,
@@ -27,11 +25,13 @@ export function useWebRTC(): UseWebRTCReturn {
     removeRemoteSettings,
   } = useAudioSettings();
 
-  // Local audio
   const {
     localStream,
     localStreamRef,
     isMicMuted,
+    ncMode,
+    setNCMode,
+    toggleNC,
     getAudioContext,
     initializeMicrophone,
     toggleMicrophone,
@@ -42,12 +42,9 @@ export function useWebRTC(): UseWebRTCReturn {
     cleanup: cleanupLocalAudio,
   } = useLocalAudio({
     audioSettings,
-    onMicMutedChange: (muted) => {
-      // Update global state if needed
-    },
+    onMicMutedChange: (_muted) => {},
   });
 
-  // Remote audio
   const {
     remoteStreams,
     addRemoteStream,
@@ -63,11 +60,10 @@ export function useWebRTC(): UseWebRTCReturn {
     onRemoteSettingsChange: updateRemoteSettings,
   });
 
-  // Connection status
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({});
 
-  // Peer connections
   const {
+    peerConnections,
     createOffer,
     handleOffer,
     handleAnswer,
@@ -80,91 +76,87 @@ export function useWebRTC(): UseWebRTCReturn {
       removeRemoteStream(socketId);
       removeRemoteSettings(socketId);
       setConnectionStatus((prev) => {
-        const newStatus = { ...prev };
-        delete newStatus[socketId];
-        return newStatus;
+        const next = { ...prev };
+        delete next[socketId];
+        return next;
       });
     },
     onConnectionStateChange: (socketId, state) => {
       setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
-      if (state === 'failed') {
-        removeParticipant(socketId);
-      }
+      if (state === 'failed') removeParticipant(socketId);
     },
   });
 
-  // Deafen toggle
+  // Screen share — owns its own PC map, completely separate from audio PCs
+  const screenShareWebRTC = useScreenShareWebRTC();
+
   const toggleDeafen = useCallback(() => {
-    const newDeafenedState = !audioSettings.isDeafened;
-    applyAudioSettings({ isDeafened: newDeafenedState });
-    applyDeafen(newDeafenedState);
+    const next = !audioSettings.isDeafened;
+    applyAudioSettings({ isDeafened: next });
+    applyDeafen(next);
   }, [audioSettings.isDeafened, applyAudioSettings, applyDeafen]);
 
-  // MODIFIED: Selective cleanup - keeps audio context alive
   const cleanup = useCallback(() => {
-    console.log('Running selective cleanup (keeping audio context)');
     cleanupPeerConnections();
     cleanupRemoteAudio();
-    cleanupLocalAudio(); // This now only stops tracks, not audio context
+    cleanupLocalAudio();
     setConnectionStatus({});
   }, [cleanupPeerConnections, cleanupRemoteAudio, cleanupLocalAudio]);
 
-  // COMPLETE cleanup only on unmount
   useEffect(
     () => () => {
-      console.log('Component unmounting - complete cleanup');
       cleanupPeerConnections();
       cleanupRemoteAudio();
-      // For unmount, we need a more aggressive cleanup
-      // But the useLocalAudio already handles this with its own useEffect
     },
     [cleanupPeerConnections, cleanupRemoteAudio]
   );
 
   return {
-    // Streams
     remoteStreams,
     localStream,
 
-    // States
     isMicMuted,
     isDeafened: audioSettings.isDeafened,
     audioSettings,
     remoteAudioSettings,
     connectionStatus,
 
-    // Local audio controls
+    peerConnections,
+
+    // Screen share — passed through so VoiceRoomBodyView and socket listeners can use it
+    screenShareWebRTC,
+
+    ncMode,
+    setNCMode,
+    toggleNC,
+
     initializeMicrophone,
     toggleMicrophone,
     toggleDeafen,
     setMicrophoneGain,
     setOutputGain,
 
-    // Remote audio controls
     setRemoteVolume,
     setRemoteMute,
 
-    // Audio settings
     setEchoCancellation,
     setNoiseSuppression,
     setNoiseSuppressionLevel,
     setHighPassFilter,
     applyAudioSettings,
 
-    // WebRTC signaling
     createOffer,
     handleOffer,
     handleAnswer,
     handleIceCandidate,
 
-    // Cleanup
     cleanup,
 
-    // Legacy methods
+    // Legacy
     muteMicrophone,
     unmuteMicrophone,
-    onClickMicrophone: (v: boolean) => {
-      if (v) muteMicrophone();
+    onClickMicrophone: (shouldMute: boolean) => {
+      if (shouldMute) muteMicrophone();
       else unmuteMicrophone();
     },
   };

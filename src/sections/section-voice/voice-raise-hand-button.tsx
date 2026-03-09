@@ -1,8 +1,9 @@
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect, useCallback } from 'react';
 
+import { useTheme } from '@mui/material/styles';
 import PanToolIcon from '@mui/icons-material/PanTool';
-import { Box, Menu, Paper, MenuItem, IconButton, Typography } from '@mui/material';
+import { Box, Menu, Paper, alpha, MenuItem, IconButton, Typography } from '@mui/material';
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -19,9 +20,11 @@ const handEmojis = {
 };
 
 export const RaiseHandButton = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const { emit, socket } = useSocketContext();
   const { room } = useRoomTools();
-
   const user = useSelector(selectAccount);
 
   const [raiseHand, setRaiseHand] = useState(false);
@@ -34,32 +37,47 @@ export const RaiseHandButton = () => {
   const toastTimeoutRef = useRef<NodeJS.Timeout>();
   const inactivityTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // ── FIX: use ref to avoid stale closure in setTimeout ─────────────────
+  const raiseHandRef = useRef(raiseHand);
+  useEffect(() => {
+    raiseHandRef.current = raiseHand;
+  }, [raiseHand]);
+
+  const showToastMessage = useCallback((message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 10000);
+  }, []);
+
+  // ── FIX: reads raiseHandRef.current instead of captured raiseHand ─────
+  const startInactivityTimer = useCallback(() => {
+    if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+
+    inactivityTimeoutRef.current = setTimeout(() => {
+      if (raiseHandRef.current) {
+        setRaiseHand(false);
+        setShowToast(false);
+        showToastMessage('Hand auto-lowered ⏱️');
+      }
+    }, 10_000);
+  }, [showToastMessage]);
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!raiseHand) {
-      // Show emoji picker
       setAnchorEl(event.currentTarget);
     } else {
-      // Lower hand
       setRaiseHand(false);
       setShowToast(false);
       setAnchorEl(null);
-      // Clear inactivity timer when manually lowering hand
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
 
       if (socket) {
         emit('send-user-actions-in-voice', {
           roomId: room.id,
           type: 'raise-hand-off',
-          senderInfo: {
-            socketId: socket.id,
-            userId: user.id,
-          },
+          senderInfo: { socketId: socket.id, userId: user.id },
         });
       }
     }
@@ -71,136 +89,102 @@ export const RaiseHandButton = () => {
     setRaiseHand(true);
     setAnchorEl(null);
     showToastMessage(`${label} ${emoji}`);
+    startInactivityTimer();
 
     if (socket) {
       emit('send-user-actions-in-voice', {
         roomId: room.id,
         type: 'raise-hand',
-        senderInfo: {
-          socketId: socket.id,
-          userId: user.id,
-          emoji: emoji || '🙌',
-          label,
-        },
+        senderInfo: { socketId: socket.id, userId: user.id, emoji, label },
       });
     }
-
-    // Start inactivity timer for auto-lower after 10 seconds
-    startInactivityTimer();
   };
 
-  const showToastMessage = (message: string) => {
-    setToastMessage(message);
-    setShowToast(true);
-
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current);
-    }
-
-    toastTimeoutRef.current = setTimeout(() => {
-      setShowToast(false);
-    }, 10000);
-  };
-
-  const startInactivityTimer = useCallback(() => {
-    // Clear any existing inactivity timer
-    if (inactivityTimeoutRef.current) {
-      clearTimeout(inactivityTimeoutRef.current);
-    }
-
-    // Set new timer to auto-lower hand after 10 seconds
-    inactivityTimeoutRef.current = setTimeout(() => {
-      if (raiseHand) {
-        setShowToast(false);
-        showToastMessage('Hand auto-lowered ⏱️');
-        setRaiseHand(false);
-      }
-    }, 10000); // 10 seconds
-  }, [raiseHand]);
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  // Cleanup timeouts on unmount
-  useEffect(
-    () => () => {
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-    },
-    []
-  );
-
-  // Show hand indicator when raised and restart inactivity timer
+  // Restart timer whenever hand stays raised
   useEffect(() => {
     if (raiseHand) {
       showToastMessage(`${selectedLabel} ${selectedEmoji}`);
       startInactivityTimer();
     }
-  }, [raiseHand, selectedLabel, selectedEmoji, startInactivityTimer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raiseHand]);
+
+  // Cleanup on unmount
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+    },
+    []
+  );
+
+  const menuBg = isDark ? theme.palette.background.paper : theme.palette.background.paper;
+  const hoverBg = isDark ? alpha('#fff', 0.07) : alpha('#000', 0.05);
+  const toastBg = isDark ? theme.palette.background.paper : '#fff';
+  const toastBdr = isDark ? alpha('#fff', 0.1) : alpha('#000', 0.1);
 
   return (
     <Box sx={{ position: 'relative' }}>
+      {/* ── Main button ─────────────────────────────────────────────── */}
       <IconButton
-        sx={{
-          color: 'common.white',
-          '&:hover': { bgcolor: '#3b3d44' },
-          position: 'relative',
-        }}
         size="small"
         onClick={handleClick}
-      >
-        <PanToolIcon sx={{ color: raiseHand ? '#ff9800' : 'inherit', fontSize: '18px' }} />
-      </IconButton>
-
-      {/* Emoji Picker Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        PaperProps={{
-          sx: {
-            bgcolor: '#2b2d31',
-            mt: -1,
-            '& .MuiMenuItem-root': {
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              minWidth: 'auto',
-              py: 1,
-              px: 2,
-              '&:hover': {
-                bgcolor: '#3b3d44',
-              },
-            },
+        sx={{
+          borderRadius: '10px',
+          color: raiseHand ? '#ff9800' : theme.palette.text.secondary,
+          bgcolor: raiseHand ? alpha('#ff9800', 0.12) : 'transparent',
+          border: '1px solid',
+          borderColor: raiseHand ? alpha('#ff9800', 0.35) : 'transparent',
+          transition: 'all 0.18s ease',
+          '&:hover': {
+            bgcolor: raiseHand ? alpha('#ff9800', 0.2) : hoverBg,
+            color: raiseHand ? '#ff9800' : theme.palette.text.primary,
           },
         }}
       >
-        <Box sx={{ p: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0.5 }}>
+        <PanToolIcon sx={{ fontSize: 18 }} />
+      </IconButton>
+
+      {/* ── Emoji picker menu ────────────────────────────────────────── */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        PaperProps={{
+          sx: {
+            bgcolor: menuBg,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            boxShadow: `0 8px 28px ${alpha('#000', isDark ? 0.5 : 0.14)}`,
+            mt: -1,
+          },
+        }}
+      >
+        <Box
+          sx={{
+            p: 0.75,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 0.5,
+          }}
+        >
           {Object.entries(handEmojis).map(([key, { emoji, label }]) => (
             <MenuItem
               key={key}
               onClick={() => handleEmojiSelect(emoji, label)}
               sx={{
-                borderRadius: 1,
+                borderRadius: 1.5,
                 flexDirection: 'column',
-                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.5rem' },
                 p: { xs: 0.5, sm: 0.75, md: 1 },
-                minWidth: { xs: 50, sm: 60, md: 70 },
-                '&:hover': {
-                  bgcolor: '#3b3d44',
-                },
+                minWidth: { xs: 50, sm: 58, md: 64 },
+                transition: 'background 0.15s',
+                '&:hover': { bgcolor: hoverBg },
               }}
             >
               <Box sx={{ lineHeight: 1 }}>{emoji}</Box>
@@ -208,7 +192,7 @@ export const RaiseHandButton = () => {
                 variant="caption"
                 sx={{
                   fontSize: { xs: '0.5rem', sm: '0.55rem', md: '0.6rem' },
-                  color: '#b5bac1',
+                  color: 'text.secondary',
                   mt: 0.25,
                   whiteSpace: 'nowrap',
                 }}
@@ -220,36 +204,31 @@ export const RaiseHandButton = () => {
         </Box>
       </Menu>
 
-      {/* Toast Notification - Positioned higher */}
+      {/* ── Toast notification ───────────────────────────────────────── */}
       {showToast && (
         <Paper
           sx={{
             position: 'absolute',
-            bottom: '100%',
+            bottom: 'calc(100% + 12px)',
             left: '50%',
             transform: 'translateX(-50%)',
-            mb: 2, // Increased from 1.5 to 5 to move it much higher
-            bgcolor: '#1e1f22',
-            color: 'white',
+            bgcolor: toastBg,
+            color: 'text.primary',
             px: 2,
-            py: 0.5,
+            py: 0.6,
             borderRadius: 2,
-            fontSize: '0.875rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            border: '1px solid #3b3d44',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            boxShadow: `0 4px 16px ${alpha('#000', 0.2)}`,
+            border: `1px solid ${toastBdr}`,
             whiteSpace: 'nowrap',
             zIndex: 1500,
             animation: 'slideUp 0.2s ease-out',
             '@keyframes slideUp': {
-              '0%': {
-                opacity: 0,
-                transform: 'translateX(-50%) translateY(10px)',
-              },
-              '100%': {
-                opacity: 1,
-                transform: 'translateX(-50%) translateY(0)',
-              },
+              '0%': { opacity: 0, transform: 'translateX(-50%) translateY(8px)' },
+              '100%': { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
             },
+            // Speech bubble arrow
             '&::after': {
               content: '""',
               position: 'absolute',
@@ -258,7 +237,7 @@ export const RaiseHandButton = () => {
               transform: 'translateX(-50%)',
               borderLeft: '6px solid transparent',
               borderRight: '6px solid transparent',
-              borderTop: '6px solid #1e1f22',
+              borderTop: `6px solid ${toastBdr}`,
             },
           }}
         >

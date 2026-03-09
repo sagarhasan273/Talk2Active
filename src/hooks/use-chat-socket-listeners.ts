@@ -26,9 +26,10 @@ export type UseReturnChatSocketListeners = {
   onLeaveRoom: () => Promise<void>;
 };
 
-export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
+// screenShareWebRTC is now inside useWebRTC — no second argument needed
+export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSocketListeners {
   const user = useSelector(selectAccount);
-  // Room management
+
   const {
     currentRooms,
     userVoiceState,
@@ -50,19 +51,22 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
 
   const { roomId } = userVoiceState;
 
-  // WebRTC
   const {
     createOffer,
     handleOffer,
     handleAnswer,
     handleIceCandidate,
     cleanup: cleanupWebRTC,
-  } = useWebRTC;
+    screenShareWebRTC,
+  } = webRTC;
 
-  // Socket
+  const { handleScreenShareOffer, handleScreenShareAnswer, handleScreenShareIce } =
+    screenShareWebRTC;
+
   const { socket, on, off } = useSocketContext();
-
   const [leaveRoom] = useLeaveRoomMutation();
+
+  // ── Leave ─────────────────────────────────────────────────────────────────
 
   const handelLeaveChat = useCallback(async () => {
     const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
@@ -70,33 +74,26 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     const name = user.id || (sessionStorage.getItem('username') as string);
 
     if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name }).unwrap();
-
-    // This cleanup keeps audio context alive
     cleanupWebRTC();
-
     updateUserVoiceState({ hasJoined: false, roomId: null });
-
-    // Reset local state
     resetParticipants();
-
     sessionStorage.removeItem('joinedRoomId');
   }, [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    console.log('User leave Clean up while component unmount.');
-    return () => {
+  useEffect(
+    () => () => {
       handelLeaveChat();
-    };
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    []
+  );
+
+  // ── Socket events ─────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!socket) {
-      return () => {};
-    }
+    if (!socket) return () => {};
 
-    // Existing participants
+    // Participants
     const handleExistingParticipants = (data: ExistingParticipantsData) => {
       if (data.roomId !== roomId) return;
       data.participants.forEach((participant) => {
@@ -107,7 +104,6 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       });
     };
 
-    // User joined
     const handleUserJoined = (data: Participant) => {
       if (data.socketId !== socket?.id) {
         addParticipant(data);
@@ -115,17 +111,14 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       }
     };
 
-    // User left
-    const handleUserLeft = (data: { socketId: string; roomId?: string }) => {
+    const handleUserLeft = (data: { socketId: string }) => {
       updateParticipant({ socketId: data.socketId, hasJoin: false });
     };
 
-    // Audio toggled
-    const handleAudioToggled = (data: { socketId: string; isMuted: boolean; roomId?: string }) => {
+    const handleAudioToggled = (data: { socketId: string; isMuted: boolean }) => {
       updateParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
     };
 
-    // Status updated
     const handleStatusUpdated = (data: {
       socketId: string;
       status: UserType['status'];
@@ -136,9 +129,9 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
       }
     };
 
-    // Message handlers
+    // Messages
     const handleGroupMessage = (data: Message) => {
-      const receiveMessage: Message = {
+      addChatRoomMessage({
         id: data.id,
         text: data.text,
         sender: data.sender,
@@ -152,27 +145,11 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         messageRepliedOf: data?.messageRepliedOf,
         senderSocketId: data?.senderSocketId,
         receiverSocketId: data?.receiverSocketId,
-      };
-
-      addChatRoomMessage(receiveMessage);
-    };
-
-    const handleReactionMessage = (data: ReactionMessageData) => {
-      reactionChatRoomMessage({
-        messageId: data.messageId,
-        reaction: data.reaction,
-      });
-    };
-
-    const handleReactionPopMessage = (data: ReactionMessageData) => {
-      reactionPopChatRoomMessage({
-        messageId: data.messageId,
-        reaction: data.reaction,
       });
     };
 
     const handlePrivateMessage = (data: Message) => {
-      const receiveMessage: Message = {
+      addChatRoomMessage({
         id: data.id,
         text: data.text,
         sender: data.sender,
@@ -187,165 +164,125 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
         systemMessageType: data?.systemMessageType,
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
-      };
-
-      addChatRoomMessage(receiveMessage);
+      });
     };
 
-    const handleEditedMessage = (data: { messageId: Message['id']; text: Message['text'] }) => {
+    const handleReactionMessage = (data: ReactionMessageData) =>
+      reactionChatRoomMessage({ messageId: data.messageId, reaction: data.reaction });
+
+    const handleReactionPopMessage = (data: ReactionMessageData) =>
+      reactionPopChatRoomMessage({ messageId: data.messageId, reaction: data.reaction });
+
+    const handleEditedMessage = (data: { messageId: Message['id']; text: Message['text'] }) =>
       editChatRoomMessage(data);
-    };
 
     const handleDeleteGroupMessage = (data: {
       messageId: Message['id'];
       text: Message['text'];
       time: Message['time'];
-    }) => {
-      deleteChatRoomMessage(data);
-    };
+    }) => deleteChatRoomMessage(data);
 
+    // Room updates
     const handleExistingRoomParticipant = (data: any) => {
       setCurrentRooms(
         currentRooms?.map((currentRoom) => {
-          if (data?.participants?.[currentRoom?.room?.id]?.length) {
-            const participants =
-              data?.participants?.[currentRoom?.room?.id]?.map((participant: any) => ({
-                user: participant,
+          if (!data?.participants?.[currentRoom?.room?.id]?.length) return currentRoom;
+          return {
+            ...currentRoom,
+            room: {
+              ...currentRoom.room,
+              currentParticipants: data.participants[currentRoom.room.id].map((p: any) => ({
+                user: p,
                 joinedAt: new Date().toDateString(),
-              })) || [];
-
-            return {
-              ...currentRoom,
-              room: {
-                ...currentRoom.room,
-                currentParticipants: participants,
-              },
-            };
-          }
-
-          return currentRoom;
+              })),
+            },
+          };
         })
       );
     };
 
     const handleBroadcastRoomUpdate = (data: any) => {
-      const recentRoomIds = currentRooms?.map((currentRoom) => currentRoom?.room?.id);
-      const hasJoinRecentRoom = recentRoomIds.includes(data?.joinInfo?.roomId);
-      const hasLeaveRecentRoom = recentRoomIds.includes(data?.leaveInfo?.roomId);
+      const recentRoomIds = currentRooms?.map((r) => r?.room?.id);
+      if (
+        !recentRoomIds.includes(data?.joinInfo?.roomId) &&
+        !recentRoomIds.includes(data?.leaveInfo?.roomId)
+      )
+        return;
 
-      if (hasJoinRecentRoom || hasLeaveRecentRoom)
-        setCurrentRooms(
-          currentRooms.map((currentRoom) => {
-            if (currentRoom?.room?.id === data?.joinInfo?.roomId) {
-              return {
-                ...currentRoom,
-                room: {
-                  ...currentRoom.room,
-                  currentParticipants: [
-                    ...(currentRoom.room.currentParticipants || []),
-                    {
-                      user: data.joinInfo.participant,
-                      joinedAt: new Date().toISOString(),
-                    },
-                  ],
-                },
-              };
-            }
-            if (currentRoom?.room?.id === data?.leaveInfo?.roomId) {
-              return {
-                ...currentRoom,
-                room: {
-                  ...currentRoom.room,
-                  currentParticipants: (currentRoom.room.currentParticipants || []).filter(
-                    (participant) =>
-                      participant?.user?.userId !== data?.leaveInfo?.participant?.userId
-                  ),
-                },
-              };
-            }
-            return currentRoom;
-          })
-        );
+      setCurrentRooms(
+        currentRooms.map((currentRoom) => {
+          if (currentRoom?.room?.id === data?.joinInfo?.roomId) {
+            return {
+              ...currentRoom,
+              room: {
+                ...currentRoom.room,
+                currentParticipants: [
+                  ...(currentRoom.room.currentParticipants || []),
+                  { user: data.joinInfo.participant, joinedAt: new Date().toISOString() },
+                ],
+              },
+            };
+          }
+          if (currentRoom?.room?.id === data?.leaveInfo?.roomId) {
+            return {
+              ...currentRoom,
+              room: {
+                ...currentRoom.room,
+                currentParticipants: (currentRoom.room.currentParticipants || []).filter(
+                  (p) => p?.user?.userId !== data?.leaveInfo?.participant?.userId
+                ),
+              },
+            };
+          }
+          return currentRoom;
+        })
+      );
     };
 
-    // WebRTC signaling
-    const handleWebRTCOffer = (data: WebRTCEventData) => {
-      handleOffer(data, socket);
-    };
+    // Audio WebRTC
+    const handleWebRTCOffer = (data: WebRTCEventData) => handleOffer(data, socket);
+    const handleWebRTCAnswer = (data: WebRTCEventData) => handleAnswer(data);
+    const handleWebRTCIce = (data: WebRTCEventData) => handleIceCandidate(data);
+    const handleUserActions = (data: any) => updateUserActionsInVoice(data);
 
-    const handleWebRTCAnswer = (data: WebRTCEventData) => {
-      handleAnswer(data);
-    };
+    // Screen share WebRTC — map directly to dedicated backend events
+    const onScreenShareOffer = (data: any) => handleScreenShareOffer(data, socket);
+    const onScreenShareAnswer = (data: any) => handleScreenShareAnswer(data);
+    const onScreenShareIce = (data: any) => handleScreenShareIce(data);
 
-    const handleWebRTCIceCandidate = (data: WebRTCEventData) => {
-      handleIceCandidate(data);
-    };
+    // ── Single event map — register & cleanup in one place ────────────────
 
-    const handleDeliverUserActionsInVoice = (data: any) => {
-      updateUserActionsInVoice(data);
-    };
+    const events: [string, (...args: any[]) => void][] = [
+      ['existing-participants', handleExistingParticipants],
+      ['user-joined', handleUserJoined],
+      ['user-left', handleUserLeft],
+      ['user-audio-toggled', handleAudioToggled],
+      ['user-audio-toggled-self', handleAudioToggled],
+      ['user-status-selected', handleStatusUpdated],
+      ['receive-group-message', handleGroupMessage],
+      ['receive-edit-group-message', handleEditedMessage],
+      ['receive-delete-group-message', handleDeleteGroupMessage],
+      ['receive-reaction-group-message', handleReactionMessage],
+      ['receive-reaction-pop-group-message', handleReactionPopMessage],
+      ['receive-private-message', handlePrivateMessage],
+      ['deliver-user-actions-in-voice', handleUserActions],
+      ['room-updated-with-participant', handleBroadcastRoomUpdate],
+      ['receive-rooms-existing-participants', handleExistingRoomParticipant],
+      // Audio signaling
+      ['webrtc-offer', handleWebRTCOffer],
+      ['webrtc-answer', handleWebRTCAnswer],
+      ['webrtc-ice-candidate', handleWebRTCIce],
+      // Screen share signaling
+      ['webrtc-screen-share-offer', onScreenShareOffer],
+      ['webrtc-screen-share-answer', onScreenShareAnswer],
+      ['webrtc-screen-share-ice', onScreenShareIce],
+    ];
 
-    // Remove listeners to avoid duplicate calls
-    off('existing-participants', handleExistingParticipants);
-    off('user-joined', handleUserJoined);
-    off('user-left', handleUserLeft);
-    off('user-audio-toggled', handleAudioToggled);
-    off('user-audio-toggled-self', handleAudioToggled);
-    off('user-status-selected', handleStatusUpdated);
-    off('receive-group-message', handleGroupMessage);
-    off('receive-edit-group-message', handleEditedMessage);
-    off('receive-delete-group-message', handleDeleteGroupMessage);
-    off('receive-reaction-group-message', handleReactionMessage);
-    off('receive-private-message', handlePrivateMessage);
-    off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-    off('room-updated-with-participant', handleBroadcastRoomUpdate);
-    off('receive-rooms-existing-participants', handleExistingRoomParticipant);
+    events.forEach(([event, handler]) => off(event, handler));
+    events.forEach(([event, handler]) => on(event, handler));
 
-    off('webrtc-offer', handleWebRTCOffer);
-    off('webrtc-answer', handleWebRTCAnswer);
-    off('webrtc-ice-candidate', handleWebRTCIceCandidate);
-
-    // Register listeners
-    on('existing-participants', handleExistingParticipants);
-    on('user-joined', handleUserJoined);
-    on('user-left', handleUserLeft);
-    on('user-audio-toggled', handleAudioToggled);
-    on('user-audio-toggled-self', handleAudioToggled);
-    on('user-status-selected', handleStatusUpdated);
-    on('receive-group-message', handleGroupMessage);
-    on('receive-edit-group-message', handleEditedMessage);
-    on('receive-delete-group-message', handleDeleteGroupMessage);
-    on('receive-reaction-group-message', handleReactionMessage);
-    on('receive-reaction-pop-group-message', handleReactionPopMessage);
-    on('receive-private-message', handlePrivateMessage);
-    on('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-    on('room-updated-with-participant', handleBroadcastRoomUpdate);
-    on('receive-rooms-existing-participants', handleExistingRoomParticipant);
-
-    on('webrtc-offer', handleWebRTCOffer);
-    on('webrtc-answer', handleWebRTCAnswer);
-    on('webrtc-ice-candidate', handleWebRTCIceCandidate);
-
-    // Return cleanup function
     return () => {
-      off('existing-participants', handleExistingParticipants);
-      off('user-joined', handleUserJoined);
-      off('user-left', handleUserLeft);
-      off('user-audio-toggled', handleAudioToggled);
-      off('user-audio-toggled-self', handleAudioToggled);
-      off('user-status-selected', handleStatusUpdated);
-      off('receive-group-message', handleGroupMessage);
-      off('receive-edit-group-message', handleEditedMessage);
-      off('receive-delete-group-message', handleDeleteGroupMessage);
-      off('receive-reaction-group-message', handleReactionMessage);
-      off('receive-private-message', handlePrivateMessage);
-      off('deliver-user-actions-in-voice', handleDeliverUserActionsInVoice);
-      off('room-updated-with-participant', handleBroadcastRoomUpdate);
-      off('receive-rooms-existing-participants', handleExistingRoomParticipant);
-
-      off('webrtc-offer', handleWebRTCOffer);
-      off('webrtc-answer', handleWebRTCAnswer);
-      off('webrtc-ice-candidate', handleWebRTCIceCandidate);
+      events.forEach(([event, handler]) => off(event, handler));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -361,6 +298,9 @@ export function useChatSocketListeners(useWebRTC: UseWebRTCReturn): UseReturnCha
     handleOffer,
     handleAnswer,
     handleIceCandidate,
+    handleScreenShareOffer,
+    handleScreenShareAnswer,
+    handleScreenShareIce,
   ]);
 
   return { onLeaveRoom: handelLeaveChat };

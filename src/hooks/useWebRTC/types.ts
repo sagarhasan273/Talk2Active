@@ -1,19 +1,16 @@
-// src/hooks/useWebRTC/types.ts
+import type React from 'react';
+
+import type { UseScreenShareWebRTCReturn } from '../use-screen-share';
 
 export interface AudioSettings {
-  microphoneGain: number; // Input sensitivity
-  outputGain: number; // How loud you are to others
-
-  // Echo & Noise Control
+  microphoneGain: number;
+  outputGain: number;
   echoCancellation: boolean;
   noiseSuppression: boolean;
   autoGainControl: boolean;
-
-  // Advanced audio processing
   echoCancellationType?: 'browser' | 'system' | 'disabled';
   noiseSuppressionLevel?: number;
   highPassFilter?: boolean;
-
   isMicMuted: boolean;
   isDeafened: boolean;
 }
@@ -63,46 +60,62 @@ export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   isDeafened: false,
 };
 
+export type NCMode = 'off' | 'basic' | 'aggressive';
+
 export type UseWebRTCReturn = {
-  // Streams
+  // ── Streams ───────────────────────────────────────────────────────────────
   remoteStreams: { [socketId: string]: MediaStream };
   localStream: MediaStream | null;
 
-  // States
+  // ── State ─────────────────────────────────────────────────────────────────
   isMicMuted: boolean;
   isDeafened: boolean;
   audioSettings: AudioSettings;
   remoteAudioSettings: RemoteAudioSettings;
   connectionStatus: ConnectionStatus;
 
-  // Local audio controls
+  // Audio peer connections ref — plain object, NOT a Map
+  peerConnections: React.MutableRefObject<PeerConnectionState>;
+
+  // ── Screen share ──────────────────────────────────────────────────────────
+  // The entire screen share hook is surfaced here so:
+  //   - VoiceRoomBodyView can call startSharing / stopSharing and read remoteScreenStreams
+  //   - useChatSocketListeners can wire the three socket handlers
+  screenShareWebRTC: UseScreenShareWebRTCReturn;
+
+  // ── Noise cancellation ────────────────────────────────────────────────────
+  ncMode: NCMode;
+  setNCMode: (mode: NCMode) => Promise<void>;
+  toggleNC: () => void;
+
+  // ── Local audio controls ──────────────────────────────────────────────────
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
   toggleMicrophone: () => boolean;
   toggleDeafen: () => void;
   setMicrophoneGain: (gain: number) => void;
   setOutputGain: (gain: number) => void;
 
-  // Remote audio controls
+  // ── Remote audio controls ─────────────────────────────────────────────────
   setRemoteVolume: (socketId: string, level: number) => void;
   setRemoteMute: (socketId: string, muted: boolean) => void;
 
-  // Audio settings
+  // ── Audio settings ────────────────────────────────────────────────────────
   setEchoCancellation: (enabled: boolean) => void;
   setNoiseSuppression: (enabled: boolean) => void;
   setNoiseSuppressionLevel: (level: number) => void;
   setHighPassFilter: (enabled: boolean) => void;
   applyAudioSettings: (settings: Partial<AudioSettings>) => void;
 
-  // WebRTC signaling
+  // ── Audio WebRTC signaling ────────────────────────────────────────────────
   createOffer: (targetSocketId: string, socket: any) => Promise<void>;
   handleOffer: (data: any, socket: any) => Promise<void>;
   handleAnswer: (data: any) => Promise<void>;
   handleIceCandidate: (data: any) => Promise<void>;
 
-  // Cleanup
+  // ── Cleanup ───────────────────────────────────────────────────────────────
   cleanup: () => void;
 
-  // Legacy methods (maintain compatibility)
+  // ── Legacy ────────────────────────────────────────────────────────────────
   muteMicrophone: () => void;
   unmuteMicrophone: () => void;
   onClickMicrophone: (v: boolean) => void;
