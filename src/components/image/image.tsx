@@ -61,10 +61,17 @@ export const Image = forwardRef<HTMLSpanElement, ImageProps>(
       ...other
     },
     ref
-  ) => {
-    const content = (
-      <Box
-        component={LazyLoadImage}
+  ) => (
+    <ImageWrapper
+      ref={ref}
+      component="span"
+      className={imageClasses.root.concat(className ? ` ${className}` : '')}
+      sx={{ ...(!!ratio && { width: 1 }), ...sx }}
+      {...other}
+    >
+      {slotProps?.overlay && <Overlay className={imageClasses.overlay} sx={slotProps?.overlay} />}
+
+      <LazyLoadImage
         alt={alt}
         src={src}
         delayTime={delayTime}
@@ -83,28 +90,14 @@ export const Image = forwardRef<HTMLSpanElement, ImageProps>(
             ? `${CONFIG.assetsDir}/assets/core/transparent.png`
             : `${CONFIG.assetsDir}/assets/core/placeholder.svg`
         }
-        sx={{
-          width: 1,
-          height: 1,
+        style={{
+          width: '100%',
+          height: '100%',
           objectFit: 'cover',
           verticalAlign: 'bottom',
-          aspectRatio: ratio,
+          aspectRatio: typeof ratio === 'string' ? ratio : undefined,
         }}
       />
-    );
-
-    return (
-      <ImageWrapper
-        ref={ref}
-        component="span"
-        className={imageClasses.root.concat(className ? ` ${className}` : '')}
-        sx={{ ...(!!ratio && { width: 1 }), ...sx }}
-        {...other}
-      >
-        {slotProps?.overlay && <Overlay className={imageClasses.overlay} sx={slotProps?.overlay} />}
-
-        {content}
-      </ImageWrapper>
-    );
-  }
+    </ImageWrapper>
+  )
 );
