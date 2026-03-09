@@ -1,7 +1,7 @@
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
 import { forwardRef } from 'react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
+import { LazyLoadImage as LazyLoadImageOriginal } from 'react-lazy-load-image-component';
 
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -12,6 +12,7 @@ import { imageClasses } from './classes';
 
 import type { ImageProps } from './types';
 
+const LazyLoadImage = LazyLoadImageOriginal as any;
 // ----------------------------------------------------------------------
 
 const ImageWrapper = styled(Box)({
@@ -97,7 +98,14 @@ export const Image = forwardRef<HTMLSpanElement, ImageProps>(
           height: '100%',
           objectFit: 'cover',
           verticalAlign: 'bottom',
-          ...(ratio && { aspectRatio: typeof ratio === 'string' ? ratio : ratio.width ? `${ratio.width} / ${ratio.height}` : undefined }),
+          ...(ratio && {
+            aspectRatio:
+              typeof ratio === 'string'
+                ? ratio
+                : ratio.width
+                  ? `${ratio.width} / ${ratio.height}`
+                  : undefined,
+          }),
         }}
       />
     </ImageWrapper>
