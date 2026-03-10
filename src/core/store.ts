@@ -9,10 +9,11 @@ import {
   socialApi,
   messageApi,
   settingsApi,
+  inventoryApi,
   suggestionApi,
 } from './apis';
 
-const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi, chatApi, messageApi];
+const apis = [userApi, settingsApi, postApi, socialApi, suggestionApi, chatApi, messageApi, inventoryApi];
 
 // Combine reducers
 const rootReducer = {
@@ -27,6 +28,7 @@ const rootReducer = {
   [suggestionApi.reducerPath]: suggestionApi.reducer,
   [chatApi.reducerPath]: chatApi.reducer,
   [messageApi.reducerPath]: messageApi.reducer,
+  [inventoryApi.reducerPath]: inventoryApi.reducer,
 };
 
 export const store = configureStore({

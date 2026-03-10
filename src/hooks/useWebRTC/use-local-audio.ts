@@ -2,29 +2,25 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 
+import { fmicGainRange } from 'src/utils/helper';
+
 import type { AudioSettings, AudioNodeManager } from './types';
 
-export type NCMode = 'off' | 'basic' | 'aggressive';
+// NCMode: 'off' = raw mic straight through (no WebAudio graph)
+//         'basic' = HPF 80Hz + second HPF 100Hz + light compressor
+export type NCMode = 'off' | 'basic';
 
 interface UseLocalAudioProps {
   audioSettings: AudioSettings;
   onMicMutedChange?: (muted: boolean) => void;
 }
 
-interface NCNodes {
-  highPass2: BiquadFilterNode | null;
-  notch: BiquadFilterNode | null; // aggressive only: 50Hz hum
-  gate: DynamicsCompressorNode | null; // aggressive only: soft noise gate
-}
-
 export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudioProps) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [isMicMuted, setIsMicMuted] = useState(false);
-  const [ncMode, setNcModeState] = useState<NCMode>('basic');
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const rawStreamRef = useRef<MediaStream | null>(null);
-  const ncModeRef = useRef<NCMode>('basic');
 
   const audioNodesRef = useRef<AudioNodeManager>({
     microphoneGainNode: null,
@@ -35,8 +31,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     highPassFilterNode: null,
     compressorNode: null,
   });
-
-  const ncNodesRef = useRef<NCNodes>({ highPass2: null, notch: null, gate: null });
 
   // ── AudioContext ─────────────────────────────────────────────────────────
 
@@ -60,7 +54,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
 
   const disconnectAll = useCallback(() => {
     const n = audioNodesRef.current;
-    const nc = ncNodesRef.current;
     [
       n.sourceNode,
       n.microphoneGainNode,
@@ -68,9 +61,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
       n.compressorNode,
       n.outputGainNode,
       n.destinationNode,
-      nc.highPass2,
-      nc.notch,
-      nc.gate,
     ].forEach((node) => {
       try {
         node?.disconnect();
@@ -80,84 +70,18 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     });
   }, []);
 
-  // ── Build NC nodes ───────────────────────────────────────────────────────
-  //
-  // basic:      second HPF at 100Hz — cuts low-frequency rumble & desk noise
-  // aggressive: HPF 120Hz + 50Hz notch (power hum) + soft gate compressor
-  //
-  // NOTE: lowShelf removed — was cutting voice presence above 8kHz, making
-  // speech sound muffled. The gate ratio is 8 (not 20) to avoid crushing
-  // natural speech pauses.
-
-  const buildNCNodes = useCallback((ctx: AudioContext, mode: NCMode): NCNodes => {
-    const nodes: NCNodes = { highPass2: null, notch: null, gate: null };
-    if (mode === 'off') return nodes;
-
-    const hp2 = ctx.createBiquadFilter();
-    hp2.type = 'highpass';
-    hp2.frequency.value = mode === 'aggressive' ? 120 : 100;
-    hp2.Q.value = 0.7;
-    nodes.highPass2 = hp2;
-
-    if (mode === 'aggressive') {
-      // Notch for power-line hum — Q:3 wide enough to also catch 60Hz variants
-      const notch = ctx.createBiquadFilter();
-      notch.type = 'notch';
-      notch.frequency.value = 50;
-      notch.Q.value = 3;
-      nodes.notch = notch;
-
-      // Soft gate — ratio:8 suppresses background noise without chopping
-      // voice during natural pauses (was ratio:20 → brutal, choppy)
-      const gate = ctx.createDynamicsCompressor();
-      gate.threshold.value = -45; // raised from -55 so soft speech is never gated
-      gate.knee.value = 10; // wide knee = smooth transition, no hard cutoff
-      gate.ratio.value = 8; // was 20 → caused robotic choppy sound
-      gate.attack.value = 0.003; // slightly slower so consonant transients pass
-      gate.release.value = 0.2; // was 0.1 → less pumping between words
-      nodes.gate = gate;
-    }
-
-    return nodes;
-  }, []);
-
-  // ── Build full WebAudio graph ────────────────────────────────────────────
-  //
-  // Signal path:
-  //   raw mic → source → micGain → HPF(80Hz)
-  //     → [HP2(100-120Hz)]    (NC basic/aggressive)
-  //     → [notch(50Hz)]       (NC aggressive)
-  //     → compressor
-  //     → [gate]              (NC aggressive)
-  //     → outputGain → destination → WebRTC peers
-
   const buildGraph = useCallback(
-    (stream: MediaStream, mode: NCMode): MediaStream => {
+    (stream: MediaStream): MediaStream => {
       const ctx = ensureAudioContext();
       disconnectAll();
 
       const sourceNode = ctx.createMediaStreamSource(stream);
       const microphoneGainNode = ctx.createGain();
-      const highPassFilter = ctx.createBiquadFilter();
-      const compressor = ctx.createDynamicsCompressor();
       const outputGainNode = ctx.createGain();
       const destinationNode = ctx.createMediaStreamDestination();
 
-      highPassFilter.type = 'highpass';
-      highPassFilter.frequency.value = 80;
-      highPassFilter.Q.value = 1;
-
-      compressor.threshold.value = -50;
-      compressor.knee.value = 40;
-      compressor.ratio.value = 12;
-      compressor.attack.value = 0;
-      compressor.release.value = 0.25;
-
       microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
       outputGainNode.gain.value = audioSettings.outputGain / 100;
-
-      const nc = buildNCNodes(ctx, mode);
-      ncNodesRef.current = nc;
 
       let tail: AudioNode = sourceNode;
       const pipe = (node: AudioNode | null) => {
@@ -167,53 +91,33 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
       };
 
       pipe(microphoneGainNode);
-      pipe(highPassFilter);
-      pipe(nc.highPass2); // basic + aggressive
-      pipe(nc.notch); // aggressive only
-      pipe(compressor);
-      pipe(nc.gate); // aggressive only
-      pipe(outputGainNode);
-      pipe(destinationNode);
 
       audioNodesRef.current = {
         audioContext: ctx,
         sourceNode,
         microphoneGainNode,
-        highPassFilterNode: highPassFilter,
-        compressorNode: compressor,
+        highPassFilterNode: null,
+        compressorNode: null,
         outputGainNode,
         destinationNode,
       };
 
-      console.log(`[LocalAudio] Graph built — NC: ${mode}`);
+      pipe(outputGainNode);
+      pipe(destinationNode);
+
       return destinationNode.stream;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      audioSettings.microphoneGain,
-      audioSettings.outputGain,
-      ensureAudioContext,
-      disconnectAll,
-      buildNCNodes,
-    ]
+    [audioSettings.microphoneGain, audioSettings.outputGain, ensureAudioContext, disconnectAll]
   );
 
   // ── getUserMedia constraints ─────────────────────────────────────────────
 
   const getConstraintsForMode = useCallback(
-    (mode: NCMode): MediaStreamConstraints => ({
+    (): MediaStreamConstraints => ({
       audio: {
-        echoCancellation: audioSettings.echoCancellation,
-        noiseSuppression: mode !== 'off' || audioSettings.noiseSuppression,
+        echoCancellation: audioSettings.echoCancellation ?? true,
+        noiseSuppression: audioSettings.noiseSuppression ?? true,
         autoGainControl: audioSettings.autoGainControl ?? true,
-        ...(mode === 'aggressive' &&
-          ({
-            googNoiseSuppression: true,
-            googNoiseSuppression2: true,
-            googEchoCancellation: true,
-            googEchoCancellation2: true,
-            googHighpassFilter: true,
-          } as any)),
       },
       video: false,
     }),
@@ -231,12 +135,12 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
         });
         rawStreamRef.current = null;
 
-        const constraints = customConstraints ?? getConstraintsForMode(ncModeRef.current);
+        const constraints = customConstraints ?? getConstraintsForMode();
         console.log('[LocalAudio] getUserMedia:', constraints);
         const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
         rawStreamRef.current = rawStream;
 
-        const processed = buildGraph(rawStream, ncModeRef.current);
+        const processed = buildGraph(rawStream);
         localStreamRef.current = processed;
         setLocalStream(processed);
 
@@ -254,51 +158,11 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     [getConstraintsForMode, buildGraph, onMicMutedChange]
   );
 
-  // ── Set NC mode ──────────────────────────────────────────────────────────
-  //
-  // FIX: capture previousMode BEFORE mutating ncModeRef, otherwise the
-  // off↔on boundary check always compares the new value against itself.
-
-  const setNCMode = useCallback(
-    async (mode: NCMode) => {
-      const previousMode = ncModeRef.current; // ← capture FIRST
-      if (mode === previousMode) return;
-
-      ncModeRef.current = mode; // ← THEN mutate
-      setNcModeState(mode);
-
-      const raw = rawStreamRef.current;
-      if (!raw) return;
-
-      // Crossing off↔on boundary requires new getUserMedia call with updated
-      // browser-level noiseSuppression constraint
-      const wasOff = previousMode === 'off';
-      const nowOff = mode === 'off';
-      const crossingBoundary = wasOff !== nowOff;
-
-      if (crossingBoundary) {
-        await initializeMicrophone();
-      } else {
-        // Same off/on side — just rewire the WebAudio graph
-        const processed = buildGraph(raw, mode);
-        localStreamRef.current = processed;
-        setLocalStream(processed);
-      }
-    },
-    [initializeMicrophone, buildGraph]
-  );
-
-  const toggleNC = useCallback(() => {
-    const next: NCMode =
-      ncModeRef.current === 'off' ? 'basic' : ncModeRef.current === 'basic' ? 'aggressive' : 'off';
-    setNCMode(next);
-  }, [setNCMode]);
-
   // ── Gain controls ────────────────────────────────────────────────────────
 
   const setMicrophoneGain = useCallback((gain: number) => {
     if (audioNodesRef.current.microphoneGainNode)
-      audioNodesRef.current.microphoneGainNode.gain.value = gain / 100;
+      audioNodesRef.current.microphoneGainNode.gain.value = fmicGainRange(gain) / 100;
   }, []);
 
   const setOutputGain = useCallback((gain: number) => {
@@ -357,7 +221,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
       highPassFilterNode: null,
       compressorNode: null,
     };
-    ncNodesRef.current = { highPass2: null, notch: null, gate: null };
     setLocalStream(null);
     setIsMicMuted(false);
     localStreamRef.current = null;
@@ -378,9 +241,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     localStream,
     localStreamRef,
     isMicMuted,
-    ncMode,
-    setNCMode,
-    toggleNC,
     getAudioContext,
     initializeMicrophone,
     toggleMicrophone,

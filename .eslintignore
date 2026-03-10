@@ -33,3 +33,5 @@ public/*
 
 # misc
 **/jsconfig.json
+
+.env

@@ -3,6 +3,8 @@
  * https://github.com/you-dont-need-x/you-dont-need-lodash
  */
 
+import { DEFAULT_AUDIO_SETTINGS } from 'src/hooks/useWebRTC/types';
+
 import { languages } from 'src/_mock/data/languages';
 
 import axiosInstance, { endpoints } from './axios';
@@ -223,3 +225,12 @@ export const fgetLanguageName = (code: string) => {
   );
   return language ? `${language.flag} ${language.name}` : code;
 };
+
+export function fmicGainRange(value: number) {
+  const inMin = 1;
+  const inMax = 100;
+  const outMin = 1;
+  const outMax = DEFAULT_AUDIO_SETTINGS.microphoneGain * 2;
+
+  return outMin + ((value - inMin) * (outMax - outMin)) / (inMax - inMin);
+}

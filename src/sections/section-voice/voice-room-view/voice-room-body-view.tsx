@@ -10,7 +10,6 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { styled, keyframes } from '@mui/material/styles';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -259,63 +258,6 @@ const CtrlBtn = React.forwardRef<
   );
 });
 
-// ─── NoiseBadge ───────────────────────────────────────────────────────────────
-
-const NoiseBadge = ({
-  mode,
-  onClick,
-}: {
-  mode: 'off' | 'basic' | 'aggressive';
-  onClick: () => void;
-}) => {
-  const theme = useTheme();
-  const cfg = {
-    off: {
-      label: 'NC Off',
-      color: theme.palette.text.disabled,
-      bg: alpha(theme.palette.text.disabled, 0.08),
-    },
-    basic: {
-      label: 'NC On',
-      color: theme.palette.success.main,
-      bg: alpha(theme.palette.success.main, 0.1),
-    },
-    aggressive: {
-      label: 'NC Max',
-      color: theme.palette.primary.main,
-      bg: alpha(theme.palette.primary.main, 0.12),
-    },
-  }[mode];
-
-  return (
-    <Tooltip title={`Noise cancellation: ${mode} — click to cycle`} arrow>
-      <Box
-        onClick={onClick}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.4,
-          bgcolor: cfg.bg,
-          border: `1px solid ${alpha(cfg.color, 0.35)}`,
-          borderRadius: '8px',
-          px: 0.85,
-          py: 0.25,
-          cursor: 'pointer',
-          transition: 'opacity 0.15s',
-          '&:hover': { opacity: 0.75 },
-        }}
-      >
-        <GraphicEqIcon sx={{ fontSize: 11, color: cfg.color }} />
-        <Typography
-          sx={{ fontSize: '0.58rem', fontWeight: 800, color: cfg.color, letterSpacing: 0.6 }}
-        >
-          {cfg.label}
-        </Typography>
-      </Box>
-    </Tooltip>
-  );
-};
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) {
@@ -343,8 +285,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     isMicMuted,
     connectionStatus,
     onClickMicrophone,
-    ncMode,
-    toggleNC,
     screenShareWebRTC, // ← from useWebRTC — owns all screen-share PCs & remote streams
   } = webRTC;
 
@@ -537,7 +477,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               ·
             </Typography>
-            <NoiseBadge mode={ncMode} onClick={toggleNC} />
           </Box>
         </Box>
 
