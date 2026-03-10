@@ -1,8 +1,7 @@
 import type { UserType } from 'src/types/type-user';
 import type { Message, ReactionMessageData } from 'src/types/type-room';
 
-import { useCallback } from 'react';
-import { useParams } from 'react-router';
+import { useEffect } from 'react';
 
 import { useMessagesTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -10,7 +9,6 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 // ----------------------------------------------------------------------
 
 export function useSocialSocketListeners() {
-  const roomId = useParams().roomId as string;
 
   // Room management
   const {
@@ -24,9 +22,9 @@ export function useSocialSocketListeners() {
   const { socket, on, off } = useSocketContext();
 
   // WebRTC and socket event handlers
-  const setupSocialSocketListeners: () => () => void = useCallback(() => {
+  useEffect(() => {
     if (!socket) {
-      return () => {};
+      return () => { };
     }
 
     // Message handlers
@@ -119,6 +117,14 @@ export function useSocialSocketListeners() {
       deleteIndividualMessage({ ...data, userId: data.receiverId || '' });
     };
 
+    off('receive-individual-message', handleIndividualMessage);
+    off('receive-individual-message-self', handleIndividualMessageSelf);
+    off('receive-edit-individual-message', handleEditedMessage);
+    off('receive-edit-individual-message-self', handleEditedMessageSelf);
+    off('receive-delete-individual-message', handleDeleteIndividualMessage);
+    off('receive-delete-individual-message-self', handleDeleteIndividualMessageSelf);
+    off('receive-reaction-individual-message', handleReactionMessage);
+
     // Register listeners
     on('receive-individual-message', handleIndividualMessage);
     on('receive-individual-message-self', handleIndividualMessageSelf);
@@ -139,7 +145,5 @@ export function useSocialSocketListeners() {
       off('receive-reaction-individual-message', handleReactionMessage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, roomId, addIndividualMessage, reactionIndividualMessage]);
-
-  return { setupSocialSocketListeners };
+  }, [socket, addIndividualMessage, reactionIndividualMessage]);
 }

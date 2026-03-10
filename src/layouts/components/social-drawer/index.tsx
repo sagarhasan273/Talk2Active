@@ -36,6 +36,7 @@ import { CustomTabs } from 'src/components/custom-tabs';
 import { AvatarUser } from 'src/components/avatar-user';
 
 import { SocialItem } from './social-item';
+import { useSocialSocketListeners } from './social-listeners';
 
 // ----------------------------------------------------------------------
 
@@ -62,6 +63,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const smDown = useResponsive('down', 'sm');
 
   const drawer = useBoolean();
+
+  useSocialSocketListeners();
 
   const user = useSelector(selectAccount);
   const {
