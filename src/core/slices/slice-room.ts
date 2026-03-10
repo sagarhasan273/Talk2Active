@@ -7,8 +7,6 @@ import { createSlice } from '@reduxjs/toolkit';
 import { useRef, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { CONFIG } from 'src/config-global';
-
 import type { RootState, UserVoiceStateProps } from '../types';
 
 // Define auth state interface
@@ -34,8 +32,8 @@ const initialState: RoomState = {
     hasJoined: false,
     isMicMuted: false,
     isDeafened: false,
-    volume: CONFIG.defaultOutputGain,
-    micGain: CONFIG.defaultMicGain,
+    micGain: 50,
+    volume: 100,
     isScreenSharing: false,
     statue: 'online',
     userVolumes: {},

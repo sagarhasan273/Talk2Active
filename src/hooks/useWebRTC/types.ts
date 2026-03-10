@@ -8,7 +8,6 @@ export interface AudioSettings {
   echoCancellation: boolean;
   noiseSuppression: boolean;
   autoGainControl: boolean;
-  echoCancellationType?: 'browser' | 'system' | 'disabled';
   noiseSuppressionLevel?: number;
   highPassFilter?: boolean;
   isMicMuted: boolean;
@@ -48,19 +47,19 @@ export interface ConnectionStatus {
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  microphoneGain: 80,
+  microphoneGain: 20,
   outputGain: 100,
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  echoCancellationType: 'browser',
-  noiseSuppressionLevel: 70,
+  noiseSuppressionLevel: 100,
   highPassFilter: true,
   isMicMuted: false,
   isDeafened: false,
 };
 
-export type NCMode = 'off' | 'basic' | 'aggressive';
+// NCMode: 'off' disables all WebAudio processing, 'basic' applies HPF + light compressor
+export type NCMode = 'off' | 'basic';
 
 export type UseWebRTCReturn = {
   // ── Streams ───────────────────────────────────────────────────────────────
@@ -78,15 +77,7 @@ export type UseWebRTCReturn = {
   peerConnections: React.MutableRefObject<PeerConnectionState>;
 
   // ── Screen share ──────────────────────────────────────────────────────────
-  // The entire screen share hook is surfaced here so:
-  //   - VoiceRoomBodyView can call startSharing / stopSharing and read remoteScreenStreams
-  //   - useChatSocketListeners can wire the three socket handlers
   screenShareWebRTC: UseScreenShareWebRTCReturn;
-
-  // ── Noise cancellation ────────────────────────────────────────────────────
-  ncMode: NCMode;
-  setNCMode: (mode: NCMode) => Promise<void>;
-  toggleNC: () => void;
 
   // ── Local audio controls ──────────────────────────────────────────────────
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;

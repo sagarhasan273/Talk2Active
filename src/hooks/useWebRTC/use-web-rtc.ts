@@ -29,9 +29,6 @@ export function useWebRTC(): UseWebRTCReturn {
     localStream,
     localStreamRef,
     isMicMuted,
-    ncMode,
-    setNCMode,
-    toggleNC,
     getAudioContext,
     initializeMicrophone,
     toggleMicrophone,
@@ -125,10 +122,6 @@ export function useWebRTC(): UseWebRTCReturn {
 
     // Screen share — passed through so VoiceRoomBodyView and socket listeners can use it
     screenShareWebRTC,
-
-    ncMode,
-    setNCMode,
-    toggleNC,
 
     initializeMicrophone,
     toggleMicrophone,
