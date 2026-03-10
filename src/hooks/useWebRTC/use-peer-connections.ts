@@ -1,6 +1,8 @@
 // src/hooks/useWebRTC/usePeerConnections.ts
 
-import { useRef, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
+
+import { useIceServersQuery } from 'src/core/apis/api-inventory';
 
 import type { ConnectionStatus, PeerConnectionState } from './types';
 
@@ -11,13 +13,9 @@ interface UsePeerConnectionsProps {
   onConnectionStateChange?: (socketId: string, state: ConnectionStatus[string]) => void;
 }
 
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-  ],
+// Fallback STUN servers in case Xirsys fails
+const FALLBACK_ICE_SERVERS = {
+  iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
   iceCandidatePoolSize: 10,
 };
 
@@ -27,13 +25,44 @@ export function usePeerConnections({
   onRemoteStreamRemoved,
   onConnectionStateChange,
 }: UsePeerConnectionsProps) {
+  // Fetch ICE servers from your backend (which fetches from Xirsys)
+  const { data: iceServersData, isLoading, isError } = useIceServersQuery();
+
+  // Log the fetched ICE servers for debugging
+  useEffect(() => {
+    if (iceServersData) {
+      console.log('✅ Fetched ICE servers from Xirsys:', iceServersData);
+
+      // Check if credentials are included
+      if (iceServersData?.iceServers?.[0]?.username) {
+        console.log('✅ TURN credentials received');
+      } else {
+        console.warn('⚠️ No TURN credentials received, using STUN only');
+      }
+    }
+    if (isError) {
+      console.error('❌ Failed to fetch ICE servers, using fallback STUN');
+    }
+  }, [iceServersData, isError]);
+
   const peerConnectionsRef = useRef<PeerConnectionState>({});
   const iceCandidatesQueue = useRef<{ [socketId: string]: RTCIceCandidateInit[] }>({});
   const pendingOffersRef = useRef<{ [socketId: string]: boolean }>({});
-  // FIX: track socketRef per peer so ICE callbacks always have fresh socket
   const socketRefs = useRef<{ [socketId: string]: any }>({});
-  // FIX: connection timeout handles to detect stuck "connecting" state
   const connectionTimeouts = useRef<{ [socketId: string]: NodeJS.Timeout }>({});
+
+  // Get the appropriate ICE servers configuration
+  const getIceConfiguration = useCallback(() => {
+    // If we have Xirsys data and it's valid, use it
+    if (iceServersData?.iceServers?.[0]) {
+      return {
+        iceServers: iceServersData.iceServers,
+        iceCandidatePoolSize: iceServersData.iceCandidatePoolSize || 10,
+      };
+    }
+    // Otherwise use fallback STUN
+    return FALLBACK_ICE_SERVERS;
+  }, [iceServersData]);
 
   const clearConnectionTimeout = useCallback((socketId: string) => {
     if (connectionTimeouts.current[socketId]) {
@@ -42,7 +71,6 @@ export function usePeerConnections({
     }
   }, []);
 
-  // FIX: ICE restart when stuck in "connecting"
   const attemptIceRestart = useCallback(
     async (socketId: string) => {
       const pc = peerConnectionsRef.current[socketId];
@@ -56,7 +84,6 @@ export function usePeerConnections({
         socket.emit('webrtc-offer', { offer, target: socketId });
       } catch (err) {
         console.error(`[${socketId}] ICE restart failed:`, err);
-        // Give up and notify disconnected
         onConnectionStateChange?.(socketId, 'failed');
         onRemoteStreamRemoved(socketId);
       }
@@ -96,7 +123,11 @@ export function usePeerConnections({
 
       clearConnectionTimeout(socketId);
 
-      const pc = new RTCPeerConnection(ICE_SERVERS);
+      // Get the latest ICE configuration
+      const iceConfig = getIceConfiguration();
+      console.log(`[${socketId}] Creating peer connection with:`, iceConfig);
+
+      const pc = new RTCPeerConnection(iceConfig);
       socketRefs.current[socketId] = socket;
 
       // Add all local tracks
@@ -106,24 +137,22 @@ export function usePeerConnections({
         });
       }
 
-      // FIX: Handle track event properly — collect all tracks into one stream
+      // Handle track event
       const receivedStreams: { [streamId: string]: MediaStream } = {};
       pc.ontrack = (event) => {
         const remoteStream = event.streams?.[0];
         if (!remoteStream) {
-          // Fallback: build stream manually from track
           const fallbackStream = new MediaStream([event.track]);
           onRemoteStreamAdded(socketId, fallbackStream);
           return;
         }
-        // Deduplicate: only call onRemoteStreamAdded once per stream
         if (!receivedStreams[remoteStream.id]) {
           receivedStreams[remoteStream.id] = remoteStream;
           onRemoteStreamAdded(socketId, remoteStream);
         }
       };
 
-      // ICE candidate — emit immediately, no batching needed
+      // ICE candidate handler
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           socket.emit('webrtc-ice-candidate', {
@@ -133,13 +162,12 @@ export function usePeerConnections({
         }
       };
 
-      // FIX: Use iceConnectionState for more granular status (connectionState is less reliable)
+      // ICE connection state handler
       pc.oniceconnectionstatechange = () => {
         const iceState = pc.iceConnectionState;
         console.log(`[${socketId}] ICE state: ${iceState}`);
 
         if (iceState === 'checking') {
-          // FIX: Start timeout — if still "checking" after 12s, trigger ICE restart
           clearConnectionTimeout(socketId);
           connectionTimeouts.current[socketId] = setTimeout(() => {
             if (
@@ -158,7 +186,6 @@ export function usePeerConnections({
         }
 
         if (iceState === 'disconnected') {
-          // Give it 5s to recover before restarting
           clearConnectionTimeout(socketId);
           connectionTimeouts.current[socketId] = setTimeout(() => {
             if (peerConnectionsRef.current[socketId]?.iceConnectionState === 'disconnected') {
@@ -204,11 +231,24 @@ export function usePeerConnections({
       onConnectionStateChange,
       clearConnectionTimeout,
       attemptIceRestart,
+      getIceConfiguration, // Added dependency
     ]
   );
 
   const createOffer = useCallback(
     async (targetSocketId: string, socket: any) => {
+      // Check if ICE servers are still loading
+      if (isLoading) {
+        console.log(`[${targetSocketId}] Waiting for ICE servers to load...`);
+        // Wait a bit and retry
+        setTimeout(() => {
+          if (!pendingOffersRef.current[targetSocketId]) {
+            createOffer(targetSocketId, socket);
+          }
+        }, 1000);
+        return;
+      }
+
       if (pendingOffersRef.current[targetSocketId]) {
         console.log(`[${targetSocketId}] Offer already pending, skipping`);
         return;
@@ -229,22 +269,32 @@ export function usePeerConnections({
         if (pc && pc.connectionState !== 'closed') pc.close();
         delete peerConnectionsRef.current[targetSocketId];
       } finally {
-        // FIX: shorter cooldown — original 1000ms caused re-join issues
         setTimeout(() => {
           delete pendingOffersRef.current[targetSocketId];
         }, 500);
       }
     },
-    [createPeerConnection]
+    [createPeerConnection, isLoading]
   );
 
   const handleOffer = useCallback(
     async (data: any, socket: any) => {
       const { offer, sender } = data;
+
+      // Check if ICE servers are still loading
+      if (isLoading) {
+        console.log(`[${sender}] Waiting for ICE servers to load before handling offer...`);
+        // Queue the offer to handle later
+        setTimeout(() => {
+          handleOffer(data, socket);
+        }, 1000);
+        return;
+      }
+
       try {
         const pc = createPeerConnection(sender, socket);
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        await processIceQueue(sender); // FIX: drain queue before answering
+        await processIceQueue(sender);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('webrtc-answer', { answer, target: sender });
@@ -252,7 +302,7 @@ export function usePeerConnections({
         console.error(`[${sender}] Handle offer error:`, error);
       }
     },
-    [createPeerConnection, processIceQueue]
+    [createPeerConnection, processIceQueue, isLoading]
   );
 
   const handleAnswer = useCallback(
@@ -265,7 +315,6 @@ export function usePeerConnections({
       }
 
       try {
-        // FIX: guard against calling setRemoteDescription on wrong state
         if (pc.signalingState !== 'have-local-offer') {
           console.warn(
             `[${sender}] Unexpected signalingState: ${pc.signalingState} — skipping answer`
@@ -273,7 +322,7 @@ export function usePeerConnections({
           return;
         }
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        await processIceQueue(sender); // FIX: drain queued candidates after remote desc set
+        await processIceQueue(sender);
       } catch (error) {
         console.error(`[${sender}] Handle answer error:`, error);
       }
@@ -286,7 +335,6 @@ export function usePeerConnections({
     const pc = peerConnectionsRef.current[sender];
 
     if (!pc) {
-      // Queue even if pc not ready yet
       if (!iceCandidatesQueue.current[sender]) iceCandidatesQueue.current[sender] = [];
       iceCandidatesQueue.current[sender].push(candidate);
       return;
@@ -299,14 +347,12 @@ export function usePeerConnections({
         console.warn(`[${sender}] addIceCandidate error:`, e);
       }
     } else {
-      // Queue until remote description is set
       if (!iceCandidatesQueue.current[sender]) iceCandidatesQueue.current[sender] = [];
       iceCandidatesQueue.current[sender].push(candidate);
     }
   }, []);
 
   const cleanup = useCallback(() => {
-    // Clear all timeouts
     Object.keys(connectionTimeouts.current).forEach(clearConnectionTimeout);
 
     Object.entries(peerConnectionsRef.current).forEach(([, pc]) => {
@@ -330,5 +376,6 @@ export function usePeerConnections({
     handleAnswer,
     handleIceCandidate,
     cleanup,
+    isIceServersLoading: isLoading,
   };
 }
