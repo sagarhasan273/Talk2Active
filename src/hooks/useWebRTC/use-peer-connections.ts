@@ -28,16 +28,6 @@ export function usePeerConnections({
 }: UsePeerConnectionsProps) {
   const { data: iceServersData, isLoading, isError } = useIceServersQuery();
 
-  useEffect(() => {
-    if (iceServersData) {
-      console.log('✅ ICE servers fetched:', iceServersData);
-      if (!iceServersData?.iceServers?.[0]?.username) {
-        console.warn('⚠️ No TURN credentials — STUN only');
-      }
-    }
-    if (isError) console.error('❌ ICE server fetch failed — using fallback STUN');
-  }, [iceServersData, isError]);
-
   const peerConnectionsRef = useRef<PeerConnectionState>({});
   const iceCandidatesQueue = useRef<{ [socketId: string]: RTCIceCandidateInit[] }>({});
   const pendingOffersRef = useRef<{ [socketId: string]: boolean }>({});
@@ -372,6 +362,15 @@ export function usePeerConnections({
     pendingOffersRef.current = {};
     socketRefs.current = {};
   }, [clearConnectionTimeout]);
+
+  useEffect(() => {
+    if (iceServersData) {
+      if (!iceServersData?.iceServers?.[0]?.username) {
+        console.warn('⚠️ No TURN credentials — STUN only');
+      }
+    }
+    if (isError) console.error('❌ ICE server fetch failed — using fallback STUN');
+  }, [iceServersData, isError]);
 
   return {
     peerConnections: peerConnectionsRef,
