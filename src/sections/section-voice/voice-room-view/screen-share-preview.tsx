@@ -67,7 +67,8 @@ export function ScreenSharePreviewPanel({
         <Box
           sx={{
             width: '100%',
-            borderRadius: 2,
+            height: 1,
+            borderRadius: 1,
             overflow: 'hidden',
             position: 'relative',
             backgroundColor: '#000',

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // useScreenShare
@@ -13,12 +13,14 @@ export type UseScreenShareReturn = {
   error: string | null;
 };
 
-export function useScreenShare(
+export function useScreenView(
   onStreamReady?: (stream: MediaStream | null) => void
 ): UseScreenShareReturn {
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
   const isSupported =
     typeof navigator !== 'undefined' &&
@@ -26,13 +28,12 @@ export function useScreenShare(
     'getDisplayMedia' in navigator.mediaDevices;
 
   const stopScreenShare = useCallback(() => {
-    if (screenStream) {
-      screenStream.getTracks().forEach((t) => t.stop());
-    }
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
     setScreenStream(null);
     setIsSharing(false);
     onStreamReady?.(null);
-  }, [screenStream, onStreamReady]);
+  }, [onStreamReady]);
 
   const startScreenShare = useCallback(async () => {
     if (!isSupported) {
@@ -46,6 +47,7 @@ export function useScreenShare(
         audio: true,
       });
 
+      screenStreamRef.current = stream;
       stream.getVideoTracks()[0].addEventListener('ended', () => stopScreenShare());
 
       setScreenStream(stream);

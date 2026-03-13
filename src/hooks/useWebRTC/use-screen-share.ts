@@ -2,14 +2,6 @@ import { useRef, useState, useCallback } from 'react';
 
 import type { PeerConnectionState } from './types';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// useScreenShareWebRTC
-//
-// Owns a SEPARATE RTCPeerConnection map from the audio PCs in usePeerConnections.
-// Matches the backend's dedicated signaling events:
-//   webrtc-screen-share-offer / webrtc-screen-share-answer / webrtc-screen-share-ice
-// ─────────────────────────────────────────────────────────────────────────────
-
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -21,61 +13,45 @@ const ICE_SERVERS: RTCConfiguration = {
 };
 
 export type UseScreenShareWebRTCReturn = {
-  /** Remote screen streams keyed by sharer socketId — pass to <video srcObject> */
   remoteScreenStreams: { [socketId: string]: MediaStream };
-  /** Sharer: call after getDisplayMedia resolves */
-  startSharing: (stream: MediaStream, socket: any, participantSocketIds: string[]) => Promise<void>;
-  /** Sharer: call to stop */
-  stopSharing: (socket: any, participantSocketIds: string[]) => void;
-  /** Wire to socket.on('webrtc-screen-share-offer') */
+  isSharing: boolean;
+  startSharing: (
+    stream: MediaStream,
+    socket: any,
+    participantSocketIds: string[],
+    roomId: string
+  ) => Promise<void>;
+  stopSharing: (socket: any, participantSocketIds: string[], roomId: string) => void;
   handleScreenShareOffer: (
     data: { offer: RTCSessionDescriptionInit | null; sender: string; isSharing?: boolean },
     socket: any
   ) => Promise<void>;
-  /** Wire to socket.on('webrtc-screen-share-answer') */
   handleScreenShareAnswer: (data: {
     answer: RTCSessionDescriptionInit;
     sender: string;
   }) => Promise<void>;
-  /** Wire to socket.on('webrtc-screen-share-ice') */
   handleScreenShareIce: (data: { candidate: RTCIceCandidateInit; sender: string }) => Promise<void>;
+  handleScreenShareActive: (data: { sharerSocketId: string }, socket: any) => void;
+  handleScreenShareRequestedBy: (data: { requesterSocketId: string }, socket: any) => Promise<void>;
+  /** Imperatively close all PCs and clear state — call on room leave */
+  cleanup: () => void;
 };
 
-export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
+export function useScreenShare(): UseScreenShareWebRTCReturn {
   const [remoteScreenStreams, setRemoteScreenStreams] = useState<{
     [socketId: string]: MediaStream;
   }>({});
+  const [isSharing, setIsSharing] = useState(false);
 
   const screenPCsRef = useRef<PeerConnectionState>({});
   const iceQueuesRef = useRef<{ [socketId: string]: RTCIceCandidateInit[] }>({});
+  const localScreenStreamRef = useRef<MediaStream | null>(null);
+  const socketRef = useRef<any>(null);
+  const roomIdRef = useRef<string | null>(null);
+  // FIX: track current participants so videoTrack.onended always has the live list
+  const participantsRef = useRef<string[]>([]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-
-  const closePC = useCallback((socketId: string) => {
-    const pc = screenPCsRef.current[socketId];
-    if (!pc) return;
-    pc.ontrack = null;
-    pc.onicecandidate = null;
-    pc.onconnectionstatechange = null;
-    pc.oniceconnectionstatechange = null;
-    if (pc.connectionState !== 'closed') pc.close();
-    delete screenPCsRef.current[socketId];
-  }, []);
-
-  const drainIceQueue = useCallback(async (socketId: string) => {
-    const pc = screenPCsRef.current[socketId];
-    const queue = iceQueuesRef.current[socketId];
-    if (!pc?.remoteDescription || !queue?.length) return;
-    const batch = [...queue];
-    iceQueuesRef.current[socketId] = [];
-    await Promise.all(
-      batch.map((c) =>
-        pc
-          .addIceCandidate(new RTCIceCandidate(c))
-          .catch((e: any) => console.warn(`[screen-share][${socketId}] queued ICE error:`, e))
-      )
-    );
-  }, []);
 
   const removeRemoteStream = useCallback((socketId: string) => {
     setRemoteScreenStreams((prev) => {
@@ -85,10 +61,33 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
     });
   }, []);
 
-  /**
-   * Creates a fresh RTCPeerConnection for screen share.
-   * onTrack is only provided on the viewer side — sharer doesn't receive video back.
-   */
+  // FIX: also delete ICE queue entry on close to prevent memory leak
+  const closePC = useCallback((socketId: string) => {
+    const pc = screenPCsRef.current[socketId];
+    if (!pc) return;
+    pc.ontrack = null;
+    pc.onicecandidate = null;
+    pc.onconnectionstatechange = null;
+    pc.oniceconnectionstatechange = null;
+    if (pc.connectionState !== 'closed') pc.close();
+    delete screenPCsRef.current[socketId];
+    delete iceQueuesRef.current[socketId]; // FIX: free ICE queue
+  }, []);
+
+  const drainIceQueue = useCallback(async (socketId: string) => {
+    const pc = screenPCsRef.current[socketId];
+    const queue = iceQueuesRef.current[socketId];
+    if (!pc?.remoteDescription || !queue?.length) return;
+    const batch = queue.splice(0); // mutate in place, avoids re-alloc
+    await Promise.all(
+      batch.map((c) =>
+        pc
+          .addIceCandidate(new RTCIceCandidate(c))
+          .catch((e: any) => console.warn(`[screen-share][${socketId}] queued ICE error:`, e))
+      )
+    );
+  }, []);
+
   const createScreenPC = useCallback(
     (socketId: string, socket: any, onTrack?: (stream: MediaStream) => void): RTCPeerConnection => {
       closePC(socketId);
@@ -97,9 +96,7 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
       screenPCsRef.current[socketId] = pc;
 
       pc.onicecandidate = ({ candidate }) => {
-        if (candidate) {
-          socket.emit('webrtc-screen-share-ice', { candidate, target: socketId });
-        }
+        if (candidate) socket.emit('webrtc-screen-share-ice', { candidate, target: socketId });
       };
 
       if (onTrack) {
@@ -111,7 +108,7 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
 
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
-        console.log(`[screen-share][${socketId}] state: ${state}`);
+        console.log(`[screen-share][${socketId}] connection: ${state}`);
         if (state === 'failed' || state === 'closed') {
           closePC(socketId);
           removeRemoteStream(socketId);
@@ -119,8 +116,7 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
       };
 
       pc.oniceconnectionstatechange = () => {
-        const iceState = pc.iceConnectionState;
-        if (iceState === 'failed') {
+        if (pc.iceConnectionState === 'failed') {
           console.warn(`[screen-share][${socketId}] ICE failed`);
           closePC(socketId);
           removeRemoteStream(socketId);
@@ -132,29 +128,75 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
     [closePC, removeRemoteStream]
   );
 
+  // ── Full teardown — used by stopSharing and unmount cleanup ───────────────
+
+  const teardown = useCallback(
+    (socket: any | null, participantSocketIds: string[], roomId: string | null) => {
+      participantSocketIds.forEach((socketId) => {
+        if (socket) {
+          socket.emit('webrtc-screen-share-offer', {
+            target: socketId,
+            isSharing: false,
+            offer: null,
+            roomId,
+          });
+        }
+        closePC(socketId);
+      });
+
+      localScreenStreamRef.current = null;
+      socketRef.current = null;
+      roomIdRef.current = null;
+      participantsRef.current = [];
+      setIsSharing(false);
+    },
+    [closePC]
+  );
+
   // ── Sharer side ───────────────────────────────────────────────────────────
 
+  const stopSharing = useCallback(
+    (socket: any, participantSocketIds: string[], roomId: string) => {
+      teardown(socket, participantSocketIds, roomId);
+    },
+    [teardown]
+  );
+
   const startSharing = useCallback(
-    async (stream: MediaStream, socket: any, participantSocketIds: string[]) => {
+    async (stream: MediaStream, socket: any, participantSocketIds: string[], roomId: string) => {
       const videoTrack = stream.getVideoTracks()[0];
       if (!videoTrack) {
         console.error('[screen-share] No video track in stream');
         return;
       }
 
+      localScreenStreamRef.current = stream;
+      socketRef.current = socket;
+      roomIdRef.current = roomId;
+      participantsRef.current = [...participantSocketIds]; // FIX: keep live list
+      setIsSharing(true);
+
+      // FIX: onended reads from refs — always has current socket + participants
+      videoTrack.onended = () => {
+        teardown(socketRef.current, participantsRef.current, roomIdRef.current);
+      };
+
       await Promise.all(
         participantSocketIds.map(async (socketId) => {
           try {
-            const pc = createScreenPC(socketId, socket); // no onTrack — sharer doesn't receive
-
+            const pc = createScreenPC(socketId, socket);
             pc.addTrack(videoTrack, stream);
-            // Include system audio if captured
             stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream));
 
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
-            socket.emit('webrtc-screen-share-offer', { offer, target: socketId, isSharing: true });
+            socket.emit('webrtc-screen-share-offer', {
+              offer,
+              target: socketId,
+              isSharing: true,
+              roomId,
+            });
           } catch (err) {
             console.error(`[screen-share] offer to ${socketId} failed:`, err);
             closePC(socketId);
@@ -162,32 +204,63 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
         })
       );
     },
+    [createScreenPC, closePC, teardown]
+    // FIX: stopSharing removed from deps — teardown via refs instead
+  );
+
+  const handleScreenShareRequestedBy = useCallback(
+    async (data: { requesterSocketId: string }, socket: any) => {
+      const stream = localScreenStreamRef.current;
+      if (!stream) {
+        console.warn('[screen-share] handleScreenShareRequestedBy: not sharing');
+        return;
+      }
+
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack) return;
+
+      const { requesterSocketId } = data;
+
+      // FIX: add late joiner to tracked participants so teardown includes them
+      if (!participantsRef.current.includes(requesterSocketId)) {
+        participantsRef.current = [...participantsRef.current, requesterSocketId];
+      }
+
+      try {
+        const pc = createScreenPC(requesterSocketId, socket);
+        pc.addTrack(videoTrack, stream);
+        stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream));
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        socket.emit('webrtc-screen-share-offer', {
+          offer,
+          target: requesterSocketId,
+          isSharing: true,
+          roomId: roomIdRef.current,
+        });
+      } catch (err) {
+        console.error(`[screen-share] late joiner offer to ${requesterSocketId} failed:`, err);
+        closePC(requesterSocketId);
+      }
+    },
     [createScreenPC, closePC]
   );
 
-  const stopSharing = useCallback(
-    (socket: any, participantSocketIds: string[]) => {
-      participantSocketIds.forEach((socketId) => {
-        socket.emit('webrtc-screen-share-offer', {
-          target: socketId,
-          isSharing: false,
-          offer: null,
-        });
-        closePC(socketId);
-      });
-    },
-    [closePC]
-  );
-
   // ── Viewer side ───────────────────────────────────────────────────────────
+
+  const handleScreenShareActive = useCallback((data: { sharerSocketId: string }, socket: any) => {
+    console.log(`[screen-share] Active share from ${data.sharerSocketId} — requesting`);
+    socket.emit('request-screen-share', { target: data.sharerSocketId });
+  }, []);
 
   const handleScreenShareOffer = useCallback(
     async (
       data: { offer: RTCSessionDescriptionInit | null; sender: string; isSharing?: boolean },
       socket: any
     ) => {
-      // Sharer stopped — tear down viewer side
-      if (data.isSharing === false || !data.offer) {
+      if (!data.offer) {
         closePC(data.sender);
         removeRemoteStream(data.sender);
         return;
@@ -253,12 +326,30 @@ export function useScreenShareWebRTC(): UseScreenShareWebRTCReturn {
     []
   );
 
+  // ── Cleanup — close all open PCs, clear all state ────────────────────────
+  // Exposed for imperative call on room leave, also runs on unmount.
+
+  const cleanup = useCallback(() => {
+    Object.keys(screenPCsRef.current).forEach(closePC);
+    iceQueuesRef.current = {};
+    localScreenStreamRef.current = null;
+    socketRef.current = null;
+    roomIdRef.current = null;
+    participantsRef.current = [];
+    setRemoteScreenStreams({});
+    setIsSharing(false);
+  }, [closePC]);
+
   return {
     remoteScreenStreams,
+    isSharing,
     startSharing,
     stopSharing,
     handleScreenShareOffer,
     handleScreenShareAnswer,
     handleScreenShareIce,
+    handleScreenShareActive,
+    handleScreenShareRequestedBy,
+    cleanup,
   };
 }

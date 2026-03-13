@@ -56,12 +56,13 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     handleOffer,
     handleAnswer,
     handleIceCandidate,
+    handleScreenShareOffer,
+    handleScreenShareAnswer,
+    handleScreenShareIce,
+    handleScreenShareActive,
+    handleScreenShareRequestedBy,
     cleanup: cleanupWebRTC,
-    screenShareWebRTC,
   } = webRTC;
-
-  const { handleScreenShareOffer, handleScreenShareAnswer, handleScreenShareIce } =
-    screenShareWebRTC;
 
   const { socket, on, off } = useSocketContext();
   const [leaveRoom] = useLeaveRoomMutation();
@@ -111,8 +112,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       }
     };
 
-    const handleUserLeft = (data: { socketId: string }) => {
-      updateParticipant({ socketId: data.socketId, hasJoin: false });
+    const handleUserLeft = (data: { userId: string }) => {
+      updateParticipant({ userId: data.userId, hasJoin: false });
     };
 
     const handleAudioToggled = (data: { socketId: string; isMuted: boolean }) => {
@@ -249,6 +250,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     const onScreenShareOffer = (data: any) => handleScreenShareOffer(data, socket);
     const onScreenShareAnswer = (data: any) => handleScreenShareAnswer(data);
     const onScreenShareIce = (data: any) => handleScreenShareIce(data);
+    const onScreenShareActive = (data: any) => handleScreenShareActive(data, socket);
+    const onScreenShareRequestedBy = (data: any) => handleScreenShareRequestedBy(data, socket);
 
     // ── Single event map — register & cleanup in one place ────────────────
 
@@ -276,6 +279,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       ['webrtc-screen-share-offer', onScreenShareOffer],
       ['webrtc-screen-share-answer', onScreenShareAnswer],
       ['webrtc-screen-share-ice', onScreenShareIce],
+      ['screen-share-active', onScreenShareActive],
+      ['screen-share-requested-by', onScreenShareRequestedBy],
     ];
 
     events.forEach(([event, handler]) => off(event, handler));

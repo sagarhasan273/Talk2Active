@@ -524,7 +524,6 @@ export function VoiceUserCard({
                 }}
               >
                 {name}
-                {isLocal && ' (You)'}
               </Typography>
             </Tooltip>
           </Box>

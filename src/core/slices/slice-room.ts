@@ -60,16 +60,16 @@ export const roomSlice = createSlice({
     },
 
     addParticipant: (state, action: PayloadAction<Participant>) => {
-      state.participants[action.payload.socketId] = action.payload;
+      state.participants[action.payload.userId] = action.payload;
     },
 
     updateParticipant: (state, action: PayloadAction<Partial<Participant>>) => {
-      if (!action.payload?.socketId) {
+      if (!action.payload?.userId) {
         return;
       }
 
-      state.participants[action.payload.socketId] = {
-        ...state.participants[action.payload.socketId],
+      state.participants[action.payload.userId] = {
+        ...state.participants[action.payload.userId],
         ...action.payload,
       };
     },
@@ -106,15 +106,12 @@ export const roomSlice = createSlice({
       state.userVoiceState = { ...state.userVoiceState, ...action.payload };
     },
 
-    updateUserVolumesState: (
-      state,
-      action: PayloadAction<{ socketId: string; volume: number }>
-    ) => {
+    updateUserVolumesState: (state, action: PayloadAction<{ userId: string; volume: number }>) => {
       state.userVoiceState = {
         ...state.userVoiceState,
         userVolumes: {
           ...state.userVoiceState.userVolumes,
-          [action.payload.socketId]: action.payload.volume,
+          [action.payload.userId]: action.payload.volume,
         },
       };
     },
@@ -270,7 +267,7 @@ export const useRoomTools = () => {
       resetParticipants: () => dispatch(resetParticipants()),
       updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
         dispatch(updateUserVoiceState(payload)),
-      updateUserVolumesState: (payload: { socketId: string; volume: number }) =>
+      updateUserVolumesState: (payload: { userId: string; volume: number }) =>
         dispatch(updateUserVolumesState(payload)),
       addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
       editChatRoomMessage: (payload: {
