@@ -52,6 +52,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   const { roomId } = userVoiceState;
 
   const {
+    removePeer,
     createOffer,
     handleOffer,
     handleAnswer,
@@ -112,8 +113,9 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       }
     };
 
-    const handleUserLeft = (data: { userId: string }) => {
+    const handleUserLeft = (data: { userId: string; socketId: string }) => {
       updateParticipant({ userId: data.userId, hasJoin: false });
+      removePeer(data.socketId);
     };
 
     const handleAudioToggled = (data: { socketId: string; isMuted: boolean }) => {

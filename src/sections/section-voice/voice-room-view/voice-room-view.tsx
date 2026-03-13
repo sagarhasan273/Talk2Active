@@ -24,7 +24,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
   const webRTC = useWebRTCContext();
 
   const { hasJoined, isMicMuted, roomId } = userVoiceState;
-  const { initializeMicrophone, cleanup: cleanupWebRTC } = webRTC;
+  const { initializeMicrophone, cleanup: cleanupWebRTC, removePeer } = webRTC;
 
   const [joinRoom] = useJoinRoomMutation();
   const [leaveRoom] = useLeaveRoomMutation();
@@ -110,7 +110,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
       cleanupWebRTC();
 
       updateUserVoiceState({ hasJoined: false, roomId: null });
-
+      if (socket?.id) removePeer(socket.id);
       // Reset local state
       resetParticipants();
     } else {

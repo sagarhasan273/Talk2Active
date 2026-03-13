@@ -11,7 +11,9 @@ import { usePeerConnections } from './use-peer-connections';
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 
 export function useWebRTC(): UseWebRTCReturn {
-  const { removeParticipant } = useRoomTools();
+  const { userVoiceState, removeParticipant } = useRoomTools();
+
+  const { roomId } = userVoiceState;
 
   const {
     audioSettings,
@@ -67,6 +69,7 @@ export function useWebRTC(): UseWebRTCReturn {
     handleIceCandidate,
     cleanup: cleanupPeerConnections,
   } = usePeerConnections({
+    roomId,
     localStreamRef,
     onRemoteStreamAdded: addRemoteStream,
     onRemoteStreamRemoved: (socketId) => {
@@ -113,7 +116,6 @@ export function useWebRTC(): UseWebRTCReturn {
   return {
     remoteStreams,
     localStream,
-
     isMicMuted,
     isDeafened: audioSettings.isDeafened,
     audioSettings,

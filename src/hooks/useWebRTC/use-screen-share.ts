@@ -33,7 +33,17 @@ export type UseScreenShareWebRTCReturn = {
   handleScreenShareIce: (data: { candidate: RTCIceCandidateInit; sender: string }) => Promise<void>;
   handleScreenShareActive: (data: { sharerSocketId: string }, socket: any) => void;
   handleScreenShareRequestedBy: (data: { requesterSocketId: string }, socket: any) => Promise<void>;
-  /** Imperatively close all PCs and clear state — call on room leave */
+  /**
+   * Remove a single peer's connection — call when server emits `user-left`.
+   *
+   * Different from the other two:
+   *   stopSharing()  — sharer signals ALL viewers to stop, then resets sharer state
+   *   cleanup()      — nukes every PC (room leave / unmount)
+   *   removePeer()   — targeted teardown for ONE departed peer, no socket emit needed
+   *                    (they're already gone), works from both sharer and viewer side
+   */
+  removePeer: (socketId: string) => void;
+  /** Close all PCs and reset all state. Call on room leave or unmount. */
   cleanup: () => void;
 };
 
@@ -48,7 +58,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
   const localScreenStreamRef = useRef<MediaStream | null>(null);
   const socketRef = useRef<any>(null);
   const roomIdRef = useRef<string | null>(null);
-  // FIX: track current participants so videoTrack.onended always has the live list
   const participantsRef = useRef<string[]>([]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -61,7 +70,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     });
   }, []);
 
-  // FIX: also delete ICE queue entry on close to prevent memory leak
   const closePC = useCallback((socketId: string) => {
     const pc = screenPCsRef.current[socketId];
     if (!pc) return;
@@ -71,14 +79,14 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     pc.oniceconnectionstatechange = null;
     if (pc.connectionState !== 'closed') pc.close();
     delete screenPCsRef.current[socketId];
-    delete iceQueuesRef.current[socketId]; // FIX: free ICE queue
+    delete iceQueuesRef.current[socketId];
   }, []);
 
   const drainIceQueue = useCallback(async (socketId: string) => {
     const pc = screenPCsRef.current[socketId];
     const queue = iceQueuesRef.current[socketId];
     if (!pc?.remoteDescription || !queue?.length) return;
-    const batch = queue.splice(0); // mutate in place, avoids re-alloc
+    const batch = queue.splice(0);
     await Promise.all(
       batch.map((c) =>
         pc
@@ -90,8 +98,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
 
   const createScreenPC = useCallback(
     (socketId: string, socket: any, onTrack?: (stream: MediaStream) => void): RTCPeerConnection => {
-      closePC(socketId);
-
       const pc = new RTCPeerConnection(ICE_SERVERS);
       screenPCsRef.current[socketId] = pc;
 
@@ -128,7 +134,7 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     [closePC, removeRemoteStream]
   );
 
-  // ── Full teardown — used by stopSharing and unmount cleanup ───────────────
+  // ── Teardown (sharer → all viewers) ──────────────────────────────────────
 
   const teardown = useCallback(
     (socket: any | null, participantSocketIds: string[], roomId: string | null) => {
@@ -143,7 +149,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
         }
         closePC(socketId);
       });
-
       localScreenStreamRef.current = null;
       socketRef.current = null;
       roomIdRef.current = null;
@@ -173,10 +178,9 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
       localScreenStreamRef.current = stream;
       socketRef.current = socket;
       roomIdRef.current = roomId;
-      participantsRef.current = [...participantSocketIds]; // FIX: keep live list
+      participantsRef.current = [...participantSocketIds];
       setIsSharing(true);
 
-      // FIX: onended reads from refs — always has current socket + participants
       videoTrack.onended = () => {
         teardown(socketRef.current, participantsRef.current, roomIdRef.current);
       };
@@ -205,7 +209,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
       );
     },
     [createScreenPC, closePC, teardown]
-    // FIX: stopSharing removed from deps — teardown via refs instead
   );
 
   const handleScreenShareRequestedBy = useCallback(
@@ -221,7 +224,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
 
       const { requesterSocketId } = data;
 
-      // FIX: add late joiner to tracked participants so teardown includes them
       if (!participantsRef.current.includes(requesterSocketId)) {
         participantsRef.current = [...participantsRef.current, requesterSocketId];
       }
@@ -326,8 +328,26 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     []
   );
 
-  // ── Cleanup — close all open PCs, clear all state ────────────────────────
-  // Exposed for imperative call on room leave, also runs on unmount.
+  // ── removePeer ────────────────────────────────────────────────────────────
+  // Targeted teardown for a single departed peer. No socket emit — they're gone.
+  //
+  // Viewer side:  sharer left → close inbound PC, clear their stream from state
+  // Sharer side:  viewer left → close outbound PC, remove from participantsRef
+  //               so teardown/onended won't try to emit to a dead socket
+  // Both sides:   handles network drops / page reload (no graceful leave signal)
+
+  const removePeer = useCallback(
+    (socketId: string) => {
+      console.log(`[screen-share] removePeer: ${socketId}`);
+      closePC(socketId);
+      removeRemoteStream(socketId);
+
+      participantsRef.current = participantsRef.current.filter((id) => id !== socketId);
+    },
+    [closePC, removeRemoteStream]
+  );
+
+  // ── Full cleanup ──────────────────────────────────────────────────────────
 
   const cleanup = useCallback(() => {
     Object.keys(screenPCsRef.current).forEach(closePC);
@@ -350,6 +370,7 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     handleScreenShareIce,
     handleScreenShareActive,
     handleScreenShareRequestedBy,
+    removePeer,
     cleanup,
   };
 }

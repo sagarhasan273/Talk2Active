@@ -75,7 +75,10 @@ export const roomSlice = createSlice({
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
-      delete state.participants[action.payload];
+      const userId = Object.values(state.participants).find(
+        (participant) => participant.socketId === action.payload
+      )?.userId;
+      if (userId) delete state.participants[userId];
     },
 
     updateParticipantAudio: (

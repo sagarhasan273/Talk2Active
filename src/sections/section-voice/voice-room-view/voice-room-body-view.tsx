@@ -278,8 +278,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const { roomId } = userVoiceState;
 
-  console.log(remoteScreenStreams);
-
   // ── Screen capture ────────────────────────────────────────────────────────
   const {
     screenStream,
@@ -636,7 +634,14 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </CtrlBtn>
           )}
 
-          <CtrlBtn tooltip="Leave room" danger onClick={onLeaveRoom}>
+          <CtrlBtn
+            tooltip="Leave room"
+            danger
+            onClick={() => {
+              onLeaveRoom();
+              stopCapture();
+            }}
+          >
             <ExitToAppIcon sx={{ fontSize: 18 }} />
           </CtrlBtn>
         </ControlBar>
