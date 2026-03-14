@@ -561,7 +561,7 @@ export function VoiceUserCard({
                 height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: '8px solid #ff9800',
+                borderTop: `8px solid ${theme.palette.warning.light}`,
               },
               '@keyframes float': {
                 '0%': { transform: 'translateX(-50%) translateY(0px)' },
