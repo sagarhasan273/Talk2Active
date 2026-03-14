@@ -52,7 +52,7 @@ const VoiceRoomSelectButton = ({
     : isDark
       ? alpha('#fff', 0.03)
       : theme.palette.background.paper;
-  const defaultBorder = selected ? alpha(primary, 0.4) : theme.palette.divider;
+  const defaultBorder = selected ? alpha(primary, 0.6) : theme.palette.divider;
 
   return (
     <ButtonBase
@@ -68,17 +68,12 @@ const VoiceRoomSelectButton = ({
         overflow: 'hidden',
         transition: 'all 0.2s ease',
         bgcolor: isJoined ? joinedBg : defaultBg,
-        border: '1.5px solid',
+        border: selected ? '2px solid' : '1.5px solid',
         borderColor: isJoined ? joinedBorder : defaultBorder,
         boxShadow: isJoined
           ? `0 4px 20px ${alpha(primary, 0.18)}`
           : `0 1px 4px ${alpha('#000', 0.06)}`,
         '&:hover': {
-          bgcolor: isJoined
-            ? isDark
-              ? alpha(primary, 0.2)
-              : alpha(primary, 0.11)
-            : alpha(primary, isDark ? 0.07 : 0.03),
           borderColor: alpha(primary, isJoined ? 0.65 : 0.3),
           transform: 'translateY(-1px)',
           boxShadow: isJoined
