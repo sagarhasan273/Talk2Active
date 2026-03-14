@@ -37,10 +37,10 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
 import { VoiceMessageGroup } from '../voice-message-group';
-import { HostActionsMenu } from '../voice-host-action-menu';
 import { RaiseHandButton } from '../voice-raise-hand-button';
 import { ChatStatusButton } from '../voice-user-status-button';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
+import { VoiceParticipantSettingsMenu } from '../voice-participant-settings-menu';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 
@@ -552,30 +552,17 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                         participant.isLocal ? localStream : remoteStreams[participant.socketId]
                       }
                     />
-                    {!participant.isLocal && (
-                      <Box
-                        className="host-btn"
-                        sx={{
-                          position: 'absolute',
-                          top: 2,
-                          right: 2,
-                          opacity: 0,
-                          transition: 'opacity 0.15s',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <HostActionsMenu
-                          targetSocketId={participant.socketId}
-                          targetUserId={participant.userId}
-                          targetName={participant.name}
-                          targetProfilePhoto={participant.profilePhoto}
-                          targetAccountType={participant.accountType}
-                          targetVerified={participant.verified}
-                          onAction={handleHostAction}
-                          isHost={isHost}
-                        />
-                      </Box>
-                    )}
+
+                    <VoiceParticipantSettingsMenu
+                      targetSocketId={participant.socketId}
+                      targetUserId={participant.userId}
+                      targetName={participant.name}
+                      targetProfilePhoto={participant.profilePhoto}
+                      targetAccountType={participant.accountType}
+                      targetVerified={participant.verified}
+                      onAction={handleHostAction}
+                      isHost={isHost}
+                    />
                   </Box>
                 </Zoom>
               ))}

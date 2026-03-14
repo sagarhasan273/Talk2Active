@@ -53,7 +53,7 @@ export function VoiceRoomFindButton({
 
         bgcolor: selected ? varAlpha(backgroundColor, isDark ? 0.18 : 0.51) : 'background.paper',
 
-        border: '1.5px solid',
+        border: selected ? '2px solid' : '1.5px solid',
         borderColor: selected
           ? alpha(primary, 0.45)
           : isDark
