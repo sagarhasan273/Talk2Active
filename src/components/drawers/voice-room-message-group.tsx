@@ -32,7 +32,7 @@ export function VoiceRoomMessageGroupDrawer({
   const { isUnreadChatRoomMessage, participants } = useRoomTools();
 
   const renderHead = (
-    <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
+    <Stack direction="row" alignItems="center" sx={{ py: 1, pl: 2.5, pr: 1, minHeight: 68 }}>
       <VoiceRoomMessageGroupHeader
         roomName="Group messages"
         users={[
@@ -40,6 +40,7 @@ export function VoiceRoomMessageGroupDrawer({
             _id: participant?.socketId,
             name: participant.name,
             profilePhoto: participant.profilePhoto,
+            verified: participant.verified,
           })) || []),
         ]}
       />
