@@ -17,7 +17,7 @@ import { MessageContainer } from 'src/components/message';
 
 import { MessageInput } from '../../components/message/message-input';
 
-export const ChatMessageGroup = ({
+export const VoiceMessageGroup = ({
   onClose,
   privateMessage,
 }: {

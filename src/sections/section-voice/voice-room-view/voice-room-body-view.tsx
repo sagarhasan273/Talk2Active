@@ -36,7 +36,7 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
-import { ChatMessageGroup } from '../voice-message-group';
+import { VoiceMessageGroup } from '../voice-message-group';
 import { HostActionsMenu } from '../voice-host-action-menu';
 import { RaiseHandButton } from '../voice-raise-hand-button';
 import { ChatStatusButton } from '../voice-user-status-button';
@@ -436,7 +436,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
           <VoiceRoomMessageGroupDrawer>
-            <ChatMessageGroup />
+            <VoiceMessageGroup />
           </VoiceRoomMessageGroupDrawer>
           <Divider
             orientation="vertical"
