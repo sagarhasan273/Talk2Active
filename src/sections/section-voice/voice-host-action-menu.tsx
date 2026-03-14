@@ -35,6 +35,7 @@ type Props = {
   targetAccountType?: UserType['accountType'];
   targetVerified?: boolean;
   onAction?: (action: HostActionType, targetSocketId: string) => void;
+  isHost?: boolean;
 };
 
 export function HostActionsMenu({
@@ -45,6 +46,7 @@ export function HostActionsMenu({
   targetAccountType,
   targetVerified,
   onAction,
+  isHost,
 }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';

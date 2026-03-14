@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import type { UseScreenShareWebRTCReturn } from './use-screen-share-webRTC';
+import type { UseScreenShareWebRTCReturn } from './use-screen-share';
 
 export interface AudioSettings {
   microphoneGain: number;
@@ -76,9 +76,6 @@ export type UseWebRTCReturn = {
   // Audio peer connections ref — plain object, NOT a Map
   peerConnections: React.MutableRefObject<PeerConnectionState>;
 
-  // ── Screen share ──────────────────────────────────────────────────────────
-  screenShareWebRTC: UseScreenShareWebRTCReturn;
-
   // ── Local audio controls ──────────────────────────────────────────────────
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
   toggleMicrophone: () => boolean;
@@ -110,4 +107,4 @@ export type UseWebRTCReturn = {
   muteMicrophone: () => void;
   unmuteMicrophone: () => void;
   onClickMicrophone: (v: boolean) => void;
-};
+} & UseScreenShareWebRTCReturn;

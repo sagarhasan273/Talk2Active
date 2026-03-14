@@ -1,30 +1,22 @@
 import type { UserType } from 'src/types/type-user';
 
 import { useSelector } from 'react-redux';
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import MicOffIcon from '@mui/icons-material/MicOff';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { styled, keyframes } from '@mui/material/styles';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
-import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
 import {
   Box,
   Chip,
   Zoom,
-  Fade,
   Slide,
-  Stack,
   alpha,
-  Slider,
-  Avatar,
   Tooltip,
   Divider,
   useTheme,
@@ -33,8 +25,9 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { useScreenShare } from 'src/hooks/use-screen-share';
+import { useScreenView } from 'src/hooks/use-screen-view';
 
+import { varAlpha } from 'src/theme/styles';
 // useScreenShare: getDisplayMedia only — no peer logic
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
@@ -100,27 +93,27 @@ const ContentPad = styled(Box)(({ theme }) => ({
   },
 }));
 
-const FeaturedPanel = styled(Box, {
-  shouldForwardProp: (p) => p !== 'open',
-})<{ open: boolean }>(({ theme, open }) => ({
-  width: '100%',
-  maxHeight: open ? 380 : 0,
-  minHeight: open ? 240 : 0,
-  overflow: 'hidden',
-  borderRadius: theme.spacing(2),
-  border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-  backgroundColor:
-    theme.palette.mode === 'dark' ? alpha('#000', 0.3) : alpha(theme.palette.primary.main, 0.03),
-  transition: 'all 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  position: 'relative',
-  [theme.breakpoints.down('sm')]: {
-    maxHeight: open ? 280 : 0,
-    minHeight: open ? 200 : 0,
-  },
-}));
+// const FeaturedPanel = styled(Box, {
+//   shouldForwardProp: (p) => p !== 'open',
+// })<{ open: boolean }>(({ theme, open }) => ({
+//   width: '100%',
+//   maxHeight: open ? 380 : 0,
+//   minHeight: open ? 240 : 0,
+//   overflow: 'hidden',
+//   borderRadius: theme.spacing(2),
+//   border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+//   backgroundColor:
+//     theme.palette.mode === 'dark' ? alpha('#000', 0.3) : alpha(theme.palette.primary.main, 0.03),
+//   transition: 'all 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
+//   display: 'flex',
+//   alignItems: 'center',
+//   justifyContent: 'center',
+//   position: 'relative',
+//   [theme.breakpoints.down('sm')]: {
+//     maxHeight: open ? 280 : 0,
+//     minHeight: open ? 200 : 0,
+//   },
+// }));
 
 const GridPanel = styled(Box)(({ theme }) => ({
   borderRadius: theme.spacing(2),
@@ -268,54 +261,51 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const {
-    room,
-    participants,
-    userVoiceState,
-    updateUserVoiceState,
-    updateUserVolumesState,
-    updateParticipantStatus,
-  } = useRoomTools();
+  const { room, participants, userVoiceState, updateUserVoiceState, updateParticipantStatus } =
+    useRoomTools();
   const user = useSelector(selectAccount);
 
   const {
     localStream,
     remoteStreams,
-    setRemoteVolume,
     isMicMuted,
     connectionStatus,
     onClickMicrophone,
-    screenShareWebRTC, // ← from useWebRTC — owns all screen-share PCs & remote streams
+    stopSharing,
+    startSharing,
+    remoteScreenStreams,
   } = webRTC;
 
-  const { userVolumes, roomId } = userVoiceState;
+  const { roomId } = userVoiceState;
 
   // ── Screen capture ────────────────────────────────────────────────────────
-  // useScreenShare: getDisplayMedia ONLY — no peer connection logic here.
-  // The onStreamReady callback hands the stream to screenShareWebRTC which
-  // creates dedicated PCs and sends offers to every participant.
   const {
     screenStream,
     isSharing,
     startScreenShare: startCapture,
     stopScreenShare: stopCapture,
     error: shareError,
-  } = useScreenShare((stream) => {
-    if (!socket) return;
+  } = useScreenView((stream) => {
+    if (!socket || !roomId) return;
 
-    const participantIds = Object.values(participants)
+    const participantSocketIds = Object.values(participants)
       .filter((p) => !p.isLocal)
       .map((p) => p.socketId);
 
     if (stream) {
       // stream arrived → create screen-share PCs and send offers to all peers
-      screenShareWebRTC.startSharing(stream, socket, participantIds);
+      startSharing(stream, socket, participantSocketIds, roomId);
     } else {
       // stream ended (user clicked browser "Stop sharing" or stopCapture())
-      screenShareWebRTC.stopSharing(socket, participantIds);
+      stopSharing(socket, participantSocketIds, roomId);
     }
 
-    emit('user-screen-share', { roomId, socketId: socket.id, isSharing: Boolean(stream) });
+    emit('user-screen-share', {
+      roomId,
+      socketId: socket.id,
+      sender: user.id,
+      isSharing: Boolean(stream),
+    });
   });
 
   const handleToggleScreenShare = async () => {
@@ -326,29 +316,10 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
     }
   };
 
-  // ── Remote screen streams ─────────────────────────────────────────────────
-  // Populated by useScreenShareWebRTC when a remote peer starts sharing
-  const { remoteScreenStreams } = screenShareWebRTC;
-  const activeRemoteShare = Object.entries(remoteScreenStreams)[0] ?? null;
-  const remoteShareSocketId = activeRemoteShare?.[0] ?? null;
-  const remoteShareStream = activeRemoteShare?.[1] ?? null;
-  const remoteSharerName = remoteShareSocketId
-    ? (participants[remoteShareSocketId]?.name ?? 'Someone')
-    : null;
-
   // ── Participants ──────────────────────────────────────────────────────────
 
   const isHost = room?.host?.id === user?.id;
-  const [selectedSocketId, setSelectedSocketId] = useState<string | null>(null);
 
-  const selectedParticipant = useMemo(
-    () => (selectedSocketId ? participants[selectedSocketId] : null),
-    [selectedSocketId, participants]
-  );
-  const otherParticipants = useMemo(
-    () => Object.values(participants).filter((p) => p.socketId !== selectedSocketId),
-    [participants, selectedSocketId]
-  );
   const allParticipants = useMemo(() => Object.values(participants), [participants]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -363,23 +334,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
         isMuted: !isMicMuted,
         name: user.name,
       });
-  };
-
-  const handleVolumeChange = (socketId: string, volume: number) => {
-    updateUserVolumesState({ socketId, volume });
-    setRemoteVolume(socketId, volume);
-  };
-
-  const [reaction, setReaction] = useState<string | null>(null);
-  const handleReaction = (type: string) => {
-    if (!socket) return;
-    setReaction(type);
-    setTimeout(() => setReaction(null), 1800);
-    emit('send-user-actions-in-voice', {
-      roomId: room.id,
-      type: 'reaction',
-      senderInfo: { socketId: socket.id, userId: user.id, emoji: type },
-    });
   };
 
   const handleToggleUserStatus = useCallback(
@@ -397,7 +351,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   );
 
   const handleHostAction = (action: 'mute' | 'kick' | 'block-mic', targetSocketId: string) => {
-    if (action === 'kick' && targetSocketId === selectedSocketId) setSelectedSocketId(null);
+    // hello
   };
 
   const participantCount = allParticipants.length;
@@ -503,15 +457,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             <ScreenSharePreviewPanel stream={screenStream} isLocal onStop={stopCapture} />
           )}
 
-          {/* Remote screen share preview (viewers see this when someone else is sharing) */}
-          {!isSharing && remoteShareStream && remoteSharerName && (
-            <ScreenSharePreviewPanel
-              stream={remoteShareStream}
-              isLocal={false}
-              sharerName={remoteSharerName}
-            />
-          )}
-
           {/* Share error */}
           {shareError && (
             <Box
@@ -528,186 +473,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               </Typography>
             </Box>
           )}
-
-          {/* Featured speaker */}
-          <FeaturedPanel open={Boolean(selectedParticipant)}>
-            {selectedParticipant && (
-              <Fade in={Boolean(selectedParticipant)} timeout={350}>
-                <Box
-                  sx={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    p: { xs: 1.5, sm: 2.5 },
-                    position: 'relative',
-                  }}
-                >
-                  {isMobile && (
-                    <IconButton
-                      size="small"
-                      onClick={() => setSelectedSocketId(null)}
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        bgcolor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
-                        '&:hover': { bgcolor: isDark ? alpha('#fff', 0.16) : alpha('#000', 0.13) },
-                      }}
-                    >
-                      <KeyboardBackspaceIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                  )}
-
-                  {reaction && (
-                    <Zoom in timeout={300}>
-                      <Avatar
-                        sx={{
-                          position: 'absolute',
-                          top: '35%',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          zIndex: 20,
-                          bgcolor: reaction === '❤️' ? '#dbdbdb' : primary,
-                          animation: 'floatUp 1.2s ease-out forwards',
-                          '@keyframes floatUp': {
-                            '0%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
-                            '100%': {
-                              transform: 'translateX(-50%) translateY(-64px)',
-                              opacity: 0,
-                            },
-                          },
-                        }}
-                      >
-                        {reaction}
-                      </Avatar>
-                    </Zoom>
-                  )}
-
-                  <Box
-                    sx={{ transform: { xs: 'scale(1)', sm: 'scale(1.1)' }, mt: { xs: 0, sm: 1 } }}
-                  >
-                    <VoiceUserCard
-                      participant={{
-                        userId: selectedParticipant.userId,
-                        name: selectedParticipant.name,
-                        profilePhoto: selectedParticipant.profilePhoto,
-                        status: selectedParticipant.status,
-                        isSpeaking: false,
-                        isMuted: Boolean(selectedParticipant.isMuted),
-                        userType: room.host.id === selectedParticipant.userId ? 'Host' : 'Guest',
-                        verified: selectedParticipant.verified,
-                        accountType: selectedParticipant.accountType,
-                        isLocal: selectedParticipant.isLocal,
-                        connectionStatus: connectionStatus[selectedParticipant.socketId],
-                        hasJoin: selectedParticipant.hasJoin,
-                      }}
-                      size="large"
-                      stream={
-                        selectedParticipant.isLocal
-                          ? localStream
-                          : remoteStreams[selectedParticipant.socketId]
-                      }
-                      showName={false}
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={700}
-                      sx={{ fontSize: { xs: '0.9rem', sm: '1.05rem' } }}
-                    >
-                      {selectedParticipant.name}
-                      {selectedParticipant.isLocal && (
-                        <Box
-                          component="span"
-                          sx={{
-                            color: 'text.secondary',
-                            fontWeight: 400,
-                            ml: 0.5,
-                            fontSize: '0.85em',
-                          }}
-                        >
-                          (You)
-                        </Box>
-                      )}
-                    </Typography>
-                    {!selectedParticipant.isLocal && (
-                      <HostActionsMenu
-                        targetSocketId={selectedParticipant.socketId}
-                        targetUserId={selectedParticipant.userId}
-                        targetName={selectedParticipant.name}
-                        targetProfilePhoto={selectedParticipant.profilePhoto}
-                        targetAccountType={selectedParticipant.accountType}
-                        targetVerified={selectedParticipant.verified}
-                        onAction={handleHostAction}
-                      />
-                    )}
-                  </Box>
-
-                  {!selectedParticipant.isLocal && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        px: { xs: 1.25, sm: 2 },
-                        py: 0.65,
-                        borderRadius: '40px',
-                        bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
-                        <VolumeOffIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
-                        <Slider
-                          size="small"
-                          value={userVolumes[selectedParticipant.socketId] ?? 50}
-                          onChange={(_, v) =>
-                            handleVolumeChange(selectedParticipant.socketId, v as number)
-                          }
-                          sx={{
-                            width: { xs: 60, sm: 90 },
-                            color: primary,
-                            '& .MuiSlider-thumb': { width: 10, height: 10 },
-                            '& .MuiSlider-track': { height: 3 },
-                            '& .MuiSlider-rail': {
-                              height: 3,
-                              bgcolor: isDark ? alpha('#fff', 0.14) : alpha('#000', 0.1),
-                            },
-                          }}
-                        />
-                        <VolumeUpIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
-                      </Stack>
-                      <Divider
-                        orientation="vertical"
-                        flexItem
-                        sx={{ height: 16, alignSelf: 'center' }}
-                      />
-                      <CtrlBtn tooltip="React ❤️" onClick={() => handleReaction('❤️')}>
-                        <FavoriteIcon sx={{ fontSize: 15 }} />
-                      </CtrlBtn>
-                      <VoiceRoomMessageGroupDrawer title="Private Message">
-                        <ChatMessageGroup
-                          privateMessage={{
-                            socketId: selectedParticipant.socketId,
-                            userId: selectedParticipant.userId,
-                            name: selectedParticipant.name,
-                            profilePhoto: selectedParticipant.profilePhoto,
-                          }}
-                        />
-                      </VoiceRoomMessageGroupDrawer>
-                    </Box>
-                  )}
-                </Box>
-              </Fade>
-            )}
-          </FeaturedPanel>
 
           {/* Participants grid */}
           <GridPanel>
@@ -729,74 +494,91 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                   textTransform: 'uppercase',
                 }}
               >
-                {selectedParticipant ? 'Other Participants' : 'All Participants'}
+                All Participants
                 <Box component="span" sx={{ ml: 0.6, color: 'text.disabled' }}>
-                  · {selectedParticipant ? otherParticipants.length : allParticipants.length}
+                  · {allParticipants.length}
                 </Box>
               </Typography>
             </Box>
 
             <ParticipantsGrid>
-              {(selectedParticipant ? otherParticipants : allParticipants).map(
-                (participant, index) => (
-                  <Zoom key={participant.socketId} in timeout={200 + index * 40}>
-                    <Box
-                      sx={{
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'transform 0.18s ease',
-                        '&:hover': { transform: 'scale(1.04)' },
-                        '&:hover .host-btn': { opacity: 1 },
+              {Object.entries(remoteScreenStreams).map(([id, stream]) => {
+                const name = Object.values(participants).find(
+                  (participant) => participant.socketId === id
+                )?.name;
+                return (
+                  <ScreenSharePreviewPanel
+                    key={id}
+                    stream={stream}
+                    isLocal={false}
+                    sharerName={name}
+                  />
+                );
+              })}
+              {allParticipants.map((participant, index) => (
+                <Zoom key={participant.socketId} in timeout={200 + index * 40}>
+                  <Box
+                    sx={{
+                      cursor: 'pointer',
+                      position: 'relative',
+                      transition: 'transform 0.18s ease',
+                      '&:hover': { transform: 'scale(1.04)' },
+                      '&:hover .host-btn': { opacity: 1 },
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? varAlpha(theme.vars.palette.primary.mainChannel, 0.08)
+                          : varAlpha(theme.vars.palette.primary.mainChannel, 0.18),
+                      p: 1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <VoiceUserCard
+                      participant={{
+                        userId: participant.userId,
+                        name: participant.name,
+                        profilePhoto: participant.profilePhoto,
+                        status: participant.status,
+                        isSpeaking: false,
+                        isMuted: Boolean(participant.isMuted),
+                        userType: participant.userType,
+                        verified: participant.verified,
+                        accountType: participant.accountType,
+                        connectionStatus: connectionStatus[participant.socketId],
+                        isLocal: participant.isLocal,
+                        hasJoin: participant.hasJoin,
                       }}
-                    >
-                      <VoiceUserCard
-                        participant={{
-                          userId: participant.userId,
-                          name: participant.name,
-                          profilePhoto: participant.profilePhoto,
-                          status: participant.status,
-                          isSpeaking: false,
-                          isMuted: Boolean(participant.isMuted),
-                          userType: participant.userType,
-                          verified: participant.verified,
-                          accountType: participant.accountType,
-                          connectionStatus: connectionStatus[participant.socketId],
-                          isLocal: participant.isLocal,
-                          hasJoin: participant.hasJoin,
+                      size={isMobile ? 'small' : 'medium'}
+                      stream={
+                        participant.isLocal ? localStream : remoteStreams[participant.socketId]
+                      }
+                    />
+                    {!participant.isLocal && (
+                      <Box
+                        className="host-btn"
+                        sx={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 2,
+                          opacity: 0,
+                          transition: 'opacity 0.15s',
                         }}
-                        size={isMobile ? 'small' : 'medium'}
-                        stream={
-                          participant.isLocal ? localStream : remoteStreams[participant.socketId]
-                        }
-                        onClick={() => setSelectedSocketId(participant.socketId)}
-                      />
-                      {isHost && !participant.isLocal && (
-                        <Box
-                          className="host-btn"
-                          sx={{
-                            position: 'absolute',
-                            top: 2,
-                            right: 2,
-                            opacity: 0,
-                            transition: 'opacity 0.15s',
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <HostActionsMenu
-                            targetSocketId={participant.socketId}
-                            targetUserId={participant.userId}
-                            targetName={participant.name}
-                            targetProfilePhoto={participant.profilePhoto}
-                            targetAccountType={participant.accountType}
-                            targetVerified={participant.verified}
-                            onAction={handleHostAction}
-                          />
-                        </Box>
-                      )}
-                    </Box>
-                  </Zoom>
-                )
-              )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <HostActionsMenu
+                          targetSocketId={participant.socketId}
+                          targetUserId={participant.userId}
+                          targetName={participant.name}
+                          targetProfilePhoto={participant.profilePhoto}
+                          targetAccountType={participant.accountType}
+                          targetVerified={participant.verified}
+                          onAction={handleHostAction}
+                          isHost={isHost}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                </Zoom>
+              ))}
             </ParticipantsGrid>
           </GridPanel>
         </ContentPad>
@@ -852,7 +634,14 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </CtrlBtn>
           )}
 
-          <CtrlBtn tooltip="Leave room" danger onClick={onLeaveRoom}>
+          <CtrlBtn
+            tooltip="Leave room"
+            danger
+            onClick={() => {
+              onLeaveRoom();
+              stopCapture();
+            }}
+          >
             <ExitToAppIcon sx={{ fontSize: 18 }} />
           </CtrlBtn>
         </ControlBar>

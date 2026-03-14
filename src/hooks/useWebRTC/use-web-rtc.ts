@@ -4,14 +4,16 @@ import { useRoomTools } from 'src/core/slices';
 
 import { useLocalAudio } from './use-local-audio';
 import { useRemoteAudio } from './use-remote-audio';
+import { useScreenShare } from './use-screen-share';
 import { useAudioSettings } from './use-audio-settings';
 import { usePeerConnections } from './use-peer-connections';
-import { useScreenShareWebRTC } from './use-screen-share-webRTC';
 
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 
 export function useWebRTC(): UseWebRTCReturn {
-  const { removeParticipant } = useRoomTools();
+  const { userVoiceState, removeParticipant } = useRoomTools();
+
+  const { roomId } = userVoiceState;
 
   const {
     audioSettings,
@@ -67,6 +69,7 @@ export function useWebRTC(): UseWebRTCReturn {
     handleIceCandidate,
     cleanup: cleanupPeerConnections,
   } = usePeerConnections({
+    roomId,
     localStreamRef,
     onRemoteStreamAdded: addRemoteStream,
     onRemoteStreamRemoved: (socketId) => {
@@ -85,7 +88,7 @@ export function useWebRTC(): UseWebRTCReturn {
   });
 
   // Screen share — owns its own PC map, completely separate from audio PCs
-  const screenShareWebRTC = useScreenShareWebRTC();
+  const { cleanup: cleanupShareScreen, ...screenShare } = useScreenShare();
 
   const toggleDeafen = useCallback(() => {
     const next = !audioSettings.isDeafened;
@@ -98,20 +101,21 @@ export function useWebRTC(): UseWebRTCReturn {
     cleanupRemoteAudio();
     cleanupLocalAudio();
     setConnectionStatus({});
-  }, [cleanupPeerConnections, cleanupRemoteAudio, cleanupLocalAudio]);
+    cleanupShareScreen();
+  }, [cleanupPeerConnections, cleanupRemoteAudio, cleanupLocalAudio, cleanupShareScreen]);
 
   useEffect(
     () => () => {
       cleanupPeerConnections();
       cleanupRemoteAudio();
+      cleanupShareScreen();
     },
-    [cleanupPeerConnections, cleanupRemoteAudio]
+    [cleanupPeerConnections, cleanupRemoteAudio, cleanupShareScreen]
   );
 
   return {
     remoteStreams,
     localStream,
-
     isMicMuted,
     isDeafened: audioSettings.isDeafened,
     audioSettings,
@@ -121,7 +125,7 @@ export function useWebRTC(): UseWebRTCReturn {
     peerConnections,
 
     // Screen share — passed through so VoiceRoomBodyView and socket listeners can use it
-    screenShareWebRTC,
+    ...screenShare,
 
     initializeMicrophone,
     toggleMicrophone,
