@@ -1,3 +1,5 @@
+import type { SxProps } from '@mui/material';
+
 import React from 'react';
 
 import { alpha, Tooltip, useTheme, IconButton } from '@mui/material';
@@ -12,8 +14,9 @@ export const CtrlBtn = React.forwardRef<
     onClick?: () => void;
     children: React.ReactNode;
     disabled?: boolean;
+    sx?: SxProps;
   }
->(({ tooltip, active, danger, warn, onClick, children, disabled }, ref) => {
+>(({ tooltip, active, danger, warn, onClick, children, disabled, sx }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const p = theme.palette;
@@ -73,6 +76,7 @@ export const CtrlBtn = React.forwardRef<
             },
             '&:active': { transform: 'scale(0.94)' },
             '&.Mui-disabled': { opacity: 0.38 },
+            ...sx,
           }}
         >
           {children}

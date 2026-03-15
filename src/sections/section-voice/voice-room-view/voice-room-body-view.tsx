@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
-import MicOffIcon from '@mui/icons-material/MicOff';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { styled, keyframes } from '@mui/material/styles';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
@@ -13,7 +11,6 @@ import {
   Box,
   Chip,
   Zoom,
-  Slide,
   alpha,
   Divider,
   useTheme,
@@ -129,62 +126,24 @@ const ParticipantsGrid = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down(360)]: { gridTemplateColumns: 'repeat(2, 1fr)' },
 }));
 
-const ControlBar = styled(Box)(({ theme }) => ({
-  position: 'fixed',
-  bottom: 20,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  padding: theme.spacing(0.75, 1.5),
-  borderRadius: 50,
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(0.25),
-  width: 'auto',
-  minWidth: 240,
-  maxWidth: '95vw',
-  backgroundColor:
-    theme.palette.mode === 'dark' ? 'rgba(14, 15, 20, 0.96)' : 'rgba(255, 255, 255, 0.96)',
-  backdropFilter: 'blur(20px)',
-  border: `1px solid ${
-    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-  }`,
-  boxShadow:
-    theme.palette.mode === 'dark'
-      ? '0 8px 36px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.04) inset'
-      : '0 8px 36px rgba(0,0,0,0.14)',
-  zIndex: 1000,
-  [theme.breakpoints.down('sm')]: {
-    bottom: 12,
-    padding: theme.spacing(0.6, 1),
-    gap: theme.spacing(0.1),
-    minWidth: 'unset',
-    width: 'calc(100vw - 24px)',
-    justifyContent: 'space-around',
-    borderRadius: 20,
-  },
-}));
-
-// ─── CtrlBtn ──────────────────────────────────────────────────────────────────
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const primary = theme.palette.primary.main;
 
   const webRTC = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const { room, participants, userVoiceState, updateUserVoiceState } = useRoomTools();
+  const { room, participants, userVoiceState } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const {
     localStream,
     remoteStreams,
-    isMicMuted,
+
     connectionStatus,
-    onClickMicrophone,
+
     stopSharing,
     startSharing,
     remoteScreenStreams,
@@ -235,20 +194,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const isHost = room?.host?.id === user?.id;
 
   const allParticipants = useMemo(() => Object.values(participants), [participants]);
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
-  const handleMicMute = () => {
-    onClickMicrophone(!isMicMuted);
-    updateUserVoiceState({ isMicMuted: !isMicMuted });
-    if (roomId)
-      emit('user-audio-toggle', {
-        socketId: socket?.id,
-        roomId,
-        isMuted: !isMicMuted,
-        name: user.name,
-      });
-  };
 
   const handleHostAction = (action: 'mute' | 'kick' | 'block-mic', targetSocketId: string) => {
     // hello
@@ -372,6 +317,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                 onLeaveRoom();
                 stopCapture();
               }}
+              sx={{ ml: 1 }}
             >
               <ExitToAppIcon sx={{ fontSize: 18 }} />
             </CtrlBtn>
@@ -500,48 +446,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </GridPanel>
         </ContentPad>
       </ScrollArea>
-
-      {/* ── Floating control bar ─────────────────────────────────────────── */}
-      <Slide direction="up" in timeout={380}>
-        <ControlBar>
-          <CtrlBtn
-            tooltip={isMicMuted ? 'Unmute' : 'Mute'}
-            danger={isMicMuted}
-            active={!isMicMuted}
-            onClick={handleMicMute}
-          >
-            {isMicMuted ? <MicOffIcon sx={{ fontSize: 18 }} /> : <MicIcon sx={{ fontSize: 18 }} />}
-          </CtrlBtn>
-
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{
-              height: 22,
-              alignSelf: 'center',
-              mx: 0.25,
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-            }}
-          />
-
-          {!isMobile && (
-            <CtrlBtn tooltip="Room settings">
-              <SettingsIcon sx={{ fontSize: 17 }} />
-            </CtrlBtn>
-          )}
-
-          <CtrlBtn
-            tooltip="Leave room"
-            danger
-            onClick={() => {
-              onLeaveRoom();
-              stopCapture();
-            }}
-          >
-            <ExitToAppIcon sx={{ fontSize: 18 }} />
-          </CtrlBtn>
-        </ControlBar>
-      </Slide>
     </RootContainer>
   );
 }

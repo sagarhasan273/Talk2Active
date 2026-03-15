@@ -87,7 +87,7 @@ export function VoiceParticipantSettingsMenu({
     setToastMessage(message);
     setShowToast(true);
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 10_000);
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 3_000);
   }, []);
 
   const startInactivityTimer = useCallback(() => {
@@ -100,24 +100,6 @@ export function VoiceParticipantSettingsMenu({
       }
     }, 10_000);
   }, [showToastMessage]);
-
-  // When hand is raised, show toast + start auto-lower timer
-  useEffect(() => {
-    if (raiseHand) {
-      showToastMessage(`${selectedLabel} ${selectedEmoji}`);
-      startInactivityTimer();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [raiseHand]);
-
-  // Cleanup timers on unmount
-  useEffect(
-    () => () => {
-      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-    },
-    []
-  );
 
   // ── Hand raise handlers ──────────────────────────────────────────────────
 
@@ -184,10 +166,28 @@ export function VoiceParticipantSettingsMenu({
   const toastBg = theme.palette.background.paper;
   const toastBdr = isDark ? alpha('#fff', 0.1) : alpha('#000', 0.1);
 
+  // When hand is raised, show toast + start auto-lower timer
+  useEffect(() => {
+    if (raiseHand) {
+      showToastMessage(`${selectedLabel} ${selectedEmoji}`);
+      startInactivityTimer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raiseHand]);
+
+  // Cleanup timers on unmount
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+    },
+    []
+  );
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ position: 'absolute', top: 2, right: 2, transition: 'opacity 0.15s' }}>
+    <Box sx={{ position: 'absolute', top: 5, right: 5, transition: 'opacity 0.15s' }}>
       {/* ── Trigger ───────────────────────────────────────────────────── */}
       <Tooltip title="Participant actions" arrow placement="top">
         <IconButton
@@ -199,7 +199,9 @@ export function VoiceParticipantSettingsMenu({
             height: 24,
             borderRadius: '6px',
             color: 'text.secondary',
-            '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06) },
+            bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
+            '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
+            '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
           }}
         >
           <MoreVertIcon sx={{ fontSize: 15 }} />
