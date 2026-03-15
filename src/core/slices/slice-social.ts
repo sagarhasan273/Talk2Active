@@ -11,7 +11,6 @@ import type { RootState } from '../types';
 
 // Define auth state interface
 interface SocialState {
-  friends: UserType[];
   loading: boolean;
   chatPeople: AllRelationsType[];
   chatPeopleLoading: boolean;
@@ -23,7 +22,6 @@ interface SocialState {
 
 // Initial state
 const initialState: SocialState = {
-  friends: [] as UserType[],
   loading: false,
   chatPeople: [] as AllRelationsType[],
   chatPeopleLoading: false,
@@ -37,10 +35,6 @@ export const socialSlice = createSlice({
   name: 'social',
   initialState,
   reducers: {
-    setFriends: (state, action: PayloadAction<SocialState['friends']>) => {
-      state.friends = action.payload;
-    },
-
     setChatPeople: (state, action: PayloadAction<SocialState['chatPeople']>) => {
       state.chatPeople = action.payload;
       let tempUnreadCount = false;
@@ -270,8 +264,6 @@ export const socialSlice = createSlice({
 });
 
 export const {
-  setFriends,
-  setFriendsLoading,
   setChatPeople,
   setChatPeopleLoading,
   setSelectedForMessage,
@@ -284,8 +276,6 @@ export const {
 } = socialSlice.actions;
 
 // Selectors with proper typing
-export const selectFriends = (state: RootState) => state.social.friends;
-export const selectFriendsLoading = (state: RootState) => state.social.loading;
 const selectChatPeople = (state: RootState) => state.social.chatPeople;
 const selectChatPeopleLoading = (state: RootState) => state.social.chatPeopleLoading;
 const selectIndividualMessages = (state: RootState) => state.social.individualMessages;

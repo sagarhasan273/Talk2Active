@@ -214,6 +214,7 @@ export function VoiceParticipantSettingsMenu({
           <Box onClick={(e) => e.stopPropagation()} style={getPopupStyle()}>
             <VoiceParticipantSettings
               socketId={targetSocketId}
+              userId={targetUserId}
               displayName={targetName}
               initials={targetName.slice(0, 2).toUpperCase()}
               avatarUrl={targetProfilePhoto ?? undefined}

@@ -15,18 +15,20 @@ type ButtonRelationshipToggleProps = {
     name: string;
     id: string;
   };
+  isFollow?: boolean;
   followSx?: SxProps;
   unfollowSx?: SxProps;
 };
 
 export function ButtonRelationshipToggle({
   targetUser,
+  isFollow = false,
   followSx,
   unfollowSx,
 }: ButtonRelationshipToggleProps) {
   const user = useSelector(selectAccount);
 
-  const [follow, setFollow] = useState<boolean>(true);
+  const [follow, setFollow] = useState<boolean>(!isFollow);
 
   const [followMutate] = useFollowMutation();
   const [unfollowMutate] = useUnfollowMutation();

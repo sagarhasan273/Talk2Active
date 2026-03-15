@@ -1,20 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import {
-  Ban,
-  Mic,
-  Hand,
-  MicOff,
-  Volume2,
-  VolumeX,
-  UserPlus,
-  UserMinus,
-  UserCheck,
-} from 'lucide-react';
+import { Ban, Mic, Hand, MicOff, Volume2, VolumeX, UserMinus } from 'lucide-react';
 
 import { styled } from '@mui/material/styles';
 import {
   Box,
-  Chip,
   Slide,
   Stack,
   alpha,
@@ -29,10 +18,15 @@ import {
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { useCredentials } from 'src/core/slices';
+
+import { ButtonRelationshipToggle } from 'src/components/buttons';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VoiceParticipantSettingsProps {
   socketId: string;
+  userId: string;
   displayName: string;
   initials: string;
   avatarUrl?: string;
@@ -127,6 +121,7 @@ const ActionBtn = styled(Button, {
 
 export function VoiceParticipantSettings({
   socketId,
+  userId,
   displayName,
   initials,
   avatarUrl,
@@ -150,6 +145,8 @@ export function VoiceParticipantSettings({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useResponsive('down', 'sm');
+
+  const { checkIfFollowing } = useCredentials();
 
   const [volume, setVolume] = useState(initialVolume);
   const [visible, setVisible] = useState(false);
@@ -196,10 +193,7 @@ export function VoiceParticipantSettings({
     () => (isMicMuted ? onUnmuteMic(socketId) : onMuteMic(socketId)),
     [isMicMuted, socketId, onMuteMic, onUnmuteMic]
   );
-  const handleFollowToggle = useCallback(
-    () => (isFollowing ? onUnfollow(socketId) : onFollow(socketId)),
-    [isFollowing, socketId, onFollow, onUnfollow]
-  );
+
   const handleHandToggle = useCallback(
     () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
     [isHandRaised, socketId, onRaiseHand, onLowerHand]
@@ -211,6 +205,8 @@ export function VoiceParticipantSettings({
     }
   }, [socketId, displayName, onKick, onClose]);
   const handleBlock = useCallback(() => onBlock(socketId), [socketId, onBlock]);
+
+  console.log(checkIfFollowing(userId));
 
   // ── Inner content ────────────────────────────────────────────────────────
 
@@ -267,25 +263,9 @@ export function VoiceParticipantSettings({
 
           {/* Follow chip */}
           <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'} arrow>
-            <Chip
-              size="small"
-              icon={isFollowing ? <UserCheck size={11} /> : <UserPlus size={11} />}
-              label={isFollowing ? 'Following' : 'Follow'}
-              onClick={handleFollowToggle}
-              sx={{
-                height: 24,
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                bgcolor: isFollowing
-                  ? alpha(theme.palette.primary.main, 0.12)
-                  : alpha(theme.palette.divider, 0.5),
-                color: isFollowing ? theme.palette.primary.main : 'text.secondary',
-                border: `1px solid ${isFollowing ? alpha(theme.palette.primary.main, 0.3) : alpha(theme.palette.divider, 0.8)}`,
-                '& .MuiChip-icon': { color: 'inherit', ml: 0.5 },
-                '& .MuiChip-label': { px: 0.75 },
-                '&:hover': { opacity: 0.82 },
-              }}
+            <ButtonRelationshipToggle
+              targetUser={{ name: displayName, id: userId }}
+              isFollow={checkIfFollowing(userId)}
             />
           </Tooltip>
         </Stack>
