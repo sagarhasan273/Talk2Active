@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import type { UserType } from 'src/types/type-user';
+
 import { useSelector } from 'react-redux';
+import React, { useState, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
@@ -28,16 +30,21 @@ import { AvatarUser } from 'src/components/avatar-user';
 import VoiceUserAudio from 'src/sections/section-voice/voice-user-audio';
 import { VoiceAudioControls } from 'src/sections/section-voice/voice-audio-controls';
 
+import { ChatStatusButton } from '../voice-user-status-button';
+
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
 const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
   const user = useSelector(selectAccount);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
-  const { room, userVoiceState, participants, updateUserVoiceState } = useRoomTools();
+  const { room, userVoiceState, participants, updateUserVoiceState, updateParticipantStatus } =
+    useRoomTools();
   const { emit, socket } = useSocketContext();
   const { userVolumes, isMicMuted, isDeafened, hasJoined } = userVoiceState;
   const { localStream, remoteStreams, toggleDeafen, onClickMicrophone } = useWebRTCContext();
+
+  const { roomId } = userVoiceState;
 
   const handleMicMute = () => {
     onClickMicrophone(!isMicMuted);
@@ -70,6 +77,20 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
       isMicMuted: newMicMutedState,
     });
   };
+
+  const handleToggleUserStatus = useCallback(
+    (selectedStatus: UserType['status']) => {
+      if (!socket) return;
+      socket.emit('user-status-select', {
+        roomId,
+        socketId: socket.id,
+        status: selectedStatus,
+        name: user.name,
+      });
+      if (socket.id) updateParticipantStatus({ socketId: socket.id, status: selectedStatus });
+    },
+    [socket, roomId, user?.name, updateParticipantStatus]
+  );
 
   return (
     <Paper
@@ -269,6 +290,12 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
                 <HeadsetIcon sx={{ fontSize: '1rem' }} />
               )}
             </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Set status">
+            <Box sx={{ display: 'inline-flex' }}>
+              <ChatStatusButton onStatusChange={handleToggleUserStatus} />
+            </Box>
           </Tooltip>
         </Stack>
 

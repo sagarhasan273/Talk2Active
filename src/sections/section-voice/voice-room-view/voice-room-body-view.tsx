@@ -1,7 +1,5 @@
-import type { UserType } from 'src/types/type-user';
-
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import React, { useMemo, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
@@ -17,7 +15,6 @@ import {
   Zoom,
   Slide,
   alpha,
-  Tooltip,
   Divider,
   useTheme,
   Typography,
@@ -37,7 +34,6 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
 import { VoiceMessageGroup } from '../voice-message-group';
-import { ChatStatusButton } from '../voice-user-status-button';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
 import { VoiceParticipantSettingsMenu } from '../voice-participant-settings-menu';
 
@@ -180,8 +176,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const webRTC = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const { room, participants, userVoiceState, updateUserVoiceState, updateParticipantStatus } =
-    useRoomTools();
+  const { room, participants, userVoiceState, updateUserVoiceState } = useRoomTools();
   const user = useSelector(selectAccount);
 
   const {
@@ -254,20 +249,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
         name: user.name,
       });
   };
-
-  const handleToggleUserStatus = useCallback(
-    (selectedStatus: UserType['status']) => {
-      if (!socket) return;
-      socket.emit('user-status-select', {
-        roomId,
-        socketId: socket.id,
-        status: selectedStatus,
-        name: user.name,
-      });
-      if (socket.id) updateParticipantStatus({ socketId: socket.id, status: selectedStatus });
-    },
-    [socket, roomId, user?.name, updateParticipantStatus]
-  );
 
   const handleHostAction = (action: 'mute' | 'kick' | 'block-mic', targetSocketId: string) => {
     // hello
@@ -353,7 +334,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <CtrlBtn
             tooltip={isSharing ? 'Stop sharing' : 'Share screen'}
             active={isSharing}
@@ -366,18 +347,35 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
               <ScreenShareIcon sx={{ fontSize: 18 }} />
             )}
           </CtrlBtn>
+
           <VoiceRoomMessageGroupDrawer>
             <VoiceMessageGroup />
           </VoiceRoomMessageGroupDrawer>
 
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ height: 18, alignSelf: 'center', mx: 0.25 }}
-          />
-          <CtrlBtn tooltip="Room settings">
-            <SettingsIcon sx={{ fontSize: 18 }} />
-          </CtrlBtn>
+          {isHost && (
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ height: 18, alignSelf: 'center', mx: 0.25 }}
+            />
+          )}
+
+          {isHost ? (
+            <CtrlBtn tooltip="Room settings">
+              <SettingsIcon sx={{ fontSize: 18 }} />
+            </CtrlBtn>
+          ) : (
+            <CtrlBtn
+              tooltip="Leave room"
+              danger
+              onClick={() => {
+                onLeaveRoom();
+                stopCapture();
+              }}
+            >
+              <ExitToAppIcon sx={{ fontSize: 18 }} />
+            </CtrlBtn>
+          )}
         </Box>
       </TopBar>
 
@@ -514,12 +512,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           >
             {isMicMuted ? <MicOffIcon sx={{ fontSize: 18 }} /> : <MicIcon sx={{ fontSize: 18 }} />}
           </CtrlBtn>
-
-          <Tooltip title="Set status">
-            <Box sx={{ display: 'inline-flex' }}>
-              <ChatStatusButton onStatusChange={handleToggleUserStatus} />
-            </Box>
-          </Tooltip>
 
           <Divider
             orientation="vertical"
