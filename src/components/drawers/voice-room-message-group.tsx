@@ -2,9 +2,9 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 // ----------------------------------------------------------------------
 
+import { Badge } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
-import { Badge, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import { Chat as ChatIcon } from '@mui/icons-material';
 
@@ -14,6 +14,7 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 
 import { Iconify } from 'src/components/iconify';
 
+import { CtrlBtn } from '../buttons';
 import { VoiceRoomMessageGroupHeader } from './voice-room-message-group-header';
 
 export type VoiceRoomMessageGroupDrawerProps = IconButtonProps & {
@@ -32,7 +33,7 @@ export function VoiceRoomMessageGroupDrawer({
   const { isUnreadChatRoomMessage, participants } = useRoomTools();
 
   const renderHead = (
-    <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
+    <Stack direction="row" alignItems="center" sx={{ py: 1, pl: 2.5, pr: 1, minHeight: 68 }}>
       <VoiceRoomMessageGroupHeader
         roomName="Group messages"
         users={[
@@ -40,6 +41,7 @@ export function VoiceRoomMessageGroupDrawer({
             _id: participant?.socketId,
             name: participant.name,
             profilePhoto: participant.profilePhoto,
+            verified: participant.verified,
           })) || []),
         ]}
       />
@@ -52,31 +54,25 @@ export function VoiceRoomMessageGroupDrawer({
 
   return (
     <>
-      <Tooltip title={title || 'Group messages'}>
-        <IconButton
-          onClick={drawer.onTrue}
-          size="small"
-          sx={{ color: '#b5bac1', '&:hover': { color: '#5865f2' } }}
+      <CtrlBtn tooltip={title || 'Group messages'} onClick={drawer.onTrue}>
+        <Badge
+          badgeContent="!"
+          color="error"
+          invisible={!isUnreadChatRoomMessage}
+          sx={{
+            '& .MuiBadge-badge': {
+              fontSize: 10,
+              minWidth: 12,
+              height: 14,
+              borderRadius: '50%',
+              top: -4,
+              right: -4,
+            },
+          }}
         >
-          <Badge
-            badgeContent="!"
-            color="error"
-            invisible={!isUnreadChatRoomMessage}
-            sx={{
-              '& .MuiBadge-badge': {
-                fontSize: 12,
-                minWidth: 16,
-                height: 16,
-                borderRadius: '50%',
-                top: -6,
-                right: -6,
-              },
-            }}
-          >
-            <ChatIcon fontSize="small" />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+          <ChatIcon sx={{ fontSize: 18 }} />
+        </Badge>
+      </CtrlBtn>
 
       <Drawer
         open={drawer.value}

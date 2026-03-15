@@ -1,3 +1,5 @@
+export * from './ctrl-button';
+
 export * from './button-follow-icon';
 
 export * from './button-unfollow-icon';

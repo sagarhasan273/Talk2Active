@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { Box, Chip, alpha, SvgIcon, ButtonBase, Typography } from '@mui/material';
 
+import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
 
 import { AvatarUser } from 'src/components/avatar-user';
@@ -31,6 +32,7 @@ export function VoiceRoomFindButton({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const primary = theme.palette.primary.main;
+  const backgroundColor = theme.vars.palette.background.paperChannel;
   const success = theme.palette.success.main;
   const currentUser = useSelector(selectAccount);
 
@@ -49,26 +51,16 @@ export function VoiceRoomFindButton({
         transition: 'all 0.22s ease',
         position: 'relative',
 
-        bgcolor: isJoined
-          ? isDark
-            ? alpha(primary, 0.15)
-            : alpha(primary, 0.07)
-          : selected
-            ? alpha(primary, isDark ? 0.18 : 0.1)
-            : isDark
-              ? alpha('#fff', 0.04)
-              : alpha('#000', 0.03),
+        bgcolor: selected ? varAlpha(backgroundColor, isDark ? 0.18 : 0.51) : 'background.paper',
 
-        border: '1.5px solid',
-        borderColor: isJoined
-          ? alpha(primary, 0.5)
-          : selected
-            ? alpha(primary, 0.45)
-            : isDark
-              ? alpha('#fff', 0.07)
-              : alpha('#000', 0.07),
+        border: selected ? '2px solid' : '1.5px solid',
+        borderColor: selected
+          ? alpha(primary, 0.45)
+          : isDark
+            ? alpha('#fff', 0.07)
+            : alpha('#000', 0.07),
 
-        color: isJoined || selected ? primary : theme.palette.text.secondary,
+        color: selected ? primary : theme.palette.text.secondary,
 
         boxShadow: isJoined
           ? `0 4px 20px ${alpha(primary, 0.18)}`
@@ -77,15 +69,6 @@ export function VoiceRoomFindButton({
             : 'none',
 
         '&:hover': {
-          bgcolor: isJoined
-            ? isDark
-              ? alpha(primary, 0.2)
-              : alpha(primary, 0.11)
-            : selected
-              ? alpha(primary, isDark ? 0.22 : 0.14)
-              : isDark
-                ? alpha('#fff', 0.07)
-                : alpha('#000', 0.055),
           borderColor: alpha(primary, isJoined ? 0.65 : selected ? 0.55 : 0.2),
           transform: 'translateY(-1px)',
           boxShadow: `0 4px 18px ${alpha(primary, isJoined ? 0.24 : 0.1)}`,
@@ -102,17 +85,9 @@ export function VoiceRoomFindButton({
           justifyContent: 'space-between',
           px: 1.5,
           py: 0.55,
-          bgcolor: isJoined
-            ? alpha(primary, isDark ? 0.22 : 0.12)
-            : isDark
-              ? alpha('#fff', 0.04)
-              : alpha('#000', 0.03),
+          bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.03),
           borderBottom: '1px solid',
-          borderColor: isJoined
-            ? alpha(primary, 0.2)
-            : isDark
-              ? alpha('#fff', 0.06)
-              : alpha('#000', 0.06),
+          borderColor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06),
           transition: 'background 0.22s',
         }}
       >
