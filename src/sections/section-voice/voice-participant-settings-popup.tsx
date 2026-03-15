@@ -38,6 +38,7 @@ type Props = {
   targetProfilePhoto: UserType['profilePhoto'];
   targetAccountType: UserType['accountType'];
   targetVerified: UserType['verified'];
+  targetIsMuted: boolean;
   onAction?: (action: HostActionType, targetSocketId: string) => void;
   isHost?: boolean;
   isSelf?: boolean;
@@ -52,6 +53,7 @@ export function VoiceParticipantSettingsPopup({
   targetAccountType,
   targetVerified,
   targetProfilePhoto,
+  targetIsMuted,
   isHost,
   isSelf = false,
   onAction,
@@ -227,12 +229,7 @@ export function VoiceParticipantSettingsPopup({
               anchorEl={anchorRef.current}
               initialVolume={remoteAudioSettings[targetSocketId]?.volume ?? 100}
               onVolumeChange={(id, vol) => setRemoteVolume(id, vol)}
-              isMicMuted={false}
-              onMuteMic={(id) => {
-                socket?.emit('host-force-mute', { targetSocketId: id });
-                onAction?.('mute', id);
-              }}
-              onUnmuteMic={() => {}}
+              isMicMuted={targetIsMuted}
               // Hand raise wired to the real handlers above
               isHandRaised={raiseHand}
               onRaiseHand={() => handleRaiseHandClick()}

@@ -56,6 +56,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     createOffer,
     handleOffer,
     handleAnswer,
+    onClickMicrophone,
     handleIceCandidate,
     handleScreenShareOffer,
     handleScreenShareAnswer,
@@ -66,6 +67,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   } = webRTC;
 
   const { socket, on, off } = useSocketContext();
+
   const [leaveRoom] = useLeaveRoomMutation();
 
   // ── Leave ─────────────────────────────────────────────────────────────────
@@ -120,6 +122,12 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
     const handleAudioToggled = (data: { userId: string; isMuted: boolean }) => {
       updateParticipantAudio({ userId: data.userId, isMuted: data.isMuted });
+    };
+
+    const handleHostForceMicMute = (data: { targetUserId: string }) => {
+      onClickMicrophone(true);
+      updateUserVoiceState({ isMicMuted: true });
+      updateParticipantAudio({ userId: data.targetUserId, isMuted: true });
     };
 
     const handleStatusUpdated = (data: {
@@ -263,6 +271,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       ['user-left', handleUserLeft],
       ['user-audio-toggled', handleAudioToggled],
       ['user-audio-toggled-self', handleAudioToggled],
+      ['force-muted', handleHostForceMicMute],
       ['user-status-selected', handleStatusUpdated],
       ['receive-group-message', handleGroupMessage],
       ['receive-edit-group-message', handleEditedMessage],

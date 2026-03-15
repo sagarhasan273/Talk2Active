@@ -85,28 +85,6 @@ const ContentPad = styled(Box)(({ theme }) => ({
   },
 }));
 
-// const FeaturedPanel = styled(Box, {
-//   shouldForwardProp: (p) => p !== 'open',
-// })<{ open: boolean }>(({ theme, open }) => ({
-//   width: '100%',
-//   maxHeight: open ? 380 : 0,
-//   minHeight: open ? 240 : 0,
-//   overflow: 'hidden',
-//   borderRadius: theme.spacing(2),
-//   border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-//   backgroundColor:
-//     theme.palette.mode === 'dark' ? alpha('#000', 0.3) : alpha(theme.palette.primary.main, 0.03),
-//   transition: 'all 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
-//   display: 'flex',
-//   alignItems: 'center',
-//   justifyContent: 'center',
-//   position: 'relative',
-//   [theme.breakpoints.down('sm')]: {
-//     maxHeight: open ? 280 : 0,
-//     minHeight: open ? 200 : 0,
-//   },
-// }));
-
 const GridPanel = styled(Box)(({ theme }) => ({
   borderRadius: theme.spacing(2),
   border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
@@ -439,6 +417,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       onAction={handleHostAction}
                       isHost={isHost}
                       isSelf={user.id === participant.userId}
+                      targetIsMuted={Boolean(participant.isMuted)}
                     />
                   </Box>
                 </Zoom>

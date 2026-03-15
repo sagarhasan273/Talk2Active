@@ -65,7 +65,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
           profilePhoto: user.profilePhoto,
           isMuted: isMicMuted,
           status: 'online',
-          userType: room.host?.id === user.id ? 'Host' : 'Guest',
+          userType: room.host?.id === user.id ? 'host' : 'guest',
           verified: user.verified,
           accountType: user.accountType,
         });

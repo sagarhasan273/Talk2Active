@@ -34,8 +34,9 @@ import {
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { useCredentials } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { useRoomTools, useCredentials } from 'src/core/slices';
+import { useSocketContext } from 'src/core/contexts/socket-context';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
 import { AvatarUser } from 'src/components/avatar-user';
@@ -57,8 +58,6 @@ export interface VoiceParticipantSettingsProps {
   onVolumeChange: (socketId: string, volume: number) => void;
 
   isMicMuted: boolean;
-  onMuteMic: (socketId: string) => void;
-  onUnmuteMic: (socketId: string) => void;
 
   isHandRaised: boolean;
   onRaiseHand: (socketId: string) => void;
@@ -158,8 +157,6 @@ export function VoiceParticipantSettings({
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
-  onMuteMic,
-  onUnmuteMic,
   isHandRaised,
   onRaiseHand,
   onLowerHand,
@@ -176,12 +173,17 @@ export function VoiceParticipantSettings({
 
   const { user, checkIfFollowing } = useCredentials();
 
+  const { emit } = useSocketContext();
+
+  const { userVoiceState, updateParticipantAudio } = useRoomTools();
+
   const [volume, setVolume] = useState(initialVolume);
   const [visible, setVisible] = useState(false);
   const [confirmTransfer, setConfirmTransfer] = useState(false);
 
   const popupRef = useRef<HTMLDivElement>(null);
 
+  const { roomId } = userVoiceState;
   const isFollowing = checkIfFollowing(userId);
 
   const [followMutate, { isLoading: isLoadingFollow }] = useFollowMutation();
@@ -198,10 +200,22 @@ export function VoiceParticipantSettings({
     [socketId, onVolumeChange]
   );
 
-  const handleMuteToggle = useCallback(
-    () => (isMicMuted ? onUnmuteMic(userId) : onMuteMic(userId)),
-    [isMicMuted, userId, onMuteMic, onUnmuteMic]
-  );
+  const handleMuteToggle = useCallback(() => {
+    emit('host-force-mute', {
+      roomId,
+      targetSocketId: socketId,
+      targetUserId: userId,
+      senderInfo: {
+        name: user.name,
+        userId: user.id,
+      },
+      receiverInfo: {
+        name: displayName,
+        userId,
+      },
+    });
+    updateParticipantAudio({ userId, isMuted: true });
+  }, [roomId, socketId, userId, user.name, displayName, user.id, emit, updateParticipantAudio]);
 
   const handleHandToggle = useCallback(
     () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
@@ -288,11 +302,12 @@ export function VoiceParticipantSettings({
     {
       key: 'mute',
       icon: isMicMuted ? <MicOff size={14} /> : <Mic size={14} />,
-      label: isMicMuted ? 'Unmute' : 'Mute',
+      label: 'Mute',
       onClick: handleMuteToggle,
       active: !isMicMuted,
       danger: isMicMuted,
       show: isHost && !isSelf,
+      disabled: isMicMuted,
     },
     {
       key: 'hand',
