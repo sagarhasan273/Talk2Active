@@ -176,10 +176,12 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   return {
     position: 'absolute',
     top: 5,
-    right: 5,
-    width: 20,
+    right: -15,
+    width: 'fit-content',
     height: 20,
-    borderRadius: '50%',
+    borderRadius: 10,
+    padding: '0px 5px',
+    color: theme.palette.mode === 'light' ? theme.palette.common.white : theme.palette.common.black,
     backgroundColor: theme.palette[statusOption?.bgColor]?.main || theme.palette.success.main,
     border: `2px solid ${theme.palette.background.paper}`,
     zIndex: 15,
@@ -463,8 +465,21 @@ export function VoiceUserCard({
           <Tooltip title={STATUS_MAP[status || 'online']?.label}>
             <StatusDot status={status}>
               {(() => {
-                const IconComponent = STATUS_MAP[status || 'online']?.icon;
-                return IconComponent ? <IconComponent style={{ width: 14, height: 14 }} /> : null;
+                const renderStatus = STATUS_MAP[status || 'online'];
+                const IconComponent = renderStatus?.icon;
+
+                return IconComponent ? (
+                  <>
+                    <IconComponent
+                      style={{
+                        width: 14,
+                        height: 14,
+                        color: 'currentColor',
+                      }}
+                    />
+                    <Typography variant="subtitle2">{renderStatus?.label}</Typography>
+                  </>
+                ) : null;
               })()}
             </StatusDot>
           </Tooltip>
