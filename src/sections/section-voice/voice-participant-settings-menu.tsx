@@ -35,9 +35,9 @@ type Props = {
   targetSocketId: string;
   targetUserId: string;
   targetName: string;
-  targetProfilePhoto?: string | null;
-  targetAccountType?: UserType['accountType'];
-  targetVerified?: boolean;
+  targetProfilePhoto: UserType['profilePhoto'];
+  targetAccountType: UserType['accountType'];
+  targetVerified: UserType['verified'];
   onAction?: (action: HostActionType, targetSocketId: string) => void;
   isHost?: boolean;
   isSelf?: boolean;
@@ -218,9 +218,12 @@ export function VoiceParticipantSettingsMenu({
               socketId={targetSocketId}
               userId={targetUserId}
               displayName={targetName}
+              accountType={targetAccountType}
+              verified={targetVerified}
               isSelf={isSelf}
+              isHost={isHost}
               initials={targetName.slice(0, 2).toUpperCase()}
-              avatarUrl={targetProfilePhoto ?? undefined}
+              avatarUrl={targetProfilePhoto}
               anchorEl={anchorRef.current}
               initialVolume={remoteAudioSettings[targetSocketId]?.volume ?? 100}
               onVolumeChange={(id, vol) => setRemoteVolume(id, vol)}

@@ -1,8 +1,11 @@
+import type { UserType } from 'src/types/type-user';
+
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Ban,
   Mic,
   Hand,
+  Crown,
   MicOff,
   Volume2,
   VolumeX,
@@ -18,12 +21,15 @@ import {
   Stack,
   alpha,
   Slider,
-  Avatar,
   Portal,
   Button,
+  Dialog,
   Tooltip,
   useTheme,
   Typography,
+  DialogTitle,
+  DialogActions,
+  DialogContent,
 } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -32,17 +38,22 @@ import { useCredentials } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
+import { AvatarUser } from 'src/components/avatar-user';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VoiceParticipantSettingsProps {
   socketId: string;
   userId: string;
   displayName: string;
+  avatarUrl: UserType['profilePhoto'];
+  accountType: UserType['accountType'];
+  verified: UserType['verified'];
   isSelf: boolean;
+  isHost?: boolean;
   initials: string;
-  avatarUrl?: string;
 
-  initialVolume?: number; // 0–150
+  initialVolume?: number;
   onVolumeChange: (socketId: string, volume: number) => void;
 
   isMicMuted: boolean;
@@ -56,6 +67,9 @@ export interface VoiceParticipantSettingsProps {
   onKick: (socketId: string) => void;
   onBlock: (socketId: string) => void;
   isBlocked?: boolean;
+
+  /** Called when host transfers ownership to this participant */
+  onTransferHost?: (socketId: string) => void;
 
   anchorEl?: HTMLElement | null;
   onClose: () => void;
@@ -96,31 +110,36 @@ const Backdrop = styled(Box)({
   transition: 'opacity 0.2s ease',
 });
 
-// Small icon button used for action row
 const ActionBtn = styled(Button, {
-  shouldForwardProp: (p) => !['danger', 'warn', 'active'].includes(p as string),
-})<{ danger?: boolean; warn?: boolean; active?: boolean }>(({ theme, danger, warn, active }) => {
+  shouldForwardProp: (p) => !['danger', 'warn', 'active', 'golden'].includes(p as string),
+})<{ danger?: boolean; warn?: boolean; active?: boolean; golden?: boolean }>(({
+  theme,
+  danger,
+  warn,
+  active,
+  golden,
+}) => {
   const p = theme.palette;
   const color = danger
     ? p.error.main
     : warn
       ? p.warning.main
-      : active
-        ? p.primary.main
-        : p.text.secondary;
+      : golden
+        ? '#f59e0b'
+        : active
+          ? p.primary.main
+          : p.text.secondary;
   return {
-    width: 30,
-    height: 30,
     borderRadius: 8,
     color,
-    border: `1px solid ${alpha(color, danger || warn || active ? 0.28 : 0.12)}`,
-    backgroundColor: alpha(color, danger || warn || active ? 0.08 : 0),
+    border: `1px solid ${alpha(color, danger || warn || active || golden ? 0.28 : 0.12)}`,
+    backgroundColor: alpha(color, danger || warn || active || golden ? 0.08 : 0),
     transition: 'all 0.14s ease',
     '&:hover': {
       backgroundColor: alpha(color, 0.16),
-      transform: 'scale(1.08)',
+      transform: 'scale(1.02)',
     },
-    '&:active': { transform: 'scale(0.93)', color, backgroundColor: alpha(color, 0.16) },
+    '&:active': { transform: 'scale(0.97)', color, backgroundColor: alpha(color, 0.16) },
   };
 });
 
@@ -130,9 +149,12 @@ export function VoiceParticipantSettings({
   socketId,
   userId,
   displayName,
-  isSelf,
-  initials,
   avatarUrl,
+  accountType,
+  verified,
+  isSelf,
+  isHost = false,
+  initials,
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
@@ -144,6 +166,7 @@ export function VoiceParticipantSettings({
   onKick,
   onBlock,
   isBlocked = false,
+  onTransferHost,
   anchorEl,
   onClose,
 }: VoiceParticipantSettingsProps) {
@@ -155,6 +178,7 @@ export function VoiceParticipantSettings({
 
   const [volume, setVolume] = useState(initialVolume);
   const [visible, setVisible] = useState(false);
+  const [confirmTransfer, setConfirmTransfer] = useState(false);
 
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -209,6 +233,16 @@ export function VoiceParticipantSettings({
     }
   }, [user.id, userId, isFollowing, followMutate, unfollowMutate]);
 
+  const handleTransferHost = useCallback(() => {
+    setConfirmTransfer(true);
+  }, []);
+
+  const handleConfirmTransfer = useCallback(() => {
+    onTransferHost?.(socketId);
+    setConfirmTransfer(false);
+    onClose();
+  }, [socketId, onTransferHost, onClose]);
+
   // Enter animation
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
@@ -218,13 +252,13 @@ export function VoiceParticipantSettings({
   // Outside click
   useEffect(() => {
     const handler = (e: PointerEvent) => {
-      e.preventDefault();
+      if (confirmTransfer) return; // don't close while confirm dialog is open
       if (popupRef.current && !popupRef.current.contains(e.target as Node) && anchorEl !== e.target)
         onClose();
     };
     document.addEventListener('pointerdown', handler);
     return () => document.removeEventListener('pointerdown', handler);
-  }, [anchorEl, onClose]);
+  }, [anchorEl, onClose, confirmTransfer]);
 
   // Escape key
   useEffect(() => {
@@ -234,6 +268,66 @@ export function VoiceParticipantSettings({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  // ── Action definitions (shared between mobile + desktop) ─────────────────
+
+  type ActionDef = {
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick: () => void;
+    danger?: boolean;
+    warn?: boolean;
+    active?: boolean;
+    golden?: boolean;
+    disabled?: boolean;
+    show: boolean;
+  };
+
+  const actions: ActionDef[] = [
+    {
+      key: 'mute',
+      icon: isMicMuted ? <MicOff size={14} /> : <Mic size={14} />,
+      label: isMicMuted ? 'Unmute' : 'Mute',
+      onClick: handleMuteToggle,
+      active: !isMicMuted,
+      danger: isMicMuted,
+      show: isHost && !isSelf,
+    },
+    {
+      key: 'hand',
+      icon: <Hand size={14} />,
+      label: isHandRaised ? 'Lower hand' : 'Raise hand',
+      onClick: handleHandToggle,
+      warn: isHandRaised,
+      show: isSelf,
+    },
+    {
+      key: 'transfer',
+      icon: <Crown size={14} />,
+      label: 'Make host',
+      onClick: handleTransferHost,
+      golden: true,
+      show: isHost && !isSelf,
+    },
+    {
+      key: 'kick',
+      icon: <UserMinus size={14} />,
+      label: 'Kick',
+      onClick: handleKick,
+      danger: true,
+      disabled: isSelf,
+      show: isHost && !isSelf,
+    },
+    {
+      key: 'block',
+      icon: <Ban size={14} />,
+      label: isBlocked ? 'Unblock' : 'Block',
+      onClick: handleBlock,
+      danger: isBlocked,
+      show: !isSelf,
+    },
+  ].filter((a) => a.show);
 
   // ── Inner content ────────────────────────────────────────────────────────
 
@@ -256,8 +350,11 @@ export function VoiceParticipantSettings({
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Avatar
-            src={avatarUrl}
+          <AvatarUser
+            name={displayName}
+            avatarUrl={avatarUrl || null}
+            accountType={accountType}
+            verified={verified}
             sx={{
               width: isMobile ? 36 : 30,
               height: isMobile ? 36 : 30,
@@ -267,10 +364,7 @@ export function VoiceParticipantSettings({
               color: theme.palette.primary.main,
               flexShrink: 0,
             }}
-          >
-            {initials}
-          </Avatar>
-
+          />
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
               noWrap
@@ -287,22 +381,35 @@ export function VoiceParticipantSettings({
               In voice room
             </Typography>
           </Box>
-
           {!isSelf && (
             <Button
               onClick={handleFollow}
-              startIcon={!isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
+              size="small"
+              startIcon={isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
               disabled={isLoadingFollow || isLoadingUnfollow}
               sx={{
-                color: isFollowing ? 'error.main' : 'praimary.main',
-                cursor: 'pointer',
-                userSelect: 'none',
-                transition: 'opacity 0.12s, transform 0.12s',
-                '&:active': { opacity: 0.7, transform: 'scale(0.98)', bgColor: 'transparent' },
-                '&:hover': { bgColor: 'transparent' },
+                height: 28,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                borderRadius: '20px',
+                px: 1.25,
+                color: isFollowing ? 'error.main' : 'primary.main',
+                border: '1px solid',
+                borderColor: isFollowing
+                  ? alpha(theme.palette.error.main, 0.3)
+                  : alpha(theme.palette.primary.main, 0.3),
+                bgcolor: isFollowing
+                  ? alpha(theme.palette.error.main, 0.07)
+                  : alpha(theme.palette.primary.main, 0.07),
+                '&:hover': {
+                  bgcolor: isFollowing
+                    ? alpha(theme.palette.error.main, 0.14)
+                    : alpha(theme.palette.primary.main, 0.14),
+                },
+                whiteSpace: 'nowrap',
               }}
             >
-              {!isFollowing ? 'Follow' : 'Unfollow'}
+              {isFollowing ? 'Unfollow' : 'Follow'}
             </Button>
           )}
         </Stack>
@@ -353,162 +460,152 @@ export function VoiceParticipantSettings({
       </Box>
 
       {/* ── Actions ─────────────────────────────────────────────────────── */}
-      {isMobile ? (
-        // Mobile: full-width rows with icon + text label, 44px tap targets
-        <Box sx={{ px: 1.5, pb: 1.5, pt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          {(
-            [
-              {
-                icon: isMicMuted ? <MicOff size={15} /> : <Mic size={15} />,
-                label: isMicMuted ? 'Unmute mic' : 'Mute mic (for everyone)',
-                onClick: handleMuteToggle,
-                active: !isMicMuted,
-                danger: isMicMuted,
-              },
-              {
-                icon: <Hand size={15} />,
-                label: isHandRaised ? 'Lower hand' : 'Raise hand',
-                onClick: handleHandToggle,
-                warn: isHandRaised,
-              },
-              {
-                icon: <UserMinus size={15} />,
-                label: 'Kick from room',
-                onClick: handleKick,
-                danger: true,
-                disabled: isSelf,
-              },
-              {
-                icon: <Ban size={15} />,
-                label: isBlocked ? 'Unblock user' : 'Block user',
-                onClick: handleBlock,
-                danger: isBlocked,
-                disabled: isSelf,
-              },
-            ] as Array<{
-              icon: React.ReactNode;
-              label: string;
-              onClick: () => void;
-              danger?: boolean;
-              warn?: boolean;
-              active?: boolean;
-              disabled?: boolean;
-            }>
-          ).map(({ icon, label, onClick, danger, warn, active, disabled }) => {
-            const p = theme.palette;
-            const color = danger
-              ? p.error.main
-              : warn
-                ? p.warning.main
-                : active
-                  ? p.primary.main
-                  : p.text.secondary;
-            return (
-              <Button
-                key={label}
-                onClick={onClick}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.25,
-                  px: 1.25,
-                  py: 0.875,
-                  minHeight: 44,
-                  borderRadius: '10px',
-                  border: `1px solid ${alpha(color, danger || warn || active ? 0.22 : 0.1)}`,
-                  bgcolor: alpha(color, danger || warn || active ? 0.07 : 0),
-                  color,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  transition: 'opacity 0.12s, transform 0.12s',
-                  '&:active': { opacity: 0.7, transform: 'scale(0.98)' },
-                }}
-                disabled={disabled}
-              >
-                {icon}
-                <Typography
-                  sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'inherit', lineHeight: 1 }}
-                >
-                  {label}
-                </Typography>
-              </Button>
-            );
-          })}
-        </Box>
-      ) : (
-        // Desktop: icon-only with tooltips
-        <Box
-          sx={{
-            px: 1.5,
-            py: 1,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 0.75,
-          }}
-        >
-          <Tooltip title={isMicMuted ? 'Unmute mic' : 'Mute mic (for everyone)'} arrow>
-            <ActionBtn
-              size="small"
-              active={!isMicMuted}
-              danger
-              onClick={handleMuteToggle}
-              aria-label="Toggle mic mute"
-              startIcon={isMicMuted ? <MicOff size={14} /> : <Mic size={14} />}
-              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
-            >
-              {isMicMuted ? 'Unmute' : 'Mute'}
-            </ActionBtn>
-          </Tooltip>
-
-          <Tooltip title={isHandRaised ? 'Lower hand' : 'Raise hand'} arrow>
-            <ActionBtn
-              size="small"
-              warn={isHandRaised}
-              onClick={handleHandToggle}
-              aria-label="Toggle raise hand"
-              startIcon={<Hand size={14} />}
-              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
-            >
-              {isHandRaised ? 'Lower hand' : 'Raise hand'}
-            </ActionBtn>
-          </Tooltip>
-
-          <Tooltip title="Kick" arrow>
-            <ActionBtn
-              size="small"
-              danger
-              onClick={handleKick}
-              aria-label="Kick participant"
-              startIcon={<UserMinus size={14} />}
-              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
-              disabled={isSelf}
-            >
-              Kick
-            </ActionBtn>
-          </Tooltip>
-
-          <Tooltip title={isBlocked ? 'Unblock user' : 'Block user'} arrow>
-            <ActionBtn
-              size="small"
-              danger={isBlocked}
-              onClick={handleBlock}
-              aria-label={isBlocked ? 'Unblock user' : 'Block user'}
-              startIcon={<Ban size={14} />}
-              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
-              disabled={isSelf}
-            >
-              {isBlocked ? 'Unblock' : 'Block'}
-            </ActionBtn>
-          </Tooltip>
-        </Box>
-      )}
+      {actions.length > 0 &&
+        (isMobile ? (
+          <Box
+            sx={{ px: 1.5, pb: 1.5, pt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
+          >
+            {actions.map(
+              ({ key, icon, label, onClick, danger, warn, active, golden, disabled }) => {
+                const p = theme.palette;
+                const color = danger
+                  ? p.error.main
+                  : warn
+                    ? p.warning.main
+                    : golden
+                      ? '#f59e0b'
+                      : active
+                        ? p.primary.main
+                        : p.text.secondary;
+                return (
+                  <Button
+                    key={key}
+                    onClick={onClick}
+                    disabled={disabled}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.25,
+                      px: 1.25,
+                      py: 0.875,
+                      minHeight: 44,
+                      borderRadius: '10px',
+                      border: `1px solid ${alpha(color, danger || warn || active || golden ? 0.22 : 0.1)}`,
+                      bgcolor: alpha(color, danger || warn || active || golden ? 0.07 : 0),
+                      color,
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      transition: 'opacity 0.12s, transform 0.12s',
+                      '&:active': { opacity: 0.7, transform: 'scale(0.98)' },
+                      '&.Mui-disabled': { opacity: 0.38 },
+                    }}
+                  >
+                    {icon}
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        color: 'inherit',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                  </Button>
+                );
+              }
+            )}
+          </Box>
+        ) : (
+          <Box sx={{ px: 1.5, py: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {actions.map(
+              ({ key, icon, label, onClick, danger, warn, active, golden, disabled }) => (
+                <Tooltip key={key} title={label} arrow>
+                  <ActionBtn
+                    size="small"
+                    danger={danger}
+                    warn={warn}
+                    active={active}
+                    golden={golden}
+                    onClick={onClick}
+                    disabled={disabled}
+                    startIcon={icon}
+                    sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
+                  >
+                    {label}
+                  </ActionBtn>
+                </Tooltip>
+              )
+            )}
+          </Box>
+        ))}
     </Box>
   );
 
+  // ── Transfer host confirm dialog ─────────────────────────────────────────
+
+  const confirmDialog = (
+    <Dialog
+      open={confirmTransfer}
+      onClose={() => setConfirmTransfer(false)}
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          maxWidth: 340,
+          width: '100%',
+          mx: 2,
+        },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Box sx={{ color: '#f59e0b', display: 'flex' }}>
+            <Crown size={20} />
+          </Box>
+          <Typography fontWeight={700} fontSize="1rem">
+            Transfer Host
+          </Typography>
+        </Stack>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 0 }}>
+        <Typography variant="body2" color="text.secondary">
+          Are you sure you want to make{' '}
+          <Box component="span" fontWeight={700} color="text.primary">
+            {displayName}
+          </Box>{' '}
+          the new host? You will lose your host privileges.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setConfirmTransfer(false)}
+          sx={{ borderRadius: 2, flex: 1 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleConfirmTransfer}
+          sx={{
+            borderRadius: 2,
+            flex: 1,
+            bgcolor: '#f59e0b',
+            '&:hover': { bgcolor: '#d97706' },
+          }}
+        >
+          Make Host
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   // ── Mobile: bottom sheet ─────────────────────────────────────────────────
-  // Wrapped in Portal so it escapes any parent `position:fixed` wrapper
-  // (e.g. the desktop-positioning Box in HostActionsMenu) and owns the
-  // full viewport correctly.
 
   if (isMobile) {
     return (
@@ -519,6 +616,7 @@ export function VoiceParticipantSettings({
             {content}
           </Sheet>
         </Slide>
+        {confirmDialog}
       </Portal>
     );
   }
@@ -526,16 +624,19 @@ export function VoiceParticipantSettings({
   // ── Desktop: floating popup ──────────────────────────────────────────────
 
   return (
-    <Popup
-      ref={popupRef}
-      role="dialog"
-      aria-label={`Controls for ${displayName}`}
-      sx={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(-5px) scale(0.97)',
-      }}
-    >
-      {content}
-    </Popup>
+    <>
+      <Popup
+        ref={popupRef}
+        role="dialog"
+        aria-label={`Controls for ${displayName}`}
+        sx={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'translateY(0) scale(1)' : 'translateY(-5px) scale(0.97)',
+        }}
+      >
+        {content}
+      </Popup>
+      {confirmDialog}
+    </>
   );
 }
