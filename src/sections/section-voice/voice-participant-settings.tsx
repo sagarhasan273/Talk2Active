@@ -1,5 +1,15 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Ban, Mic, Hand, MicOff, Volume2, VolumeX, UserMinus } from 'lucide-react';
+import {
+  Ban,
+  Mic,
+  Hand,
+  MicOff,
+  Volume2,
+  VolumeX,
+  UserPlus,
+  UserMinus,
+  UserCheck,
+} from 'lucide-react';
 
 import { styled } from '@mui/material/styles';
 import {
@@ -19,8 +29,8 @@ import {
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { useCredentials } from 'src/core/slices';
-
-import { ButtonRelationshipToggle } from 'src/components/buttons';
+import { RelationshipTypeEnum } from 'src/enums/enum-social';
+import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,12 +38,9 @@ export interface VoiceParticipantSettingsProps {
   socketId: string;
   userId: string;
   displayName: string;
+  isSelf: boolean;
   initials: string;
   avatarUrl?: string;
-
-  isFollowing: boolean;
-  onFollow: (socketId: string) => void;
-  onUnfollow: (socketId: string) => void;
 
   initialVolume?: number; // 0–150
   onVolumeChange: (socketId: string, volume: number) => void;
@@ -113,7 +120,7 @@ const ActionBtn = styled(Button, {
       backgroundColor: alpha(color, 0.16),
       transform: 'scale(1.08)',
     },
-    '&:active': { transform: 'scale(0.93)' },
+    '&:active': { transform: 'scale(0.93)', color, backgroundColor: alpha(color, 0.16) },
   };
 });
 
@@ -123,11 +130,9 @@ export function VoiceParticipantSettings({
   socketId,
   userId,
   displayName,
+  isSelf,
   initials,
   avatarUrl,
-  isFollowing,
-  onFollow,
-  onUnfollow,
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
@@ -146,11 +151,63 @@ export function VoiceParticipantSettings({
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useResponsive('down', 'sm');
 
-  const { checkIfFollowing } = useCredentials();
+  const { user, checkIfFollowing } = useCredentials();
 
   const [volume, setVolume] = useState(initialVolume);
   const [visible, setVisible] = useState(false);
+
   const popupRef = useRef<HTMLDivElement>(null);
+
+  const isFollowing = checkIfFollowing(userId);
+
+  const [followMutate, { isLoading: isLoadingFollow }] = useFollowMutation();
+  const [unfollowMutate, { isLoading: isLoadingUnfollow }] = useUnfollowMutation();
+
+  // ── Handlers ────────────────────────────────────────────────────────────
+
+  const handleVolumeChange = useCallback(
+    (_: Event, val: number | number[]) => {
+      const v = val as number;
+      setVolume(v);
+      onVolumeChange(socketId, v);
+    },
+    [socketId, onVolumeChange]
+  );
+
+  const handleMuteToggle = useCallback(
+    () => (isMicMuted ? onUnmuteMic(userId) : onMuteMic(userId)),
+    [isMicMuted, userId, onMuteMic, onUnmuteMic]
+  );
+
+  const handleHandToggle = useCallback(
+    () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
+    [isHandRaised, socketId, onRaiseHand, onLowerHand]
+  );
+
+  const handleKick = useCallback(() => {
+    if (window.confirm(`Kick ${displayName}?`)) {
+      onKick(socketId);
+      onClose();
+    }
+  }, [socketId, displayName, onKick, onClose]);
+
+  const handleBlock = useCallback(() => onBlock(socketId), [socketId, onBlock]);
+
+  const handleFollow = useCallback(async () => {
+    if (!isFollowing) {
+      await followMutate({
+        requester: user.id,
+        recipient: userId,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    } else {
+      await unfollowMutate({
+        requester: user.id,
+        recipient: userId,
+        type: RelationshipTypeEnum.FOLLOW,
+      });
+    }
+  }, [user.id, userId, isFollowing, followMutate, unfollowMutate]);
 
   // Enter animation
   useEffect(() => {
@@ -177,36 +234,6 @@ export function VoiceParticipantSettings({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
-
-  // ── Handlers ────────────────────────────────────────────────────────────
-
-  const handleVolumeChange = useCallback(
-    (_: Event, val: number | number[]) => {
-      const v = val as number;
-      setVolume(v);
-      onVolumeChange(socketId, v);
-    },
-    [socketId, onVolumeChange]
-  );
-
-  const handleMuteToggle = useCallback(
-    () => (isMicMuted ? onUnmuteMic(socketId) : onMuteMic(socketId)),
-    [isMicMuted, socketId, onMuteMic, onUnmuteMic]
-  );
-
-  const handleHandToggle = useCallback(
-    () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
-    [isHandRaised, socketId, onRaiseHand, onLowerHand]
-  );
-  const handleKick = useCallback(() => {
-    if (window.confirm(`Kick ${displayName}?`)) {
-      onKick(socketId);
-      onClose();
-    }
-  }, [socketId, displayName, onKick, onClose]);
-  const handleBlock = useCallback(() => onBlock(socketId), [socketId, onBlock]);
-
-  console.log(checkIfFollowing(userId));
 
   // ── Inner content ────────────────────────────────────────────────────────
 
@@ -261,13 +288,23 @@ export function VoiceParticipantSettings({
             </Typography>
           </Box>
 
-          {/* Follow chip */}
-          <Tooltip title={isFollowing ? 'Unfollow' : 'Follow'} arrow>
-            <ButtonRelationshipToggle
-              targetUser={{ name: displayName, id: userId }}
-              isFollow={checkIfFollowing(userId)}
-            />
-          </Tooltip>
+          {!isSelf && (
+            <Button
+              onClick={handleFollow}
+              startIcon={!isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
+              disabled={isLoadingFollow || isLoadingUnfollow}
+              sx={{
+                color: isFollowing ? 'error.main' : 'praimary.main',
+                cursor: 'pointer',
+                userSelect: 'none',
+                transition: 'opacity 0.12s, transform 0.12s',
+                '&:active': { opacity: 0.7, transform: 'scale(0.98)', bgColor: 'transparent' },
+                '&:hover': { bgColor: 'transparent' },
+              }}
+            >
+              {!isFollowing ? 'Follow' : 'Unfollow'}
+            </Button>
+          )}
         </Stack>
       </Box>
 
@@ -339,12 +376,14 @@ export function VoiceParticipantSettings({
                 label: 'Kick from room',
                 onClick: handleKick,
                 danger: true,
+                disabled: isSelf,
               },
               {
                 icon: <Ban size={15} />,
                 label: isBlocked ? 'Unblock user' : 'Block user',
                 onClick: handleBlock,
                 danger: isBlocked,
+                disabled: isSelf,
               },
             ] as Array<{
               icon: React.ReactNode;
@@ -353,8 +392,9 @@ export function VoiceParticipantSettings({
               danger?: boolean;
               warn?: boolean;
               active?: boolean;
+              disabled?: boolean;
             }>
-          ).map(({ icon, label, onClick, danger, warn, active }) => {
+          ).map(({ icon, label, onClick, danger, warn, active, disabled }) => {
             const p = theme.palette;
             const color = danger
               ? p.error.main
@@ -364,7 +404,7 @@ export function VoiceParticipantSettings({
                   ? p.primary.main
                   : p.text.secondary;
             return (
-              <Box
+              <Button
                 key={label}
                 onClick={onClick}
                 sx={{
@@ -383,6 +423,7 @@ export function VoiceParticipantSettings({
                   transition: 'opacity 0.12s, transform 0.12s',
                   '&:active': { opacity: 0.7, transform: 'scale(0.98)' },
                 }}
+                disabled={disabled}
               >
                 {icon}
                 <Typography
@@ -390,7 +431,7 @@ export function VoiceParticipantSettings({
                 >
                   {label}
                 </Typography>
-              </Box>
+              </Button>
             );
           })}
         </Box>
@@ -409,7 +450,7 @@ export function VoiceParticipantSettings({
             <ActionBtn
               size="small"
               active={!isMicMuted}
-              danger={isMicMuted}
+              danger
               onClick={handleMuteToggle}
               aria-label="Toggle mic mute"
               startIcon={isMicMuted ? <MicOff size={14} /> : <Mic size={14} />}
@@ -440,6 +481,7 @@ export function VoiceParticipantSettings({
               aria-label="Kick participant"
               startIcon={<UserMinus size={14} />}
               sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
+              disabled={isSelf}
             >
               Kick
             </ActionBtn>
@@ -453,6 +495,7 @@ export function VoiceParticipantSettings({
               aria-label={isBlocked ? 'Unblock user' : 'Block user'}
               startIcon={<Ban size={14} />}
               sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
+              disabled={isSelf}
             >
               {isBlocked ? 'Unblock' : 'Block'}
             </ActionBtn>

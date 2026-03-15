@@ -40,6 +40,7 @@ type Props = {
   targetVerified?: boolean;
   onAction?: (action: HostActionType, targetSocketId: string) => void;
   isHost?: boolean;
+  isSelf?: boolean;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ export function VoiceParticipantSettingsMenu({
   targetVerified,
   targetProfilePhoto,
   isHost,
+  isSelf = false,
   onAction,
 }: Props) {
   const theme = useTheme();
@@ -216,6 +218,7 @@ export function VoiceParticipantSettingsMenu({
               socketId={targetSocketId}
               userId={targetUserId}
               displayName={targetName}
+              isSelf={isSelf}
               initials={targetName.slice(0, 2).toUpperCase()}
               avatarUrl={targetProfilePhoto ?? undefined}
               anchorEl={anchorRef.current}
@@ -240,9 +243,6 @@ export function VoiceParticipantSettingsMenu({
                 onAction?.('block-mic', id);
               }}
               isBlocked={false}
-              isFollowing={false}
-              onFollow={() => {}}
-              onUnfollow={() => {}}
               onClose={() => setSettingsOpen(false)}
             />
           </Box>

@@ -96,21 +96,18 @@ export const useCredentials = () => {
   const friends = useSelector(selectFriends);
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  const checkIfFollowing = useCallback(
-    (targetUserId: string) => {
-      console.log(targetUserId, friends, following);
-      if (
-        targetUserId &&
-        following.map((temp) => temp?.accountDetails?.id).includes(targetUserId)
-      ) {
-        return true;
-      }
-      if (targetUserId && friends.map((temp) => temp?.accountDetails?.id).includes(targetUserId)) {
-        return true;
-      }
-      return false;
-    },
+  const followingIds = useMemo(
+    () =>
+      new Set([
+        ...following.map((f) => f?.accountDetails?.id),
+        ...friends.map((f) => f?.accountDetails?.id),
+      ]),
     [following, friends]
+  );
+
+  const checkIfFollowing = useCallback(
+    (targetUserId: string) => followingIds.has(targetUserId),
+    [followingIds]
   );
 
   const memoCredentials = useMemo(

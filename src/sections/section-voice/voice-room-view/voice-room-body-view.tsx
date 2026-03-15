@@ -438,6 +438,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       targetVerified={participant.verified}
                       onAction={handleHostAction}
                       isHost={isHost}
+                      isSelf={user.id === participant.userId}
                     />
                   </Box>
                 </Zoom>
