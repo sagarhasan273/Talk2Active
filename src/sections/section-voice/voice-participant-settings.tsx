@@ -21,10 +21,9 @@ import {
   Slider,
   Avatar,
   Portal,
+  Button,
   Tooltip,
-  Divider,
   useTheme,
-  IconButton,
   Typography,
 } from '@mui/material';
 
@@ -97,7 +96,7 @@ const Backdrop = styled(Box)({
 });
 
 // Small icon button used for action row
-const ActionBtn = styled(IconButton, {
+const ActionBtn = styled(Button, {
   shouldForwardProp: (p) => !['danger', 'warn', 'active'].includes(p as string),
 })<{ danger?: boolean; warn?: boolean; active?: boolean }>(({ theme, danger, warn, active }) => {
   const p = theme.palette;
@@ -422,8 +421,8 @@ export function VoiceParticipantSettings({
             px: 1.5,
             py: 1,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 0.75,
           }}
         >
           <Tooltip title={isMicMuted ? 'Unmute mic' : 'Mute mic (for everyone)'} arrow>
@@ -433,16 +432,12 @@ export function VoiceParticipantSettings({
               danger={isMicMuted}
               onClick={handleMuteToggle}
               aria-label="Toggle mic mute"
+              startIcon={isMicMuted ? <MicOff size={14} /> : <Mic size={14} />}
+              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
             >
-              {isMicMuted ? <MicOff size={14} /> : <Mic size={14} />}
+              {isMicMuted ? 'Unmute' : 'Mute'}
             </ActionBtn>
           </Tooltip>
-
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ mx: 0.5, height: 18, alignSelf: 'center' }}
-          />
 
           <Tooltip title={isHandRaised ? 'Lower hand' : 'Raise hand'} arrow>
             <ActionBtn
@@ -450,14 +445,23 @@ export function VoiceParticipantSettings({
               warn={isHandRaised}
               onClick={handleHandToggle}
               aria-label="Toggle raise hand"
+              startIcon={<Hand size={14} />}
+              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
             >
-              <Hand size={14} />
+              {isHandRaised ? 'Lower hand' : 'Raise hand'}
             </ActionBtn>
           </Tooltip>
 
-          <Tooltip title="Kick from room" arrow>
-            <ActionBtn size="small" danger onClick={handleKick} aria-label="Kick participant">
-              <UserMinus size={14} />
+          <Tooltip title="Kick" arrow>
+            <ActionBtn
+              size="small"
+              danger
+              onClick={handleKick}
+              aria-label="Kick participant"
+              startIcon={<UserMinus size={14} />}
+              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
+            >
+              Kick
             </ActionBtn>
           </Tooltip>
 
@@ -467,8 +471,10 @@ export function VoiceParticipantSettings({
               danger={isBlocked}
               onClick={handleBlock}
               aria-label={isBlocked ? 'Unblock user' : 'Block user'}
+              startIcon={<Ban size={14} />}
+              sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
             >
-              <Ban size={14} />
+              {isBlocked ? 'Unblock' : 'Block'}
             </ActionBtn>
           </Tooltip>
         </Box>
