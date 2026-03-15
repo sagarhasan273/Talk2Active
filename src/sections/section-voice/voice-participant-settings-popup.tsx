@@ -45,7 +45,7 @@ type Props = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function VoiceParticipantSettingsMenu({
+export function VoiceParticipantSettingsPopup({
   targetSocketId,
   targetUserId,
   targetName,

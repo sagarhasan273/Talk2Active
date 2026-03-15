@@ -32,7 +32,7 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 import { VoiceUserCard } from '../voice-user-card';
 import { VoiceMessageGroup } from '../voice-message-group';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
-import { VoiceParticipantSettingsMenu } from '../voice-participant-settings-menu';
+import { VoiceParticipantSettingsPopup } from '../voice-participant-settings-popup';
 
 // ─── Animations ───────────────────────────────────────────────────────────────
 
@@ -429,7 +429,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       }
                     />
 
-                    <VoiceParticipantSettingsMenu
+                    <VoiceParticipantSettingsPopup
                       targetSocketId={participant.socketId}
                       targetUserId={participant.userId}
                       targetName={participant.name}

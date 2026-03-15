@@ -526,7 +526,7 @@ export function VoiceUserCard({
           <Paper
             sx={{
               position: 'absolute',
-              top: 0,
+              top: -10,
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 30,
@@ -551,7 +551,7 @@ export function VoiceUserCard({
                 height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: `8px solid ${theme.palette.warning.light}`,
+                borderTop: `8px solid ${theme.palette.warning.lighter}`,
               },
               '@keyframes float': {
                 '0%': { transform: 'translateX(-50%) translateY(0px)' },
