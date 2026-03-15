@@ -175,8 +175,8 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
 
   return {
     position: 'absolute',
-    top: 5,
-    right: -15,
+    top: -10,
+    left: 0,
     width: 'fit-content',
     height: 20,
     borderRadius: 10,
@@ -460,31 +460,6 @@ export function VoiceUserCard({
           },
         }}
       >
-        {/* Status indicator dot */}
-        {showStatus && status !== 'online' && (
-          <Tooltip title={STATUS_MAP[status || 'online']?.label}>
-            <StatusDot status={status}>
-              {(() => {
-                const renderStatus = STATUS_MAP[status || 'online'];
-                const IconComponent = renderStatus?.icon;
-
-                return IconComponent ? (
-                  <>
-                    <IconComponent
-                      style={{
-                        width: 14,
-                        height: 14,
-                        color: 'currentColor',
-                      }}
-                    />
-                    <Typography variant="subtitle2">{renderStatus?.label}</Typography>
-                  </>
-                ) : null;
-              })()}
-            </StatusDot>
-          </Tooltip>
-        )}
-
         {/* Connection Status Overlay */}
         {connectionStatusElement}
 
@@ -620,6 +595,31 @@ export function VoiceUserCard({
             </Box>
           </Zoom>
         )}
+
+      {/* Status indicator dot */}
+      {showStatus && status !== 'online' && (
+        <Tooltip title={STATUS_MAP[status || 'online']?.label}>
+          <StatusDot status={status}>
+            {(() => {
+              const renderStatus = STATUS_MAP[status || 'online'];
+              const IconComponent = renderStatus?.icon;
+
+              return IconComponent ? (
+                <>
+                  <IconComponent
+                    style={{
+                      width: 14,
+                      height: 14,
+                      color: 'currentColor',
+                    }}
+                  />
+                  <Typography variant="subtitle2">{renderStatus?.label}</Typography>
+                </>
+              ) : null;
+            })()}
+          </StatusDot>
+        </Tooltip>
+      )}
     </Box>
   );
 }
