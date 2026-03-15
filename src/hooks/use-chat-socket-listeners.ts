@@ -118,17 +118,17 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       removePeer(data.socketId);
     };
 
-    const handleAudioToggled = (data: { socketId: string; isMuted: boolean }) => {
-      updateParticipantAudio({ socketId: data.socketId, isMuted: data.isMuted });
+    const handleAudioToggled = (data: { userId: string; isMuted: boolean }) => {
+      updateParticipantAudio({ userId: data.userId, isMuted: data.isMuted });
     };
 
     const handleStatusUpdated = (data: {
-      socketId: string;
+      userId: string;
       status: UserType['status'];
       roomId?: string;
     }) => {
       if (!data.roomId || data.roomId === roomId) {
-        updateParticipantStatus({ socketId: data.socketId, status: data.status });
+        updateParticipantStatus({ userId: data.userId, status: data.status });
       }
     };
 

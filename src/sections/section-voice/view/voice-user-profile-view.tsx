@@ -55,6 +55,7 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
         roomId: room.id,
         isMuted: !isMicMuted,
         name: user.name,
+        userId: user.id,
       });
     }
   };
@@ -86,10 +87,11 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
         socketId: socket.id,
         status: selectedStatus,
         name: user.name,
+        userId: user.id,
       });
-      if (socket.id) updateParticipantStatus({ socketId: socket.id, status: selectedStatus });
+      if (socket.id) updateParticipantStatus({ userId: user.id, status: selectedStatus });
     },
-    [socket, roomId, user?.name, updateParticipantStatus]
+    [socket, roomId, user?.name, user?.id, updateParticipantStatus]
   );
 
   return (

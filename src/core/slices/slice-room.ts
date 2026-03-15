@@ -83,9 +83,9 @@ export const roomSlice = createSlice({
 
     updateParticipantAudio: (
       state,
-      action: PayloadAction<{ socketId: string; isMuted: boolean }>
+      action: PayloadAction<{ userId: string; isMuted: boolean }>
     ) => {
-      const participant = state.participants[action.payload.socketId];
+      const participant = state.participants[action.payload.userId];
       if (participant) {
         participant.isMuted = action.payload.isMuted;
       }
@@ -93,9 +93,9 @@ export const roomSlice = createSlice({
 
     updateParticipantStatus: (
       state,
-      action: PayloadAction<{ socketId: string; status: UserType['status'] }>
+      action: PayloadAction<{ userId: string; status: UserType['status'] }>
     ) => {
-      const participant = state.participants[action.payload.socketId];
+      const participant = state.participants[action.payload.userId];
       if (participant) {
         participant.status = action.payload.status;
       }
@@ -263,9 +263,9 @@ export const useRoomTools = () => {
       updateParticipant: (participant: Partial<Participant>) =>
         dispatch(updateParticipant(participant)),
       removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
-      updateParticipantAudio: (payload: { socketId: string; isMuted: boolean }) =>
+      updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),
-      updateParticipantStatus: (payload: { socketId: string; status: UserType['status'] }) =>
+      updateParticipantStatus: (payload: { userId: string; status: UserType['status'] }) =>
         dispatch(updateParticipantStatus(payload)),
       resetParticipants: () => dispatch(resetParticipants()),
       updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>

@@ -17,8 +17,9 @@ import {
   useTheme,
   Typography,
   IconButton,
-  useMediaQuery,
 } from '@mui/material';
+
+import { useResponsive } from 'src/hooks/use-responsive';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -78,7 +79,6 @@ export const STATUS_OPTIONS: ChatUserStatus[] = [
 const INITIAL_STATUS = STATUS_OPTIONS[0];
 const POPOVER_WIDTH = 290;
 const MARGIN = 8;
-const MOBILE_BP = 480;
 
 // ─── Styled ───────────────────────────────────────────────────────────────────
 
@@ -177,7 +177,7 @@ function StatusGrid({
 export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = useMediaQuery(`(max-width:${MOBILE_BP}px)`);
+  const isMobile = useResponsive('down', 'sm');
 
   const [currentStatus, setCurrentStatus] = useState<ChatUserStatus>(INITIAL_STATUS);
   const [isOpen, setIsOpen] = useState(false);
