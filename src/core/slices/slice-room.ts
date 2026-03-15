@@ -289,21 +289,21 @@ export const useRoomTools = () => {
         dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
       updateUserActionsInVoice: (payload: any) => {
+        // Clear any previous timer before setting a new one
+        if (setTimeOutRef.current) clearTimeout(setTimeOutRef.current);
+
         if (payload.type === 'raise-hand-off') {
           dispatch(updateUserActionsInVoice({}));
-        } else {
-          dispatch(updateUserActionsInVoice(payload));
+          // No timer needed — already cleared
+          return;
         }
 
-        if (payload?.type === 'raise-hand') {
-          setTimeOutRef.current = setTimeout(() => {
-            dispatch(updateUserActionsInVoice({}));
-          }, 10000);
-        } else {
-          setTimeOutRef.current = setTimeout(() => {
-            dispatch(updateUserActionsInVoice({}));
-          }, 3000);
-        }
+        dispatch(updateUserActionsInVoice(payload));
+
+        const delay = payload.type === 'raise-hand' ? 10_000 : 3_000;
+        setTimeOutRef.current = setTimeout(() => {
+          dispatch(updateUserActionsInVoice({}));
+        }, delay);
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
