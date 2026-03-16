@@ -208,6 +208,11 @@ export const roomSlice = createSlice({
       });
     },
 
+    clearChatRoomMessages: (state) => {
+      state.isUnreadChatRoomMessage = false;
+      state.chatRoomMessages = [];
+    },
+
     updateUserActionsInVoice: (state, action: PayloadAction<any>) => {
       state.userActionsInVoice = action.payload;
     },
@@ -233,6 +238,7 @@ const {
   reactionChatRoomMessage,
   reactionPopChatRoomMessage,
   clearUnreadChatRoomMessages,
+  clearChatRoomMessages,
   updateUserActionsInVoice,
 } = roomSlice.actions;
 
@@ -305,6 +311,7 @@ export const useRoomTools = () => {
       reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
         dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
+      clearChatRoomMessages: () => dispatch(clearChatRoomMessages()),
       updateUserActionsInVoice: (payload: any) => {
         // Clear any previous timer before setting a new one
         if (setTimeOutRef.current) clearTimeout(setTimeOutRef.current);

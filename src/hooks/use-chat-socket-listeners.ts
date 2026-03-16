@@ -49,6 +49,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     updateUserActionsInVoice,
     updateUserVoiceState,
     resetParticipants,
+    clearChatRoomMessages,
   } = useRoomTools();
 
   const { roomId } = userVoiceState;
@@ -81,12 +82,24 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       const name = user.id || (sessionStorage.getItem('username') as string);
 
       if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name, kicked }).unwrap();
+
       cleanupWebRTC();
       updateUserVoiceState({ hasJoined: false, roomId: null });
       resetParticipants();
+      clearChatRoomMessages();
       sessionStorage.removeItem('joinedRoomId');
+      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('username');
     },
-    [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]
+    [
+      roomId,
+      cleanupWebRTC,
+      leaveRoom,
+      resetParticipants,
+      clearChatRoomMessages,
+      updateUserVoiceState,
+      user.id,
+    ]
   );
 
   useEffect(
@@ -162,6 +175,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
         type: data.type,
         systemMessageType: data?.systemMessageType,
         senderInfo: data.senderInfo,
+        receiverInfo: data?.receiverInfo,
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
         senderSocketId: data?.senderSocketId,

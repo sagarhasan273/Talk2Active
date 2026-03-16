@@ -166,6 +166,7 @@ export function VoiceParticipantSettings({
   const [volume, setVolume] = useState(initialVolume);
   const [visible, setVisible] = useState(false);
   const [confirmTransfer, setConfirmTransfer] = useState(false);
+  const [confirmKick, setConfirmKick] = useState(false);
 
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -210,16 +211,22 @@ export function VoiceParticipantSettings({
   );
 
   const handleKick = useCallback(() => {
-    if (window.confirm(`Kick ${displayName}?`)) {
+    setConfirmKick(true);
+  }, []);
+
+  const handleConfirmKick = useCallback(
+    (event: any) => {
+      console.log('hello');
+      event.stopPropagation();
       emit('host-kick-user', {
         roomId,
         targetSocketId: socketId,
         userId,
         name: displayName,
       });
-      onClose();
-    }
-  }, [socketId, userId, roomId, displayName, emit, onClose]);
+    },
+    [socketId, userId, roomId, displayName, emit]
+  );
 
   const handleLike = useCallback(() => {
     emit('send-user-actions-in-voice', {
@@ -269,12 +276,13 @@ export function VoiceParticipantSettings({
   useEffect(() => {
     const handler = (e: PointerEvent) => {
       if (confirmTransfer) return; // don't close while confirm dialog is open
+      if (confirmKick) return;
       if (popupRef.current && !popupRef.current.contains(e.target as Node) && anchorEl !== e.target)
         onClose();
     };
     document.addEventListener('pointerdown', handler);
     return () => document.removeEventListener('pointerdown', handler);
-  }, [anchorEl, onClose, confirmTransfer]);
+  }, [anchorEl, onClose, confirmTransfer, confirmKick]);
 
   // Escape key
   useEffect(() => {
@@ -622,6 +630,70 @@ export function VoiceParticipantSettings({
     </Dialog>
   );
 
+  // Kick confirm modal ___________________
+
+  const confirmKickialog = (
+    <Dialog
+      open={confirmKick}
+      onClose={() => setConfirmKick(false)}
+      sx={{ zIndex: 1500 }}
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          maxWidth: 340,
+          width: '100%',
+          mx: 2,
+        },
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Box sx={{ color: '#f59e0b', display: 'flex' }}>
+            <UserMinus size={20} />
+          </Box>
+          <Typography fontWeight={700} fontSize="1rem">
+            Kick Confirm.
+          </Typography>
+        </Stack>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 0 }}>
+        <Typography variant="body2" color="text.secondary">
+          Are you sure you want to kick{' '}
+          <Box component="span" fontWeight={700} color="text.primary">
+            {displayName}
+          </Box>{' '}
+          from the voice room?
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setConfirmKick(false)}
+          sx={{ borderRadius: 2, flex: 1 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleConfirmKick}
+          sx={{
+            borderRadius: 2,
+            flex: 1,
+            bgcolor: '#f59e0b',
+            '&:hover': { bgcolor: '#d97706' },
+          }}
+        >
+          Kick
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   // ── Mobile: bottom sheet ─────────────────────────────────────────────────
 
   if (isMobile) {
@@ -634,6 +706,7 @@ export function VoiceParticipantSettings({
           </Sheet>
         </Slide>
         {confirmDialog}
+        {confirmKickialog}
       </Portal>
     );
   }
@@ -654,6 +727,7 @@ export function VoiceParticipantSettings({
         {content}
       </Popup>
       {confirmDialog}
+      {confirmKickialog}
     </>
   );
 }

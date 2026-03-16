@@ -68,6 +68,7 @@ export function VoiceMainView() {
     setCurrentRooms,
     updateUserVoiceState,
     resetParticipants,
+    clearChatRoomMessages,
   } = useRoomTools();
   const { roomId } = userVoiceState;
 
@@ -133,16 +134,19 @@ export function VoiceMainView() {
       // Reset local state
       resetParticipants();
 
+      clearChatRoomMessages();
+
       sessionStorage.removeItem('joinedRoomId');
     } else {
       console.error(response?.message || 'Failed to leave chat');
     }
   }, [
+    roomId,
     cleanupWebRTC,
     emit,
     leaveRoom,
     resetParticipants,
-    roomId,
+    clearChatRoomMessages,
     updateUserVoiceState,
     user.id,
     user.name,
