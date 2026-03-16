@@ -38,6 +38,14 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ['chat-recall'],
     }),
+    updateRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
+      query: (body) => ({
+        url: `room/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['chat-recall'],
+    }),
 
     joinRoom: builder.mutation<
       { message: string; status: boolean },
@@ -69,6 +77,7 @@ export const {
   useGetRoomsQuery,
   useGetRoomByIdQuery,
   useCreateRoomMutation,
+  useUpdateRoomMutation,
   useJoinRoomMutation,
   useLeaveRoomMutation,
 } = chatApi;

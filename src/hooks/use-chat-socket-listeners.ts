@@ -33,6 +33,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   const {
     currentRooms,
     userVoiceState,
+    transferParticipantUserType,
     setCurrentRooms,
     addParticipant,
     removeParticipant,
@@ -213,12 +214,34 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     };
 
     const handleBroadcastRoomUpdate = (data: any) => {
-      const recentRoomIds = currentRooms?.map((r) => r?.room?.id);
-      if (
-        !recentRoomIds.includes(data?.joinInfo?.roomId) &&
-        !recentRoomIds.includes(data?.leaveInfo?.roomId)
-      )
+      if (data?.type === 'transfer-host') {
+        setCurrentRooms(
+          currentRooms.map((currentRoom) => {
+            if (currentRoom?.room?.id === data?.roomId) {
+              transferParticipantUserType({ newUserId: data?.host?.id });
+              return {
+                ...currentRoom,
+                room: {
+                  ...currentRoom.room,
+                  host: data?.host,
+                },
+              };
+            }
+
+            return currentRoom;
+          })
+        );
         return;
+      }
+
+      const recentRoomIds = new Set(currentRooms?.map((r) => r?.room?.id) || []);
+
+      const joinRoomId = data?.joinInfo?.roomId;
+      const leaveRoomId = data?.leaveInfo?.roomId;
+
+      if (!recentRoomIds.has(joinRoomId) && !recentRoomIds.has(leaveRoomId)) {
+        return;
+      }
 
       setCurrentRooms(
         currentRooms.map((currentRoom) => {

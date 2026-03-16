@@ -14,7 +14,7 @@ interface RoomState {
   room: RoomResponse;
   currentRooms: { room: RoomResponse; joinedAt: string }[];
   loading: boolean;
-  participants: { [socketId: string]: Participant };
+  participants: { [userId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadChatRoomMessage: boolean;
@@ -72,6 +72,23 @@ export const roomSlice = createSlice({
         ...state.participants[action.payload.userId],
         ...action.payload,
       };
+    },
+
+    transferParticipantUserType: (
+      state,
+      action: PayloadAction<{
+        prevUserId?: string;
+        newUserId: string;
+      }>
+    ) => {
+      console.log(action.payload.newUserId);
+      Object.values(state.participants).forEach((participant) => {
+        if (participant.userId === action.payload.newUserId) {
+          participant.userType = 'host';
+        } else {
+          participant.userType = 'guest';
+        }
+      });
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
@@ -206,6 +223,7 @@ const {
   setRoomLoading,
   addParticipant,
   updateParticipant,
+  transferParticipantUserType,
   removeParticipant,
   updateParticipantAudio,
   updateParticipantStatus,
@@ -262,6 +280,8 @@ export const useRoomTools = () => {
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<Participant>) =>
         dispatch(updateParticipant(participant)),
+      transferParticipantUserType: (payload: { newUserId: string; prevUserId?: string }) =>
+        dispatch(transferParticipantUserType(payload)),
       removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
       updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),

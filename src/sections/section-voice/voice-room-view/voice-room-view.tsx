@@ -77,7 +77,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
           socketId: socket?.id,
           status: 'online',
           isMuted: isMicMuted,
-          userType: room.host?.id === user.id ? 'Host' : 'Guest',
+          userType: room.host?.id === user.id ? 'host' : 'guest',
           verified: user.verified,
           isLocal: true,
           isSpeaking: false,

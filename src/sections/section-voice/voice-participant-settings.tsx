@@ -37,7 +37,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 import { useRoomTools, useCredentials } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
-import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
+import { useFollowMutation, useUnfollowMutation, useUpdateRoomMutation } from 'src/core/apis';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
@@ -188,6 +188,7 @@ export function VoiceParticipantSettings({
 
   const [followMutate, { isLoading: isLoadingFollow }] = useFollowMutation();
   const [unfollowMutate, { isLoading: isLoadingUnfollow }] = useUnfollowMutation();
+  const [updateRoomHost, { isLoading: isLoadingTransferHost }] = useUpdateRoomMutation();
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
@@ -251,11 +252,11 @@ export function VoiceParticipantSettings({
     setConfirmTransfer(true);
   }, []);
 
-  const handleConfirmTransfer = useCallback(() => {
-    onTransferHost?.(socketId);
+  const handleConfirmTransfer = useCallback(async () => {
+    await updateRoomHost({ roomId, host: userId });
     setConfirmTransfer(false);
     onClose();
-  }, [socketId, onTransferHost, onClose]);
+  }, [roomId, userId, onClose, updateRoomHost]);
 
   // Enter animation
   useEffect(() => {
@@ -324,6 +325,7 @@ export function VoiceParticipantSettings({
       onClick: handleTransferHost,
       golden: true,
       show: isHost && !isSelf,
+      disabled: isLoadingTransferHost,
     },
     {
       key: 'kick',
@@ -563,6 +565,7 @@ export function VoiceParticipantSettings({
     <Dialog
       open={confirmTransfer}
       onClose={() => setConfirmTransfer(false)}
+      sx={{ zIndex: 1500 }}
       PaperProps={{
         sx: {
           borderRadius: 3,
