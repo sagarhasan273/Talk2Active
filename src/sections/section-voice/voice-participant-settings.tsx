@@ -51,7 +51,6 @@ export interface VoiceParticipantSettingsProps {
   verified: UserType['verified'];
   isSelf: boolean;
   isHost?: boolean;
-  initials: string;
 
   initialVolume?: number;
   onVolumeChange: (socketId: string, volume: number) => void;
@@ -61,13 +60,6 @@ export interface VoiceParticipantSettingsProps {
   isHandRaised: boolean;
   onRaiseHand: (socketId: string) => void;
   onLowerHand: (socketId: string) => void;
-
-  onKick: (socketId: string) => void;
-  onBlock: (socketId: string) => void;
-  isBlocked?: boolean;
-
-  /** Called when host transfers ownership to this participant */
-  onTransferHost?: (socketId: string) => void;
 
   anchorEl?: HTMLElement | null;
   onClose: () => void;
@@ -152,17 +144,12 @@ export function VoiceParticipantSettings({
   verified,
   isSelf,
   isHost = false,
-  initials,
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
   isHandRaised,
   onRaiseHand,
   onLowerHand,
-  onKick,
-  onBlock,
-  isBlocked = false,
-  onTransferHost,
   anchorEl,
   onClose,
 }: VoiceParticipantSettingsProps) {

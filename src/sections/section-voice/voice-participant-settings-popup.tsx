@@ -224,7 +224,6 @@ export function VoiceParticipantSettingsPopup({
               verified={targetVerified}
               isSelf={isSelf}
               isHost={isHost}
-              initials={targetName.slice(0, 2).toUpperCase()}
               avatarUrl={targetProfilePhoto}
               anchorEl={anchorRef.current}
               initialVolume={remoteAudioSettings[targetSocketId]?.volume ?? 100}
@@ -234,15 +233,6 @@ export function VoiceParticipantSettingsPopup({
               isHandRaised={raiseHand}
               onRaiseHand={() => handleRaiseHandClick()}
               onLowerHand={() => handleRaiseHandClick()}
-              onKick={(id) => {
-                socket?.emit('host-kick-user', { targetSocketId: id });
-                onAction?.('kick', id);
-              }}
-              onBlock={(id) => {
-                socket?.emit('host-block-mic', { targetSocketId: id });
-                onAction?.('block-mic', id);
-              }}
-              isBlocked={false}
               onClose={() => setSettingsOpen(false)}
             />
           </Box>
