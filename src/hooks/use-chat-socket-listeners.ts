@@ -33,6 +33,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   const {
     currentRooms,
     userVoiceState,
+    setRoom,
     transferParticipantUserType,
     setCurrentRooms,
     addParticipant,
@@ -219,6 +220,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
           currentRooms.map((currentRoom) => {
             if (currentRoom?.room?.id === data?.roomId) {
               transferParticipantUserType({ newUserId: data?.host?.id });
+              setRoom({ ...currentRoom.room, host: data?.host });
               return {
                 ...currentRoom,
                 room: {
