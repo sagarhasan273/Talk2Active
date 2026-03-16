@@ -74,17 +74,20 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
   // ── Leave ─────────────────────────────────────────────────────────────────
 
-  const handelLeaveChat = useCallback(async () => {
-    const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
-    const userId = user.id || (sessionStorage.getItem('userId') as string);
-    const name = user.id || (sessionStorage.getItem('username') as string);
+  const handelLeaveChat = useCallback(
+    async (kicked?: boolean) => {
+      const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
+      const userId = user.id || (sessionStorage.getItem('userId') as string);
+      const name = user.id || (sessionStorage.getItem('username') as string);
 
-    if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name }).unwrap();
-    cleanupWebRTC();
-    updateUserVoiceState({ hasJoined: false, roomId: null });
-    resetParticipants();
-    sessionStorage.removeItem('joinedRoomId');
-  }, [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]);
+      if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name, kicked }).unwrap();
+      cleanupWebRTC();
+      updateUserVoiceState({ hasJoined: false, roomId: null });
+      resetParticipants();
+      sessionStorage.removeItem('joinedRoomId');
+    },
+    [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]
+  );
 
   useEffect(
     () => () => {
@@ -117,8 +120,13 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       }
     };
 
-    const handleUserLeft = (data: { userId: string; socketId: string }) => {
-      updateParticipant({ userId: data.userId, hasJoin: false });
+    const handleUserLeft = (data: { userId: string; socketId: string; kicked?: boolean }) => {
+      if (data?.kicked) {
+        removeParticipant(data?.userId);
+      } else {
+        updateParticipant({ userId: data.userId, hasJoin: false });
+      }
+
       removePeer(data.socketId);
     };
 
@@ -275,6 +283,10 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       );
     };
 
+    const handleKickFromRoom = () => {
+      handelLeaveChat(true);
+    };
+
     // Audio WebRTC
     const handleWebRTCOffer = (data: WebRTCEventData) => handleOffer(data, socket);
     const handleWebRTCAnswer = (data: WebRTCEventData) => handleAnswer(data);
@@ -297,6 +309,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       ['user-audio-toggled', handleAudioToggled],
       ['user-audio-toggled-self', handleAudioToggled],
       ['force-muted', handleHostForceMicMute],
+      ['kicked-from-room', handleKickFromRoom],
       ['user-status-selected', handleStatusUpdated],
       ['receive-group-message', handleGroupMessage],
       ['receive-edit-group-message', handleEditedMessage],

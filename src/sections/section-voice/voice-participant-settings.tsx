@@ -2,10 +2,10 @@ import type { UserType } from 'src/types/type-user';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
-  Ban,
   Mic,
   Hand,
   Crown,
+  Heart,
   MicOff,
   Volume2,
   VolumeX,
@@ -24,7 +24,6 @@ import {
   Portal,
   Button,
   Dialog,
-  Tooltip,
   useTheme,
   Typography,
   DialogTitle,
@@ -225,12 +224,27 @@ export function VoiceParticipantSettings({
 
   const handleKick = useCallback(() => {
     if (window.confirm(`Kick ${displayName}?`)) {
-      onKick(socketId);
+      emit('host-kick-user', {
+        roomId,
+        targetSocketId: socketId,
+        userId,
+        name: displayName,
+      });
       onClose();
     }
-  }, [socketId, displayName, onKick, onClose]);
+  }, [socketId, userId, roomId, displayName, emit, onClose]);
 
-  const handleBlock = useCallback(() => onBlock(socketId), [socketId, onBlock]);
+  const handleLike = useCallback(() => {
+    emit('send-user-actions-in-voice', {
+      type: 'reaction',
+      roomId,
+      senderInfo: {
+        userId: user.id,
+        name: user.name,
+        emoji: '❤️',
+      },
+    });
+  }, [user.id, user.name, roomId, emit]);
 
   const handleFollow = useCallback(async () => {
     if (!isFollowing) {
@@ -319,6 +333,13 @@ export function VoiceParticipantSettings({
       show: isSelf,
     },
     {
+      key: 'block',
+      icon: <Heart size={14} />,
+      label: 'Like',
+      onClick: handleLike,
+      show: !isSelf,
+    },
+    {
       key: 'transfer',
       icon: <Crown size={14} />,
       label: 'Make host',
@@ -335,14 +356,6 @@ export function VoiceParticipantSettings({
       danger: true,
       disabled: isSelf,
       show: isHost && !isSelf,
-    },
-    {
-      key: 'block',
-      icon: <Ban size={14} />,
-      label: isBlocked ? 'Unblock' : 'Block',
-      onClick: handleBlock,
-      danger: isBlocked,
-      show: !isSelf,
     },
   ].filter((a) => a.show);
 
@@ -537,21 +550,20 @@ export function VoiceParticipantSettings({
           <Box sx={{ px: 1.5, py: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
             {actions.map(
               ({ key, icon, label, onClick, danger, warn, active, golden, disabled }) => (
-                <Tooltip key={key} title={label} arrow>
-                  <ActionBtn
-                    size="small"
-                    danger={danger}
-                    warn={warn}
-                    active={active}
-                    golden={golden}
-                    onClick={onClick}
-                    disabled={disabled}
-                    startIcon={icon}
-                    sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
-                  >
-                    {label}
-                  </ActionBtn>
-                </Tooltip>
+                <ActionBtn
+                  key={key}
+                  size="small"
+                  danger={danger}
+                  warn={warn}
+                  active={active}
+                  golden={golden}
+                  onClick={onClick}
+                  disabled={disabled}
+                  startIcon={icon}
+                  sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
+                >
+                  {label}
+                </ActionBtn>
               )
             )}
           </Box>

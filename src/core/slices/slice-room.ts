@@ -92,10 +92,7 @@ export const roomSlice = createSlice({
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
-      const userId = Object.values(state.participants).find(
-        (participant) => participant.socketId === action.payload
-      )?.userId;
-      if (userId) delete state.participants[userId];
+      if (action.payload) delete state.participants[action.payload];
     },
 
     updateParticipantAudio: (
@@ -282,7 +279,7 @@ export const useRoomTools = () => {
         dispatch(updateParticipant(participant)),
       transferParticipantUserType: (payload: { newUserId: string; prevUserId?: string }) =>
         dispatch(transferParticipantUserType(payload)),
-      removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
+      removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
       updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),
       updateParticipantStatus: (payload: { userId: string; status: UserType['status'] }) =>

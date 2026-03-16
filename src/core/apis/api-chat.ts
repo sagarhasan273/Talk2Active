@@ -61,12 +61,12 @@ export const chatApi = createApi({
 
     leaveRoom: builder.mutation<
       { message: string; status: boolean },
-      { roomId: string; userId: string; name: string }
+      { roomId: string; userId: string; name: string; kicked?: boolean }
     >({
-      query: ({ roomId, userId }) => ({
+      query: ({ roomId, userId, kicked = false }) => ({
         url: `room/${roomId}/leave`,
         method: 'POST',
-        body: { userId },
+        body: { userId, kicked: kicked ?? false },
       }),
       invalidatesTags: ['chat-recall'],
     }),
