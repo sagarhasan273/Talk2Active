@@ -15,6 +15,7 @@ import {
   Divider,
   useTheme,
   Typography,
+  capitalize,
   useMediaQuery,
 } from '@mui/material';
 
@@ -22,6 +23,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useScreenView } from 'src/hooks/use-screen-view';
 
 import { varAlpha } from 'src/theme/styles';
+import { getLanguageByCode } from 'src/_mock/data/languages';
 // useScreenShare: getDisplayMedia only — no peer logic
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
@@ -199,22 +201,22 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             >
               {room.name}
             </Typography>
-            {isHost && (
-              <Chip
-                label="HOST"
-                size="small"
-                sx={{
-                  height: 17,
-                  fontSize: '0.58rem',
-                  fontWeight: 900,
-                  letterSpacing: 0.8,
-                  bgcolor: alpha(primary, 0.12),
-                  color: primary,
-                  border: `1px solid ${alpha(primary, 0.3)}`,
-                  '& .MuiChip-label': { px: 0.6 },
-                }}
-              />
-            )}
+
+            <Chip
+              label={capitalize(room.roomType)}
+              size="small"
+              sx={{
+                height: 17,
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                letterSpacing: 0.8,
+                bgcolor: alpha(primary, 0.12),
+                color: primary,
+                border: `1px solid ${alpha(primary, 0.3)}`,
+                '& .MuiChip-label': { px: 0.6 },
+              }}
+            />
+
             {isSharing && (
               <Chip
                 icon={<ScreenShareIcon sx={{ fontSize: '11px !important' }} />}
@@ -253,6 +255,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </Box>
             <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               ·
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.primary', fontSize: '0.7rem' }}>
+              {room.languages.map((language) => getLanguageByCode(language)?.name).join(' . ')}
             </Typography>
           </Box>
         </Box>
