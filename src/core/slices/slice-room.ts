@@ -14,11 +14,12 @@ interface RoomState {
   room: RoomResponse;
   currentRooms: { room: RoomResponse; joinedAt: string }[];
   loading: boolean;
-  participants: { [socketId: string]: Participant };
+  participants: { [userId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
-  isUnreadChatRoomMessage: boolean;
+  isUnreadRoomMessage: boolean;
   userActionsInVoice: any;
+  privateMessageFor: UserType['id'];
 }
 
 // Initial state
@@ -39,8 +40,9 @@ const initialState: RoomState = {
     userVolumes: {},
   },
   chatRoomMessages: [],
-  isUnreadChatRoomMessage: false,
+  isUnreadRoomMessage: false,
   userActionsInVoice: {},
+  privateMessageFor: 'no-private-message',
 };
 
 export const roomSlice = createSlice({
@@ -74,11 +76,33 @@ export const roomSlice = createSlice({
       };
     },
 
+    transferParticipantUserType: (
+      state,
+      action: PayloadAction<{
+        prevUserId?: string;
+        newUserId: string;
+      }>
+    ) => {
+      Object.values(state.participants).forEach((participant) => {
+        if (participant.userId === action.payload.newUserId) {
+          participant.userType = 'host';
+        } else {
+          participant.userType = 'guest';
+        }
+      });
+    },
+
     removeParticipant: (state, action: PayloadAction<string>) => {
-      const userId = Object.values(state.participants).find(
-        (participant) => participant.socketId === action.payload
-      )?.userId;
-      if (userId) delete state.participants[userId];
+      if (!state.participants[action.payload]) {
+        let removeUserId = null;
+        Object.values(state.participants).forEach((participant) => {
+          if (participant.socketId === action.payload) {
+            removeUserId = participant.userId;
+          }
+        });
+        if (removeUserId) delete state.participants[removeUserId];
+      }
+      if (action.payload) delete state.participants[action.payload];
     },
 
     updateParticipantAudio: (
@@ -122,9 +146,12 @@ export const roomSlice = createSlice({
     addChatRoomMessage: (state, action: PayloadAction<Message>) => {
       state.chatRoomMessages.push({
         ...action.payload,
-        startOfUnread: !state.isUnreadChatRoomMessage === action.payload.isUnread,
+        startOfUnread: !state.isUnreadRoomMessage === action.payload.isUnread,
       });
-      state.isUnreadChatRoomMessage = action.payload.isUnread;
+      state.isUnreadRoomMessage = action.payload.isUnread;
+      state.privateMessageFor = action.payload.isPrivate
+        ? (action.payload?.senderInfo?.userId ?? 'no-private-message')
+        : 'no-private-message';
     },
 
     editChatRoomMessage: (
@@ -140,6 +167,10 @@ export const roomSlice = createSlice({
           msg.isEdited = true;
           msg.text = action.payload.text || msg.text;
           msg.time = action.payload.time || msg.time;
+        }
+        if (msg.isPrivate && msg.id === action.payload.messageId) {
+          state.privateMessageFor = msg.senderInfo?.userId ?? 'no-private-message';
+          state.isUnreadRoomMessage = true;
         }
       });
     },
@@ -187,11 +218,18 @@ export const roomSlice = createSlice({
     },
 
     clearUnreadChatRoomMessages: (state) => {
-      state.isUnreadChatRoomMessage = false;
+      state.isUnreadRoomMessage = false;
+      state.privateMessageFor = 'no-private-message';
       state.chatRoomMessages.forEach((msg) => {
         msg.isUnread = false;
         msg.startOfUnread = false;
       });
+    },
+
+    clearChatRoomMessages: (state) => {
+      state.isUnreadRoomMessage = false;
+      state.privateMessageFor = 'no-private-message';
+      state.chatRoomMessages = [];
     },
 
     updateUserActionsInVoice: (state, action: PayloadAction<any>) => {
@@ -206,6 +244,7 @@ const {
   setRoomLoading,
   addParticipant,
   updateParticipant,
+  transferParticipantUserType,
   removeParticipant,
   updateParticipantAudio,
   updateParticipantStatus,
@@ -218,6 +257,7 @@ const {
   reactionChatRoomMessage,
   reactionPopChatRoomMessage,
   clearUnreadChatRoomMessages,
+  clearChatRoomMessages,
   updateUserActionsInVoice,
 } = roomSlice.actions;
 
@@ -227,9 +267,10 @@ const selectCurrentRooms = (state: RootState) => state.room.currentRooms;
 const selectRoomLoading = (state: RootState) => state.room.loading;
 const selectParticipants = (state: RootState) => state.room.participants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
-const selectIsUnreadChatRoomMessage = (state: RootState) => state.room.isUnreadChatRoomMessage;
+const selectisUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 const selectUserVoiceState = (state: RootState) => state.room.userVoiceState;
 const selectUserActionInVoiceState = (state: RootState) => state.room.userActionsInVoice;
+const selectprivateMessageFor = (state: RootState) => state.room.privateMessageFor;
 
 export const useRoomTools = () => {
   const dispatch = useDispatch();
@@ -239,9 +280,10 @@ export const useRoomTools = () => {
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
   const chatRoomMessages = useSelector(selectChatRoomMessages);
-  const isUnreadChatRoomMessage = useSelector(selectIsUnreadChatRoomMessage);
+  const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
   const userVoiceState = useSelector(selectUserVoiceState);
   const userActionsInVoice = useSelector(selectUserActionInVoiceState);
+  const privateMessageFor = useSelector(selectprivateMessageFor);
 
   const setTimeOutRef = useRef<NodeJS.Timeout>();
 
@@ -252,9 +294,10 @@ export const useRoomTools = () => {
       loading,
       participants,
       chatRoomMessages,
-      isUnreadChatRoomMessage,
+      isUnreadRoomMessage,
       userVoiceState,
       userActionsInVoice,
+      privateMessageFor,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setCurrentRooms: (roomData: { room: RoomResponse; joinedAt: string }[]) =>
         dispatch(setCurrentRooms(roomData)),
@@ -262,7 +305,9 @@ export const useRoomTools = () => {
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<Participant>) =>
         dispatch(updateParticipant(participant)),
-      removeParticipant: (socketId: string) => dispatch(removeParticipant(socketId)),
+      transferParticipantUserType: (payload: { newUserId: string; prevUserId?: string }) =>
+        dispatch(transferParticipantUserType(payload)),
+      removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
       updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),
       updateParticipantStatus: (payload: { userId: string; status: UserType['status'] }) =>
@@ -288,6 +333,7 @@ export const useRoomTools = () => {
       reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
         dispatch(reactionPopChatRoomMessage(payload)),
       clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
+      clearChatRoomMessages: () => dispatch(clearChatRoomMessages()),
       updateUserActionsInVoice: (payload: any) => {
         // Clear any previous timer before setting a new one
         if (setTimeOutRef.current) clearTimeout(setTimeOutRef.current);
@@ -313,9 +359,10 @@ export const useRoomTools = () => {
       loading,
       participants,
       chatRoomMessages,
-      isUnreadChatRoomMessage,
+      isUnreadRoomMessage,
       userVoiceState,
       userActionsInVoice,
+      privateMessageFor,
     ]
   );
 

@@ -33,6 +33,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   const {
     currentRooms,
     userVoiceState,
+    setRoom,
+    transferParticipantUserType,
     setCurrentRooms,
     addParticipant,
     removeParticipant,
@@ -47,6 +49,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     updateUserActionsInVoice,
     updateUserVoiceState,
     resetParticipants,
+    clearChatRoomMessages,
   } = useRoomTools();
 
   const { roomId } = userVoiceState;
@@ -56,6 +59,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     createOffer,
     handleOffer,
     handleAnswer,
+    onClickMicrophone,
     handleIceCandidate,
     handleScreenShareOffer,
     handleScreenShareAnswer,
@@ -63,24 +67,41 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     handleScreenShareActive,
     handleScreenShareRequestedBy,
     cleanup: cleanupWebRTC,
+    closePeerConnection,
   } = webRTC;
 
   const { socket, on, off } = useSocketContext();
+
   const [leaveRoom] = useLeaveRoomMutation();
 
   // ── Leave ─────────────────────────────────────────────────────────────────
 
-  const handelLeaveChat = useCallback(async () => {
-    const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
-    const userId = user.id || (sessionStorage.getItem('userId') as string);
-    const name = user.id || (sessionStorage.getItem('username') as string);
+  const handelLeaveChat = useCallback(
+    async (kicked?: boolean) => {
+      const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
+      const userId = user.id || (sessionStorage.getItem('userId') as string);
+      const name = user.id || (sessionStorage.getItem('username') as string);
 
-    if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name }).unwrap();
-    cleanupWebRTC();
-    updateUserVoiceState({ hasJoined: false, roomId: null });
-    resetParticipants();
-    sessionStorage.removeItem('joinedRoomId');
-  }, [cleanupWebRTC, leaveRoom, resetParticipants, roomId, updateUserVoiceState, user.id]);
+      if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name, kicked }).unwrap();
+
+      cleanupWebRTC();
+      updateUserVoiceState({ hasJoined: false, roomId: null });
+      resetParticipants();
+      clearChatRoomMessages();
+      sessionStorage.removeItem('joinedRoomId');
+      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('username');
+    },
+    [
+      roomId,
+      cleanupWebRTC,
+      leaveRoom,
+      resetParticipants,
+      clearChatRoomMessages,
+      updateUserVoiceState,
+      user.id,
+    ]
+  );
 
   useEffect(
     () => () => {
@@ -113,13 +134,28 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       }
     };
 
-    const handleUserLeft = (data: { userId: string; socketId: string }) => {
-      updateParticipant({ userId: data.userId, hasJoin: false });
+    const handleUserLeft = (data: { userId: string; socketId: string; kicked?: boolean }) => {
+      if (data?.kicked) {
+        removeParticipant(data?.userId);
+      } else {
+        updateParticipant({ userId: data.userId, hasJoin: false });
+        setTimeout(() => {
+          removeParticipant(data?.userId);
+        }, 2000);
+      }
+
+      closePeerConnection(data.socketId);
       removePeer(data.socketId);
     };
 
     const handleAudioToggled = (data: { userId: string; isMuted: boolean }) => {
       updateParticipantAudio({ userId: data.userId, isMuted: data.isMuted });
+    };
+
+    const handleHostForceMicMute = (data: { targetUserId: string }) => {
+      onClickMicrophone(true);
+      updateUserVoiceState({ isMicMuted: true });
+      updateParticipantAudio({ userId: data.targetUserId, isMuted: true });
     };
 
     const handleStatusUpdated = (data: {
@@ -144,6 +180,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
         type: data.type,
         systemMessageType: data?.systemMessageType,
         senderInfo: data.senderInfo,
+        receiverInfo: data?.receiverInfo,
         mentions: data.mentions || [],
         messageRepliedOf: data?.messageRepliedOf,
         senderSocketId: data?.senderSocketId,
@@ -205,12 +242,35 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     };
 
     const handleBroadcastRoomUpdate = (data: any) => {
-      const recentRoomIds = currentRooms?.map((r) => r?.room?.id);
-      if (
-        !recentRoomIds.includes(data?.joinInfo?.roomId) &&
-        !recentRoomIds.includes(data?.leaveInfo?.roomId)
-      )
+      if (data?.type === 'transfer-host') {
+        setCurrentRooms(
+          currentRooms.map((currentRoom) => {
+            if (currentRoom?.room?.id === data?.roomId) {
+              transferParticipantUserType({ newUserId: data?.host?.id });
+              setRoom({ ...currentRoom.room, host: data?.host });
+              return {
+                ...currentRoom,
+                room: {
+                  ...currentRoom.room,
+                  host: data?.host,
+                },
+              };
+            }
+
+            return currentRoom;
+          })
+        );
         return;
+      }
+
+      const recentRoomIds = new Set(currentRooms?.map((r) => r?.room?.id) || []);
+
+      const joinRoomId = data?.joinInfo?.roomId;
+      const leaveRoomId = data?.leaveInfo?.roomId;
+
+      if (!recentRoomIds.has(joinRoomId) && !recentRoomIds.has(leaveRoomId)) {
+        return;
+      }
 
       setCurrentRooms(
         currentRooms.map((currentRoom) => {
@@ -242,6 +302,10 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       );
     };
 
+    const handleKickFromRoom = () => {
+      handelLeaveChat(true);
+    };
+
     // Audio WebRTC
     const handleWebRTCOffer = (data: WebRTCEventData) => handleOffer(data, socket);
     const handleWebRTCAnswer = (data: WebRTCEventData) => handleAnswer(data);
@@ -263,6 +327,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       ['user-left', handleUserLeft],
       ['user-audio-toggled', handleAudioToggled],
       ['user-audio-toggled-self', handleAudioToggled],
+      ['force-muted', handleHostForceMicMute],
+      ['kicked-from-room', handleKickFromRoom],
       ['user-status-selected', handleStatusUpdated],
       ['receive-group-message', handleGroupMessage],
       ['receive-edit-group-message', handleEditedMessage],

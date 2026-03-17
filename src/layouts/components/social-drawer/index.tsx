@@ -3,7 +3,6 @@ import type { AllRelationsType } from 'src/types/type-social';
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import { m } from 'framer-motion';
-import { useSelector } from 'react-redux';
 import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
@@ -19,7 +18,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 
 import { fUsername } from 'src/utils/helper';
 
-import { selectAccount, useMessagesTools } from 'src/core/slices';
+import { useCredentials, useMessagesTools } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 import { MessageTypingIllustration } from 'src/assets/illustrations';
 import { useGetConversationQuery, useReadMessagesMutation } from 'src/core/apis/api-message';
@@ -66,7 +65,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
 
   useSocialSocketListeners();
 
-  const user = useSelector(selectAccount);
+  const { user, setFriends, setFollowing } = useCredentials();
   const {
     isUnreadIndividualMessage,
     chatPeople,
@@ -85,17 +84,11 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const [people, setPeople] = useState<AllRelationsType[]>([]);
   const [chatUser, setChatUser] = useState<Partial<UserType>>({});
 
-  const { data: allRelations } = useGetAllRelationsQuery(user.id, {
-    skip: currentTab !== 'all',
-  });
+  const { data: allRelations } = useGetAllRelationsQuery(user.id);
 
-  const { data: friends } = useGetFriendsQuery(user.id, {
-    skip: !chatPeople,
-  });
+  const { data: friendsQuery } = useGetFriendsQuery(user.id);
 
-  const { data: following } = useGetFollowingQuery(user.id, {
-    skip: currentTab !== 'following',
-  });
+  const { data: followingQuery } = useGetFollowingQuery(user.id);
 
   const { data, isLoading, isFetching } = useGetConversationQuery(
     {
@@ -317,25 +310,42 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     if (currentTab === 'all' && allRelations?.data) {
       setPeople(allRelations.data);
     }
-    if (currentTab === 'friends' && friends?.data) {
-      setPeople(friends.data);
+    if (currentTab === 'friends' && friendsQuery?.data) {
+      setPeople(friendsQuery.data);
     }
-    if (friends?.data && !chatPeople.length) {
-      setChatPeople(friends.data);
+
+    if (friendsQuery?.data && !chatPeople.length) {
+      setChatPeople(friendsQuery.data);
     }
-    if (currentTab === 'following' && following?.data) {
-      setPeople(following.data);
+    if (currentTab === 'following' && followingQuery?.data) {
+      setPeople(followingQuery.data);
     }
   }, [
     currentTab,
     headerTab,
     allRelations,
-    friends,
-    following,
+    friendsQuery,
+    followingQuery,
     chatPeople,
     setPeople,
+    setFriends,
+    setFollowing,
     setChatPeople,
   ]);
+
+  useEffect(() => {
+    if (friendsQuery?.data) {
+      console.log('friends query updated');
+      setFriends(friendsQuery.data || []);
+    }
+  }, [friendsQuery, setFriends]);
+
+  useEffect(() => {
+    if (followingQuery?.data) {
+      console.log('following query updated');
+      setFollowing(followingQuery.data || []);
+    }
+  }, [followingQuery, setFollowing]);
 
   return (
     <>

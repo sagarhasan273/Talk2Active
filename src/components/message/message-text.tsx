@@ -253,6 +253,29 @@ function GetTextFromMessage({ message }: { message: Message }) {
         </Box>
       );
     }
+    if (message.systemMessageType === 'user-kicked') {
+      return (
+        <Box sx={{ typography: 'body1', color: 'error.main' }}>
+          <Box component="span" sx={{ color: 'error.dark' }}>
+            {message?.senderInfo?.name}
+          </Box>{' '}
+          was kicked from the voice room.
+        </Box>
+      );
+    }
+    if (message.systemMessageType === 'mic-force-mute') {
+      return (
+        <Box sx={{ typography: 'body1' }}>
+          <Box component="span" sx={{ color: 'primary.main' }}>
+            {message?.receiverInfo?.name}
+          </Box>{' '}
+          was force-muted by{' '}
+          <Box component="span" sx={{ color: 'primary.main' }}>
+            {message?.senderInfo?.name}
+          </Box>{' '}
+        </Box>
+      );
+    }
   }
 
   if (message.isDeleted) {

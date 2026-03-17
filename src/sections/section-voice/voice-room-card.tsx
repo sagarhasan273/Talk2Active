@@ -247,6 +247,13 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
 
   const handleBroadcastNewRoom = useCallback(
     (data: any) => {
+      if (data?.type === 'transfer-host' && room.id === data?.roomId) {
+        setRoom((prev) => ({
+          ...prev,
+          host: data?.host || prev.host,
+        }));
+        return;
+      }
       if (room.id === data?.joinInfo?.roomId) {
         setRoom((prev) => ({
           ...prev,

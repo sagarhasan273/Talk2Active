@@ -38,6 +38,14 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ['chat-recall'],
     }),
+    updateRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
+      query: (body) => ({
+        url: `room/update`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['chat-recall'],
+    }),
 
     joinRoom: builder.mutation<
       { message: string; status: boolean },
@@ -53,12 +61,12 @@ export const chatApi = createApi({
 
     leaveRoom: builder.mutation<
       { message: string; status: boolean },
-      { roomId: string; userId: string; name: string }
+      { roomId: string; userId: string; name: string; kicked?: boolean }
     >({
-      query: ({ roomId, userId }) => ({
+      query: ({ roomId, userId, kicked = false }) => ({
         url: `room/${roomId}/leave`,
         method: 'POST',
-        body: { userId },
+        body: { userId, kicked: kicked ?? false },
       }),
       invalidatesTags: ['chat-recall'],
     }),
@@ -69,6 +77,7 @@ export const {
   useGetRoomsQuery,
   useGetRoomByIdQuery,
   useCreateRoomMutation,
+  useUpdateRoomMutation,
   useJoinRoomMutation,
   useLeaveRoomMutation,
 } = chatApi;

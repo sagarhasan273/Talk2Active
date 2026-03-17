@@ -19,6 +19,7 @@ import {
   useTheme,
   keyframes,
   Typography,
+  capitalize,
   useMediaQuery,
 } from '@mui/material';
 
@@ -89,13 +90,13 @@ const UserTypeBadge = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'userType',
 })<{ userType?: string }>(({ theme, userType }) => {
   const colors = {
-    Host: { bg: '#5865f2', text: '#fff' },
-    Speaker: { bg: '#00ffcc', text: '#000' },
-    Moderator: { bg: '#9c27b0', text: '#fff' },
-    Guest: { bg: '#4e5058', text: '#fff' },
+    host: { bg: '#5865f2', text: '#fff' },
+    speaker: { bg: '#00ffcc', text: '#000' },
+    moderator: { bg: '#9c27b0', text: '#fff' },
+    guest: { bg: '#4e5058', text: '#fff' },
   };
 
-  const color = colors[userType as keyof typeof colors] || colors.Guest;
+  const color = colors[userType as keyof typeof colors] || colors.guest;
 
   return {
     backgroundColor: color.bg,
@@ -277,7 +278,7 @@ export function VoiceUserCard({
     userId,
     name,
     profilePhoto,
-    userType = 'Guest',
+    userType = 'guest',
     verified,
     accountType,
     status,
@@ -378,12 +379,12 @@ export function VoiceUserCard({
     }
 
     // Priority 3: User type with verification
-    if (userType === 'Host' || userType === 'Moderator' || userType === 'Speaker') {
+    if (userType === 'host' || userType === 'moderator' || userType === 'speaker') {
       return (
         <Tooltip title={userType} arrow placement="top">
           <UserTypeBadge userType={userType}>
             {verified && <VerifiedIcon sx={{ fontSize: isMobile ? 10 : 12 }} />}
-            {userType}
+            {capitalize(userType)}
           </UserTypeBadge>
         </Tooltip>
       );
@@ -526,7 +527,7 @@ export function VoiceUserCard({
           <Paper
             sx={{
               position: 'absolute',
-              top: 0,
+              top: -10,
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 30,
@@ -551,7 +552,7 @@ export function VoiceUserCard({
                 height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: `8px solid ${theme.palette.warning.light}`,
+                borderTop: `8px solid ${theme.palette.warning.lighter}`,
               },
               '@keyframes float': {
                 '0%': { transform: 'translateX(-50%) translateY(0px)' },
