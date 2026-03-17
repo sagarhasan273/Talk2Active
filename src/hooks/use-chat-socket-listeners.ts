@@ -139,6 +139,9 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
         removeParticipant(data?.userId);
       } else {
         updateParticipant({ userId: data.userId, hasJoin: false });
+        setTimeout(() => {
+          removeParticipant(data?.userId);
+        }, 2000);
       }
 
       closePeerConnection(data.socketId);
