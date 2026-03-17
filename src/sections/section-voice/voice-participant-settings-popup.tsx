@@ -100,6 +100,7 @@ export function VoiceParticipantSettingsPopup({
 
   // Ref to avoid stale closure in setTimeout
   const raiseHandRef = useRef(raiseHand);
+
   useEffect(() => {
     raiseHandRef.current = raiseHand;
   }, [raiseHand]);
@@ -236,8 +237,8 @@ export function VoiceParticipantSettingsPopup({
               borderRadius: '6px',
               color: 'text.secondary',
               bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
-              '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
-              '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
+              '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.16) },
+              '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.16) },
             }}
           >
             <MoreVertIcon sx={{ fontSize: 15 }} />
@@ -261,7 +262,9 @@ export function VoiceParticipantSettingsPopup({
               avatarUrl={targetProfilePhoto}
               anchorEl={anchorRef.current}
               initialVolume={remoteAudioSettings[targetSocketId]?.volume ?? 100}
-              onVolumeChange={(id, vol) => setRemoteVolume(id, vol)}
+              onVolumeChange={(id, vol) => {
+                setRemoteVolume(id, vol);
+              }}
               isMicMuted={targetIsMuted}
               // Hand raise wired to the real handlers above
               isHandRaised={raiseHand}

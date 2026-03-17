@@ -84,7 +84,7 @@ export function useWebRTC(): UseWebRTCReturn {
     },
     onConnectionStateChange: (socketId, state) => {
       setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
-      if (state === 'failed' || state === 'closed') {
+      if (state === 'failed') {
         removeParticipant(socketId);
       }
     },

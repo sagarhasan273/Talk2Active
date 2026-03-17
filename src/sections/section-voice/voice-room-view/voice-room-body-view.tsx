@@ -18,6 +18,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
 import { useScreenView } from 'src/hooks/use-screen-view';
 
 import { varAlpha } from 'src/theme/styles';
@@ -31,6 +32,7 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
 import { VoiceMessageGroup } from '../voice-message-group';
+import { CreateRoomModal } from '../voice-create-room-modal';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
 import { VoiceParticipantSettingsPopup } from '../voice-participant-settings-popup';
 
@@ -115,6 +117,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const { emit, socket } = useSocketContext();
   const { room, participants, userVoiceState } = useRoomTools();
   const user = useSelector(selectAccount);
+
+  const editRoomOpen = useBoolean();
 
   const {
     localStream,
@@ -280,7 +284,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           )}
 
           {isHost ? (
-            <CtrlBtn tooltip="Room settings">
+            <CtrlBtn tooltip="Room settings" onClick={editRoomOpen.onTrue}>
               <SettingsIcon sx={{ fontSize: 18 }} />
             </CtrlBtn>
           ) : (
@@ -422,6 +426,21 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </GridPanel>
         </ContentPad>
       </ScrollArea>
+      <CreateRoomModal
+        open={editRoomOpen.value}
+        onClose={editRoomOpen.onFalse}
+        onCreateRoom={() => {}}
+        currentRoom={{
+          name: room.name,
+          description: room.description,
+          languages: room.languages,
+          level: room.level,
+          maxParticipants: room.maxParticipants,
+          host: room.host.id,
+          roomId: room.id,
+          roomType: room.roomType,
+        }}
+      />
     </RootContainer>
   );
 }

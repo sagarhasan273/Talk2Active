@@ -8,7 +8,6 @@ interface UserAudioProps {
   stream: MediaStream | null;
   isLocal: boolean;
   userName: string;
-  volume?: number; // 0-100
   muted?: boolean;
 }
 
@@ -20,7 +19,7 @@ export default function VoiceUserAudio({
   stream,
   isLocal,
   userName,
-  volume = 50,
+
   muted = false,
 }: UserAudioProps) {
   const webRTC = useWebRTCContext();
@@ -46,9 +45,9 @@ export default function VoiceUserAudio({
   useEffect(() => {
     if (audioRef.current) {
       // If muted, set volume to 0, otherwise use volume/100
-      audioRef.current.volume = muted || isDeafened ? 0 : volume / 100;
+      audioRef.current.volume = muted || isDeafened ? 0 : 1;
     }
-  }, [volume, muted, isDeafened]);
+  }, [muted, isDeafened]);
 
   return (
     <Box sx={{ position: 'relative' }}>

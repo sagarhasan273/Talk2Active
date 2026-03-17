@@ -41,7 +41,7 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
   const { room, userVoiceState, participants, updateUserVoiceState, updateParticipantStatus } =
     useRoomTools();
   const { emit, socket } = useSocketContext();
-  const { userVolumes, isMicMuted, isDeafened, hasJoined } = userVoiceState;
+  const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
   const { localStream, remoteStreams, toggleDeafen, onClickMicrophone } = useWebRTCContext();
 
   const { roomId } = userVoiceState;
@@ -294,11 +294,13 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Set status">
-            <Box sx={{ display: 'inline-flex' }}>
-              <ChatStatusButton onStatusChange={handleToggleUserStatus} />
-            </Box>
-          </Tooltip>
+          {hasJoined && (
+            <Tooltip title="Set status">
+              <Box sx={{ display: 'inline-flex' }}>
+                <ChatStatusButton onStatusChange={handleToggleUserStatus} />
+              </Box>
+            </Tooltip>
+          )}
         </Stack>
 
         {/* Right: settings + leave */}
@@ -378,7 +380,6 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
           stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
           isLocal={participant.isLocal}
           userName={participant.name || 'unknown'}
-          volume={userVolumes[participant.socketId] || 50}
           muted={participant.isMuted || isDeafened}
         />
       ))}

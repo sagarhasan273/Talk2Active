@@ -486,7 +486,7 @@ export function VoiceParticipantSettings({
           <Slider
             size="small"
             min={0}
-            max={150}
+            max={100}
             step={1}
             value={volume}
             onChange={handleVolumeChange}

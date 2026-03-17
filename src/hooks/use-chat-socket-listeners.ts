@@ -135,15 +135,11 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     };
 
     const handleUserLeft = (data: { userId: string; socketId: string; kicked?: boolean }) => {
-      if (data?.kicked) {
-        removeParticipant(data?.userId);
-      } else {
+      if (!data?.kicked) {
         updateParticipant({ userId: data.userId, hasJoin: false });
-        setTimeout(() => {
-          removeParticipant(data?.userId);
-        }, 2000);
       }
 
+      removeParticipant(data?.userId);
       closePeerConnection(data.socketId);
       removePeer(data.socketId);
     };
