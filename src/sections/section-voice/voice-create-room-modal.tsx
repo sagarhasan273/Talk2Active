@@ -292,6 +292,11 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                           '& .MuiChip-deleteIcon': {
                             color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
                           },
+                          '&:hover': {
+                            background: varAlpha(theme.vars.palette.primary.lightChannel, 0.35),
+                            color: varAlpha(theme.vars.palette.primary.mainChannel, 1),
+                            border: `1px solid ${varAlpha(theme.vars.palette.primary.lightChannel, 0.25)}`,
+                          },
                         }}
                       />
                     );
@@ -319,6 +324,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                     size="small"
                     placeholder="Search language & press Enter…"
                     onKeyDown={handleKeyDown}
+                    disabled={formData.languages.length >= 2}
                   />
                 )}
                 renderOption={(props, option) => (
@@ -326,6 +332,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                     {option.label}
                   </MenuItem>
                 )}
+                disabled={formData.languages.length >= 2}
               />
             </Box>
 

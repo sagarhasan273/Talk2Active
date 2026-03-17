@@ -78,7 +78,10 @@ export type UseWebRTCReturn = {
   closePeerConnection: (socketId: string) => void;
 
   // ── Local audio controls ──────────────────────────────────────────────────
-  initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;
+  initializeMicrophone: (
+    isMicMute?: boolean,
+    constraints?: MediaStreamConstraints
+  ) => Promise<boolean>;
   toggleMicrophone: () => boolean;
   toggleDeafen: () => void;
   setMicrophoneGain: (gain: number) => void;

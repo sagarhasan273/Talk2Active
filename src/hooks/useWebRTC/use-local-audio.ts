@@ -127,7 +127,7 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
   // ── Init microphone ──────────────────────────────────────────────────────
 
   const initializeMicrophone = useCallback(
-    async (customConstraints?: MediaStreamConstraints): Promise<boolean> => {
+    async (isMicMute?: boolean, customConstraints?: MediaStreamConstraints): Promise<boolean> => {
       try {
         rawStreamRef.current?.getTracks().forEach((t) => {
           t.stop();
@@ -140,11 +140,16 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
         const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
         rawStreamRef.current = rawStream;
 
+        // Apply mute state from parameter immediately after getting stream
+        const track = rawStream.getAudioTracks()[0];
+        if (track) {
+          track.enabled = isMicMute !== undefined ? !isMicMute : track.enabled;
+        }
+
         const processed = buildGraph(rawStream);
         localStreamRef.current = processed;
         setLocalStream(processed);
 
-        const track = rawStream.getAudioTracks()[0];
         const muted = track ? !track.enabled : false;
         setIsMicMuted(muted);
         onMicMutedChange?.(muted);
