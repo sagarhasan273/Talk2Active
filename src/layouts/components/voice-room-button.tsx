@@ -34,14 +34,16 @@ export function VoiceRoomButton({ sx, active, onClickActive, ...other }: VoiceRo
       {...other}
     >
       <SvgIcon>
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12Z" />
           <path
-            fill="currentColor"
-            d="m20.713 8.128l-.246.566a.506.506 0 0 1-.934 0l-.246-.566a4.36 4.36 0 0 0-2.22-2.25l-.759-.339a.53.53 0 0 1 0-.963l.717-.319a4.37 4.37 0 0 0 2.251-2.326l.253-.611a.506.506 0 0 1 .942 0l.253.61a4.37 4.37 0 0 0 2.25 2.327l.718.32a.53.53 0 0 1 0 .962l-.76.338a4.36 4.36 0 0 0-2.219 2.251M22 12q0-.668-.085-1.312A6 6 0 0 1 20 11a6 6 0 0 1-3-.803V15h-2V9h.528A5.98 5.98 0 0 1 14 5c0-.953.222-1.854.617-2.654A10 10 0 0 0 12 2C6.477 2 2 6.477 2 12a9.97 9.97 0 0 0 2.929 7.071L2 22h10c5.523 0 10-4.477 10-10M11 6h2v12h-2zm-4 9V9h2v6z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 8v8m-3-6v4m-3-3v2m9-3v4m3-3v2"
           />
-        </svg>
+        </g>
       </SvgIcon>
-      <Typography variant="caption">Chat</Typography>
+      <Typography variant="caption">Voice</Typography>
     </IconButton>
   );
 }
