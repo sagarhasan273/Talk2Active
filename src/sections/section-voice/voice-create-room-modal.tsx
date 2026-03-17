@@ -464,10 +464,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                     sx={{
                       color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
                       '& .MuiSlider-rail': {
-                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.15),
+                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.55),
                       },
                       '& .MuiSlider-mark': {
-                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
+                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.55),
                       },
                     }}
                   />
