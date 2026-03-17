@@ -70,6 +70,8 @@ export const VoiceMessageGroup = ({
           userId: user.id,
           name: user.name,
           profilePhoto: user.profilePhoto,
+          verified: user.verified,
+          accountType: user.accountType,
         },
         receiverInfo: targetUserInfo,
         mentions,
@@ -152,6 +154,8 @@ export const VoiceMessageGroup = ({
         userId: messageReply?.senderInfo?.userId as string,
         name: messageReply?.senderInfo?.name as string,
         profilePhoto: messageReply?.senderInfo?.profilePhoto,
+        verified: messageReply?.senderInfo?.verified,
+        accountType: messageReply?.senderInfo?.accountType,
       });
     }
   }, []);

@@ -78,4 +78,6 @@ export type PrivateParticipantProps = {
   userId: UserType['id'];
   name: UserType['name'];
   profilePhoto?: UserType['profilePhoto'];
+  verified?: UserType['verified'];
+  accountType?: UserType['accountType'];
 };

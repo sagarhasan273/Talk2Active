@@ -139,7 +139,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       {
         userId: participant.userId,
         name: participant.name,
-        avatar: participant.profilePhoto,
+        profilePhoto: participant.profilePhoto,
       },
     ]);
 
@@ -162,6 +162,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       userId: participant.userId,
       name: participant.name,
       profilePhoto: participant.profilePhoto,
+      verified: participant?.verified,
+      accountType: participant?.accountType,
     });
     setMessage('');
     setShowMentions(false);
@@ -185,6 +187,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           userId: privateRecipient.userId,
           name: privateRecipient.name,
           profilePhoto: privateRecipient?.profilePhoto,
+          verified: privateRecipient?.verified,
+          accountType: privateRecipient?.accountType,
         });
       } else {
         onSendMessage(false, undefined, mentions);
