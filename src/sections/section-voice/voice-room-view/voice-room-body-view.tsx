@@ -173,10 +173,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
 
   const allParticipants = useMemo(() => Object.values(participants), [participants]);
 
-  const handleHostAction = (action: 'mute' | 'kick' | 'block-mic', targetSocketId: string) => {
-    // hello
-  };
-
   const participantCount = allParticipants.length;
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -414,7 +410,6 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       targetProfilePhoto={participant.profilePhoto}
                       targetAccountType={participant.accountType}
                       targetVerified={participant.verified}
-                      onAction={handleHostAction}
                       isHost={isHost}
                       isSelf={user.id === participant.userId}
                       targetIsMuted={Boolean(participant.isMuted)}

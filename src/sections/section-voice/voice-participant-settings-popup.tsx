@@ -6,12 +6,27 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Portal from '@mui/material/Portal';
 import { useTheme } from '@mui/material/styles';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { Box, Menu, Paper, alpha, Tooltip, MenuItem, IconButton, Typography } from '@mui/material';
+import {
+  Box,
+  Menu,
+  Paper,
+  alpha,
+  Badge,
+  Tooltip,
+  MenuItem,
+  IconButton,
+  Typography,
+} from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
+import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
+
+import { VoiceMessageGroup } from './voice-message-group';
 import { VoiceParticipantSettings } from './voice-participant-settings';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -39,7 +54,6 @@ type Props = {
   targetAccountType: UserType['accountType'];
   targetVerified: UserType['verified'];
   targetIsMuted: boolean;
-  onAction?: (action: HostActionType, targetSocketId: string) => void;
   isHost?: boolean;
   isSelf?: boolean;
 };
@@ -56,15 +70,16 @@ export function VoiceParticipantSettingsPopup({
   targetIsMuted,
   isHost,
   isSelf = false,
-  onAction,
 }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const { remoteAudioSettings, setRemoteVolume } = useWebRTCContext();
   const { emit, socket } = useSocketContext();
-  const { room } = useRoomTools();
+  const { room, privateMessageFor } = useRoomTools();
   const user = useSelector(selectAccount);
+
+  const privateMessageOpen = useBoolean();
 
   // ── Settings popup ───────────────────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -194,22 +209,38 @@ export function VoiceParticipantSettingsPopup({
     <Box sx={{ position: 'absolute', top: 5, right: 5, transition: 'opacity 0.15s' }}>
       {/* ── Trigger ───────────────────────────────────────────────────── */}
       <Tooltip title="Participant actions" arrow placement="top">
-        <IconButton
-          ref={anchorRef}
-          size="small"
-          onClick={handleSettingsOpen}
+        <Badge
+          badgeContent="!"
+          color="error"
+          invisible={privateMessageFor !== targetUserId}
           sx={{
-            width: 24,
-            height: 24,
-            borderRadius: '6px',
-            color: 'text.secondary',
-            bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
-            '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
-            '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
+            '& .MuiBadge-badge': {
+              fontSize: 10,
+              minWidth: 12,
+              height: 14,
+              borderRadius: '50%',
+              top: -4,
+              right: -4,
+            },
           }}
         >
-          <MoreVertIcon sx={{ fontSize: 15 }} />
-        </IconButton>
+          <IconButton
+            ref={anchorRef}
+            size="small"
+            onClick={handleSettingsOpen}
+            sx={{
+              width: 24,
+              height: 24,
+              borderRadius: '6px',
+              color: 'text.secondary',
+              bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
+              '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
+              '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.6) },
+            }}
+          >
+            <MoreVertIcon sx={{ fontSize: 15 }} />
+          </IconButton>
+        </Badge>
       </Tooltip>
 
       {/* ── Settings popup (Portal) ────────────────────────────────────── */}
@@ -234,6 +265,11 @@ export function VoiceParticipantSettingsPopup({
               onRaiseHand={() => handleRaiseHandClick()}
               onLowerHand={() => handleRaiseHandClick()}
               onClose={() => setSettingsOpen(false)}
+              isUnreadPM={privateMessageFor === targetUserId}
+              onClickPM={() => {
+                privateMessageOpen.onTrue();
+                setSettingsOpen(false);
+              }}
             />
           </Box>
         </Portal>
@@ -330,6 +366,17 @@ export function VoiceParticipantSettingsPopup({
           {toastMessage}
         </Paper>
       )}
+
+      <VoiceRoomMessageGroupDrawer openDrawer={privateMessageOpen}>
+        <VoiceMessageGroup
+          privateMessage={{
+            userId: targetUserId,
+            socketId: targetSocketId,
+            name: targetName,
+            profilePhoto: targetProfilePhoto,
+          }}
+        />
+      </VoiceRoomMessageGroupDrawer>
     </Box>
   );
 }

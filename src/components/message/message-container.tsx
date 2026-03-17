@@ -21,7 +21,7 @@ export function MessageContainer({
   onDelete,
   isEditing,
 }: MessageContainerProps) {
-  const { isUnreadChatRoomMessage } = useRoomTools();
+  const { isUnreadRoomMessage } = useRoomTools();
 
   const theme = useTheme();
 
@@ -132,7 +132,7 @@ export function MessageContainer({
               opacity: 1,
             },
           },
-          backgroundColor: isUnreadChatRoomMessage
+          backgroundColor: isUnreadRoomMessage
             ? varAlpha(theme.vars.palette.primary.mainChannel, 0.18)
             : 'transparent',
         }}

@@ -12,11 +12,13 @@ import {
   UserPlus,
   UserMinus,
   UserCheck,
+  MessageCircleIcon,
 } from 'lucide-react';
 
 import { styled } from '@mui/material/styles';
 import {
   Box,
+  Badge,
   Slide,
   Stack,
   alpha,
@@ -63,6 +65,8 @@ export interface VoiceParticipantSettingsProps {
 
   anchorEl?: HTMLElement | null;
   onClose: () => void;
+  isUnreadPM: boolean;
+  onClickPM: () => void;
 }
 
 // ─── Styled ───────────────────────────────────────────────────────────────────
@@ -152,6 +156,8 @@ export function VoiceParticipantSettings({
   onLowerHand,
   anchorEl,
   onClose,
+  isUnreadPM,
+  onClickPM,
 }: VoiceParticipantSettingsProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -209,6 +215,10 @@ export function VoiceParticipantSettings({
     () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
     [isHandRaised, socketId, onRaiseHand, onLowerHand]
   );
+
+  const handlePrivateMessage = useCallback(() => {
+    onClickPM();
+  }, [onClickPM]);
 
   const handleKick = useCallback(() => {
     setConfirmKick(true);
@@ -306,6 +316,7 @@ export function VoiceParticipantSettings({
     golden?: boolean;
     disabled?: boolean;
     show: boolean;
+    showBadge?: boolean;
   };
 
   const actions: ActionDef[] = [
@@ -320,6 +331,15 @@ export function VoiceParticipantSettings({
       disabled: isMicMuted,
     },
     {
+      key: 'private-message',
+      icon: <MessageCircleIcon size={14} />,
+      label: 'PM',
+      onClick: handlePrivateMessage,
+      warn: isHandRaised,
+      show: !isSelf,
+      showBadge: isUnreadPM,
+    },
+    {
       key: 'hand',
       icon: <Hand size={14} />,
       label: isHandRaised ? 'Lower hand' : 'Raise hand',
@@ -329,7 +349,7 @@ export function VoiceParticipantSettings({
     },
     {
       key: 'block',
-      icon: <Heart size={14} />,
+      icon: <Heart size={14} color="red" />,
       label: 'Like',
       onClick: handleLike,
       show: !isSelf,
@@ -491,7 +511,18 @@ export function VoiceParticipantSettings({
             sx={{ px: 1.5, pb: 1.5, pt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
           >
             {actions.map(
-              ({ key, icon, label, onClick, danger, warn, active, golden, disabled }) => {
+              ({
+                key,
+                icon,
+                label,
+                onClick,
+                danger,
+                warn,
+                active,
+                golden,
+                disabled,
+                showBadge,
+              }) => {
                 const p = theme.palette;
                 const color = danger
                   ? p.error.main
@@ -502,7 +533,7 @@ export function VoiceParticipantSettings({
                       : active
                         ? p.primary.main
                         : p.text.secondary;
-                return (
+                const button = (
                   <Button
                     key={key}
                     onClick={onClick}
@@ -525,26 +556,54 @@ export function VoiceParticipantSettings({
                       '&.Mui-disabled': { opacity: 0.38 },
                     }}
                   >
-                    {icon}
-                    <Typography
+                    <Badge
+                      badgeContent="!"
+                      color="error"
+                      invisible={!showBadge}
                       sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        color: 'inherit',
-                        lineHeight: 1,
+                        '& .MuiBadge-badge': {
+                          fontSize: 10,
+                          minWidth: 12,
+                          height: 14,
+                          borderRadius: '50%',
+                          top: -4,
+                          right: -4,
+                        },
                       }}
                     >
-                      {label}
-                    </Typography>
+                      {icon}
+                      <Typography
+                        sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: 'inherit',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {label}
+                      </Typography>
+                    </Badge>
                   </Button>
                 );
+                return button;
               }
             )}
           </Box>
         ) : (
           <Box sx={{ px: 1.5, py: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
             {actions.map(
-              ({ key, icon, label, onClick, danger, warn, active, golden, disabled }) => (
+              ({
+                key,
+                icon,
+                label,
+                onClick,
+                danger,
+                warn,
+                active,
+                golden,
+                disabled,
+                showBadge,
+              }) => (
                 <ActionBtn
                   key={key}
                   size="small"
@@ -557,7 +616,23 @@ export function VoiceParticipantSettings({
                   startIcon={icon}
                   sx={{ flex: '1 1 calc(50% - 6px)', minWidth: 0 }}
                 >
-                  {label}
+                  <Badge
+                    badgeContent="!"
+                    color="error"
+                    invisible={!showBadge}
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: 10,
+                        minWidth: 12,
+                        height: 14,
+                        borderRadius: '50%',
+                        top: -4,
+                        right: -4,
+                      },
+                    }}
+                  >
+                    {label}
+                  </Badge>
                 </ActionBtn>
               )
             )}

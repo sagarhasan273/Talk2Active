@@ -2,6 +2,8 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 // ----------------------------------------------------------------------
 
+import type { UseBooleanReturn } from 'src/hooks/use-boolean';
+
 import { Badge } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
@@ -20,17 +22,19 @@ import { VoiceRoomMessageGroupHeader } from './voice-room-message-group-header';
 export type VoiceRoomMessageGroupDrawerProps = IconButtonProps & {
   children?: React.ReactNode;
   title?: string;
+  openDrawer?: UseBooleanReturn;
 };
 
 export function VoiceRoomMessageGroupDrawer({
   children,
   title,
+  openDrawer,
   sx,
   ...other
 }: VoiceRoomMessageGroupDrawerProps) {
   const drawer = useBoolean();
 
-  const { isUnreadChatRoomMessage, participants } = useRoomTools();
+  const { isUnreadRoomMessage, participants } = useRoomTools();
 
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 1, pl: 2.5, pr: 1, minHeight: 68 }}>
@@ -46,7 +50,10 @@ export function VoiceRoomMessageGroupDrawer({
         ]}
       />
 
-      <IconButton onClick={drawer.onFalse} sx={{ ml: 'auto', display: { xs: 'inline-flex' } }}>
+      <IconButton
+        onClick={openDrawer?.onFalse || drawer.onFalse}
+        sx={{ ml: 'auto', display: { xs: 'inline-flex' } }}
+      >
         <Iconify icon="mingcute:close-line" />
       </IconButton>
     </Stack>
@@ -54,29 +61,31 @@ export function VoiceRoomMessageGroupDrawer({
 
   return (
     <>
-      <CtrlBtn tooltip={title || 'Group messages'} onClick={drawer.onTrue}>
-        <Badge
-          badgeContent="!"
-          color="error"
-          invisible={!isUnreadChatRoomMessage}
-          sx={{
-            '& .MuiBadge-badge': {
-              fontSize: 10,
-              minWidth: 12,
-              height: 14,
-              borderRadius: '50%',
-              top: -4,
-              right: -4,
-            },
-          }}
-        >
-          <ChatIcon sx={{ fontSize: 18 }} />
-        </Badge>
-      </CtrlBtn>
+      {!openDrawer && (
+        <CtrlBtn tooltip={title || 'Group messages'} onClick={drawer.onTrue}>
+          <Badge
+            badgeContent="!"
+            color="error"
+            invisible={!isUnreadRoomMessage}
+            sx={{
+              '& .MuiBadge-badge': {
+                fontSize: 10,
+                minWidth: 12,
+                height: 14,
+                borderRadius: '50%',
+                top: -4,
+                right: -4,
+              },
+            }}
+          >
+            <ChatIcon sx={{ fontSize: 18 }} />
+          </Badge>
+        </CtrlBtn>
+      )}
 
       <Drawer
-        open={drawer.value}
-        onClose={drawer.onFalse}
+        open={openDrawer?.value || drawer.value}
+        onClose={openDrawer?.onFalse || drawer.onFalse}
         anchor="right"
         slotProps={{ backdrop: { invisible: true } }}
         PaperProps={{ sx: { width: 1, maxWidth: 420 } }}

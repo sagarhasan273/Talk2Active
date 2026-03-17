@@ -67,7 +67,7 @@ export const VoiceMessageGroup = ({
         receiverSocketId: targetUserInfo?.socketId,
         type: 'message',
         senderInfo: {
-          id: user.id,
+          userId: user.id,
           name: user.name,
           profilePhoto: user.profilePhoto,
         },
@@ -149,7 +149,7 @@ export const VoiceMessageGroup = ({
     if (!!messageReply.isPrivate && messageReply.senderSocketId) {
       setPrivateRecipient({
         socketId: messageReply.senderSocketId,
-        userId: messageReply?.senderInfo?.id as string,
+        userId: messageReply?.senderInfo?.userId as string,
         name: messageReply?.senderInfo?.name as string,
         profilePhoto: messageReply?.senderInfo?.profilePhoto,
       });
