@@ -53,6 +53,7 @@ export interface VoiceParticipantSettingsProps {
   verified: UserType['verified'];
   isSelf: boolean;
   isHost?: boolean;
+  allowKick?: boolean;
 
   initialVolume?: number;
   onVolumeChange: (socketId: string, volume: number) => void;
@@ -148,6 +149,7 @@ export function VoiceParticipantSettings({
   verified,
   isSelf,
   isHost = false,
+  allowKick = false,
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
@@ -370,7 +372,7 @@ export function VoiceParticipantSettings({
       onClick: handleKick,
       danger: true,
       disabled: isSelf,
-      show: isHost && !isSelf,
+      show: isHost && !isSelf && allowKick,
     },
   ].filter((a) => a.show);
 

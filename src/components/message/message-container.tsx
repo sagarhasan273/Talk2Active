@@ -1,6 +1,7 @@
+// message-container.tsx
 import type { Message } from 'src/types/type-room';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Box, useTheme } from '@mui/material';
 
@@ -22,21 +23,25 @@ export function MessageContainer({
   isEditing,
 }: MessageContainerProps) {
   const { isUnreadRoomMessage } = useRoomTools();
-
   const theme = useTheme();
 
   const [messageIdEdit, setMessageIdEdit] = useState<Message['id']>('');
 
-  const handleResend = (id: number) => {
+  // Clear editing highlight when editing mode ends
+  useEffect(() => {
+    if (!isEditing) setMessageIdEdit('');
+  }, [isEditing]);
+
+  const handleResend = useCallback((id: number) => {
     console.log('Resend message:', id);
-  };
+  }, []);
 
   const handleEdit = useCallback(
     (message: Message) => {
       setMessageIdEdit(message.id);
       onEdit?.(message);
     },
-    [onEdit, setMessageIdEdit]
+    [onEdit]
   );
 
   const handleDelete = useCallback(
@@ -49,89 +54,55 @@ export function MessageContainer({
   return (
     <>
       {messages.map((msg, index) => (
-        <Box key={`${msg.id}${index}`}>
-          {/* {msg?.startOfUnread && (
-            <Divider
-              sx={{
-                typography: 'caption',
-                color: theme.vars.palette.text.primary,
-                background: varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
-                '&::before, &::after': {
-                  border: 1,
-                  borderColor: varAlpha(theme.vars.palette.primary.mainChannel, 0.8),
-                },
-              }}
-            >
-              <Typography variant="caption" color="primary">
-                Unread Messages
-              </Typography>
-            </Divider>
-          )} */}
+        <Box
+          // Use id as primary key; fall back to index only as tiebreaker
+          key={msg.id ?? index}
+          sx={{
+            py: 1,
+            pb: msg.reactions?.length ? 3 : 1,
+            display: 'flex',
+            justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
+            transition: 'opacity 0.2s',
+            '&:hover': {
+              '& .message-time': { opacity: 1 },
+              '& .message-actions': { opacity: 1 },
+            },
+            ...(isEditing && {
+              opacity: messageIdEdit === msg.id ? 1 : 0.4,
+              pointerEvents: messageIdEdit === msg.id ? 'auto' : 'none',
+            }),
+          }}
+        >
           <Box
             sx={{
-              pl: 'auto',
-              py: 1,
-              pb: msg.reactions?.length ? 3 : 1,
               display: 'flex',
-              justifyContent: msg.sender === 'me' ? 'flex-end' : 'flex-start',
-              // backgroundColor: msg.isUnread
-              //   ? varAlpha(theme.vars.palette.primary.mainChannel, 0.08)
-              //   : 'transparent',
-              '&:hover': {
-                '& .message-time': {
-                  opacity: 1,
-                },
-                '& .message-actions': {
-                  opacity: 1,
-                },
-              },
-              ...(isEditing && {
-                opacity: messageIdEdit === msg.id ? 1 : 0.5,
-              }),
+              flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
+              alignItems: 'flex-end',
+              // System messages can be wider; regular messages capped tighter
+              maxWidth: msg.type === 'system' ? '95%' : '75%',
+              position: 'relative',
+              gap: 0.5,
             }}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: msg.sender === 'me' ? 'row-reverse' : 'row',
-                alignItems: 'flex-end',
-                maxWidth: msg.type === 'message' ? '90%' : '95%',
-                minWidth: '60%',
-                position: 'relative',
-              }}
-            >
-              {/* Messages Avatar */}
-              <MessageAvatars message={msg} />
-
-              {/* Messages Text */}
-              <MessageText message={msg} onReaction={onReaction} />
-
-              {/* Messages Action */}
-              <MessageActions
-                message={msg}
-                onEdit={handleEdit}
-                onReply={onReply}
-                onResend={handleResend}
-                onDelete={handleDelete}
-                onReaction={onReaction}
-              />
-            </Box>
+            <MessageAvatars message={msg} />
+            <MessageText message={msg} onReaction={onReaction} />
+            <MessageActions
+              message={msg}
+              onEdit={handleEdit}
+              onReply={onReply}
+              onResend={handleResend}
+              onDelete={handleDelete}
+              onReaction={onReaction}
+            />
           </Box>
         </Box>
       ))}
 
-      {/*
-       *  Make sure there is space for message actions
-       */}
+      {/* Spacer — also doubles as unread highlight strip */}
       <Box
         sx={{
-          display: 'flex',
           pb: 2,
-          '&:hover': {
-            '& .message-time': {
-              opacity: 1,
-            },
-          },
+          transition: 'background-color 0.3s',
           backgroundColor: isUnreadRoomMessage
             ? varAlpha(theme.vars.palette.primary.mainChannel, 0.18)
             : 'transparent',

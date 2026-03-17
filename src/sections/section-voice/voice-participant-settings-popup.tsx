@@ -56,6 +56,7 @@ type Props = {
   targetIsMuted: boolean;
   isHost?: boolean;
   isSelf?: boolean;
+  hasJoin: boolean;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export function VoiceParticipantSettingsPopup({
   targetIsMuted,
   isHost,
   isSelf = false,
+  hasJoin,
 }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -255,6 +257,7 @@ export function VoiceParticipantSettingsPopup({
               verified={targetVerified}
               isSelf={isSelf}
               isHost={isHost}
+              allowKick={hasJoin}
               avatarUrl={targetProfilePhoto}
               anchorEl={anchorRef.current}
               initialVolume={remoteAudioSettings[targetSocketId]?.volume ?? 100}

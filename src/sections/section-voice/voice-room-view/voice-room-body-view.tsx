@@ -413,6 +413,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
                       isHost={isHost}
                       isSelf={user.id === participant.userId}
                       targetIsMuted={Boolean(participant.isMuted)}
+                      hasJoin={participant.hasJoin ?? true}
                     />
                   </Box>
                 </Zoom>

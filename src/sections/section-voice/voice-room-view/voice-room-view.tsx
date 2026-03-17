@@ -100,12 +100,6 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
     }).unwrap();
 
     if (response.status) {
-      socket?.emit('leave-voice-room', {
-        roomId,
-        userId: user.id,
-        name: user.name,
-      });
-
       // This cleanup keeps audio context alive
       cleanupWebRTC();
 
