@@ -47,7 +47,7 @@ export interface ConnectionStatus {
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  microphoneGain: 20,
+  microphoneGain: 40,
   outputGain: 100,
   echoCancellation: true,
   noiseSuppression: true,
@@ -75,6 +75,7 @@ export type UseWebRTCReturn = {
 
   // Audio peer connections ref — plain object, NOT a Map
   peerConnections: React.MutableRefObject<PeerConnectionState>;
+  closePeerConnection: (socketId: string) => void;
 
   // ── Local audio controls ──────────────────────────────────────────────────
   initializeMicrophone: (constraints?: MediaStreamConstraints) => Promise<boolean>;

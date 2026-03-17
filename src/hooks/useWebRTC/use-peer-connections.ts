@@ -33,8 +33,14 @@ export function usePeerConnections({
   const pendingOffersRef = useRef<{ [socketId: string]: boolean }>({});
   const socketRefs = useRef<{ [socketId: string]: any }>({});
   const connectionTimeouts = useRef<{ [socketId: string]: NodeJS.Timeout }>({});
-  // FIX: track mount state so deferred retries don't fire after unmount
   const isMountedRef = useRef(true);
+  const intentionallyClosedRef = useRef<{ [socketId: string]: boolean }>({});
+
+  // FIX 1: track isLoading in a ref so waitForIce interval always reads the latest value
+  const isLoadingRef = useRef(isLoading);
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -62,7 +68,32 @@ export function usePeerConnections({
     }
   }, []);
 
-  // FIX: guard stale socket + unmount before attempting restart
+  // FIX 4: wrap closePeerConnection in useCallback so it's stable and safe as a dep
+  const closePeerConnection = useCallback(
+    (socketId: string) => {
+      // Mark as intentionally closed BEFORE cleanup
+      intentionallyClosedRef.current[socketId] = true;
+
+      // Clear any pending timeouts
+      if (connectionTimeouts.current[socketId]) {
+        clearTimeout(connectionTimeouts.current[socketId]);
+        delete connectionTimeouts.current[socketId];
+      }
+
+      // Close the peer connection and null out handlers to prevent leaks
+      const pc = peerConnectionsRef.current[socketId];
+      if (pc) {
+        pc.ontrack = null;
+        pc.onicecandidate = null;
+        pc.onconnectionstatechange = null;
+        pc.oniceconnectionstatechange = null;
+        if (pc.connectionState !== 'closed') pc.close();
+        delete peerConnectionsRef.current[socketId];
+      }
+    },
+    [] // only touches refs — no external deps needed
+  );
+
   const attemptIceRestart = useCallback(
     async (socketId: string) => {
       if (!isMountedRef.current) return;
@@ -112,7 +143,6 @@ export function usePeerConnections({
         existing.oniceconnectionstatechange = null;
         if (existing.connectionState !== 'closed') existing.close();
         delete peerConnectionsRef.current[socketId];
-        // FIX: also clear ICE queue for this peer on PC recreation
         delete iceCandidatesQueue.current[socketId];
       }
 
@@ -156,10 +186,19 @@ export function usePeerConnections({
       pc.oniceconnectionstatechange = () => {
         const iceState = pc.iceConnectionState;
         console.log(`[${socketId}] ICE: ${iceState}`);
+
         if (iceState === 'checking') {
           clearConnectionTimeout(socketId);
           connectionTimeouts.current[socketId] = setTimeout(() => {
             if (!isMountedRef.current) return;
+            if (intentionallyClosedRef.current[socketId]) {
+              console.log(
+                `[${socketId}] Ignoring ICE state change - connection intentionally closed`
+              );
+              onConnectionStateChange?.(socketId, 'closed');
+              return;
+            }
+
             const current = peerConnectionsRef.current[socketId];
             if (
               current?.iceConnectionState === 'checking' ||
@@ -168,7 +207,7 @@ export function usePeerConnections({
               console.warn(`[${socketId}] Stuck in checking — ICE restart`);
               attemptIceRestart(socketId);
             }
-          }, 12_000);
+          }, 10_000);
         }
 
         if (iceState === 'connected' || iceState === 'completed') {
@@ -227,12 +266,11 @@ export function usePeerConnections({
 
   // ── Signaling ─────────────────────────────────────────────────────────────
 
-  // FIX: replaced unsafe recursive setTimeout retry with a waitForIce helper
-  // that respects mount state and resolves once iceServersData is available.
+  // FIX 1: reads isLoadingRef (always current) instead of stale closure value
   const waitForIce = useCallback(
     (socketId: string): Promise<void> =>
       new Promise((resolve, reject) => {
-        if (!isLoading) {
+        if (!isLoadingRef.current) {
           resolve();
           return;
         }
@@ -243,13 +281,13 @@ export function usePeerConnections({
             reject(new Error('unmounted'));
             return;
           }
-          if (!isLoading || Date.now() - start > 8_000) {
+          if (!isLoadingRef.current || Date.now() - start > 8_000) {
             clearInterval(interval);
             resolve(); // resolve even on timeout — fallback STUN will be used
           }
         }, 200);
       }),
-    [isLoading]
+    [] // no deps needed — reads refs directly
   );
 
   const createOffer = useCallback(
@@ -346,22 +384,16 @@ export function usePeerConnections({
 
   // ── Full cleanup ──────────────────────────────────────────────────────────
 
+  // FIX 2: use closePeerConnection per peer (handles timeouts + intentional flag),
+  // then reset remaining refs including intentionallyClosedRef
   const cleanup = useCallback(() => {
-    Object.keys(connectionTimeouts.current).forEach(clearConnectionTimeout);
+    Object.keys(peerConnectionsRef.current).forEach(closePeerConnection);
 
-    Object.entries(peerConnectionsRef.current).forEach(([, pc]) => {
-      pc.ontrack = null;
-      pc.onicecandidate = null;
-      pc.onconnectionstatechange = null;
-      pc.oniceconnectionstatechange = null;
-      if (pc.connectionState !== 'closed') pc.close();
-    });
-
-    peerConnectionsRef.current = {};
     iceCandidatesQueue.current = {};
     pendingOffersRef.current = {};
     socketRefs.current = {};
-  }, [clearConnectionTimeout]);
+    intentionallyClosedRef.current = {}; // FIX 2: clear stale intentional-close flags
+  }, [closePeerConnection]);
 
   useEffect(() => {
     if (iceServersData) {
@@ -379,6 +411,7 @@ export function usePeerConnections({
     handleAnswer,
     handleIceCandidate,
     cleanup,
+    closePeerConnection,
     isIceServersLoading: isLoading,
   };
 }

@@ -11,7 +11,7 @@ import { usePeerConnections } from './use-peer-connections';
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 
 export function useWebRTC(): UseWebRTCReturn {
-  const { userVoiceState, removeParticipant } = useRoomTools();
+  const { userVoiceState } = useRoomTools();
 
   const { roomId } = userVoiceState;
 
@@ -68,6 +68,7 @@ export function useWebRTC(): UseWebRTCReturn {
     handleAnswer,
     handleIceCandidate,
     cleanup: cleanupPeerConnections,
+    closePeerConnection,
   } = usePeerConnections({
     roomId,
     localStreamRef,
@@ -83,7 +84,6 @@ export function useWebRTC(): UseWebRTCReturn {
     },
     onConnectionStateChange: (socketId, state) => {
       setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
-      if (state === 'failed') removeParticipant(socketId);
     },
   });
 
@@ -123,6 +123,7 @@ export function useWebRTC(): UseWebRTCReturn {
     connectionStatus,
 
     peerConnections,
+    closePeerConnection,
 
     // Screen share — passed through so VoiceRoomBodyView and socket listeners can use it
     ...screenShare,

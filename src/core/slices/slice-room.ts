@@ -83,7 +83,6 @@ export const roomSlice = createSlice({
         newUserId: string;
       }>
     ) => {
-      console.log(action.payload.newUserId);
       Object.values(state.participants).forEach((participant) => {
         if (participant.userId === action.payload.newUserId) {
           participant.userType = 'host';
@@ -94,6 +93,15 @@ export const roomSlice = createSlice({
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
+      if (!state.participants[action.payload]) {
+        let removeUserId = null;
+        Object.values(state.participants).forEach((participant) => {
+          if (participant.socketId === action.payload) {
+            removeUserId = participant.userId;
+          }
+        });
+        if (removeUserId) delete state.participants[removeUserId];
+      }
       if (action.payload) delete state.participants[action.payload];
     },
 

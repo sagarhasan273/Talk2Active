@@ -67,6 +67,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     handleScreenShareActive,
     handleScreenShareRequestedBy,
     cleanup: cleanupWebRTC,
+    closePeerConnection,
   } = webRTC;
 
   const { socket, on, off } = useSocketContext();
@@ -140,6 +141,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
         updateParticipant({ userId: data.userId, hasJoin: false });
       }
 
+      closePeerConnection(data.socketId);
       removePeer(data.socketId);
     };
 
