@@ -11,7 +11,7 @@ import { usePeerConnections } from './use-peer-connections';
 import type { UseWebRTCReturn, ConnectionStatus } from './types';
 
 export function useWebRTC(): UseWebRTCReturn {
-  const { userVoiceState } = useRoomTools();
+  const { userVoiceState, removeParticipant } = useRoomTools();
 
   const { roomId } = userVoiceState;
 
@@ -84,6 +84,9 @@ export function useWebRTC(): UseWebRTCReturn {
     },
     onConnectionStateChange: (socketId, state) => {
       setConnectionStatus((prev) => ({ ...prev, [socketId]: state }));
+      if (state === 'failed' || state === 'closed') {
+        removeParticipant(socketId);
+      }
     },
   });
 
