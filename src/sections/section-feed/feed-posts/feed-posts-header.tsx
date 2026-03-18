@@ -4,6 +4,8 @@ import { Box, Stack, useTheme, IconButton, Typography } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { useCredentials } from 'src/core/slices';
+
 import { Iconify } from 'src/components/iconify';
 
 import { DiscoveryPanel } from '../feed-discovery-panal';
@@ -21,6 +23,8 @@ export function FeedPostsHeader({
   setIsCreatePostOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const theme = useTheme();
+
+  const { isAuthenticated } = useCredentials();
 
   const mid = useResponsive('down', 'lg');
   const small = useResponsive('down', 'md');
@@ -66,7 +70,7 @@ export function FeedPostsHeader({
         Wisdom Feed
       </Typography>
       <Stack direction="row" sx={{ ml: 'auto', gap: 1 }}>
-        {small && (
+        {isAuthenticated && small && (
           <DiscoveryPanalDrawer>
             <DiscoveryPanel />
           </DiscoveryPanalDrawer>

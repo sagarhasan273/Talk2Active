@@ -232,7 +232,7 @@ export function VoiceMainView() {
               borderColor: 'primary.light',
             },
           }}
-          onClick={editRoomBoolean.onTrue}
+          onClick={isAuthenticated ? editRoomBoolean.onTrue : isAuthOpen.onTrue}
         >
           Create New Room
         </Button>

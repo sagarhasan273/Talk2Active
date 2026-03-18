@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import {
   Zap,
   Star,
@@ -34,8 +33,12 @@ import {
   Typography,
 } from '@mui/material';
 
-import { selectAccount } from 'src/core/slices';
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useCredentials } from 'src/core/slices';
 import { useUpdateUserTagsMutation } from 'src/core/apis';
+
+import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import { CreatePost } from 'src/sections/section-components/create-post';
 
@@ -57,7 +60,9 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
 }) => {
   const theme = useTheme();
 
-  const user = useSelector(selectAccount);
+  const isAuthOpen = useBoolean();
+
+  const { user, isAuthenticated } = useCredentials();
 
   const [isCreatePostOpen, setIsCreatePostOpen] = React.useState(false);
 
@@ -289,13 +294,21 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
               transform: 'scale(1.05)',
             },
           }}
-          onClick={() => setIsCreatePostOpen(true)}
+          onClick={() => {
+            if (isAuthenticated) {
+              setIsCreatePostOpen(true);
+            } else {
+              isAuthOpen.onTrue();
+            }
+          }}
         >
           Create Post
         </Button>
       </GradientBox>
 
       <CreatePost isOpen={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
+
+      <LoginPromptDialog openBoolean={isAuthOpen} />
     </Stack>
   );
 };
