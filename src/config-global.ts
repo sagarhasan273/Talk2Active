@@ -16,6 +16,7 @@ export type ConfigValue = {
   };
   mapboxApiKey: string;
   youtubeApiKey: string;
+  googleAuthClientId: string;
   defaultMicGain: number;
   defaultOutputGain: number;
 };
@@ -41,6 +42,7 @@ export const CONFIG: ConfigValue = {
    */
   mapboxApiKey: import.meta.env.VITE_MAPBOX_API_KEY ?? '',
   youtubeApiKey: import.meta.env.VITE_YOUTUBE_API_KEY ?? 'YOUTUBE_API_KEY',
+  googleAuthClientId: import.meta.env.VITE_GOOGLE_AUTH0_CLIENT_ID ?? '',
 
   // Default Voice Settings
   defaultMicGain: Number(import.meta.env.VITE_DEFAULT_MIC_GAIN) || 50,

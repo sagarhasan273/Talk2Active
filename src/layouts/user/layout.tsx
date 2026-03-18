@@ -5,9 +5,12 @@ import { useState } from 'react';
 import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
 
+import { useCredentials } from 'src/core/slices';
 import { getUserStatus } from 'src/assets/data/status';
 
 import { Logo } from 'src/components/logo';
+
+import { GoogleLogInView } from 'src/auth/view/google-log-in-view';
 
 import { UserMain } from './main';
 import { layoutClasses } from '../classes';
@@ -32,6 +35,8 @@ export type UserLayoutProps = {
 
 export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
   const theme = useTheme();
+
+  const { isAuthenticated } = useCredentials();
 
   const [active, setActive] = useState<string>('');
 
@@ -72,10 +77,12 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 />
 
                 {/* -- Social popover -- */}
-                <SocialDrawer sx={{ mt: 0.5 }} />
+                {isAuthenticated && <SocialDrawer sx={{ mt: 0.5 }} />}
 
                 {/* -- Account drawer -- */}
-                <AccountDrawer data={_user_account} status={getUserStatus()} />
+                {isAuthenticated && <AccountDrawer data={_user_account} status={getUserStatus()} />}
+
+                <GoogleLogInView />
               </Box>
             ),
           }}

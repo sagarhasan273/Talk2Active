@@ -13,7 +13,7 @@ export function FeedButton({ sx, active, onClickActive, ...other }: FeedButtonPr
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('');
+    router.push('feed');
     onClickActive();
   };
 

@@ -29,10 +29,10 @@ export const userRoutes = [
     path: '/',
     element: CONFIG.auth.skip ? <>{layoutContent}</> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
-      { element: <FeedView />, index: true },
+      { element: <VoiceRoomView />, index: true },
       { path: 'user/profile', element: <ProfilePage /> },
       { path: 'user/settings', element: <SettingsView /> },
-      { path: 'voice-room', element: <VoiceRoomView /> },
+      { path: 'feed', element: <FeedView /> },
     ],
   },
 ];

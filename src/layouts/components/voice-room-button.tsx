@@ -13,7 +13,7 @@ export function VoiceRoomButton({ sx, active, onClickActive, ...other }: VoiceRo
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('voice-room');
+    router.push('');
     onClickActive();
   };
 
