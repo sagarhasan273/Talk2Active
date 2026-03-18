@@ -11,6 +11,10 @@ import { CONFIG } from 'src/config-global';
 import { useAuthContext } from 'src/auth/hooks';
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
+// utils/is-mobile.ts
+export const isMobileBrowser = (): boolean =>
+  /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+
 export const GoogleLogInView = ({
   sx,
   textSx,
@@ -23,29 +27,29 @@ export const GoogleLogInView = ({
   onSuccess?: () => void;
 }) => {
   const { loadCredentials } = useAuthContext();
-
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useGoogleLogin({
-    onSuccess: async (credentialResponse) => {
+  // ── Mobile: redirect flow ─────────────────────────────────────────────────
+  const mobileLogin = useGoogleLogin({
+    flow: 'auth-code',
+    ux_mode: 'redirect',
+    redirect_uri: window.location.origin,
+    onSuccess: async (codeResponse) => {
       try {
-        const response = await axios.post(`${CONFIG.serverUrl}/auth/google`, {
-          token: credentialResponse.access_token,
+        const response = await axios.post(`${CONFIG.serverUrl}/auth/google/mobile`, {
+          code: codeResponse.code,
+          redirect_uri: window.location.origin,
         });
-
         const { data } = response;
-
         if (data.status) {
-          if (!data.token) {
-            throw new Error('Access token not found in response');
-          }
+          if (!data.token) throw new Error('Access token not found in response');
           sessionStorage.setItem(STORAGE_KEY, data.token);
           loadCredentials?.(data.user, data.recentRooms);
           onSuccess?.();
         }
-        setIsLoading(false);
       } catch (err) {
         console.error('Google login failed', err);
+      } finally {
         setIsLoading(false);
       }
     },
@@ -55,15 +59,46 @@ export const GoogleLogInView = ({
     },
   });
 
+  // ── Desktop: popup flow ───────────────────────────────────────────────────
+  const desktopLogin = useGoogleLogin({
+    onSuccess: async (credentialResponse) => {
+      try {
+        const response = await axios.post(`${CONFIG.serverUrl}/auth/google`, {
+          token: credentialResponse.access_token,
+        });
+        const { data } = response;
+        if (data.status) {
+          if (!data.token) throw new Error('Access token not found in response');
+          sessionStorage.setItem(STORAGE_KEY, data.token);
+          loadCredentials?.(data.user, data.recentRooms);
+          onSuccess?.();
+        }
+      } catch (err) {
+        console.error('Google login failed', err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      console.log('Login failed');
+      setIsLoading(false);
+    },
+  });
+
+  const handleLogin = () => {
+    setIsLoading(true);
+    if (isMobileBrowser()) {
+      mobileLogin(); // redirect flow
+    } else {
+      desktopLogin(); // popup flow
+    }
+  };
   return (
     <Button
       fullWidth
       variant="outlined"
       disabled={isLoading}
-      onClick={() => {
-        setIsLoading(true);
-        login();
-      }}
+      onClick={handleLogin}
       sx={{
         py: 2,
         px: 1,
@@ -79,9 +114,7 @@ export const GoogleLogInView = ({
           backgroundColor: 'primary.light',
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         },
-        '&:active': {
-          transform: 'scale(0.99)',
-        },
+        '&:active': { transform: 'scale(0.99)' },
         transition: 'all 0.15s ease',
         ...sx,
       }}
