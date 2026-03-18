@@ -301,7 +301,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           width: 1,
           maxWidth: { xs: 1, sm: 360 },
           bgcolor: 'background.paper',
-          borderRadius: 1,
+          borderRadius: { xs: 2, sm: 1 },
           overflow: 'hidden',
           border: '1px solid',
           borderColor: 'divider',

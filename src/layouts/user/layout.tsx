@@ -82,7 +82,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
                 {/* -- Account drawer -- */}
                 {isAuthenticated && <AccountDrawer data={_user_account} status={getUserStatus()} />}
 
-                <GoogleLogInView />
+                {!isAuthenticated && <GoogleLogInView sx={{ ml: 1 }} />}
               </Box>
             ),
           }}

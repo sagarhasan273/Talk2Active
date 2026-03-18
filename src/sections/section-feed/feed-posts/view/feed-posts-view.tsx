@@ -60,7 +60,7 @@ export function FeedPostsView() {
         sx={{
           px: 0,
           pb: 0,
-          height: 'calc(100vh - 65px)',
+          height: 'calc(100vh - 54px)',
           overflowY: 'hidden',
         }}
       >
