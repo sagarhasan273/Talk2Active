@@ -1,6 +1,5 @@
 import type { UserType } from 'src/types/type-user';
 
-import { useSelector } from 'react-redux';
 import React, { useState, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
@@ -21,7 +20,7 @@ import {
   IconButton,
 } from '@mui/material';
 
-import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useRoomTools, useCredentials } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
@@ -35,7 +34,8 @@ import { ChatStatusButton } from '../voice-user-status-button';
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
 const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
-  const user = useSelector(selectAccount);
+  const { user } = useCredentials();
+
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   const { room, userVoiceState, participants, updateUserVoiceState, updateParticipantStatus } =
