@@ -10,7 +10,7 @@ import { useAuthContext } from 'src/auth/hooks';
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
 export const GoogleLogInView = () => {
-  const { checkUserSession } = useAuthContext();
+  const { loadCredentials } = useAuthContext();
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,7 +28,7 @@ export const GoogleLogInView = () => {
             throw new Error('Access token not found in response');
           }
           sessionStorage.setItem(STORAGE_KEY, data.token);
-          checkUserSession?.();
+          loadCredentials?.(data.user, data.recentRooms);
         }
         setIsLoading(false);
       } catch (err) {

@@ -1,7 +1,7 @@
 import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { RoomResponse } from 'src/types/type-chat';
 import type { Message, Reaction, Participant } from 'src/types/type-room';
+import type { RoomResponse, RecentRoomResponse } from 'src/types/type-chat';
 
 import { createSlice } from '@reduxjs/toolkit';
 import { useRef, useMemo, useEffect } from 'react';
@@ -12,7 +12,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 // Define auth state interface
 interface RoomState {
   room: RoomResponse;
-  currentRooms: { room: RoomResponse; joinedAt: string }[];
+  currentRooms: RecentRoomResponse;
   loading: boolean;
   participants: { [userId: string]: Participant };
   userVoiceState: UserVoiceStateProps;
@@ -287,8 +287,7 @@ export const useRoomTools = () => {
       userActionsInVoice,
       privateMessageFor,
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
-      setCurrentRooms: (roomData: { room: RoomResponse; joinedAt: string }[]) =>
-        dispatch(setCurrentRooms(roomData)),
+      setCurrentRooms: (roomData: RecentRoomResponse) => dispatch(setCurrentRooms(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<Participant>) =>

@@ -1,11 +1,13 @@
-import { useDispatch } from 'react-redux';
+import type { UserType } from 'src/types/type-user';
+import type { RecentRoomResponse } from 'src/types/type-chat';
+
 import { useMemo, useEffect, useCallback } from 'react';
 
 import { useSetState } from 'src/hooks/use-set-state';
 
 import axios, { endpoints } from 'src/utils/axios';
 
-import { setAccount, useRoomTools, useCredentials } from 'src/core/slices';
+import { useRoomTools, useCredentials } from 'src/core/slices';
 
 import { STORAGE_KEY } from './constant';
 import { AuthContext } from '../auth-context';
@@ -26,9 +28,7 @@ type Props = {
 };
 
 export function AuthProvider({ children }: Props) {
-  const dispatch = useDispatch();
-
-  const { setSelectedUser } = useCredentials();
+  const { setSelectedUser, setAccount } = useCredentials();
 
   const { currentRooms, setCurrentRooms } = useRoomTools();
 
@@ -36,6 +36,34 @@ export function AuthProvider({ children }: Props) {
     authUser: {} as AuthState['authUser'],
     loading: true,
   });
+
+  const loadCredentials = useCallback(
+    (user: UserType, recentRooms: RecentRoomResponse) => {
+      if (recentRooms && recentRooms?.length > 0 && !currentRooms.length) {
+        setCurrentRooms(recentRooms);
+      }
+
+      setState({ authUser: user, loading: false });
+
+      setAccount(user);
+
+      setSelectedUser({
+        ...user,
+        relationShip: {
+          relationship: 'none',
+          following: false,
+          followers: false,
+          friends: false,
+          blocked: false,
+          pending: false,
+        },
+      });
+      sessionStorage.setItem('userId', user.id);
+      sessionStorage.setItem('username', user.name);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentRooms.length, setCurrentRooms]
+  );
 
   const checkUserSession = useCallback(async () => {
     try {
@@ -45,30 +73,10 @@ export function AuthProvider({ children }: Props) {
         setSession(accessToken);
 
         const res = await axios.get(endpoints.auth.me);
-        const { data } = res.data;
-        const { recentRooms, ...user } = data;
-
-        if (recentRooms?.length > 0 && !currentRooms.length) {
-          setCurrentRooms(recentRooms);
+        const { data, status } = res.data;
+        if (status) {
+          loadCredentials(data, data.recentRooms);
         }
-
-        setState({ authUser: { ...user, accessToken }, loading: false });
-
-        dispatch(setAccount(user));
-
-        setSelectedUser({
-          ...user,
-          relationShip: {
-            relationship: 'none',
-            following: false,
-            followers: false,
-            friends: false,
-            blocked: false,
-            pending: false,
-          },
-        });
-        sessionStorage.setItem('userId', user.id);
-        sessionStorage.setItem('username', user.name);
       } else {
         setState({ authUser: {} as AuthState['authUser'], loading: false });
       }
@@ -77,7 +85,7 @@ export function AuthProvider({ children }: Props) {
       setState({ authUser: {} as AuthState['authUser'], loading: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setState, dispatch]);
+  }, [setState]);
 
   useEffect(() => {
     checkUserSession();
@@ -98,11 +106,12 @@ export function AuthProvider({ children }: Props) {
           }
         : ({} as AuthState['authUser']),
       checkUserSession,
+      loadCredentials,
       loading: status === 'loading',
       authenticated: status === 'authenticated',
       unauthenticated: status === 'unauthenticated',
     }),
-    [checkUserSession, state.authUser, status]
+    [checkUserSession, loadCredentials, state.authUser, status]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

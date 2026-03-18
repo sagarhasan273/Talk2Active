@@ -66,3 +66,10 @@ export const RoomResponseSchema = RoomBaseSchema.extend({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
+
+export const RecentRoomSchema = z.array(
+  z.object({
+    room: RoomResponseSchema,
+    joinedAt: z.string(),
+  })
+);
