@@ -1,8 +1,8 @@
 import 'src/global.css';
 
-// ----------------------------------------------------------------------
-
 import { Provider } from 'react-redux';
+// ----------------------------------------------------------------------
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { Router } from 'src/routes/route-sections';
 
@@ -18,6 +18,7 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { store } from './core/store';
+import { CONFIG } from './config-global';
 import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/route-components';
 import { SocketProvider } from './core/contexts/socket-context';
@@ -29,27 +30,29 @@ export default function App() {
   useScrollToTop();
 
   return (
-    <LocalizationProvider>
-      <Provider store={store}>
-        <UserProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <WebRTCProvider>
-                <SettingsProvider settings={defaultSettings}>
-                  <ThemeProvider>
-                    <MotionLazy>
-                      <Snackbar />
-                      <ProgressBar />
-                      <SettingsDrawer />
-                      <Router />
-                    </MotionLazy>
-                  </ThemeProvider>
-                </SettingsProvider>
-              </WebRTCProvider>
-            </SocketProvider>
-          </AuthProvider>
-        </UserProvider>
-      </Provider>
-    </LocalizationProvider>
+    <GoogleOAuthProvider clientId={CONFIG.googleAuthClientId}>
+      <LocalizationProvider>
+        <Provider store={store}>
+          <UserProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <WebRTCProvider>
+                  <SettingsProvider settings={defaultSettings}>
+                    <ThemeProvider>
+                      <MotionLazy>
+                        <Snackbar />
+                        <ProgressBar />
+                        <SettingsDrawer />
+                        <Router />
+                      </MotionLazy>
+                    </ThemeProvider>
+                  </SettingsProvider>
+                </WebRTCProvider>
+              </SocketProvider>
+            </AuthProvider>
+          </UserProvider>
+        </Provider>
+      </LocalizationProvider>
+    </GoogleOAuthProvider>
   );
 }

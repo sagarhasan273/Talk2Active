@@ -103,7 +103,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
         color: 'white',
         position: 'relative',
         gap: 2,
-        px: 1,
+        px: { xs: 0, sm: 1 },
       }}
     >
       {rooms.map((room) => (

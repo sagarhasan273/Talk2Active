@@ -143,6 +143,7 @@ export function useRemoteAudio({
 
       if (nodes?.gainNode && !isDeafened && !settings?.isMuted) {
         nodes.gainNode.gain.value = level / 100;
+        console.log('hello', socketId, level);
       }
       onRemoteSettingsChange?.(socketId, { volume: level });
     },

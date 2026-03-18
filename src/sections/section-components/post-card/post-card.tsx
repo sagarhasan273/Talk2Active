@@ -48,7 +48,7 @@ function RegularPostCard({ post }: PostCardProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { user, setSelectedUser } = useCredentials();
+  const { user, isAuthenticated, setSelectedUser } = useCredentials();
 
   const imageOpen = useBoolean();
   const createOpen = useBoolean();
@@ -567,51 +567,53 @@ function RegularPostCard({ post }: PostCardProps) {
       {renderContent()}
 
       {/* ── Interaction bar ────────────────────────────────────────────────── */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 1,
-          py: 0.75,
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          bgcolor: isDark ? alpha('#fff', 0.015) : alpha('#000', 0.015),
-        }}
-      >
-        <Stack direction="row">
+      {isAuthenticated && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 1,
+            py: 0.75,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: isDark ? alpha('#fff', 0.015) : alpha('#000', 0.015),
+          }}
+        >
+          <Stack direction="row">
+            <InteractionButton
+              icon="mynaui:like"
+              activeIcon="mynaui:like-solid"
+              count={data.engagement.likes}
+              isActive={data.isLiked}
+              onClick={() => handleLike(data.id)}
+              activeColor="primary"
+              hoverColor="primary"
+              label={`${data.isLiked ? 'Unlike' : 'Like'} post`}
+            />
+            <InteractionButton
+              icon="mynaui:dislike"
+              activeIcon="mynaui:dislike-solid"
+              count={data.engagement.dislikes}
+              isActive={data.isDisliked}
+              onClick={() => handleDislike(data.id)}
+              activeColor="error"
+              hoverColor="error"
+              label={`${data.isDisliked ? 'Remove dislike' : 'Dislike'} post`}
+            />
+          </Stack>
           <InteractionButton
-            icon="mynaui:like"
-            activeIcon="mynaui:like-solid"
-            count={data.engagement.likes}
-            isActive={data.isLiked}
-            onClick={() => handleLike(data.id)}
-            activeColor="primary"
-            hoverColor="primary"
-            label={`${data.isLiked ? 'Unlike' : 'Like'} post`}
+            icon="mynaui:pin"
+            activeIcon="mynaui:pin-solid"
+            count={data.engagement.pins}
+            isActive={data.isPinned}
+            onClick={() => handlePinpost(data.id)}
+            activeColor="info"
+            hoverColor="info"
+            label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
           />
-          <InteractionButton
-            icon="mynaui:dislike"
-            activeIcon="mynaui:dislike-solid"
-            count={data.engagement.dislikes}
-            isActive={data.isDisliked}
-            onClick={() => handleDislike(data.id)}
-            activeColor="error"
-            hoverColor="error"
-            label={`${data.isDisliked ? 'Remove dislike' : 'Dislike'} post`}
-          />
-        </Stack>
-        <InteractionButton
-          icon="mynaui:pin"
-          activeIcon="mynaui:pin-solid"
-          count={data.engagement.pins}
-          isActive={data.isPinned}
-          onClick={() => handlePinpost(data.id)}
-          activeColor="info"
-          hoverColor="info"
-          label={`${data.isPinned ? 'Undo pin' : 'Pin'} post`}
-        />
-      </Box>
+        </Box>
+      )}
 
       {/* ── Profile photo lightbox ─────────────────────────────────────────── */}
       <ImageViewer

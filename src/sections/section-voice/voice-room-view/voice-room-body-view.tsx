@@ -15,12 +15,15 @@ import {
   Divider,
   useTheme,
   Typography,
+  capitalize,
   useMediaQuery,
 } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
 import { useScreenView } from 'src/hooks/use-screen-view';
 
 import { varAlpha } from 'src/theme/styles';
+import { getLanguageByCode } from 'src/_mock/data/languages';
 // useScreenShare: getDisplayMedia only — no peer logic
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
@@ -31,6 +34,7 @@ import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
 import { VoiceMessageGroup } from '../voice-message-group';
+import { CreateRoomModal } from '../voice-create-room-modal';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
 import { VoiceParticipantSettingsPopup } from '../voice-participant-settings-popup';
 
@@ -116,6 +120,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const { room, participants, userVoiceState } = useRoomTools();
   const user = useSelector(selectAccount);
 
+  const editRoomOpen = useBoolean();
+
   const {
     localStream,
     remoteStreams,
@@ -195,22 +201,22 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             >
               {room.name}
             </Typography>
-            {isHost && (
-              <Chip
-                label="HOST"
-                size="small"
-                sx={{
-                  height: 17,
-                  fontSize: '0.58rem',
-                  fontWeight: 900,
-                  letterSpacing: 0.8,
-                  bgcolor: alpha(primary, 0.12),
-                  color: primary,
-                  border: `1px solid ${alpha(primary, 0.3)}`,
-                  '& .MuiChip-label': { px: 0.6 },
-                }}
-              />
-            )}
+
+            <Chip
+              label={capitalize(room.roomType)}
+              size="small"
+              sx={{
+                height: 17,
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                letterSpacing: 0.8,
+                bgcolor: alpha(primary, 0.12),
+                color: primary,
+                border: `1px solid ${alpha(primary, 0.3)}`,
+                '& .MuiChip-label': { px: 0.6 },
+              }}
+            />
+
             {isSharing && (
               <Chip
                 icon={<ScreenShareIcon sx={{ fontSize: '11px !important' }} />}
@@ -250,6 +256,9 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               ·
             </Typography>
+            <Typography variant="caption" sx={{ color: 'text.primary', fontSize: '0.7rem' }}>
+              {room.languages.map((language) => getLanguageByCode(language)?.name).join(' . ')}
+            </Typography>
           </Box>
         </Box>
 
@@ -280,7 +289,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           )}
 
           {isHost ? (
-            <CtrlBtn tooltip="Room settings">
+            <CtrlBtn tooltip="Room settings" onClick={editRoomOpen.onTrue}>
               <SettingsIcon sx={{ fontSize: 18 }} />
             </CtrlBtn>
           ) : (
@@ -422,6 +431,21 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
           </GridPanel>
         </ContentPad>
       </ScrollArea>
+      <CreateRoomModal
+        open={editRoomOpen.value}
+        onClose={editRoomOpen.onFalse}
+        onCreateRoom={() => {}}
+        currentRoom={{
+          name: room.name,
+          description: room.description,
+          languages: room.languages,
+          level: room.level,
+          maxParticipants: room.maxParticipants,
+          host: room.host.id,
+          roomId: room.id,
+          roomType: room.roomType,
+        }}
+      />
     </RootContainer>
   );
 }

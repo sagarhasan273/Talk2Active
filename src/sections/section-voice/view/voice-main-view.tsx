@@ -1,6 +1,5 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import { useSelector } from 'react-redux';
 import { VerifiedIcon } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
@@ -11,7 +10,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { toastErrorResponse } from 'src/utils/response';
 
-import { selectAccount } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useSocketContext } from 'src/core/contexts/socket-context';
@@ -19,6 +18,7 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useLeaveRoomMutation, useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
+import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceUserProfileView from './voice-user-profile-view';
@@ -54,9 +54,11 @@ function TabPanel(props: TabPanelProps) {
 type selectedTabType = 'find' | 'entry';
 
 export function VoiceMainView() {
-  const user = useSelector(selectAccount);
+  const { user, isAuthenticated } = useCredentials();
 
   const editRoomBoolean = useBoolean();
+
+  const isAuthOpen = useBoolean();
 
   const { emit } = useSocketContext();
 
@@ -82,6 +84,11 @@ export function VoiceMainView() {
 
   const handleJoinRoom = useCallback(
     async (roomSelected: RoomResponse) => {
+      if (!isAuthenticated) {
+        isAuthOpen.onTrue();
+        return;
+      }
+
       setRoom(roomSelected);
       setSelectedTab('entry');
 
@@ -105,7 +112,15 @@ export function VoiceMainView() {
         }
       }
     },
-    [user.id, currentRooms, setCurrentRooms, updateUserRecentRooms, setRoom]
+    [
+      user.id,
+      currentRooms,
+      isAuthenticated,
+      isAuthOpen,
+      setCurrentRooms,
+      updateUserRecentRooms,
+      setRoom,
+    ]
   );
 
   const handelLeaveChat = useCallback(async () => {
@@ -217,7 +232,7 @@ export function VoiceMainView() {
               borderColor: 'primary.light',
             },
           }}
-          onClick={editRoomBoolean.onTrue}
+          onClick={isAuthenticated ? editRoomBoolean.onTrue : isAuthOpen.onTrue}
         >
           Create New Room
         </Button>
@@ -227,7 +242,7 @@ export function VoiceMainView() {
 
   const leftSidebar = (
     <Scrollbar sx={{ height: 1 }}>
-      <VoiceUserProfileView onLeave={handelLeaveChat} />
+      {isAuthenticated && <VoiceUserProfileView onLeave={handelLeaveChat} />}
       <VoiceRoomFindButton
         selected={selectedTab === 'find'}
         onClick={() => {
@@ -235,15 +250,16 @@ export function VoiceMainView() {
         }}
       />
 
-      {currentRooms.map((recentRoom) => (
-        <VoiceRoomSelectButton
-          key={recentRoom?.room?.id}
-          selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
-          isJoined={userVoiceState.roomId === recentRoom?.room?.id}
-          room={recentRoom?.room}
-          onClick={handleJoinRoom}
-        />
-      ))}
+      {isAuthenticated &&
+        currentRooms.map((recentRoom) => (
+          <VoiceRoomSelectButton
+            key={recentRoom?.room?.id}
+            selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
+            isJoined={userVoiceState.roomId === recentRoom?.room?.id}
+            room={recentRoom?.room}
+            onClick={handleJoinRoom}
+          />
+        ))}
     </Scrollbar>
   );
 
@@ -279,6 +295,8 @@ export function VoiceMainView() {
         onClose={editRoomBoolean.onFalse}
         onCreateRoom={() => {}}
       />
+
+      <LoginPromptDialog openBoolean={isAuthOpen} />
     </>
   );
 }

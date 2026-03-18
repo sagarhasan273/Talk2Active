@@ -9,6 +9,8 @@ import { RouterLink } from 'src/routes/route-components';
 
 import { Logo } from 'src/components/logo';
 
+import { GoogleLogInView } from 'src/auth/view';
+
 import { Main, CompactContent } from './main';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
@@ -60,6 +62,8 @@ export function SimpleLayout({ sx, children, header, content }: SimpleLayoutProp
                 </Link>
                 {/* -- Settings button -- */}
                 <SettingsButton />
+
+                <GoogleLogInView />
               </Box>
             ),
           }}

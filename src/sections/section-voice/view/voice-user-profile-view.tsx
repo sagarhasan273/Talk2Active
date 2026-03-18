@@ -1,6 +1,5 @@
 import type { UserType } from 'src/types/type-user';
 
-import { useSelector } from 'react-redux';
 import React, { useState, useCallback } from 'react';
 
 import MicIcon from '@mui/icons-material/Mic';
@@ -21,7 +20,7 @@ import {
   IconButton,
 } from '@mui/material';
 
-import { useRoomTools, selectAccount } from 'src/core/slices';
+import { useRoomTools, useCredentials } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
@@ -35,13 +34,14 @@ import { ChatStatusButton } from '../voice-user-status-button';
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
 const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
-  const user = useSelector(selectAccount);
+  const { user } = useCredentials();
+
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   const { room, userVoiceState, participants, updateUserVoiceState, updateParticipantStatus } =
     useRoomTools();
   const { emit, socket } = useSocketContext();
-  const { userVolumes, isMicMuted, isDeafened, hasJoined } = userVoiceState;
+  const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
   const { localStream, remoteStreams, toggleDeafen, onClickMicrophone } = useWebRTCContext();
 
   const { roomId } = userVoiceState;
@@ -294,11 +294,13 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Set status">
-            <Box sx={{ display: 'inline-flex' }}>
-              <ChatStatusButton onStatusChange={handleToggleUserStatus} />
-            </Box>
-          </Tooltip>
+          {hasJoined && (
+            <Tooltip title="Set status">
+              <Box sx={{ display: 'inline-flex' }}>
+                <ChatStatusButton onStatusChange={handleToggleUserStatus} />
+              </Box>
+            </Tooltip>
+          )}
         </Stack>
 
         {/* Right: settings + leave */}
@@ -378,7 +380,6 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
           stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
           isLocal={participant.isLocal}
           userName={participant.name || 'unknown'}
-          volume={userVolumes[participant.socketId] || 50}
           muted={participant.isMuted || isDeafened}
         />
       ))}

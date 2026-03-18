@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 
 import { Box } from '@mui/material';
 
@@ -8,51 +8,98 @@ interface UserAudioProps {
   stream: MediaStream | null;
   isLocal: boolean;
   userName: string;
-  volume?: number; // 0-100
   muted?: boolean;
 }
 
-/**
- * A component to handle attaching a MediaStream to an audio element.
- * Supports volume control via props.
- */
 export default function VoiceUserAudio({
   stream,
   isLocal,
   userName,
-  volume = 50,
   muted = false,
 }: UserAudioProps) {
-  const webRTC = useWebRTCContext();
-
-  const { isDeafened } = webRTC;
+  const { isDeafened } = useWebRTCContext();
 
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasUserGestureRef = useRef(false);
+  const pendingPlayRef = useRef(false);
 
-  // Handle stream attachment
+  // Attempt to play — safe to call multiple times
+  const tryPlay = useCallback(() => {
+    const el = audioRef.current;
+    if (!el || isLocal || !el.srcObject) return;
+
+    el.play()
+      .then(() => {
+        pendingPlayRef.current = false;
+        console.log(`[VoiceUserAudio] Playing: ${userName}`);
+      })
+      .catch((err) => {
+        if (err.name === 'NotAllowedError') {
+          // Chrome mobile — queue it for next user gesture
+          pendingPlayRef.current = true;
+          console.warn(`[VoiceUserAudio] Autoplay blocked for ${userName}, waiting for gesture`);
+        } else {
+          console.warn(`[VoiceUserAudio] Play error for ${userName}:`, err);
+        }
+      });
+  }, [isLocal, userName]);
+
+  // Attach stream
   useEffect(() => {
-    if (audioRef.current && stream) {
-      audioRef.current.srcObject = stream;
+    const el = audioRef.current;
+    if (!el || !stream) return undefined;
 
-      if (!isLocal) {
-        audioRef.current.play().catch((error) => {
-          console.warn(`Autoplay denied for ${userName}`, error);
-        });
-      }
-    }
-  }, [stream, isLocal, userName]);
+    el.srcObject = stream;
+    if (!isLocal) tryPlay();
 
-  // Handle volume changes
+    return () => {
+      el.srcObject = null;
+    };
+  }, [stream, isLocal, tryPlay]);
+
+  // Volume / deafen
   useEffect(() => {
     if (audioRef.current) {
-      // If muted, set volume to 0, otherwise use volume/100
-      audioRef.current.volume = muted || isDeafened ? 0 : volume / 100;
+      audioRef.current.volume = muted || isDeafened ? 0 : 1;
     }
-  }, [volume, muted, isDeafened]);
+  }, [muted, isDeafened]);
+
+  // Global gesture listener — resumes any blocked audio
+  useEffect(() => {
+    if (isLocal) return undefined;
+
+    const handleGesture = () => {
+      if (!hasUserGestureRef.current) {
+        hasUserGestureRef.current = true;
+      }
+      if (pendingPlayRef.current) {
+        tryPlay();
+      }
+    };
+
+    // Both touch and click to cover all cases
+    document.addEventListener('touchend', handleGesture, { once: false, passive: true });
+    document.addEventListener('click', handleGesture, { once: false, passive: true });
+
+    return () => {
+      document.removeEventListener('touchend', handleGesture);
+      document.removeEventListener('click', handleGesture);
+    };
+  }, [isLocal, tryPlay]);
 
   return (
     <Box sx={{ position: 'relative' }}>
-      <audio ref={audioRef} autoPlay={!isLocal} muted={isLocal} style={{ display: 'none' }}>
+      {/*
+        KEY FIX: playsInline is required on iOS/Chrome mobile.
+        Without it, audio hijacks the media session or fails silently.
+      */}
+      <audio
+        ref={audioRef}
+        autoPlay={!isLocal}
+        muted={isLocal}
+        {...({ playsInline: true } as any)} // ← critical for iOS + Chrome mobile
+        style={{ display: 'none' }}
+      >
         <track kind="captions" />
       </audio>
     </Box>

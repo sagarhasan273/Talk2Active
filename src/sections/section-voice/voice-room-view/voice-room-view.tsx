@@ -35,7 +35,7 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
     }
 
     // Initialize microphone - this will reuse audio context if available
-    const success = await initializeMicrophone().catch((error) => {
+    const success = await initializeMicrophone(isMicMuted).catch((error) => {
       let errorMessage = '';
       if (error.name === 'NotAllowedError') {
         errorMessage = 'Microphone access was denied. Please allow access and try again.';
@@ -52,42 +52,46 @@ export function VoiceRoomView({ onLeave }: { onLeave: () => void }) {
 
     if (!success) return;
 
-    const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
+    try {
+      const response = await joinRoom({ roomId: room.id, userId: user.id }).unwrap();
 
-    if (response.status) {
-      sessionStorage.setItem('joinedRoomId', room.id);
+      if (response.status) {
+        sessionStorage.setItem('joinedRoomId', room.id);
 
-      if (socket?.id) {
-        socket?.emit('join-voice-room', {
-          roomId: room.id,
-          userId: user.id,
-          name: user.name,
-          profilePhoto: user.profilePhoto,
-          isMuted: isMicMuted,
-          status: 'online',
-          userType: room.host?.id === user.id ? 'host' : 'guest',
-          verified: user.verified,
-          accountType: user.accountType,
-        });
+        if (socket?.id) {
+          socket?.emit('join-voice-room', {
+            roomId: room.id,
+            userId: user.id,
+            name: user.name,
+            profilePhoto: user.profilePhoto,
+            isMuted: isMicMuted,
+            status: 'online',
+            userType: room.host?.id === user.id ? 'host' : 'guest',
+            verified: user.verified,
+            accountType: user.accountType,
+          });
 
-        updateUserVoiceState({ hasJoined: true, roomId: room.id });
+          updateUserVoiceState({ hasJoined: true, roomId: room.id });
 
-        addParticipant({
-          userId: user.id,
-          socketId: socket?.id,
-          status: 'online',
-          isMuted: isMicMuted,
-          userType: room.host?.id === user.id ? 'host' : 'guest',
-          verified: user.verified,
-          isLocal: true,
-          isSpeaking: false,
-          name: user.name,
-          profilePhoto: user.profilePhoto,
-          accountType: user.accountType,
-        });
+          addParticipant({
+            userId: user.id,
+            socketId: socket?.id,
+            status: 'online',
+            isMuted: isMicMuted,
+            userType: room.host?.id === user.id ? 'host' : 'guest',
+            verified: user.verified,
+            isLocal: true,
+            isSpeaking: false,
+            name: user.name,
+            profilePhoto: user.profilePhoto,
+            accountType: user.accountType,
+          });
+        }
+      } else {
+        toast.info(response.message);
       }
-    } else {
-      toast.info(response.message);
+    } catch (error) {
+      toast.error(error);
     }
   };
 

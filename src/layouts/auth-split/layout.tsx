@@ -11,11 +11,12 @@ import { CONFIG } from 'src/config-global';
 
 import { Logo } from 'src/components/logo';
 
+import { GoogleLogInView } from 'src/auth/view';
+
 import { Section } from './section';
 import { Main, Content } from './main';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { SettingsButton } from '../components/settings-button';
 
 // ----------------------------------------------------------------------
 
@@ -69,15 +70,8 @@ export function AuthSplitLayout({ sx, section, children, header }: AuthSplitLayo
                 >
                   About?
                 </Link>
-                {/* -- Settings button -- */}
-                <SettingsButton
-                  sx={{
-                    color: 'button.primary',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                    },
-                  }}
-                />
+
+                <GoogleLogInView />
               </Box>
             ),
           }}
