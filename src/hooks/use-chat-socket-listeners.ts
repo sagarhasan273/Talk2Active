@@ -2,12 +2,13 @@ import type { UserType } from 'src/types/type-user';
 import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
 import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
 
+import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { useEffect, useCallback } from 'react';
 
-import { useLeaveRoomMutation } from 'src/core/apis';
 import { useRoomTools, selectAccount } from 'src/core/slices';
 import { useSocketContext } from 'src/core/contexts/socket-context';
+import { useJoinRoomMutation, useLeaveRoomMutation } from 'src/core/apis';
 
 export interface WebRTCEventData {
   offer?: RTCSessionDescriptionInit;
@@ -24,6 +25,7 @@ export interface ExistingParticipantsData {
 
 export type UseReturnChatSocketListeners = {
   onLeaveRoom: () => Promise<void>;
+  onJoinRoom: () => Promise<void>;
 };
 
 // screenShareWebRTC is now inside useWebRTC — no second argument needed
@@ -33,6 +35,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
   const {
     currentRooms,
     userVoiceState,
+    room,
     setRoom,
     transferParticipantUserType,
     setCurrentRooms,
@@ -52,14 +55,15 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     clearChatRoomMessages,
   } = useRoomTools();
 
-  const { roomId } = userVoiceState;
+  const { hasJoined, isMicMuted, roomId } = userVoiceState;
 
   const {
-    removePeer,
     createOffer,
     handleOffer,
     handleAnswer,
+    initializeMicrophone,
     onClickMicrophone,
+    removePeerShare,
     handleIceCandidate,
     handleScreenShareOffer,
     handleScreenShareAnswer,
@@ -72,44 +76,119 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
   const { socket, on, off } = useSocketContext();
 
+  const [joinRoom] = useJoinRoomMutation();
   const [leaveRoom] = useLeaveRoomMutation();
 
   // ── Leave ─────────────────────────────────────────────────────────────────
 
   const handelLeaveChat = useCallback(
-    async (kicked?: boolean) => {
-      const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
-      const userId = user.id || (sessionStorage.getItem('userId') as string);
-      const name = user.id || (sessionStorage.getItem('username') as string);
+    async (kicked: boolean = false) => {
+      const joinedRoomId = roomId;
+      const userId = user.id;
 
-      if (joinedRoomId) await leaveRoom({ roomId: joinedRoomId, userId, name, kicked }).unwrap();
+      if (joinedRoomId && socket?.id)
+        await leaveRoom({
+          roomId: joinedRoomId,
+          socketId: socket.id,
+          userId,
+          name: user.name,
+          kicked,
+        }).unwrap();
+
+      if (socket?.id) removePeerShare(socket.id);
 
       cleanupWebRTC();
       updateUserVoiceState({ hasJoined: false, roomId: null });
       resetParticipants();
       clearChatRoomMessages();
-      sessionStorage.removeItem('joinedRoomId');
-      sessionStorage.removeItem('userId');
-      sessionStorage.removeItem('username');
     },
     [
+      socket?.id,
       roomId,
+      user.id,
+      user.name,
       cleanupWebRTC,
       leaveRoom,
+      removePeerShare,
       resetParticipants,
       clearChatRoomMessages,
       updateUserVoiceState,
-      user.id,
     ]
   );
 
-  useEffect(
-    () => () => {
-      handelLeaveChat();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  const handleJoinChat = useCallback(async () => {
+    if (!room || !socket?.id) return;
+
+    if (hasJoined) {
+      await handelLeaveChat();
+    }
+
+    const success = await initializeMicrophone(isMicMuted).catch((error) => {
+      let errorMessage = '';
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Microphone access was denied. Please allow access and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No microphone found. Please connect a microphone and try again.';
+      } else {
+        errorMessage = 'An unexpected error occurred while accessing the microphone.';
+      }
+
+      // Update state to reflect mic access error
+      updateUserVoiceState({ micError: errorMessage });
+      return false;
+    });
+
+    if (!success) return;
+
+    try {
+      updateUserVoiceState({ hasJoined: true, roomId: room.id });
+      const response = await joinRoom({
+        roomId: room.id,
+        socketId: socket.id,
+        userId: user.id,
+        name: user.name,
+        profilePhoto: user.profilePhoto,
+        isMuted: isMicMuted,
+        status: 'online',
+        verified: user.verified,
+        userType: room.host?.id === user.id ? 'host' : 'guest',
+        accountType: user.accountType,
+      }).unwrap();
+
+      if (response?.status) {
+        addParticipant({
+          userId: user.id,
+          socketId: socket?.id,
+          isMuted: isMicMuted,
+          isLocal: true,
+          name: user.name,
+          profilePhoto: user.profilePhoto,
+          status: 'online',
+          verified: user.verified,
+          userType: room.host?.id === user.id ? 'host' : 'guest',
+          accountType: user.accountType,
+          hasJoin: true,
+        });
+      } else {
+        toast.info(response?.message);
+        updateUserVoiceState({ hasJoined: true, roomId: null });
+      }
+    } catch (error) {
+      updateUserVoiceState({ hasJoined: false, roomId: null });
+      toast.error(error?.data?.message || 'Internal Error!');
+    }
+  }, [
+    room,
+    socket,
+    user,
+    hasJoined,
+    isMicMuted,
+    addParticipant,
+    handelLeaveChat,
+    initializeMicrophone,
+    updateUserVoiceState,
+    joinRoom,
+  ]);
 
   // ── Socket events ─────────────────────────────────────────────────────────
 
@@ -118,7 +197,8 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
     // Participants
     const handleExistingParticipants = (data: ExistingParticipantsData) => {
-      if (data.roomId !== roomId) return;
+      if (roomId !== data.roomId) return;
+
       data.participants.forEach((participant) => {
         if (participant.socketId !== socket.id) {
           addParticipant(participant);
@@ -141,7 +221,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
       removeParticipant(data?.userId);
       closePeerConnection(data.socketId);
-      removePeer(data.socketId);
+      removePeerShare(data.socketId);
     };
 
     const handleAudioToggled = (data: { userId: string; isMuted: boolean }) => {
@@ -288,7 +368,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
               room: {
                 ...currentRoom.room,
                 currentParticipants: (currentRoom.room.currentParticipants || []).filter(
-                  (p) => p?.user?.userId !== data?.leaveInfo?.participant?.userId
+                  (p) => ![p.user.userId, p.user.id].includes(data.leaveInfo.participant.userId)
                 ),
               },
             };
@@ -372,5 +452,5 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     handleScreenShareIce,
   ]);
 
-  return { onLeaveRoom: handelLeaveChat };
+  return { onJoinRoom: handleJoinChat, onLeaveRoom: handelLeaveChat };
 }

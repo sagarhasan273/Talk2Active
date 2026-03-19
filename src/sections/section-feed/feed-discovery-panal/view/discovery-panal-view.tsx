@@ -58,7 +58,7 @@ export const DiscoveryPanel: React.FC = () => {
     >
       {/* Engagement Profile Card */}
       {Boolean(selectedUser?.id) && <EngagementProfileCard />}
-      {hasJoined && <VoiceUserProfileView onLeave={() => {}} />}
+      {hasJoined && <VoiceUserProfileView />}
 
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>

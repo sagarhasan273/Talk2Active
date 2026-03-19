@@ -42,7 +42,7 @@ export type UseScreenShareWebRTCReturn = {
    *   removePeer()   — targeted teardown for ONE departed peer, no socket emit needed
    *                    (they're already gone), works from both sharer and viewer side
    */
-  removePeer: (socketId: string) => void;
+  removePeerShare: (socketId: string) => void;
   /** Close all PCs and reset all state. Call on room leave or unmount. */
   cleanup: () => void;
 };
@@ -329,12 +329,6 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
   );
 
   // ── removePeer ────────────────────────────────────────────────────────────
-  // Targeted teardown for a single departed peer. No socket emit — they're gone.
-  //
-  // Viewer side:  sharer left → close inbound PC, clear their stream from state
-  // Sharer side:  viewer left → close outbound PC, remove from participantsRef
-  //               so teardown/onended won't try to emit to a dead socket
-  // Both sides:   handles network drops / page reload (no graceful leave signal)
 
   const removePeer = useCallback(
     (socketId: string) => {
@@ -370,7 +364,7 @@ export function useScreenShare(): UseScreenShareWebRTCReturn {
     handleScreenShareIce,
     handleScreenShareActive,
     handleScreenShareRequestedBy,
-    removePeer,
+    removePeerShare: removePeer,
     cleanup,
   };
 }

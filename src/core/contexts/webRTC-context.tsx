@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
+import type { UseReturnChatSocketListeners } from 'src/hooks/use-chat-socket-listeners';
 
 import React, { useContext, createContext } from 'react';
 
 import { useWebRTC } from 'src/hooks/useWebRTC';
 import { useChatSocketListeners } from 'src/hooks/use-chat-socket-listeners';
 
-const WebRTCContext = createContext<UseWebRTCReturn | null>(null);
+export type UseWebRTCContextReturn = UseWebRTCReturn & UseReturnChatSocketListeners;
+
+const WebRTCContext = createContext<UseWebRTCContextReturn | null>(null);
 
 interface WebRTCProviderProps {
   children: ReactNode;
@@ -15,9 +18,12 @@ interface WebRTCProviderProps {
 export function WebRTCProvider({ children }: WebRTCProviderProps) {
   const webRTC = useWebRTC();
 
-  const { onLeaveRoom } = useChatSocketListeners(webRTC);
+  const { onLeaveRoom, onJoinRoom } = useChatSocketListeners(webRTC);
 
-  const memoizedWebRTC = React.useMemo(() => ({ ...webRTC, onLeaveRoom }), [webRTC, onLeaveRoom]);
+  const memoizedWebRTC = React.useMemo(
+    () => ({ ...webRTC, onLeaveRoom, onJoinRoom }),
+    [webRTC, onLeaveRoom, onJoinRoom]
+  );
 
   return <WebRTCContext.Provider value={memoizedWebRTC}>{children}</WebRTCContext.Provider>;
 }

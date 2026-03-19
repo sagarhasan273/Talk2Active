@@ -1,4 +1,4 @@
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomResponse, JoinRoomUserInput, LeaveRoomUserInput } from 'src/types/type-chat';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -47,26 +47,20 @@ export const chatApi = createApi({
       invalidatesTags: ['chat-recall'],
     }),
 
-    joinRoom: builder.mutation<
-      { message: string; status: boolean },
-      { roomId: string; userId: string }
-    >({
-      query: ({ roomId, userId }) => ({
-        url: `room/${roomId}/join`,
+    joinRoom: builder.mutation<{ message: string; status: boolean }, JoinRoomUserInput>({
+      query: (input) => ({
+        url: `room/${input.roomId}/join`,
         method: 'POST',
-        body: { userId },
+        body: input,
       }),
       invalidatesTags: ['chat-recall'],
     }),
 
-    leaveRoom: builder.mutation<
-      { message: string; status: boolean },
-      { roomId: string; userId: string; name: string; kicked?: boolean }
-    >({
-      query: ({ roomId, userId, kicked = false }) => ({
-        url: `room/${roomId}/leave`,
+    leaveRoom: builder.mutation<{ message: string; status: boolean }, LeaveRoomUserInput>({
+      query: (body) => ({
+        url: `room/${body.roomId}/leave`,
         method: 'POST',
-        body: { userId, kicked: kicked ?? false },
+        body,
       }),
       invalidatesTags: ['chat-recall'],
     }),

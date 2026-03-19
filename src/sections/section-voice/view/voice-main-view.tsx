@@ -13,9 +13,7 @@ import { toastErrorResponse } from 'src/utils/response';
 import { useCredentials } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
-import { useSocketContext } from 'src/core/contexts/socket-context';
-import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
-import { useLeaveRoomMutation, useUpdateUserRecentRoomsMutation } from 'src/core/apis';
+import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
@@ -60,27 +58,11 @@ export function VoiceMainView() {
 
   const isAuthOpen = useBoolean();
 
-  const { emit } = useSocketContext();
-
-  const {
-    room,
-    userVoiceState,
-    currentRooms,
-    setRoom,
-    setCurrentRooms,
-    updateUserVoiceState,
-    resetParticipants,
-    clearChatRoomMessages,
-  } = useRoomTools();
-  const { roomId } = userVoiceState;
-
-  const webRTC = useWebRTCContext();
-  const { cleanup: cleanupWebRTC } = webRTC;
+  const { room, userVoiceState, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
 
   const [selectedTab, setSelectedTab] = useState<selectedTabType>('find');
 
   const [updateUserRecentRooms] = useUpdateUserRecentRoomsMutation();
-  const [leaveRoom] = useLeaveRoomMutation();
 
   const handleJoinRoom = useCallback(
     async (roomSelected: RoomResponse) => {
@@ -122,50 +104,6 @@ export function VoiceMainView() {
       setRoom,
     ]
   );
-
-  const handelLeaveChat = useCallback(async () => {
-    const joinedRoomId = roomId || (sessionStorage.getItem('joinedRoomId') as string);
-    let response = null;
-
-    if (joinedRoomId)
-      response = await leaveRoom({
-        roomId: joinedRoomId,
-        userId: user.id,
-        name: user.name,
-      }).unwrap();
-
-    if (response?.status) {
-      emit('leave-voice-room', {
-        roomId: joinedRoomId,
-        userId: user.id,
-        name: user.name,
-      });
-
-      // This cleanup keeps audio context alive
-      cleanupWebRTC();
-
-      updateUserVoiceState({ hasJoined: false, roomId: null });
-
-      // Reset local state
-      resetParticipants();
-
-      clearChatRoomMessages();
-
-      sessionStorage.removeItem('joinedRoomId');
-    } else {
-      console.error(response?.message || 'Failed to leave chat');
-    }
-  }, [
-    roomId,
-    cleanupWebRTC,
-    emit,
-    leaveRoom,
-    resetParticipants,
-    clearChatRoomMessages,
-    updateUserVoiceState,
-    user.id,
-    user.name,
-  ]);
 
   const header = (
     <Box
@@ -242,7 +180,7 @@ export function VoiceMainView() {
 
   const leftSidebar = (
     <Scrollbar sx={{ height: 1 }}>
-      {isAuthenticated && <VoiceUserProfileView onLeave={handelLeaveChat} />}
+      {isAuthenticated && <VoiceUserProfileView />}
       <VoiceRoomFindButton
         selected={selectedTab === 'find'}
         onClick={() => {
@@ -274,7 +212,7 @@ export function VoiceMainView() {
       </TabPanel>
 
       <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
-        <VoiceRoomView onLeave={handelLeaveChat} />
+        <VoiceRoomView />
       </TabPanel>
     </Scrollbar>
   );

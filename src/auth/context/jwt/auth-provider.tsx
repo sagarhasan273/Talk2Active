@@ -58,8 +58,6 @@ export function AuthProvider({ children }: Props) {
           pending: false,
         },
       });
-      sessionStorage.setItem('userId', user.id);
-      sessionStorage.setItem('username', user.name);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentRooms.length, setCurrentRooms]
@@ -81,7 +79,6 @@ export function AuthProvider({ children }: Props) {
         setState({ authUser: {} as AuthState['authUser'], loading: false });
       }
     } catch (error) {
-      console.error(error);
       setState({ authUser: {} as AuthState['authUser'], loading: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

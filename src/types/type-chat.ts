@@ -33,3 +33,24 @@ export interface ChatUserStatus {
     | 'darkChannel'
     | 'darkerChannel';
 }
+
+export type JoinRoomUserInput = {
+  roomId: string;
+  socketId: string;
+  userId: string;
+  name: string;
+  profilePhoto: string;
+  isMuted: boolean;
+  status: string;
+  userType: 'host' | 'guest';
+  verified: UserType['verified'];
+  accountType: UserType['accountType'];
+};
+
+export type LeaveRoomUserInput = {
+  roomId: string;
+  socketId: string;
+  userId: string;
+  name: string;
+  kicked?: boolean;
+};

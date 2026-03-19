@@ -110,7 +110,7 @@ const ParticipantsGrid = styled(Box)(({ theme }) => ({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) {
+export function VoiceRoomBodyView() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const primary = theme.palette.primary.main;
@@ -125,9 +125,8 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
   const {
     localStream,
     remoteStreams,
-
     connectionStatus,
-
+    onLeaveRoom,
     stopSharing,
     startSharing,
     remoteScreenStreams,
@@ -203,7 +202,7 @@ export function VoiceRoomBodyView({ onLeaveRoom }: { onLeaveRoom: () => void }) 
             </Typography>
 
             <Chip
-              label={capitalize(room.roomType)}
+              label={capitalize(room?.roomType || '')}
               size="small"
               sx={{
                 height: 17,
