@@ -96,6 +96,7 @@ export const GoogleLogInView = ({
       desktopLogin(); // popup flow
     }
   };
+
   return (
     <Button
       fullWidth
