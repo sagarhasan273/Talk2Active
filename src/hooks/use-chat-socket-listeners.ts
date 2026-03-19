@@ -368,7 +368,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
               room: {
                 ...currentRoom.room,
                 currentParticipants: (currentRoom.room.currentParticipants || []).filter(
-                  (p) => p?.user?.id !== data?.leaveInfo?.participant?.userId
+                  (p) => ![p.user.userId, p.user.id].includes(data.leaveInfo.participant.userId)
                 ),
               },
             };
