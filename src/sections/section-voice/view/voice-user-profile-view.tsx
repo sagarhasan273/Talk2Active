@@ -1,99 +1,23 @@
-import type { UserType } from 'src/types/type-user';
+import React from 'react';
 
-import React, { useState, useCallback } from 'react';
-
-import MicIcon from '@mui/icons-material/Mic';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import HeadsetIcon from '@mui/icons-material/Headset';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
-import {
-  Box,
-  Fade,
-  Stack,
-  Paper,
-  Badge,
-  Tooltip,
-  Collapse,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Paper, Badge, Typography } from '@mui/material';
 
 import { useRoomTools, useCredentials } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
-import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
 import VoiceUserAudio from 'src/sections/section-voice/voice-user-audio';
-import { VoiceAudioControls } from 'src/sections/section-voice/voice-audio-controls';
-
-import { ChatStatusButton } from '../voice-user-status-button';
 
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
 const VoiceUserProfileView = () => {
   const { user } = useCredentials();
 
-  const [showAudioControls, setShowAudioControls] = useState(false);
+  const { userVoiceState, participants } = useRoomTools();
 
-  const { room, userVoiceState, participants, updateUserVoiceState, updateParticipantStatus } =
-    useRoomTools();
-  const { emit, socket } = useSocketContext();
   const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
-  const { localStream, remoteStreams, toggleDeafen, onClickMicrophone, onLeaveRoom } =
-    useWebRTCContext();
-
-  const { roomId } = userVoiceState;
-
-  const handleMicMute = () => {
-    onClickMicrophone(!isMicMuted);
-    updateUserVoiceState({ isMicMuted: !isMicMuted });
-    if (room.id) {
-      emit('user-audio-toggle', {
-        socketId: socket?.id,
-        roomId: room.id,
-        isMuted: !isMicMuted,
-        name: user.name,
-        userId: user.id,
-      });
-    }
-  };
-
-  const handleDeafen = () => {
-    const newDeafenedState = !isDeafened;
-    const newMicMutedState = newDeafenedState ? true : isMicMuted;
-
-    // Update local state
-    toggleDeafen();
-
-    // Update mic if needed
-    if (newDeafenedState && !isMicMuted) {
-      onClickMicrophone(true);
-    }
-
-    // Update server/global state
-    updateUserVoiceState({
-      isDeafened: newDeafenedState,
-      isMicMuted: newMicMutedState,
-    });
-  };
-
-  const handleToggleUserStatus = useCallback(
-    (selectedStatus: UserType['status']) => {
-      if (!socket) return;
-      socket.emit('user-status-select', {
-        roomId,
-        socketId: socket.id,
-        status: selectedStatus,
-        name: user.name,
-        userId: user.id,
-      });
-      if (socket.id) updateParticipantStatus({ userId: user.id, status: selectedStatus });
-    },
-    [socket, roomId, user?.name, user?.id, updateParticipantStatus]
-  );
+  const { localStream, remoteStreams } = useWebRTCContext();
 
   return (
     <Paper
@@ -235,144 +159,6 @@ const VoiceUserProfileView = () => {
           </Typography>
         </Box>
       )}
-
-      {/* ── Control strip ──────────────────────────────────────── */}
-      <Box
-        sx={{
-          bgcolor: 'background.neutral',
-          px: 0.5,
-          py: 0.75,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        {/* Left: mic + deafen */}
-        <Stack direction="row" spacing={0.5}>
-          <Tooltip title={isMicMuted ? 'Unmute' : 'Mute'}>
-            <IconButton
-              size="small"
-              onClick={handleMicMute}
-              sx={{
-                color: isMicMuted ? '#ed4245' : '#72767d',
-                borderRadius: '8px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.07)',
-                  color: isMicMuted ? '#ed4245' : '#667eea',
-                  transform: 'scale(1.12)',
-                },
-              }}
-            >
-              {isMicMuted ? (
-                <MicOffIcon sx={{ fontSize: '1rem' }} />
-              ) : (
-                <MicIcon sx={{ fontSize: '1rem' }} />
-              )}
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title={isDeafened ? 'Undeafen' : 'Deafen'}>
-            <IconButton
-              size="small"
-              onClick={handleDeafen}
-              sx={{
-                color: isDeafened ? '#ed4245' : '#72767d',
-                borderRadius: '8px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.07)',
-                  color: isDeafened ? '#ed4245' : '#667eea',
-                  transform: 'scale(1.12)',
-                },
-              }}
-            >
-              {isDeafened ? (
-                <HeadsetOffIcon sx={{ fontSize: '1rem' }} />
-              ) : (
-                <HeadsetIcon sx={{ fontSize: '1rem' }} />
-              )}
-            </IconButton>
-          </Tooltip>
-
-          {hasJoined && (
-            <Tooltip title="Set status">
-              <Box sx={{ display: 'inline-flex' }}>
-                <ChatStatusButton onStatusChange={handleToggleUserStatus} />
-              </Box>
-            </Tooltip>
-          )}
-        </Stack>
-
-        {/* Right: settings + leave */}
-        <Stack direction="row" spacing={0.5} alignItems="center">
-          <Tooltip title="Audio settings">
-            <IconButton
-              size="small"
-              onClick={() => setShowAudioControls((p) => !p)}
-              sx={{
-                color: showAudioControls ? '#667eea' : '#72767d',
-                borderRadius: '8px',
-                transition: 'transform 0.35s ease, color 0.2s ease',
-                transform: showAudioControls ? 'rotate(90deg)' : 'rotate(0deg)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.07)' },
-              }}
-            >
-              <SettingsIcon sx={{ fontSize: '1rem' }} />
-            </IconButton>
-          </Tooltip>
-
-          {hasJoined && (
-            <Tooltip title="Leave voice">
-              <IconButton
-                size="small"
-                onClick={() => onLeaveRoom()}
-                sx={{
-                  color: '#ed4245',
-                  bgcolor: 'rgba(237,66,69,0.1)',
-                  border: '1px solid rgba(237,66,69,0.2)',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    bgcolor: 'rgba(237,66,69,0.22)',
-                    transform: 'scale(1.08)',
-                  },
-                }}
-              >
-                <ExitToAppIcon sx={{ fontSize: '1rem' }} />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
-      </Box>
-
-      {/* ── Collapsible audio controls ─────────────────────────── */}
-      <Collapse in={showAudioControls} timeout={380} easing="cubic-bezier(0.4,0,0.2,1)">
-        <Box
-          sx={{
-            px: 2,
-            py: 1.5,
-            animation: showAudioControls ? 'fadeSlide 0.38s ease' : 'none',
-            '@keyframes fadeSlide': {
-              from: { opacity: 0, transform: 'translateY(-8px)' },
-              to: { opacity: 1, transform: 'translateY(0)' },
-            },
-          }}
-        >
-          <VoiceAudioControls />
-        </Box>
-      </Collapse>
-
-      {/* ── Bottom accent line ─────────────────────────────────── */}
-      <Fade in timeout={600}>
-        <Box
-          sx={{
-            height: '6px',
-            opacity: 0.55,
-            transition: 'background 0.5s ease',
-          }}
-        />
-      </Fade>
 
       {/* ── Hidden audio elements ──────────────────────────────── */}
       {Object.values(participants).map((participant: any) => (
