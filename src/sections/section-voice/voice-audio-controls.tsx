@@ -24,7 +24,7 @@ export function VoiceAudioControls() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <MicIcon sx={{ color: 'grey.500', fontSize: 16 }} />
 
-              <Typography variant="caption">Microphone</Typography>
+              <Typography variant="caption">Input Volume</Typography>
             </Box>
             <Typography variant="caption">{micGain}%</Typography>
           </Box>
@@ -37,7 +37,7 @@ export function VoiceAudioControls() {
             disabled={isMicMuted}
             size="small"
             sx={{
-              p: '4px 0',
+              p: '2px 0',
               '& .MuiSlider-track': {
                 height: 5,
                 background: isMicMuted

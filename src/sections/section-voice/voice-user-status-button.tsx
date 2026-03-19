@@ -6,18 +6,7 @@ import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react'
 
 import Portal from '@mui/material/Portal';
 import { styled } from '@mui/material/styles';
-import {
-  Box,
-  Fade,
-  Paper,
-  Slide,
-  Stack,
-  alpha,
-  Button,
-  useTheme,
-  Typography,
-  IconButton,
-} from '@mui/material';
+import { Box, Fade, Paper, Slide, alpha, useTheme, Typography, IconButton } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -122,24 +111,33 @@ function StatusGrid({
   isMobile: boolean;
 }) {
   return (
-    <Stack direction="row" flexWrap="wrap" sx={{ gap: 0.5 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 0.5,
+      }}
+    >
       {STATUS_OPTIONS.map((status) => {
         const Icon = status.icon;
         const isSelected = status.name === currentStatus.name;
         const channel = getChannelValue(status);
 
         return (
-          <Button
+          <Box
             key={status.name}
             onClick={() => onSelect(status)}
             sx={{
-              minWidth: 'calc(33.333% - 5px)',
-              width: 'calc(33.333% - 5px)',
+              width: '100%',
               borderRadius: 1.5,
-              flexDirection: 'column',
-              gap: 0.4,
+              display: 'flex',
+              flexDirection: 'row', // ← icon left, label right
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.6,
               py: isMobile ? 1.25 : 0.85,
-              px: 0.5,
+              px: 0.75,
+              cursor: 'pointer',
               color: status.color,
               bgcolor: isSelected && channel ? varAlpha(channel, 0.16) : 'transparent',
               border: '1px solid',
@@ -153,7 +151,9 @@ function StatusGrid({
                 : {},
             }}
           >
-            <Icon style={{ width: isMobile ? 20 : 17, height: isMobile ? 20 : 17 }} />
+            <Icon
+              style={{ width: isMobile ? 16 : 14, height: isMobile ? 16 : 14, flexShrink: 0 }}
+            />
             <Typography
               variant="caption"
               sx={{
@@ -161,17 +161,17 @@ function StatusGrid({
                 fontSize: isMobile ? '0.72rem' : '0.63rem',
                 letterSpacing: 0.2,
                 color: 'inherit',
+                lineHeight: 1,
               }}
             >
               {status.label}
             </Typography>
-          </Button>
+          </Box>
         );
       })}
-    </Stack>
+    </Box>
   );
 }
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
@@ -305,6 +305,7 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
   );
 
   const PrimaryIcon = currentStatus.icon;
+  const primaryName = currentStatus.name;
   const currentChannel = getChannelValue(currentStatus);
 
   return (
@@ -317,9 +318,20 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
         sx={{
           borderRadius: '10px',
           color: currentStatus.color,
-          border: '1px solid',
-          borderColor: isOpen && currentChannel ? varAlpha(currentChannel, 0.4) : 'transparent',
-          bgcolor: isOpen && currentChannel ? varAlpha(currentChannel, 0.12) : 'transparent',
+          border:
+            primaryName !== 'online' ? `1px solid ${varAlpha(currentChannel, 0.4)}` : '1px solid',
+          borderColor:
+            primaryName !== 'online'
+              ? varAlpha(currentChannel, 0.4)
+              : isOpen && currentChannel
+                ? varAlpha(currentChannel, 0.4)
+                : 'transparent',
+          bgcolor:
+            primaryName !== 'online'
+              ? varAlpha(currentChannel, 0.14)
+              : isOpen && currentChannel
+                ? varAlpha(currentChannel, 0.12)
+                : 'transparent',
           transition: 'all 0.18s',
           '&:hover': currentChannel
             ? {

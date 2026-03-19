@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import StopIcon from '@mui/icons-material/Stop';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { styled, keyframes } from '@mui/material/styles';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import {
@@ -12,7 +11,6 @@ import {
   Chip,
   Zoom,
   alpha,
-  Divider,
   useTheme,
   Typography,
   capitalize,
@@ -30,10 +28,9 @@ import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { CtrlBtn } from 'src/components/buttons';
-import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
 
 import { VoiceUserCard } from '../voice-user-card';
-import { VoiceMessageGroup } from '../voice-message-group';
+import { VoiceActionBar } from '../voice-action-bar';
 import { CreateRoomModal } from '../voice-create-room-modal';
 import { ScreenSharePreviewPanel } from './screen-share-preview';
 import { VoiceParticipantSettingsPopup } from '../voice-participant-settings-popup';
@@ -51,6 +48,7 @@ const RootContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
+  minHeight: 600,
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.spacing(1.5),
   position: 'relative',
@@ -126,7 +124,6 @@ export function VoiceRoomBodyView() {
     localStream,
     remoteStreams,
     connectionStatus,
-    onLeaveRoom,
     stopSharing,
     startSharing,
     remoteScreenStreams,
@@ -262,46 +259,9 @@ export function VoiceRoomBodyView() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <CtrlBtn
-            tooltip={isSharing ? 'Stop sharing' : 'Share screen'}
-            active={isSharing}
-            warn={isSharing}
-            onClick={handleToggleScreenShare}
-          >
-            {isSharing ? (
-              <StopIcon sx={{ fontSize: 18 }} />
-            ) : (
-              <ScreenShareIcon sx={{ fontSize: 18 }} />
-            )}
-          </CtrlBtn>
-
-          <VoiceRoomMessageGroupDrawer>
-            <VoiceMessageGroup />
-          </VoiceRoomMessageGroupDrawer>
-
           {isHost && (
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ height: 18, alignSelf: 'center', mx: 0.25 }}
-            />
-          )}
-
-          {isHost ? (
             <CtrlBtn tooltip="Room settings" onClick={editRoomOpen.onTrue}>
               <SettingsIcon sx={{ fontSize: 18 }} />
-            </CtrlBtn>
-          ) : (
-            <CtrlBtn
-              tooltip="Leave room"
-              danger
-              onClick={() => {
-                onLeaveRoom();
-                stopCapture();
-              }}
-              sx={{ ml: 1 }}
-            >
-              <ExitToAppIcon sx={{ fontSize: 18 }} />
             </CtrlBtn>
           )}
         </Box>
@@ -430,6 +390,40 @@ export function VoiceRoomBodyView() {
           </GridPanel>
         </ContentPad>
       </ScrollArea>
+
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          px: { xs: 1, sm: 1.5 },
+          py: 1,
+          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          backdropFilter: 'blur(8px)',
+          zIndex: 10,
+        }}
+      >
+        <VoiceActionBar
+          screenShareButton={
+            <CtrlBtn
+              tooltip={isSharing ? 'Stop sharing' : 'Share screen'}
+              active={isSharing}
+              warn={isSharing}
+              onClick={handleToggleScreenShare}
+            >
+              {isSharing ? (
+                <StopIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <ScreenShareIcon sx={{ fontSize: 18 }} />
+              )}
+            </CtrlBtn>
+          }
+        />
+      </Box>
+
       <CreateRoomModal
         open={editRoomOpen.value}
         onClose={editRoomOpen.onFalse}
