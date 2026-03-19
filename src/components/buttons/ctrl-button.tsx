@@ -7,7 +7,7 @@ import { alpha, Tooltip, useTheme, IconButton } from '@mui/material';
 export const CtrlBtn = React.forwardRef<
   HTMLButtonElement,
   {
-    tooltip: string;
+    tooltip?: string;
     active?: boolean;
     danger?: boolean;
     warn?: boolean;

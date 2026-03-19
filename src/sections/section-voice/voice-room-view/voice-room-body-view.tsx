@@ -260,8 +260,9 @@ export function VoiceRoomBodyView() {
 
         <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           {isHost && (
-            <CtrlBtn tooltip="Room settings" onClick={editRoomOpen.onTrue}>
-              <SettingsIcon sx={{ fontSize: 18 }} />
+            <CtrlBtn onClick={editRoomOpen.onTrue}>
+              <SettingsIcon sx={{ fontSize: 18, mr: 0.5 }} />
+              <Typography variant="body2">Room Settings</Typography>
             </CtrlBtn>
           )}
         </Box>

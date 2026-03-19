@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 
 import Portal from '@mui/material/Portal';
 import { useTheme } from '@mui/material/styles';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, alpha, Badge, Tooltip, IconButton } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -85,7 +85,7 @@ export function VoiceParticipantSettingsPopup({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ position: 'absolute', top: 5, right: 5, transition: 'opacity 0.15s' }}>
+    <Box sx={{ position: 'absolute', top: 2, right: 2, transition: 'opacity 0.15s' }}>
       {/* ── Trigger ───────────────────────────────────────────────────── */}
       <Tooltip title="Participant actions" arrow placement="top">
         <Badge
@@ -112,12 +112,11 @@ export function VoiceParticipantSettingsPopup({
               height: 24,
               borderRadius: '6px',
               color: 'text.secondary',
-              bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
               '&:hover': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.16) },
               '&:active': { bgcolor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.16) },
             }}
           >
-            <MoreVertIcon sx={{ fontSize: 15 }} />
+            <SettingsIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </Badge>
       </Tooltip>
