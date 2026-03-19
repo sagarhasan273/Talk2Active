@@ -91,7 +91,6 @@ export const GoogleLogInView = ({
     setIsLoading(true);
     if (isMobileBrowser()) {
       mobileLogin(); // redirect flow
-      console.log('hello');
     } else {
       desktopLogin(); // popup flow
     }
