@@ -65,7 +65,6 @@ export type Participant = {
   profilePhoto: UserType['profilePhoto'];
   accountType: UserType['accountType'];
   status: UserType['status'];
-  isSpeaking: boolean;
   isMuted: boolean;
   volume?: number;
   userType?: string;

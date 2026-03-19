@@ -33,7 +33,7 @@ import { ChatStatusButton } from '../voice-user-status-button';
 
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
-const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
+const VoiceUserProfileView = () => {
   const { user } = useCredentials();
 
   const [showAudioControls, setShowAudioControls] = useState(false);
@@ -42,7 +42,8 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
     useRoomTools();
   const { emit, socket } = useSocketContext();
   const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
-  const { localStream, remoteStreams, toggleDeafen, onClickMicrophone } = useWebRTCContext();
+  const { localStream, remoteStreams, toggleDeafen, onClickMicrophone, onLeaveRoom } =
+    useWebRTCContext();
 
   const { roomId } = userVoiceState;
 
@@ -325,7 +326,7 @@ const VoiceUserProfileView = ({ onLeave }: { onLeave: () => void }) => {
             <Tooltip title="Leave voice">
               <IconButton
                 size="small"
-                onClick={onLeave}
+                onClick={() => onLeaveRoom()}
                 sx={{
                   color: '#ed4245',
                   bgcolor: 'rgba(237,66,69,0.1)',
