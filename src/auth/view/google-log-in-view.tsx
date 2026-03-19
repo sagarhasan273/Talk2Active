@@ -32,29 +32,31 @@ export const GoogleLogInView = ({
   // ── Mobile: redirect flow ─────────────────────────────────────────────────
   const mobileLogin = useGoogleLogin({
     flow: 'auth-code',
-    ux_mode: 'redirect',
     redirect_uri: window.location.origin,
     onSuccess: async (codeResponse) => {
       try {
+        setIsLoading(true);
         const response = await axios.post(`${CONFIG.serverUrl}/auth/google/mobile`, {
-          code: codeResponse.code,
+          code: codeResponse?.code,
           redirect_uri: window.location.origin,
         });
-        const { data } = response;
-        if (data.status) {
-          if (!data.token) throw new Error('Access token not found in response');
-          sessionStorage.setItem(STORAGE_KEY, data.token);
-          loadCredentials?.(data.user, data.recentRooms);
+
+        if (response.data?.status && response.data?.token) {
+          sessionStorage.setItem(STORAGE_KEY, response.data.token);
+          loadCredentials?.(response.data.user, response.data.recentRooms);
           onSuccess?.();
+        } else {
+          throw new Error('Invalid response format');
         }
       } catch (err) {
         console.error('Google login failed', err);
+        // Add user-facing error message here
       } finally {
         setIsLoading(false);
       }
     },
-    onError: () => {
-      console.log('Login failed');
+    onError: (error) => {
+      console.error('Login failed', error);
       setIsLoading(false);
     },
   });
@@ -89,6 +91,7 @@ export const GoogleLogInView = ({
     setIsLoading(true);
     if (isMobileBrowser()) {
       mobileLogin(); // redirect flow
+      console.log('hello');
     } else {
       desktopLogin(); // popup flow
     }
