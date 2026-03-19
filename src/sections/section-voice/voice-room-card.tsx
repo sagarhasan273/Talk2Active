@@ -266,13 +266,15 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
       if (room.id === data?.leaveInfo?.roomId) {
         setRoom((prev) => ({
           ...prev,
-          currentParticipants: prev.currentParticipants.filter(
-            (p) => p.user.id !== data.leaveInfo.participant.userId
-          ),
+          currentParticipants: [
+            ...prev.currentParticipants.filter(
+              (p) => p.user.id !== data.leaveInfo.participant.userId
+            ),
+          ],
         }));
       }
     },
-    [room.id]
+    [room, setRoom]
   );
 
   useEffect(() => {
