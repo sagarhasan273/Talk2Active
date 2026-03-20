@@ -3,7 +3,6 @@ import type { UserType } from 'src/types/type-user';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   Mic,
-  Hand,
   Crown,
   Heart,
   MicOff,
@@ -60,10 +59,6 @@ export interface VoiceParticipantSettingsProps {
 
   isMicMuted: boolean;
 
-  isHandRaised: boolean;
-  onRaiseHand: (socketId: string) => void;
-  onLowerHand: (socketId: string) => void;
-
   anchorEl?: HTMLElement | null;
   onClose: () => void;
   isUnreadPM: boolean;
@@ -105,7 +100,7 @@ const Backdrop = styled(Box)({
   transition: 'opacity 0.2s ease',
 });
 
-const ActionBtn = styled(Button, {
+export const ActionBtn = styled(Button, {
   shouldForwardProp: (p) => !['danger', 'warn', 'active', 'golden'].includes(p as string),
 })<{ danger?: boolean; warn?: boolean; active?: boolean; golden?: boolean }>(({
   theme,
@@ -153,9 +148,6 @@ export function VoiceParticipantSettings({
   initialVolume = 100,
   onVolumeChange,
   isMicMuted,
-  isHandRaised,
-  onRaiseHand,
-  onLowerHand,
   anchorEl,
   onClose,
   isUnreadPM,
@@ -212,11 +204,6 @@ export function VoiceParticipantSettings({
     });
     updateParticipantAudio({ userId, isMuted: true });
   }, [roomId, socketId, userId, user.name, displayName, user.id, emit, updateParticipantAudio]);
-
-  const handleHandToggle = useCallback(
-    () => (isHandRaised ? onLowerHand(socketId) : onRaiseHand(socketId)),
-    [isHandRaised, socketId, onRaiseHand, onLowerHand]
-  );
 
   const handlePrivateMessage = useCallback(() => {
     onClickPM();
@@ -337,17 +324,8 @@ export function VoiceParticipantSettings({
       icon: <MessageCircleIcon size={14} />,
       label: 'PM',
       onClick: handlePrivateMessage,
-      warn: isHandRaised,
       show: !isSelf,
       showBadge: isUnreadPM,
-    },
-    {
-      key: 'hand',
-      icon: <Hand size={14} />,
-      label: isHandRaised ? 'Lower hand' : 'Raise hand',
-      onClick: handleHandToggle,
-      warn: isHandRaised,
-      show: isSelf,
     },
     {
       key: 'block',

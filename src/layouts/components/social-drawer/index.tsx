@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import { Stack, Tooltip } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Diversity2Icon from '@mui/icons-material/Diversity2';
@@ -226,6 +227,12 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             },
           }}
         />
+      )}
+
+      {smDown && (
+        <IconButton sx={{ ml: 'auto' }} size="medium" onClick={drawer.onFalse}>
+          <CloseIcon sx={{ fontSize: '1.4rem' }} />
+        </IconButton>
       )}
     </CustomTabs>
   );

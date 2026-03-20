@@ -1,7 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 
-import { Box } from '@mui/material';
-
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 interface UserAudioProps {
@@ -88,7 +86,7 @@ export default function VoiceUserAudio({
   }, [isLocal, tryPlay]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <>
       {/*
         KEY FIX: playsInline is required on iOS/Chrome mobile.
         Without it, audio hijacks the media session or fails silently.
@@ -102,6 +100,6 @@ export default function VoiceUserAudio({
       >
         <track kind="captions" />
       </audio>
-    </Box>
+    </>
   );
 }

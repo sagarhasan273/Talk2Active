@@ -3,6 +3,8 @@
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
+import { Scrollbar } from 'src/components/scrollbar';
+
 import { VoiceRoomBodyView } from './voice-room-body-view';
 import { VoiceRoomEntryView } from './voice-room-entry-view';
 
@@ -15,7 +17,11 @@ export function VoiceRoomView() {
 
   return (
     <>
-      {room.id !== roomId && <VoiceRoomEntryView onJoinRoom={onJoinRoom} />}
+      {room.id !== roomId && (
+        <Scrollbar sx={{ height: 1 }}>
+          <VoiceRoomEntryView onJoinRoom={onJoinRoom} />
+        </Scrollbar>
+      )}
 
       {hasJoined && room.id === roomId && <VoiceRoomBodyView />}
     </>

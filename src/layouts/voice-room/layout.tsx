@@ -154,6 +154,7 @@ export type DashboardLayoutProps = {
   data?: {
     nav?: NavSectionProps['data'];
   };
+  inVoice?: boolean;
 };
 
 export function VoiceRoomLayout({
@@ -163,6 +164,7 @@ export function VoiceRoomLayout({
   rightSidebar,
   mainContent,
   footer,
+  inVoice,
   data,
 }: DashboardLayoutProps) {
   const theme = useTheme();
@@ -183,6 +185,10 @@ export function VoiceRoomLayout({
       max: window.innerHeight - 100,
     };
   }, []);
+
+  useEffect(() => {
+    setButtonPosition(inVoice ? 80 : 24);
+  }, [inVoice]);
 
   const handleDrawerToggle = () => {
     setMobileDrawerOpen(!mobileDrawerOpen);

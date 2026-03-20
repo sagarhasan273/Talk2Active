@@ -97,7 +97,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
       sx={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        alignItems: 'center',
+        alignItems: 'stretch',
         justifyContent: 'center',
         flexDirection: 'column',
         color: 'white',
