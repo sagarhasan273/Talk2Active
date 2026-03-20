@@ -429,7 +429,7 @@ export function VoiceUserCard({
     <Box
       className={className}
       sx={{
-        display: 'inline-flex',
+        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',

@@ -33,17 +33,29 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
+  const isActive = value === index;
 
   return (
-    <div
+    <Box
       role="tabpanel"
-      hidden={value !== index}
+      hidden={!isActive}
       id={`voice-tabpanel-${index}`}
       aria-labelledby={`voice-tab-${index}`}
+      sx={{
+        height: isActive ? '100%' : 0, // ← full height when active
+        minHeight: 0,
+        overflow: 'hidden',
+        display: isActive ? 'flex' : 'none', // ← flex so child fills height
+        flexDirection: 'column',
+      }}
       {...other}
     >
-      {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
-    </div>
+      {isActive && (
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </Box>
+      )}
+    </Box>
   );
 }
 
@@ -206,15 +218,17 @@ export function VoiceMainView() {
   );
 
   const mainContent = (
-    <Scrollbar sx={{ height: 1 }}>
+    <>
       <TabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
-        <VoiceRoomsView onJoinRoom={handleJoinRoom} />
+        <Scrollbar sx={{ height: 1 }}>
+          <VoiceRoomsView onJoinRoom={handleJoinRoom} />
+        </Scrollbar>
       </TabPanel>
 
       <TabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
         <VoiceRoomView />
       </TabPanel>
-    </Scrollbar>
+    </>
   );
 
   const footer = <Box sx={{ height: 1, backgroundColor: 'background.neutral' }} />;
@@ -227,6 +241,7 @@ export function VoiceMainView() {
         rightSidebar={rightSidebar}
         mainContent={mainContent}
         footer={footer}
+        inVoice={userVoiceState.hasJoined}
       />
       <CreateRoomModal
         open={editRoomBoolean.value}

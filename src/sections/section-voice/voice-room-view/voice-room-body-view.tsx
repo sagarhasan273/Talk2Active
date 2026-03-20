@@ -48,7 +48,7 @@ const RootContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
-  minHeight: 600,
+  maxHeight: 750,
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.spacing(1.5),
   position: 'relative',
