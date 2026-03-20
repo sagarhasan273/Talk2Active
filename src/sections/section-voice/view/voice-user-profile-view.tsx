@@ -3,21 +3,17 @@ import React from 'react';
 import { Box, Paper, Badge, Typography } from '@mui/material';
 
 import { useRoomTools, useCredentials } from 'src/core/slices';
-import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
-
-import VoiceUserAudio from 'src/sections/section-voice/voice-user-audio';
 
 const WAVE_HEIGHTS = [3, 6, 9, 5, 4, 7, 5, 3, 6];
 
 const VoiceUserProfileView = () => {
   const { user } = useCredentials();
 
-  const { userVoiceState, participants } = useRoomTools();
+  const { userVoiceState } = useRoomTools();
 
-  const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
-  const { localStream, remoteStreams } = useWebRTCContext();
+  const { isMicMuted, hasJoined } = userVoiceState;
 
   return (
     <Paper
@@ -159,17 +155,6 @@ const VoiceUserProfileView = () => {
           </Typography>
         </Box>
       )}
-
-      {/* ── Hidden audio elements ──────────────────────────────── */}
-      {Object.values(participants).map((participant: any) => (
-        <VoiceUserAudio
-          key={participant.socketId}
-          stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
-          isLocal={participant.isLocal}
-          userName={participant.name || 'unknown'}
-          muted={participant.isMuted || isDeafened}
-        />
-      ))}
     </Paper>
   );
 };

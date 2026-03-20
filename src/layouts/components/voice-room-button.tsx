@@ -5,6 +5,11 @@ import { SvgIcon, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/route-hooks';
 
+import { useRoomTools } from 'src/core/slices';
+import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
+
+import VoiceUserAudio from 'src/sections/section-voice/voice-user-audio';
+
 // ----------------------------------------------------------------------
 
 type VoiceRoomButtonProps = IconButtonProps & { active: string; onClickActive: () => void };
@@ -12,38 +17,56 @@ type VoiceRoomButtonProps = IconButtonProps & { active: string; onClickActive: (
 export function VoiceRoomButton({ sx, active, onClickActive, ...other }: VoiceRoomButtonProps) {
   const router = useRouter();
 
+  const { participants, userVoiceState } = useRoomTools();
+
+  const { isDeafened, hasJoined } = userVoiceState;
+  const { localStream, remoteStreams } = useWebRTCContext();
+
   const handleClick = () => {
     router.push('');
     onClickActive();
   };
 
   return (
-    <IconButton
-      onClick={handleClick}
-      sx={{
-        color: 'primary.main',
-        mr: 0.8,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...(active === 'voice-room' && { color: 'primary.dark' }),
-        ...sx,
-      }}
-      disableRipple
-      {...other}
-    >
-      <SvgIcon>
-        <g fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12Z" />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 8v8m-3-6v4m-3-3v2m9-3v4m3-3v2"
-          />
-        </g>
-      </SvgIcon>
-      <Typography variant="caption">Voice</Typography>
-    </IconButton>
+    <>
+      <IconButton
+        onClick={handleClick}
+        sx={{
+          color: 'primary.main',
+          mr: 0.8,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          ...(active === 'voice-room' && { color: 'primary.dark' }),
+          ...(hasJoined && { color: 'success.main' }),
+          ...sx,
+        }}
+        disableRipple
+        {...other}
+      >
+        <SvgIcon>
+          <g fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12Z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 8v8m-3-6v4m-3-3v2m9-3v4m3-3v2"
+            />
+          </g>
+        </SvgIcon>
+        <Typography variant="caption">Voice</Typography>
+      </IconButton>
+      {/* ── Hidden audio elements ──────────────────────────────── */}
+      {Object.values(participants).map((participant: any) => (
+        <VoiceUserAudio
+          key={participant.socketId}
+          stream={participant.isLocal ? localStream : remoteStreams[participant.socketId]}
+          isLocal={participant.isLocal}
+          userName={participant.name || 'unknown'}
+          muted={participant.isMuted || isDeafened}
+        />
+      ))}
+    </>
   );
 }
