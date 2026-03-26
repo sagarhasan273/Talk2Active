@@ -1,14 +1,8 @@
-// src/hooks/useWebRTC/use-local-audio.ts
-
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 import { fmicGainRange } from 'src/utils/helper';
 
 import type { AudioSettings, AudioNodeManager } from './types';
-
-// NCMode: 'off' = raw mic straight through (no WebAudio graph)
-//         'basic' = HPF 80Hz + second HPF 100Hz + light compressor
-export type NCMode = 'off' | 'basic';
 
 interface UseLocalAudioProps {
   audioSettings: AudioSettings;
@@ -32,8 +26,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     compressorNode: null,
   });
 
-  // ── AudioContext ─────────────────────────────────────────────────────────
-
   const ensureAudioContext = useCallback((): AudioContext => {
     if (
       !audioNodesRef.current.audioContext ||
@@ -49,8 +41,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     }
     return ctx;
   }, []);
-
-  // ── Disconnect all nodes ─────────────────────────────────────────────────
 
   const disconnectAll = useCallback(() => {
     const n = audioNodesRef.current;
@@ -70,17 +60,33 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     });
   }, []);
 
+  // ── Build audio graph with new nCMode support ─────────────────────────────
   const buildGraph = useCallback(
     (stream: MediaStream): MediaStream => {
       const ctx = ensureAudioContext();
       disconnectAll();
 
+      if (audioSettings.nCMode === 'off') {
+        console.log('[LocalAudio] NCMode=off — raw mic (no WebAudio graph)');
+        audioNodesRef.current = {
+          audioContext: ctx,
+          sourceNode: null,
+          microphoneGainNode: null,
+          highPassFilterNode: null,
+          compressorNode: null,
+          outputGainNode: null,
+          destinationNode: null,
+        };
+        return stream; // raw stream
+      }
+
+      // ── 'basic' mode: clean voice processing ───────────────────────────────
       const sourceNode = ctx.createMediaStreamSource(stream);
       const microphoneGainNode = ctx.createGain();
       const outputGainNode = ctx.createGain();
       const destinationNode = ctx.createMediaStreamDestination();
 
-      microphoneGainNode.gain.value = audioSettings.microphoneGain / 100;
+      microphoneGainNode.gain.value = fmicGainRange(audioSettings.microphoneGain) / 100;
       outputGainNode.gain.value = audioSettings.outputGain / 100;
 
       let tail: AudioNode = sourceNode;
@@ -92,25 +98,59 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
 
       pipe(microphoneGainNode);
 
-      audioNodesRef.current = {
-        audioContext: ctx,
-        sourceNode,
-        microphoneGainNode,
-        highPassFilterNode: null,
-        compressorNode: null,
-        outputGainNode,
-        destinationNode,
-      };
+      if (audioSettings.nCMode === 'basic') {
+        const hpf1 = ctx.createBiquadFilter();
+        hpf1.type = 'highpass';
+        hpf1.frequency.value = 80;
+
+        const hpf2 = ctx.createBiquadFilter();
+        hpf2.type = 'highpass';
+        hpf2.frequency.value = 100;
+
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -30;
+        compressor.knee.value = 10;
+        compressor.ratio.value = 12;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+
+        pipe(hpf1);
+        pipe(hpf2);
+        pipe(compressor);
+
+        audioNodesRef.current.highPassFilterNode = hpf1;
+        audioNodesRef.current.compressorNode = compressor;
+      } else {
+        audioNodesRef.current.highPassFilterNode = null;
+        audioNodesRef.current.compressorNode = null;
+      }
 
       pipe(outputGainNode);
       pipe(destinationNode);
 
+      audioNodesRef.current = {
+        audioContext: ctx,
+        sourceNode,
+        microphoneGainNode,
+        highPassFilterNode: audioNodesRef.current.highPassFilterNode,
+        compressorNode: audioNodesRef.current.compressorNode,
+        outputGainNode,
+        destinationNode,
+      };
+
       return destinationNode.stream;
     },
-    [audioSettings.microphoneGain, audioSettings.outputGain, ensureAudioContext, disconnectAll]
+    [
+      audioSettings.microphoneGain,
+      audioSettings.outputGain,
+      audioSettings.nCMode,
+      ensureAudioContext,
+      disconnectAll,
+    ]
   );
 
-  // ── getUserMedia constraints ─────────────────────────────────────────────
+  // ... (rest of the file stays exactly the same - initializeMicrophone, gain controls, mute, cleanup, etc.)
+  // Only buildGraph was updated.
 
   const getConstraintsForMode = useCallback(
     (): MediaStreamConstraints => ({
@@ -123,8 +163,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     }),
     [audioSettings]
   );
-
-  // ── Init microphone ──────────────────────────────────────────────────────
 
   const initializeMicrophone = useCallback(
     async (isMicMute?: boolean, customConstraints?: MediaStreamConstraints): Promise<boolean> => {
@@ -140,7 +178,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
         const rawStream = await navigator.mediaDevices.getUserMedia(constraints);
         rawStreamRef.current = rawStream;
 
-        // Apply mute state from parameter immediately after getting stream
         const track = rawStream.getAudioTracks()[0];
         if (track) {
           track.enabled = isMicMute !== undefined ? !isMicMute : track.enabled;
@@ -163,8 +200,7 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     [getConstraintsForMode, buildGraph, onMicMutedChange]
   );
 
-  // ── Gain controls ────────────────────────────────────────────────────────
-
+  // ... rest of file unchanged (setMicrophoneGain, toggleMicrophone, cleanup, etc.)
   const setMicrophoneGain = useCallback((gain: number) => {
     if (audioNodesRef.current.microphoneGainNode)
       audioNodesRef.current.microphoneGainNode.gain.value = fmicGainRange(gain) / 100;
@@ -174,8 +210,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
     if (audioNodesRef.current.outputGainNode)
       audioNodesRef.current.outputGainNode.gain.value = gain / 100;
   }, []);
-
-  // ── Mute — toggle RAW hardware track ────────────────────────────────────
 
   const toggleMicrophone = useCallback(() => {
     const track = rawStreamRef.current?.getAudioTracks()[0];
@@ -207,8 +241,6 @@ export function useLocalAudio({ audioSettings, onMicMutedChange }: UseLocalAudio
   }, [onMicMutedChange]);
 
   const getAudioContext = useCallback(() => audioNodesRef.current.audioContext, []);
-
-  // ── Cleanup ──────────────────────────────────────────────────────────────
 
   const cleanup = useCallback(() => {
     rawStreamRef.current?.getTracks().forEach((t) => {
