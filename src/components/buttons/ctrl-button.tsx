@@ -21,15 +21,7 @@ export const CtrlBtn = React.forwardRef<
   const isDark = theme.palette.mode === 'dark';
   const p = theme.palette;
 
-  const color = danger
-    ? '#ff4d4d'
-    : warn
-      ? p.warning.main
-      : active
-        ? p.primary.main
-        : isDark
-          ? '#b5bac1'
-          : alpha('#000', 0.5);
+  const color = danger ? '#ff4d4d' : warn ? p.warning.main : active ? p.primary.main : 'grey.500';
   const bg = danger
     ? alpha('#ff4d4d', 0.12)
     : warn

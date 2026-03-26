@@ -47,8 +47,8 @@ export interface ConnectionStatus {
 }
 
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  microphoneGain: 40,
-  outputGain: 100,
+  microphoneGain: 50,
+  outputGain: 50,
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,

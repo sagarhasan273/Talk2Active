@@ -75,7 +75,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     roomType: currentRoom?.roomType || 'conversation',
     level: currentRoom?.level || 'mixed',
     maxParticipants: currentRoom?.maxParticipants || 8,
-    host: currentRoom?.host || user.id,
   });
 
   const [inputValue, setInputValue] = useState('');
@@ -118,9 +117,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     onCreateRoom(formData);
     let response = null;
     if (currentRoom) {
-      response = await updateRoom({ roomId: currentRoom?.roomId, ...formData }).unwrap();
+      response = await updateRoom({
+        roomId: currentRoom?.roomId,
+        ...formData,
+        host: currentRoom?.host || user.id,
+      }).unwrap();
     } else {
-      response = await createRoom(formData).unwrap();
+      response = await createRoom({ ...formData, host: user.id }).unwrap();
     }
     if (response.status) onClose();
   };
