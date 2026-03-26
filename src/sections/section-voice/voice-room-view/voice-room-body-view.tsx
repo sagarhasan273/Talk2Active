@@ -344,18 +344,20 @@ export function VoiceRoomBodyView() {
                       }
                     />
 
-                    <VoiceParticipantSettingsPopup
-                      targetSocketId={participant.socketId}
-                      targetUserId={participant.userId}
-                      targetName={participant.name}
-                      targetProfilePhoto={participant.profilePhoto}
-                      targetAccountType={participant.accountType}
-                      targetVerified={participant.verified}
-                      isHost={isHost}
-                      isSelf={user.id === participant.userId}
-                      targetIsMuted={Boolean(participant.isMuted)}
-                      hasJoin={participant.hasJoin ?? true}
-                    />
+                    {!participant.isLocal && (
+                      <VoiceParticipantSettingsPopup
+                        targetSocketId={participant.socketId}
+                        targetUserId={participant.userId}
+                        targetName={participant.name}
+                        targetProfilePhoto={participant.profilePhoto}
+                        targetAccountType={participant.accountType}
+                        targetVerified={participant.verified}
+                        isHost={isHost}
+                        isSelf={user.id === participant.userId}
+                        targetIsMuted={Boolean(participant.isMuted)}
+                        hasJoin={participant.hasJoin ?? true}
+                      />
+                    )}
                   </Box>
                 </Zoom>
               ))}
