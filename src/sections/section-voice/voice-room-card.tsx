@@ -337,11 +337,11 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         <Stack direction="row" justifyContent="space-between">
           {/* Title */}
           <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary' }}>
-            {roomData?.name || 'Untitled Room'}
+            {room?.name || 'Untitled Room'}
           </Typography>
 
           {/* LIVE */}
-          {roomData?.isActive && (
+          {room?.isActive && (
             <Typography
               variant="caption"
               sx={{
@@ -361,7 +361,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
           noWrap
         >
-          {roomData?.description || 'No description'}
+          {room?.description || 'No description'}
         </Typography>
 
         {/* Host */}
@@ -371,26 +371,50 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             p: 1,
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
+            gap: 1.5,
             borderRadius: 1,
             border: `1px dashed ${theme.palette.divider}`,
           }}
         >
           <AvatarUser
-            avatarUrl={roomData?.host?.profilePhoto}
-            name={roomData?.host?.name || 'Unknown'}
-            verified={roomData?.host?.verified}
-            accountType={roomData?.host?.accountType}
+            avatarUrl={room?.host?.profilePhoto}
+            name={room?.host?.name || 'Unknown'}
+            verified={room?.host?.verified}
+            accountType={room?.host?.accountType}
             sx={{ width: 52, height: 52 }}
           />
           <Stack direction="column" justifyContent="space-between">
-            <Typography variant="body2" sx={{ color: 'text.primary' }}>
-              {roomData?.host?.name || 'Unknown'}
+            <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
+              {room?.host?.name || 'Unknown'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              @host
+              @Host
             </Typography>
           </Stack>
+
+          <Typography variant="caption" sx={{ color: 'text.secondary' }} />
+
+          <Chip
+            label={`${allUsers.length}/${max}`}
+            size="small"
+            sx={{
+              ml: 'auto',
+              height: 20,
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: 'capitalize',
+              bgcolor: alpha(levelColor, 0.12),
+              border: '1px solid',
+              color: levelColor,
+              borderColor: alpha(levelColor, 0.35),
+              '&:hover': {
+                bgcolor: alpha(levelColor, 0.12),
+                color: levelColor,
+                borderColor: alpha(levelColor, 0.35),
+              },
+              px: 0.5,
+            }}
+          />
         </Box>
 
         {/* Participants */}
@@ -404,12 +428,13 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         >
           {allUsers.length === 0 ? (
             <Typography
-              variant="caption"
+              variant="subtitle2"
               sx={{
                 p: 2,
                 borderRadius: 1,
                 color: 'text.secondary',
                 backgroundColor: 'background.neutral',
+                flex: 1,
               }}
             >
               No participants yet
