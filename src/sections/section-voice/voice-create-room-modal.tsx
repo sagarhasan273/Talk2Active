@@ -40,17 +40,6 @@ interface CreateRoomModalProps {
   };
 }
 
-const roomTypes = [
-  { value: 'conversation', label: 'Conversation Practice', emoji: '💬' },
-  { value: 'pronunciation', label: 'Pronunciation Focus', emoji: '🗣️' },
-  { value: 'grammar', label: 'Grammar Workshop', emoji: '📝' },
-  { value: 'vocabulary', label: 'Vocabulary Building', emoji: '📚' },
-  { value: 'debate', label: 'Debate & Discussion', emoji: '⚡' },
-  { value: 'storytelling', label: 'Storytelling', emoji: '✨' },
-  { value: 'business', label: 'Business Language', emoji: '💼' },
-  { value: 'exam-prep', label: 'Exam Preparation', emoji: '🎯' },
-];
-
 const levelColors: Record<string, string> = {
   beginner: '#4ade80',
   intermediate: '#facc15',
@@ -72,7 +61,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     name: currentRoom?.name || '',
     description: currentRoom?.description || '',
     languages: currentRoom?.languages || ['en'],
-    roomType: currentRoom?.roomType || 'conversation',
     level: currentRoom?.level || 'mixed',
     maxParticipants: currentRoom?.maxParticipants || 8,
   });
@@ -133,8 +121,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const sectionStyle = {
     borderRadius: 2,
     border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-    p: isMobile ? 1.5 : 2,
-    mb: 2,
+    p: 1.5,
     background: isDark
       ? alpha(theme.palette.background.paper, 0.4)
       : alpha(theme.palette.grey[50], 0.8),
@@ -146,7 +133,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     letterSpacing: '0.08em',
     textTransform: 'uppercase' as const,
     color: theme.palette.text.disabled,
-    mb: 0.75,
+    mb: 1,
   };
 
   return (
@@ -158,7 +145,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       fullScreen={isMobile}
       PaperProps={{
         sx: {
-          borderRadius: isMobile ? 0 : 3,
+          borderRadius: isMobile ? 0 : 1,
           overflow: 'hidden',
           background: theme.palette.background.paper,
           boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
@@ -339,60 +326,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               />
             </Box>
 
-            {/* Section: Channel Type */}
-            <Box sx={sectionStyle}>
-              <Typography sx={labelStyle}>Channel Type</Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)',
-                  gap: 0.75,
-                }}
-              >
-                {roomTypes.map((type) => {
-                  const selected = formData.roomType === type.value;
-                  return (
-                    <Box
-                      key={type.value}
-                      onClick={() => setFormData((prev) => ({ ...prev, roomType: type.value }))}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        px: 1.25,
-                        py: 0.9,
-                        borderRadius: 1.5,
-                        cursor: 'pointer',
-                        border: `1px solid ${selected ? varAlpha(theme.vars.palette.primary.lightChannel, 0.5) : theme.palette.divider}`,
-                        background: selected
-                          ? varAlpha(theme.vars.palette.primary.lightChannel, 0.15)
-                          : 'transparent',
-                        transition: 'all 0.15s ease',
-                        '&:hover': {
-                          border: `1px solid ${varAlpha(theme.vars.palette.primary.lightChannel, 0.5)}`,
-                          background: varAlpha(theme.vars.palette.primary.lightChannel, 0.5),
-                        },
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 14, lineHeight: 1 }}>{type.emoji}</Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 11.5,
-                          fontWeight: selected ? 600 : 400,
-                          color: selected
-                            ? varAlpha(theme.vars.palette.primary.lightChannel, 1)
-                            : theme.palette.text.secondary,
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {type.label}
-                      </Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
-
             {/* Section: Settings */}
             <Box sx={sectionStyle}>
               <Typography sx={labelStyle}>Settings</Typography>
@@ -527,11 +460,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             fontWeight: 700,
             px: 2,
             flex: isMobile ? 2 : 'unset',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+            background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+            boxShadow: '0 4px 14px rgba(217, 218, 240, 0.45)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-              boxShadow: '0 6px 20px rgba(99,102,241,0.45)',
+              boxShadow: '0 6px 20px rgba(215, 215, 241, 0.45)',
             },
           }}
           disabled={isLoadingUpdate}
