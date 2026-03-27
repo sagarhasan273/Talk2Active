@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { Mic, MicOff } from '@mui/icons-material';
+import HeadsetIcon from '@mui/icons-material/Headset';
+import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
 import { Box, alpha, Tooltip, useTheme, Typography } from '@mui/material';
 
 import { useRoomTools, useCredentials } from 'src/core/slices';
@@ -21,12 +23,13 @@ const VoiceUserProfileView = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const success = theme.palette.success.main;
+  const grey = theme.palette.grey['500'];
 
   const { user } = useCredentials();
   const webRTC = useWebRTCContext();
   const { userVoiceState, participants } = useRoomTools();
 
-  const { isMicMuted, hasJoined } = userVoiceState;
+  const { isMicMuted, isDeafened, hasJoined } = userVoiceState;
   const { localStream, remoteStreams } = webRTC;
 
   const allParticipants = useMemo(() => Object.values(participants), [participants]);
@@ -37,6 +40,8 @@ const VoiceUserProfileView = () => {
   const sub = isDark ? '#3a3d4a' : '#c4c6d0';
   const muted = isDark ? '#555868' : '#9da0ae';
   const accent = isMicMuted ? '#e84042' : success;
+  const accentMic = isMicMuted ? '#e84042' : grey;
+  const accentDeafen = isDeafened ? '#e84042' : grey;
 
   return (
     <Box
@@ -54,8 +59,8 @@ const VoiceUserProfileView = () => {
       <Box
         sx={{
           height: 28,
-          bgcolor: hasJoined ? alpha(accent, isDark ? 0.13 : 0.08) : alpha(sub, 0.1),
-          borderBottom: `1px solid ${line}`,
+          bgcolor: hasJoined ? alpha(accent, isDark ? 0.15 : 0.1) : alpha(sub, 0.15),
+          borderBottom: !isMicMuted ? 'none' : `1px solid ${line}`,
           display: 'flex',
           alignItems: 'center',
           px: 1.5,
@@ -126,11 +131,12 @@ const VoiceUserProfileView = () => {
           display: 'flex',
           alignItems: 'flex-end',
           gap: '2px',
-          height: isMicMuted ? 0 : 30,
-          opacity: isMicMuted ? 0 : 1,
+          height: !hasJoined || isMicMuted ? 0 : 15,
+          opacity: !hasJoined || isMicMuted ? 0 : 1,
           transition: 'all 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
           overflow: 'hidden',
+          bgcolor: alpha(accent, isDark ? 0.15 : 0.1),
         }}
       >
         {BARS.map((h, i) => (
@@ -147,7 +153,7 @@ const VoiceUserProfileView = () => {
                   : i % 3 === 1
                     ? alpha(success, 0.5)
                     : alpha(success, 0.28),
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               transformOrigin: 'bottom',
               animation: !isMicMuted ? `fbar ${SPEEDS[i]}s ease-in-out infinite alternate` : 'none',
               '@keyframes fbar': {
@@ -164,13 +170,13 @@ const VoiceUserProfileView = () => {
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1.25,
+          gap: 0.5,
           px: 1.5,
           py: 1.25,
           borderBottom: `1px solid ${line}`,
         }}
       >
-        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+        <Box sx={{ position: 'relative', flexShrink: 0, mr: 1 }}>
           <AvatarUser
             avatarUrl={user?.profilePhoto}
             verified={Boolean(user?.verified)}
@@ -216,18 +222,37 @@ const VoiceUserProfileView = () => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            px: 0.75,
+            px: 0.35,
             py: 0.35,
             borderRadius: '4px',
-            bgcolor: alpha(accent, 0.12),
-            border: `1px solid ${alpha(accent, 0.22)}`,
+            bgcolor: alpha(accentMic, 0.12),
+            border: `1px solid ${alpha(accentMic, 0.22)}`,
             transition: 'all 0.3s',
           }}
         >
           {isMicMuted ? (
-            <MicOff sx={{ fontSize: 11, color: accent }} />
+            <MicOff sx={{ fontSize: 11, color: accentMic }} />
           ) : (
-            <Mic sx={{ fontSize: 11, color: accent }} />
+            <Mic sx={{ fontSize: 11, color: accentMic }} />
+          )}
+        </Box>
+        {/* Deafen icon badge */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            px: 0.25,
+            py: 0.35,
+            borderRadius: '4px',
+            bgcolor: alpha(accentDeafen, 0.12),
+            border: `1px solid ${alpha(accentDeafen, 0.22)}`,
+            transition: 'all 0.3s',
+          }}
+        >
+          {isDeafened ? (
+            <HeadsetOffIcon sx={{ fontSize: 11, color: accentDeafen }} />
+          ) : (
+            <HeadsetIcon sx={{ fontSize: 11, color: accentDeafen }} />
           )}
         </Box>
       </Box>
