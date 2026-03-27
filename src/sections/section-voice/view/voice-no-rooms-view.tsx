@@ -14,8 +14,8 @@ interface VoiceRoomsEmptyStateProps {
 }
 
 export function VoiceRoomsEmptyState({
-  title = 'No Voice Rooms Yet',
-  description = 'It looks quiet in here! Be the first to create a voice room and start connecting with others. Whether it is language practice, discussions, or just hanging out - there is always room for more voices!',
+  title = 'No Voice Channels Yet',
+  description = 'It looks quiet in here! Be the first to create a voice channel and start connecting with others. Whether it is language practice, discussions, or just hanging out - there is always channel for more voices!',
   suggestions = ['🗣️ Language Exchange', '💬 Discussion', '🎯 Practice', '🎉 Social'],
 }: VoiceRoomsEmptyStateProps) {
   const createRoomBoolean = useBoolean();
@@ -239,7 +239,7 @@ export function VoiceRoomsEmptyState({
             transition: 'all 0.2s',
           }}
         >
-          Create Your First Room
+          Create Your First Channel
         </Button>
 
         <CreateRoomModal

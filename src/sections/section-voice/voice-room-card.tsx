@@ -573,7 +573,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
               cursor: isFull ? 'not-allowed' : 'pointer',
             }}
           >
-            {isFull ? 'Room Full' : 'Join Room'}
+            {isFull ? 'Channel Full' : 'Join Channel'}
           </Button>
         </Box>
       </Box>
@@ -691,7 +691,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
               boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
             }}
           >
-            {isFull ? 'Room Full' : 'Join Room'}
+            {isFull ? 'Channel Full' : 'Join Channel'}
           </Button>
         </DialogContent>
       </Dialog>

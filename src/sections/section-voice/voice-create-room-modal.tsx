@@ -208,7 +208,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   color: theme.palette.text.primary,
                 }}
               >
-                {currentRoom ? 'Update Voice Room' : 'Create Voice Room'}
+                {currentRoom ? 'Update Voice Channel' : 'Create Voice Channel'}
               </Typography>
               <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary, mt: 0.25 }}>
                 Set up your language learning space
@@ -247,7 +247,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <TextField
                   fullWidth
-                  label="Room Name"
+                  label="Channel Name"
                   required
                   size="small"
                   value={formData.name}
@@ -339,9 +339,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               />
             </Box>
 
-            {/* Section: Room Type */}
+            {/* Section: Channel Type */}
             <Box sx={sectionStyle}>
-              <Typography sx={labelStyle}>Room Type</Typography>
+              <Typography sx={labelStyle}>Channel Type</Typography>
               <Box
                 sx={{
                   display: 'grid',
@@ -536,7 +536,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           }}
           disabled={isLoadingUpdate}
         >
-          Create Room
+          Create Channel
         </Button>
       </DialogActions>
     </Dialog>

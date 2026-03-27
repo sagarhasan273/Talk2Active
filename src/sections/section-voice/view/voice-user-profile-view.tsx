@@ -261,7 +261,7 @@ const VoiceUserProfileView = () => {
           </Box>
         )}
 
-        {/* Message to join a room */}
+        {/* Message to join a channel */}
         {!hasJoined && allParticipants.length === 0 && (
           <Box
             sx={{

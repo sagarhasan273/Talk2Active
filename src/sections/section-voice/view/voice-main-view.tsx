@@ -131,7 +131,7 @@ export function VoiceMainView() {
         Dive Into Conversation
       </Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        Explore and join voice rooms to connect with others in real-time.
+        Explore and join voice channels to connect with others in real-time.
       </Typography>
 
       <Box
@@ -184,7 +184,7 @@ export function VoiceMainView() {
           }}
           onClick={isAuthenticated ? editRoomBoolean.onTrue : isAuthOpen.onTrue}
         >
-          Create New Room
+          Create New Channel
         </Button>
       </Box>
     </Box>

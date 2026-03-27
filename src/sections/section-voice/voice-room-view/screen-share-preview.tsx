@@ -23,7 +23,7 @@ const screenSharePulse = keyframes`
 // ─────────────────────────────────────────────────────────────────────────────
 // ScreenSharePreviewPanel
 //
-// Inline preview card shown in the voice room body.
+// Inline preview card shown in the voice channel body.
 // Includes a fullscreen button that opens ScreenShareFullscreenModal.
 //
 // Props:

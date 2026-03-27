@@ -260,7 +260,7 @@ export function VoiceRoomBodyView() {
           {isHost && (
             <CtrlBtn onClick={editRoomOpen.onTrue}>
               <SettingsIcon sx={{ fontSize: 18, mr: 0.5 }} />
-              <Typography variant="body2">Room Settings</Typography>
+              <Typography variant="body2">Channel Settings</Typography>
             </CtrlBtn>
           )}
         </Box>
