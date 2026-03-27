@@ -2,15 +2,16 @@ import type { RoomResponse } from 'src/types/type-chat';
 
 import React, { useState, useEffect, useCallback } from 'react';
 
+import { keyframes } from '@mui/system';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
   Chip,
   Fade,
+  Stack,
   alpha,
   Button,
   Dialog,
-  Tooltip,
   useTheme,
   Backdrop,
   IconButton,
@@ -19,6 +20,8 @@ import {
   DialogContent,
 } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { fgetLanguageName } from 'src/utils/helper';
 
 import { varAlpha } from 'src/theme/styles';
@@ -26,27 +29,21 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
-// ---------- helpers ----------
+const gradientShift = keyframes`
+  0% { background-position: 0% 50% }
+  100% { background-position: 200% 50% }
+`;
 
-const RoomTypeIcon = ({ type }: { type: string }) => {
-  const icons: Record<string, string> = {
-    // Existing
-    conversation: '💬',
-    lecture: '🎙️',
-    debate: '⚔️',
-    study: '📚',
+const glowPulse = keyframes`
+  0% { filter: drop-shadow(0 0 2px rgba(25,118,210,0.4)) }
+  50% { filter: drop-shadow(0 0 8px rgba(25,118,210,0.9)) }
+  100% { filter: drop-shadow(0 0 2px rgba(25,118,210,0.4)) }
+`;
 
-    // New additions
-    pronunciation: '🔤',
-    grammar: '📝',
-    vocabulary: '📖',
-    storytelling: '📖',
-    business: '💼',
-    'exam-prep': '📋',
-  };
-
-  return <span style={{ fontSize: 13 }}>{icons[type] ?? '🔊'}</span>;
-};
+const shimmer = keyframes`
+  0% { background-position: -200% 0 }
+  100% { background-position: 200% 0 }
+`;
 
 const LevelColor: Record<string, string> = {
   beginner: '#43e97b',
@@ -151,6 +148,8 @@ const ParticipantTile = ({
   isHost?: boolean;
   onImageClick: (src: string, name: string) => void;
 }) => {
+  const theme = useTheme();
+
   const hasPhoto = user.verified ? Boolean(user.profilePhoto) : false;
 
   return (
@@ -166,8 +165,7 @@ const ParticipantTile = ({
         transition: 'background 0.15s',
         '&:hover': hasPhoto
           ? {
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? alpha('#fff', 0.06) : alpha('#000', 0.06),
+              bgcolor: theme.palette.mode === 'dark' ? alpha('#fff', 0.06) : alpha('#000', 0.06),
             }
           : {},
       }}
@@ -183,32 +181,58 @@ const ParticipantTile = ({
           accountType={user.accountType}
           sx={{ width: 64, height: 64 }}
         />
-        {/* Online dot */}
-        {user.status && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 2,
-              right: 2,
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              bgcolor: user.status === 'online' ? '#43e97b' : '#aaa',
-              boxShadow: user.status === 'online' ? '0 0 6px #43e97b' : 'none',
-              border: '2px solid',
-              borderColor: 'background.paper',
-              zIndex: 3,
-            }}
-          />
-        )}
       </Box>
       <Typography
         variant="caption"
-        fontWeight={700}
+        fontWeight={800}
         noWrap
-        sx={{ color: 'text.primary', maxWidth: 80, textAlign: 'center' }}
+        sx={{
+          mt: 1,
+          px: 1,
+          borderRadius: 0.5,
+          maxWidth: 80,
+          textAlign: 'center',
+          position: 'relative',
+
+          ...(user.accountType === 'supporter'
+            ? {
+                // 🌈 gradient text
+                background: `linear-gradient(
+              90deg,
+              ${theme.palette.primary.light},
+              ${theme.palette.primary.main},
+              ${theme.palette.primary.dark},
+              ${theme.palette.primary.light}
+            )`,
+                backgroundSize: '200% auto',
+
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+
+                // ✨ animation combo
+                animation: `
+            ${gradientShift} 4s linear infinite,
+            ${glowPulse} 2s ease-in-out infinite
+          `,
+
+                // 💡 shimmer overlay
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: 0,
+                  background: `linear-gradient(120deg, transparent 20%, ${varAlpha(theme.vars.palette.primary.mainChannel, 0.25)}, transparent 80%)`,
+                  backgroundSize: '200% 100%',
+                  animation: `${shimmer} 2.5s linear infinite`,
+                  mixBlendMode: 'overlay',
+                  pointerEvents: 'none',
+                },
+              }
+            : {
+                color: 'text.primary',
+              }),
+        }}
       >
-        {user.name.split(' ')[0]}
+        {user.accountType === 'supporter' ? user?.name : user?.name?.split(' ')[0]}
       </Typography>
       {isHost && (
         <Chip
@@ -242,7 +266,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
   const theme = useTheme();
   const { on, off } = useSocketContext();
   const [room, setRoom] = useState<RoomResponse>(roomData);
-  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const participantsOpen = useBoolean();
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   const handleBroadcastNewRoom = useCallback(
@@ -276,7 +300,6 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
     },
     [room.id]
   );
-
   useEffect(() => {
     off('room-updated-with-participant', handleBroadcastNewRoom);
     on('room-updated-with-participant', handleBroadcastNewRoom);
@@ -284,304 +307,209 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, off, room.id]);
 
-  const spotsLeft = room.maxParticipants - room.currentParticipants.length;
-  const isFull = spotsLeft <= 0;
-  const capacityPct = Math.min((room.currentParticipants.length / room.maxParticipants) * 100, 100);
-  const levelColor = LevelColor[room.level] ?? '#aaa';
+  const allUsers = [...room.currentParticipants.map((p) => ({ ...p, isHost: false }))];
 
-  // Everyone shown in popup: host first, then participants
-  const allUsers = [
-    { user: { ...room.host, status: room.host.status }, joinedAt: '', isHost: true },
-    ...room.currentParticipants.map((p) => ({ ...p, isHost: false })),
-  ];
+  const max = room?.maxParticipants ?? 0;
+  const isFull = allUsers.length >= max;
+  const levelColor = LevelColor[room.level] ?? '#aaa';
 
   return (
     <>
       <Box
-        onClick={() => setParticipantsOpen(true)}
+        onClick={() => participantsOpen.onTrue()}
         sx={{
-          width: 1,
-          maxWidth: { xs: 1, sm: 360 },
+          p: 2,
+          borderRadius: 1,
           bgcolor: 'background.paper',
-          borderRadius: { xs: 2, sm: 1 },
-          overflow: 'hidden',
           border: '1px solid',
           borderColor: 'divider',
-          display: 'flex',
-          flexDirection: 'column',
           cursor: 'pointer',
-          transition: 'box-shadow 0.2s, transform 0.2s',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            borderColor: 'primary.main',
+          },
+          maxWidth: {
+            xs: 1,
+            sm: 360,
+          },
         }}
       >
-        {/* Capacity bar */}
-        <Box
-          sx={{ height: 4, bgcolor: alpha(theme.palette.primary.main, 0.32), position: 'relative' }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              height: '100%',
-              width: `${capacityPct}%`,
-              background: isFull
-                ? 'linear-gradient(90deg, #ff6b6b, #ff4444)'
-                : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-              transition: 'width 0.4s ease',
-              borderRadius: '0 2px 2px 0',
-            }}
-          />
-        </Box>
+        <Stack direction="row" justifyContent="space-between">
+          {/* Title */}
+          <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary' }}>
+            {roomData?.name || 'Untitled Room'}
+          </Typography>
 
-        <Box sx={{ p: { xs: 2, sm: 2.5 }, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {/* Row 1: Name + badges */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 1,
-            }}
-          >
-            <Tooltip title={room.name} arrow placement="top" enterDelay={400}>
-              <Typography
-                variant="subtitle1"
-                fontWeight={700}
-                noWrap
-                sx={{ color: 'text.primary', flex: 1 }}
-              >
-                {room.name}
-              </Typography>
-            </Tooltip>
-            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-              {room.isActive && (
-                <Chip
-                  label="LIVE"
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: 1,
-                    bgcolor: varAlpha(theme.vars.palette.success.mainChannel, 0.15),
-                    color: varAlpha(theme.vars.palette.success.mainChannel, 1),
-                    border: '1px solid',
-                    borderColor: varAlpha(theme.vars.palette.success.mainChannel, 1),
-                    px: 0.5,
-                    '&:hover': {
-                      bgcolor: varAlpha(theme.vars.palette.success.mainChannel, 0.15),
-                      borderColor: varAlpha(theme.vars.palette.success.mainChannel, 1),
-                    },
-                  }}
-                />
-              )}
-              <Chip
-                label={room.level}
-                size="small"
-                sx={{
-                  height: 20,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  textTransform: 'capitalize',
-                  bgcolor: alpha(levelColor, 0.12),
-                  border: '1px solid',
-                  color: levelColor,
-                  borderColor: alpha(levelColor, 0.35),
-                  '&:hover': {
-                    bgcolor: alpha(levelColor, 0.12),
-                    color: levelColor,
-                    borderColor: alpha(levelColor, 0.35),
-                  },
-                  px: 0.5,
-                }}
-              />
-            </Box>
-          </Box>
-
-          {/* Row 2: Type + description */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Tooltip title={room.description} arrow placement="top" enterDelay={400}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'text.primary',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  flex: 1,
-                  cursor: 'help',
-                }}
-              >
-                {room.description}
-              </Typography>
-            </Tooltip>
-            <RoomTypeIcon type={room.roomType} />
+          {/* LIVE */}
+          {roomData?.isActive && (
             <Typography
               variant="caption"
-              sx={{ color: 'text.secondary', textTransform: 'capitalize', fontWeight: 600 }}
-            >
-              {room.roomType}
-            </Typography>
-          </Box>
-
-          {/* Row 3: Languages */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-            {room.languages?.length ? (
-              room.languages.map((lang) => (
-                <Chip
-                  key={lang}
-                  label={fgetLanguageName(lang)}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    height: 22,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    borderRadius: 1,
-                    color: 'text.secondary',
-                    borderColor: 'divider',
-                  }}
-                />
-              ))
-            ) : (
-              <Chip label="Multiple Languages" size="small" sx={{ borderRadius: 1, height: 22 }} />
-            )}
-          </Box>
-
-          <Box sx={{ borderTop: '1px solid', borderColor: 'divider', mx: -0.5 }} />
-
-          {/* Row 4: Host + participants */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-              flexWrap: { xs: 'wrap', sm: 'nowrap' },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
-              <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                <AvatarUser
-                  avatarUrl={room.host.profilePhoto}
-                  name={room.host.name}
-                  verified={room.host.verified}
-                  accountType={room.host.accountType}
-                  sx={{ width: 44, height: 44 }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 1,
-                    right: 1,
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    bgcolor: room.host.status === 'online' ? '#43e97b' : '#aaa',
-                    boxShadow: room.host.status === 'online' ? '0 0 6px #43e97b' : 'none',
-                    border: '2px solid',
-                    borderColor: 'background.paper',
-                    zIndex: 3,
-                  }}
-                />
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  variant="caption"
-                  fontWeight={700}
-                  noWrap
-                  sx={{ color: 'text.primary' }}
-                >
-                  {room.host.name}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.2 }}
-                >
-                  Host
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                gap: 0.25,
-                flexShrink: 0,
+                color: 'success.main',
+                fontWeight: 700,
+                mb: 0.5,
+                display: 'block',
               }}
             >
-              <AvatarGroup
-                max={3}
-                sx={{
-                  '& .MuiAvatar-root': {
-                    width: 28,
-                    height: 28,
-                    fontSize: 11,
-                    border: '2px solid',
-                    borderColor: 'background.paper',
-                  },
-                }}
-              >
-                {room.currentParticipants.map((p, i) => (
-                  <AvatarUser
-                    key={`${p.user.id}+${i}`}
-                    avatarUrl={p.user.profilePhoto}
-                    name={p.user.name}
-                    verified={p.user.verified}
-                    accountType={p.user.accountType}
+              ● LIVE
+            </Typography>
+          )}
+        </Stack>
+        {/* Description */}
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', mb: 1, display: 'block' }}
+          noWrap
+        >
+          {roomData?.description || 'No description'}
+        </Typography>
+
+        {/* Host */}
+        <Box
+          sx={{
+            my: 1.5,
+            p: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            borderRadius: 1,
+            border: `1px dashed ${theme.palette.divider}`,
+          }}
+        >
+          <AvatarUser
+            avatarUrl={roomData?.host?.profilePhoto}
+            name={roomData?.host?.name || 'Unknown'}
+            verified={roomData?.host?.verified}
+            accountType={roomData?.host?.accountType}
+            sx={{ width: 52, height: 52 }}
+          />
+          <Stack direction="column" justifyContent="space-between">
+            <Typography variant="body2" sx={{ color: 'text.primary' }}>
+              {roomData?.host?.name || 'Unknown'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              @host
+            </Typography>
+          </Stack>
+        </Box>
+
+        {/* Participants */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1.5,
+          }}
+        >
+          {allUsers.length === 0 ? (
+            <Typography
+              variant="caption"
+              sx={{
+                p: 2,
+                borderRadius: 1,
+                color: 'text.secondary',
+                backgroundColor: 'background.neutral',
+              }}
+            >
+              No participants yet
+            </Typography>
+          ) : (
+            <AvatarGroup max={4} sx={{ gap: 1.5 }}>
+              {allUsers.map((p, i) => (
+                <AvatarUser
+                  key={p?.user?.id || i}
+                  avatarUrl={p?.user?.profilePhoto}
+                  name={p?.user?.name || 'User'}
+                  verified={p?.user?.verified}
+                  accountType={p?.user?.accountType}
+                />
+              ))}
+            </AvatarGroup>
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Tags */}
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Chip
+              label={room.level}
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: 'capitalize',
+                bgcolor: alpha(levelColor, 0.12),
+                border: '1px solid',
+                color: levelColor,
+                borderColor: alpha(levelColor, 0.35),
+                '&:hover': {
+                  bgcolor: alpha(levelColor, 0.12),
+                  color: levelColor,
+                  borderColor: alpha(levelColor, 0.35),
+                },
+                px: 0.5,
+              }}
+            />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {room.languages?.length ? (
+                room.languages.map((lang) => (
+                  <Chip
+                    key={lang}
+                    label={fgetLanguageName(lang)}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      height: 22,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      borderColor: 'divider',
+                    }}
                   />
-                ))}
-              </AvatarGroup>
-              <Typography
-                variant="caption"
-                sx={{ color: isFull ? '#ff6b6b' : 'text.secondary', fontWeight: 600, fontSize: 11 }}
-              >
-                {room.currentParticipants.length}/{room.maxParticipants}{' '}
-                {isFull ? '· Full' : `· ${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
-              </Typography>
+                ))
+              ) : (
+                <Chip
+                  label="Multiple Languages"
+                  size="small"
+                  sx={{ borderRadius: 1, height: 22 }}
+                />
+              )}
             </Box>
           </Box>
 
-          {/* Join button */}
+          {/* Join */}
           <Button
+            size="small"
             variant="contained"
-            fullWidth
             disabled={isFull}
             onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation(); // don't open popup
+              e.stopPropagation();
               onJoinRoom(room);
             }}
             sx={{
-              mt: 0.5,
               borderRadius: 2,
-              py: 1,
-              fontWeight: 700,
-              fontSize: '0.875rem',
               textTransform: 'none',
-              letterSpacing: 0.3,
-              background: isFull
-                ? undefined
-                : `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
-              '&:hover:not(:disabled)': {
-                background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.45)}`,
-              },
-              cursor: isFull ? 'not-allowed' : 'pointer',
+              fontWeight: 700,
             }}
           >
-            {isFull ? 'Channel Full' : 'Join Channel'}
+            {isFull ? 'Full' : 'Join'}
           </Button>
         </Box>
       </Box>
 
-      {/* ── Participants Popup ── */}
       <Dialog
-        open={participantsOpen}
-        onClose={() => setParticipantsOpen(false)}
+        open={participantsOpen.value}
+        onClose={() => participantsOpen.onFalse()}
         TransitionComponent={Fade}
         maxWidth="xs"
         fullWidth
@@ -617,7 +545,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           </Box>
           <IconButton
             size="small"
-            onClick={() => setParticipantsOpen(false)}
+            onClick={() => participantsOpen.onFalse()}
             sx={{ color: 'text.secondary' }}
           >
             <CloseIcon fontSize="small" />
@@ -662,7 +590,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
                     }}
                     isHost={entry.isHost}
                     onImageClick={(src, name) => {
-                      setParticipantsOpen(false);
+                      participantsOpen.onFalse();
                       setLightbox({ src, name });
                     }}
                   />
@@ -676,7 +604,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             fullWidth
             disabled={isFull}
             onClick={() => {
-              setParticipantsOpen(false);
+              participantsOpen.onFalse();
               onJoinRoom(room);
             }}
             sx={{
@@ -703,7 +631,7 @@ const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           name={lightbox.name}
           onClose={() => {
             setLightbox(null);
-            setParticipantsOpen(true); // reopen popup after lightbox closes
+            participantsOpen.onTrue(); // reopen popup after lightbox closes
           }}
         />
       )}
