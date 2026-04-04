@@ -58,7 +58,7 @@ export default function VoiceUserAudio({
   // Volume / deafen
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = muted || isDeafened ? 0 : 1;
+      audioRef.current.volume = muted || isDeafened ? 0 : 0.1;
     }
   }, [muted, isDeafened]);
 

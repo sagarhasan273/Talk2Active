@@ -454,7 +454,7 @@ export function VoiceUserCard({
           '& .MuiBadge-badge': {
             transform: badgeContent ? 'scale(1) translate(20%, 20%)' : 'scale(0)',
             transition: 'transform 0.2s ease',
-            zIndex: 20,
+            zIndex: 10,
             ...(isHovered && {
               transform: badgeContent ? 'scale(1.1) translate(20%, 20%)' : 'scale(0)',
             }),

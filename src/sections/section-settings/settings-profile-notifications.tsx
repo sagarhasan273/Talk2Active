@@ -62,8 +62,8 @@ const notificationCategories = [
       { key: 'directMessage', label: 'Direct Messages', description: 'New private messages' },
       {
         key: 'roomInvitations',
-        label: 'Room Invitations',
-        description: 'Invites to language rooms',
+        label: 'Channel Invitations',
+        description: 'Invites to language channels',
       },
       { key: 'liveEvents', label: 'Live Events', description: 'Live sessions and events' },
     ],

@@ -69,5 +69,8 @@ export function useMicLevel(stream: MediaStream | null) {
     };
   }, [stream, setupAudioAnalyser, startMonitoring, stopMonitoring]);
 
-  return { micLevel, stopMonitoring, startMonitoring };
+  const normalized = Math.min(Math.max(micLevel, 0), 50);
+  const isTalking = normalized > 10;
+
+  return { micLevel, isTalking, stopMonitoring, startMonitoring };
 }

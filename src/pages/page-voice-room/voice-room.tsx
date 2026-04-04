@@ -6,7 +6,7 @@ import { VoiceMainView } from 'src/sections/section-voice';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Voice Room - ${CONFIG.appName}` };
+const metadata = { title: `Voice Channel - ${CONFIG.appName}` };
 
 export default function Page() {
   return (

@@ -145,7 +145,7 @@ export function VoiceParticipantSettings({
   isSelf,
   isHost = false,
   allowKick = false,
-  initialVolume = 100,
+  initialVolume = 50,
   onVolumeChange,
   isMicMuted,
   anchorEl,

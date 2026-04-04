@@ -100,7 +100,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
     return language ? `${language.flag} ${language.name}` : code;
   };
 
-  // Get room type display
+  // Get channel type display
   const getRoomType = () => {
     const roomType = room.roomType || 'conversation';
     const type = ROOM_TYPES[roomType as keyof typeof ROOM_TYPES] || ROOM_TYPES.conversation;
@@ -125,7 +125,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
     );
   };
 
-  // Truncate room name to 3-4 words
+  // Truncate channel name to 3-4 words
   const getTruncatedName = (name: string) => {
     if (!name) return '';
     const words = name.split(' ');
@@ -147,7 +147,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
           {/* Left Column - Main Content */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* Room Header */}
+              {/* channel Header */}
               <Box sx={{ mb: 2 }}>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                   {getRoomType()}
@@ -234,7 +234,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                 </Box>
               </Paper>
 
-              {/* Room Description */}
+              {/* Channel Description */}
               <Paper
                 elevation={0}
                 sx={{
@@ -278,7 +278,7 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                   },
                 }}
               >
-                Join Voice Room
+                Join Voice Channel
               </Button>
             </Box>
           </Grid>
@@ -303,7 +303,8 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
                     Participants
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {participants.length} {participants.length === 1 ? 'person' : 'people'} in room
+                    {participants.length} {participants.length === 1 ? 'person' : 'people'} in
+                    channel
                   </Typography>
                 </Box>
 
@@ -380,13 +381,13 @@ export function VoiceRoomEntryView({ onJoinRoom }: { onJoinRoom: () => void }) {
 
                 <Divider sx={{ mt: 2, mb: 1 }} />
 
-                {/* Room Info */}
+                {/* Channel Info */}
                 <Box sx={{ pt: 1 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {room.roomType === 'private' ? (
-                      <>🔒 This is a private room. Join with password.</>
+                      <>🔒 This is a private channel. Join with password.</>
                     ) : (
-                      <>🌐 Public voice room - Everyone can join and speak.</>
+                      <>🌐 Public voice channel - Everyone can join and speak.</>
                     )}
                   </Typography>
                 </Box>

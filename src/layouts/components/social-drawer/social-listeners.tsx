@@ -9,8 +9,7 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 // ----------------------------------------------------------------------
 
 export function useSocialSocketListeners() {
-
-  // Room management
+  // Channel management
   const {
     addIndividualMessage,
     editIndividualMessage,
@@ -24,7 +23,7 @@ export function useSocialSocketListeners() {
   // WebRTC and socket event handlers
   useEffect(() => {
     if (!socket) {
-      return () => { };
+      return () => {};
     }
 
     // Message handlers

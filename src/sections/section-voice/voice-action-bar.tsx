@@ -298,7 +298,7 @@ export const VoiceActionBar = ({ screenShareButton }: { screenShareButton?: Reac
   const iconBtnSx = (active?: boolean, danger?: boolean) => ({
     borderRadius: '8px',
     transition: 'all 0.2s ease',
-    color: danger ? '#ed4245' : active ? '#667eea' : '#72767d',
+    color: danger ? '#ed4245' : active ? '#667eea' : 'grey.500',
     bgcolor: danger ? 'rgba(237,66,69,0.1)' : active ? 'rgba(102,126,234,0.1)' : 'transparent',
     border: danger ? '1px solid rgba(237,66,69,0.2)' : '1px solid transparent',
     '&:hover': {
@@ -358,7 +358,7 @@ export const VoiceActionBar = ({ screenShareButton }: { screenShareButton?: Reac
                   sx={{
                     borderRadius: 0,
                     px: 0.25,
-                    color: '#72767d',
+                    color: 'grey.500',
                     '&:hover': { bgcolor: hoverBg, color: '#667eea' },
                   }}
                 >
@@ -407,7 +407,7 @@ export const VoiceActionBar = ({ screenShareButton }: { screenShareButton?: Reac
                   <Hand
                     sx={{
                       fontSize: '1rem',
-                      color: raiseHand ? '#f9ca24' : '#72767d',
+                      color: raiseHand ? '#f9ca24' : 'grey.500',
                       animation: raiseHand ? 'wave 0.5s ease infinite alternate' : 'none',
                       '@keyframes wave': {
                         from: { transform: 'rotate(-15deg)' },

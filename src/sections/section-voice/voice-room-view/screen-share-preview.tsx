@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-import StopIcon from '@mui/icons-material/Stop';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import ScreenShareIcon from '@mui/icons-material/ScreenShare';
 import { Box, Fade, alpha, useTheme, keyframes, IconButton, Typography } from '@mui/material';
@@ -24,7 +23,7 @@ const screenSharePulse = keyframes`
 // ─────────────────────────────────────────────────────────────────────────────
 // ScreenSharePreviewPanel
 //
-// Inline preview card shown in the voice room body.
+// Inline preview card shown in the voice channel body.
 // Includes a fullscreen button that opens ScreenShareFullscreenModal.
 //
 // Props:
@@ -139,27 +138,15 @@ export function ScreenSharePreviewPanel({
             >
               <OpenInFullIcon sx={{ fontSize: 15 }} />
             </IconButton>
-
-            {/* Stop button — only shown to the local sharer */}
-            {isLocal && onStop && (
-              <IconButton
-                size="small"
-                onClick={onStop}
-                sx={{
-                  bgcolor: alpha('#ff4d4d', 0.85),
-                  color: '#fff',
-                  backdropFilter: 'blur(6px)',
-                  '&:hover': { bgcolor: '#ff4d4d' },
-                }}
-              >
-                <StopIcon sx={{ fontSize: 15 }} />
-              </IconButton>
-            )}
           </Box>
 
           {/* Click-to-expand overlay hint */}
           <Box
-            onClick={() => setFullscreenOpen(true)}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setFullscreenOpen(true);
+            }}
             sx={{
               position: 'absolute',
               inset: 0,

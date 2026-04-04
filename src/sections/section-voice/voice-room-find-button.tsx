@@ -120,7 +120,7 @@ export function VoiceRoomFindButton({
               transition: 'color 0.2s',
             }}
           >
-            Browsing other rooms to join
+            Browsing other channels to join
           </Typography>
         </Box>
 

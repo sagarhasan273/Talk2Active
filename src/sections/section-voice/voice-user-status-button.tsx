@@ -201,7 +201,7 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
     let left = rect.left + rect.width / 2 - POPOVER_WIDTH / 2;
     left = Math.max(MARGIN, Math.min(left, vw - POPOVER_WIDTH - MARGIN));
 
-    // Prefer above the button; flip below if not enough room
+    // Prefer above the button; flip below if not enough channel
     const spaceAbove = rect.top - MARGIN;
     const spaceBelow = vh - rect.bottom - MARGIN;
     let top: number;
@@ -213,7 +213,7 @@ export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChan
       } else if (paperHeight <= spaceBelow) {
         top = rect.bottom + 8;
       } else {
-        // Neither side fits perfectly — pick whichever has more room
+        // Neither side fits perfectly — pick whichever has more channel
         top =
           spaceAbove >= spaceBelow ? Math.max(MARGIN, rect.top - paperHeight - 8) : rect.bottom + 8;
       }

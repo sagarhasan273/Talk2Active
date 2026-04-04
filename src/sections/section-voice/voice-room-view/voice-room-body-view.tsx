@@ -89,8 +89,6 @@ const ContentPad = styled(Box)(({ theme }) => ({
 
 const GridPanel = styled(Box)(({ theme }) => ({
   borderRadius: theme.spacing(2),
-  border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
-  backgroundColor: theme.palette.mode === 'dark' ? alpha('#fff', 0.02) : alpha('#000', 0.015),
   padding: theme.spacing(1.5),
   [theme.breakpoints.down('sm')]: { padding: theme.spacing(1) },
 }));
@@ -262,7 +260,7 @@ export function VoiceRoomBodyView() {
           {isHost && (
             <CtrlBtn onClick={editRoomOpen.onTrue}>
               <SettingsIcon sx={{ fontSize: 18, mr: 0.5 }} />
-              <Typography variant="body2">Room Settings</Typography>
+              <Typography variant="body2">Channel Settings</Typography>
             </CtrlBtn>
           )}
         </Box>
@@ -271,11 +269,6 @@ export function VoiceRoomBodyView() {
       {/* ── Scroll area ──────────────────────────────────────────────────── */}
       <ScrollArea>
         <ContentPad>
-          {/* Local screen share preview (sharer sees their own stream) */}
-          {isSharing && screenStream && (
-            <ScreenSharePreviewPanel stream={screenStream} isLocal onStop={stopCapture} />
-          )}
-
           {/* Share error */}
           {shareError && (
             <Box
@@ -295,32 +288,11 @@ export function VoiceRoomBodyView() {
 
           {/* Participants grid */}
           <GridPanel>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                mb: 1.25,
-              }}
-            >
-              <Typography
-                variant="caption"
-                fontWeight={800}
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: '0.65rem',
-                  letterSpacing: 0.8,
-                  textTransform: 'uppercase',
-                }}
-              >
-                All Participants
-                <Box component="span" sx={{ ml: 0.6, color: 'text.disabled' }}>
-                  · {allParticipants.length}
-                </Box>
-              </Typography>
-            </Box>
-
             <ParticipantsGrid>
+              {/* Local screen share preview (sharer sees their own stream) */}
+              {isSharing && screenStream && (
+                <ScreenSharePreviewPanel stream={screenStream} isLocal onStop={stopCapture} />
+              )}
               {Object.entries(remoteScreenStreams).map(([id, stream]) => {
                 const name = Object.values(participants).find(
                   (participant) => participant.socketId === id
@@ -372,18 +344,20 @@ export function VoiceRoomBodyView() {
                       }
                     />
 
-                    <VoiceParticipantSettingsPopup
-                      targetSocketId={participant.socketId}
-                      targetUserId={participant.userId}
-                      targetName={participant.name}
-                      targetProfilePhoto={participant.profilePhoto}
-                      targetAccountType={participant.accountType}
-                      targetVerified={participant.verified}
-                      isHost={isHost}
-                      isSelf={user.id === participant.userId}
-                      targetIsMuted={Boolean(participant.isMuted)}
-                      hasJoin={participant.hasJoin ?? true}
-                    />
+                    {!participant.isLocal && (
+                      <VoiceParticipantSettingsPopup
+                        targetSocketId={participant.socketId}
+                        targetUserId={participant.userId}
+                        targetName={participant.name}
+                        targetProfilePhoto={participant.profilePhoto}
+                        targetAccountType={participant.accountType}
+                        targetVerified={participant.verified}
+                        isHost={isHost}
+                        isSelf={user.id === participant.userId}
+                        targetIsMuted={Boolean(participant.isMuted)}
+                        hasJoin={participant.hasJoin ?? true}
+                      />
+                    )}
                   </Box>
                 </Zoom>
               ))}
@@ -412,11 +386,11 @@ export function VoiceRoomBodyView() {
             <CtrlBtn
               tooltip={isSharing ? 'Stop sharing' : 'Share screen'}
               active={isSharing}
-              warn={isSharing}
+              danger={isSharing}
               onClick={handleToggleScreenShare}
             >
               {isSharing ? (
-                <StopIcon sx={{ fontSize: 18 }} />
+                <StopIcon sx={{ fontSize: 18, color: isSharing ? 'error.main' : 'currentColor' }} />
               ) : (
                 <ScreenShareIcon sx={{ fontSize: 18 }} />
               )}

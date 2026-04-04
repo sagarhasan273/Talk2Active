@@ -298,7 +298,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       time: Message['time'];
     }) => deleteChatRoomMessage(data);
 
-    // Room updates
+    // Channel updates
     const handleExistingRoomParticipant = (data: any) => {
       setCurrentRooms(
         currentRooms?.map((currentRoom) => {

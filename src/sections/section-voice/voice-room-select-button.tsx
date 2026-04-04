@@ -121,7 +121,7 @@ const VoiceRoomSelectButton = ({
                 letterSpacing: 0.3,
               }}
             >
-              You are in this room
+              You are in this channel
             </Typography>
           </Box>
 
@@ -282,7 +282,7 @@ const VoiceRoomSelectButton = ({
                 ? `${participantCount} online`
                 : participantCount > 0
                   ? `${participantCount} online`
-                  : 'Empty room'}
+                  : 'Empty channel'}
             </Typography>
           </Box>
         </Box>

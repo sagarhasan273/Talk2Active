@@ -1,5 +1,3 @@
-import type React from 'react';
-
 import type { UseScreenShareWebRTCReturn } from './use-screen-share';
 
 export interface AudioSettings {
@@ -12,15 +10,15 @@ export interface AudioSettings {
   highPassFilter?: boolean;
   isMicMuted: boolean;
   isDeafened: boolean;
+  nCMode: NCMode; // ← NEW: controls processing mode
 }
-
 export interface RemoteAudioSettings {
-  [socketId: string]: {
+  [userId: string]: {
+    // ← now keyed by stable userId
     volume: number;
     isMuted: boolean;
   };
 }
-
 export interface AudioNodeManager {
   microphoneGainNode: GainNode | null;
   outputGainNode: GainNode | null;
@@ -30,25 +28,22 @@ export interface AudioNodeManager {
   highPassFilterNode: BiquadFilterNode | null;
   compressorNode: DynamicsCompressorNode | null;
 }
-
 export interface RemoteAudioNodeManager {
-  [socketId: string]: {
+  [userId: string]: {
+    // ← keyed by userId
     sourceNode: MediaStreamAudioSourceNode | null;
     gainNode: GainNode | null;
   };
 }
-
 export interface PeerConnectionState {
-  [socketId: string]: RTCPeerConnection;
+  [socketId: string]: RTCPeerConnection; // peerConnection still uses socketId
 }
-
 export interface ConnectionStatus {
   [socketId: string]: 'new' | 'connecting' | 'connected' | 'disconnected' | 'failed' | 'closed';
 }
-
 export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
-  microphoneGain: 40,
-  outputGain: 100,
+  microphoneGain: 50,
+  outputGain: 50,
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
@@ -56,27 +51,23 @@ export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   highPassFilter: true,
   isMicMuted: false,
   isDeafened: false,
+  nCMode: 'basic', // ← default = processed voice (best quality)
 };
-
-// NCMode: 'off' disables all WebAudio processing, 'basic' applies HPF + light compressor
+// NCMode: 'off' = raw mic (no WebAudio graph)
+//         'basic' = HPF 80Hz + HPF 100Hz + light compressor
 export type NCMode = 'off' | 'basic';
-
 export type UseWebRTCReturn = {
   // ── Streams ───────────────────────────────────────────────────────────────
-  remoteStreams: { [socketId: string]: MediaStream };
+  remoteStreams: { [userId: string]: MediaStream }; // ← now userId
   localStream: MediaStream | null;
-
   // ── State ─────────────────────────────────────────────────────────────────
   isMicMuted: boolean;
   isDeafened: boolean;
   audioSettings: AudioSettings;
   remoteAudioSettings: RemoteAudioSettings;
   connectionStatus: ConnectionStatus;
-
-  // Audio peer connections ref — plain object, NOT a Map
   peerConnections: React.MutableRefObject<PeerConnectionState>;
   closePeerConnection: (socketId: string) => void;
-
   // ── Local audio controls ──────────────────────────────────────────────────
   initializeMicrophone: (
     isMicMute?: boolean,
@@ -86,27 +77,25 @@ export type UseWebRTCReturn = {
   toggleDeafen: () => void;
   setMicrophoneGain: (gain: number) => void;
   setOutputGain: (gain: number) => void;
-
-  // ── Remote audio controls ─────────────────────────────────────────────────
-  setRemoteVolume: (socketId: string, level: number) => void;
-  setRemoteMute: (socketId: string, muted: boolean) => void;
-
+  // ── Remote audio controls (now use stable userId) ────────────────────────
+  setRemoteVolume: (userId: string, level: number) => void;
+  setRemoteMute: (userId: string, muted: boolean) => void;
   // ── Audio settings ────────────────────────────────────────────────────────
   setEchoCancellation: (enabled: boolean) => void;
   setNoiseSuppression: (enabled: boolean) => void;
   setNoiseSuppressionLevel: (level: number) => void;
   setHighPassFilter: (enabled: boolean) => void;
   applyAudioSettings: (settings: Partial<AudioSettings>) => void;
-
   // ── Audio WebRTC signaling ────────────────────────────────────────────────
   createOffer: (targetSocketId: string, socket: any) => Promise<void>;
   handleOffer: (data: any, socket: any) => Promise<void>;
   handleAnswer: (data: any) => Promise<void>;
   handleIceCandidate: (data: any) => Promise<void>;
-
+  // ── Mapping (socketId ↔ userId) ──────────────────────────────────────────
+  setParticipantMapping: (socketId: string, userId: string) => void;
+  removeParticipantMapping: (socketId: string) => void;
   // ── Cleanup ───────────────────────────────────────────────────────────────
   cleanup: () => void;
-
   // ── Legacy ────────────────────────────────────────────────────────────────
   muteMicrophone: () => void;
   unmuteMicrophone: () => void;
