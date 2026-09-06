@@ -118,7 +118,7 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         onClick={participantsOpen.onTrue}
         sx={{
           position: 'relative',
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           borderRadius: 1,
           bgcolor: 'background.paper',
           border: '1px solid',

@@ -155,7 +155,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 1, sm: 2 },
+        p: { xs: 1.5, sm: 2 },
         bgcolor: 'background.paper',
         borderRadius: 1,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
@@ -186,7 +186,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   <IconButton
                     size="small"
                     onClick={() => handleFilterUpdate({ searchQuery: '' })}
-                    sx={{ p: 0.5 }}
+                    sx={{ px: 0.5 }}
                   >
                     <ClearIcon fontSize="small" />
                   </IconButton>
@@ -206,7 +206,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         </Grid>
 
         {/* Quick Filters - Desktop */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 2.5 }}>
           <FormControl fullWidth size="small">
             <Select
               value={selectedLanguage}
@@ -233,7 +233,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   bgcolor: alpha(theme.palette.background.default, 0.8),
                 },
                 '& .MuiSelect-select': {
-                  py: 1.2,
+                  px: 1.2,
                 },
               }}
             >
@@ -246,7 +246,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+        <Grid size={{ xs: 6, sm: 6, md: 2.5 }}>
           <FormControl fullWidth size="small">
             <Select
               value={selectedLevel}
@@ -273,7 +273,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   bgcolor: alpha(theme.palette.background.default, 0.8),
                 },
                 '& .MuiSelect-select': {
-                  py: 1.2,
+                  px: 1.2,
                 },
               }}
             >

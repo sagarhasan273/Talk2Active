@@ -249,7 +249,7 @@ export function VoiceRoomLayout({
         disableGutters
         component="main"
         sx={{
-          p: { xs: 2 },
+          p: { xs: 1 },
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 1, sm: 2 },
@@ -269,10 +269,6 @@ export function VoiceRoomLayout({
         {/* Filter */}
         {filter && <Box sx={{
           gridArea: '2 / 1 / 3 / 2',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backdropFilter: 'blur(8px)',
         }}>
           {filter}
         </Box>}
