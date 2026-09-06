@@ -119,8 +119,7 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         sx={{
           position: 'relative',
           p: 2,
-          pl: 2.25,
-          borderRadius: 1.5,
+          borderRadius: 1,
           bgcolor: 'background.paper',
           border: '1px solid',
           borderColor: 'divider',
@@ -129,7 +128,6 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
             borderColor: alpha(levelColor, 0.5),
             boxShadow: `0 2px 12px ${alpha(levelColor, 0.12)}`,
           },
-          maxWidth: { xs: 1, sm: 360 },
         }}
       >
         {/* Header */}

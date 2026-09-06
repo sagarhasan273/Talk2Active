@@ -17,8 +17,7 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
       sx={{
         position: 'relative',
         p: 2,
-        pl: 2.25,
-        borderRadius: 1.5,
+        borderRadius: 1,
         bgcolor: 'background.paper',
         border: '1px dashed',
         borderColor:
@@ -30,7 +29,6 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
         flexDirection: 'column',
         justify: 'space-between',
         transition: 'all 200ms ease-in-out',
-        maxWidth: { xs: 1, sm: 360 },
         width: '100%',
         minHeight: 280, // Matches standard VoiceRoomCard height profile
         '&:hover': {

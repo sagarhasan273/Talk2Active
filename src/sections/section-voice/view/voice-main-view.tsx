@@ -188,12 +188,14 @@ export function VoiceMainView() {
     </Box>
   );
 
-  const filter = <VoiceRoomsFilter onFilterChange={() => {}} />;
+  const filter = <VoiceRoomsFilter onFilterChange={() => { }} />;
 
   const mainContent = (
     <>
       <TabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
-        <Scrollbar sx={{ height: 1 }}>
+        <Scrollbar sx={{
+          height: 1,
+        }}>
           <VoiceRoomsView onJoinRoom={handleJoinRoom} />
         </Scrollbar>
       </TabPanel>
@@ -218,7 +220,7 @@ export function VoiceMainView() {
       <CreateRoomModal
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
-        onCreateRoom={() => {}}
+        onCreateRoom={() => { }}
       />
 
       <LoginPromptDialog openBoolean={isAuthOpen} />
