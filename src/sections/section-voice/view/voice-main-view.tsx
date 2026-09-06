@@ -19,6 +19,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
+import VoiceRoomsFilter from './voice-rooms-filter';
 import VoiceUserProfileView from './voice-user-profile-view';
 import { CreateRoomModal } from '../voice-create-room-modal';
 import { VoiceRoomFindButton } from '../voice-room-find-button';
@@ -120,9 +121,8 @@ export function VoiceMainView() {
   const header = (
     <Box
       sx={{
-        p: 2,
-        pb: { xs: 1, sm: 2 },
-        borderRadius: 2,
+        p: { xs: 1, sm: 2 },
+        borderRadius: 1,
         height: '100%',
         backgroundColor: 'background.paper',
       }}
@@ -213,9 +213,7 @@ export function VoiceMainView() {
     </Scrollbar>
   );
 
-  const rightSidebar = (
-    <Box sx={{ width: 1, backgroundColor: 'background.neutral', height: '100%' }} />
-  );
+  const filter = <VoiceRoomsFilter onFilterChange={() => {}} />;
 
   const mainContent = (
     <>
@@ -237,8 +235,7 @@ export function VoiceMainView() {
     <>
       <VoiceRoomLayout
         header={header}
-        leftSidebar={leftSidebar}
-        rightSidebar={rightSidebar}
+        filter={filter}
         mainContent={mainContent}
         footer={footer}
         inVoice={userVoiceState.hasJoined}

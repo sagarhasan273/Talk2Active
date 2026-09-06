@@ -7,8 +7,9 @@ import { Box } from '@mui/material';
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import VoiceRoomCard from '../voice-room-card';
+import { VoiceRoomCard } from '../voice-room-card';
 import { VoiceRoomsEmptyState } from './voice-no-rooms-view';
+import {  RoomCardCreation } from '../voice-room-card';
 
 interface RoomListProps {
   onJoinRoom: (room: RoomResponse) => void;
@@ -64,9 +65,15 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
         color: 'white',
         position: 'relative',
         gap: 2,
-        px: { xs: 0, sm: 1 },
       }}
     >
+      <RoomCardCreation onCreateRoom={() => {
+        const createRoomEvent = new CustomEvent('create-room', {
+          bubbles: true,
+          cancelable: true,
+        });
+        window.dispatchEvent(createRoomEvent);
+      }} />
       {rooms.map((room) => (
         <VoiceRoomCard key={room.id} roomData={room} onJoinRoom={onJoinRoom} />
       ))}

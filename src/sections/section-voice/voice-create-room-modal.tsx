@@ -58,9 +58,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const user = useSelector(selectAccount);
 
   const [formData, setFormData] = useState({
-    name: currentRoom?.name || '',
-    description: currentRoom?.description || '',
-    languages: currentRoom?.languages || ['en'],
+    name: currentRoom?.topic || '',
+    description: currentRoom?.welcome_message || '',
+    languages: currentRoom?.language ? [currentRoom.language] : ['en'],
     level: currentRoom?.level || 'mixed',
     maxParticipants: currentRoom?.maxParticipants || 8,
   });
@@ -72,7 +72,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const handleRemoveLanguage = (languageToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
-      languages: prev.languages.filter((lang) => lang !== languageToRemove),
+      languages: prev.languages.filter((language) => language !== languageToRemove),
     }));
   };
 
