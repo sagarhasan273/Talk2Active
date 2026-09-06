@@ -227,7 +227,7 @@ export const RoomInfoHeader = ({
           gap={1}
           sx={{
             width: { xs: '100%', md: 'auto' },
-            pt: { xs: 1.5, md: 0 },
+            pt: { xs: 1, md: 0 },
             borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.1)}`, md: 'none' },
           }}
         >
@@ -241,7 +241,7 @@ export const RoomInfoHeader = ({
               sx={{
                 bgcolor: alpha(theme.palette.text.primary, 0.04),
                 color: 'text.primary',
-                borderRadius: 2,
+                borderRadius: 1,
                 px: 2,
                 py: 0.8,
                 fontSize: 13,
@@ -265,7 +265,7 @@ export const RoomInfoHeader = ({
                   sx={{
                     bgcolor: alpha(theme.palette.text.primary, 0.04),
                     color: 'text.primary',
-                    borderRadius: 2,
+                    borderRadius: 1,
                     p: 1,
                     '&:hover': {
                       bgcolor: alpha(theme.palette.primary.main, 0.1),
@@ -287,7 +287,7 @@ export const RoomInfoHeader = ({
             sx={{
               bgcolor: alpha(theme.palette.error.main, 0.1),
               color: 'error.main',
-              borderRadius: 2,
+              borderRadius: 1,
               px: { xs: 2, sm: 2.5 },
               py: 0.8,
               fontSize: 13,

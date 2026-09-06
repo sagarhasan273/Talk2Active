@@ -249,7 +249,7 @@ export function VoiceRoomLayout({
         disableGutters
         sx={{
           p: { xs: 1 },
-          height: 'calc(100vh - 54px)',
+          height: { xs: 'calc(100vh - 54px)', sm: 'calc(100vh - 64px)' },
           display: 'grid',
           gridTemplateRows: 'auto 1fr auto',
           gap: { xs: 1, sm: 2 },
@@ -257,55 +257,55 @@ export function VoiceRoomLayout({
           ...sx,
         }}
       >
-          {header}
+        {header}
 
-          {/* Scrollable Content */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: 'auto',
-              '&::-webkit-scrollbar': {
-                width: 6,
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'divider',
-                borderRadius: 3,
-              },
-            }}
-          >
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}>
-              {/* Filter */}
-              {filter && (
-                <Box
-                  sx={{
-                    flexShrink: 0,
-                  }}
-                >
-                  {filter}
-                </Box>
-              )}
+        {/* Scrollable Content */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            '&::-webkit-scrollbar': {
+              width: 6,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              bgcolor: 'divider',
+              borderRadius: 3,
+            },
+          }}
+        >
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}>
+            {/* Filter */}
+            {filter && (
+              <Box
+                sx={{
+                  flexShrink: 0,
+                }}
+              >
+                {filter}
+              </Box>
+            )}
 
-              {mainContent}
+            {mainContent}
 
 
-              {/* Footer */}
-              {footer && (
-                <Box
-                  sx={{
-                    flexShrink: 0,
-                    display: { xs: 'none', sm: 'block' },
-                    mt: 1,
-                  }}
-                >
-                  {footer}
-                </Box>
-              )}
-            </Box>
+            {/* Footer */}
+            {footer && (
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  display: { xs: 'none', sm: 'block' },
+                  mt: 1,
+                }}
+              >
+                {footer}
+              </Box>
+            )}
           </Box>
+        </Box>
       </Container>
 
       {/* Mobile Menu Button */}
