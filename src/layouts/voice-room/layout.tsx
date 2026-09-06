@@ -245,59 +245,67 @@ export function VoiceRoomLayout({
   return (
     <>
       <Container
-        maxWidth='lg'
+        maxWidth="lg"
         disableGutters
-        component="main"
         sx={{
           p: { xs: 1 },
-          display: 'flex',
-          flexDirection: 'column',
+          height: 'calc(100vh - 54px)',
+          display: 'grid',
+          gridTemplateRows: 'auto 1fr auto',
           gap: { xs: 1, sm: 2 },
           position: 'relative',
           ...sx,
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            gridArea: '1 / 1 / 2 / 2',
-          }}
-        >
           {header}
-        </Box>
 
-        {/* Filter */}
-        {filter && <Box sx={{
-          gridArea: '2 / 1 / 3 / 2',
-        }}>
-          {filter}
-        </Box>}
-
-        {/* Main Content */}
-        <Box
-          sx={{
-            gridArea: filter ? '3 / 1 / 4 / 2' : '2 / 1 / 3 / 2',
-            overflow: 'hidden',
-            position: 'relative',
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.05)}`,
-          }}
-        >
-          {mainContent}
-        </Box>
-
-        {/* Footer */}
-        {footer && (
+          {/* Scrollable Content */}
           <Box
             sx={{
-              gridArea: '4 / 1 / 5 / 2',
-              display: { xs: 'none', sm: 'block' },
-              mt: 1,
+              flex: 1,
+              overflow: 'auto',
+              '&::-webkit-scrollbar': {
+                width: 6,
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: 'divider',
+                borderRadius: 3,
+              },
             }}
           >
-            {footer}
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}>
+              {/* Filter */}
+              {filter && (
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                  }}
+                >
+                  {filter}
+                </Box>
+              )}
+
+              {mainContent}
+
+
+              {/* Footer */}
+              {footer && (
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    display: { xs: 'none', sm: 'block' },
+                    mt: 1,
+                  }}
+                >
+                  {footer}
+                </Box>
+              )}
+            </Box>
           </Box>
-        )}
       </Container>
 
       {/* Mobile Menu Button */}
