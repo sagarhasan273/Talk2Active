@@ -20,11 +20,9 @@ import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
 import VoiceRoomsFilter from './voice-rooms-filter';
-import VoiceUserProfileView from './voice-user-profile-view';
 import { CreateRoomModal } from '../voice-create-room-modal';
-import { VoiceRoomFindButton } from '../voice-room-find-button';
-import VoiceRoomSelectButton from '../voice-room-select-button';
 import { VoiceRoomView } from '../voice-room-view/voice-room-view';
+
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -188,29 +186,6 @@ export function VoiceMainView() {
         </Button>
       </Box>
     </Box>
-  );
-
-  const leftSidebar = (
-    <Scrollbar sx={{ height: 1 }}>
-      {isAuthenticated && <VoiceUserProfileView />}
-      <VoiceRoomFindButton
-        selected={selectedTab === 'find'}
-        onClick={() => {
-          setSelectedTab('find');
-        }}
-      />
-
-      {isAuthenticated &&
-        currentRooms.map((recentRoom) => (
-          <VoiceRoomSelectButton
-            key={recentRoom?.room?.id}
-            selected={selectedTab === 'entry' && room.id === recentRoom?.room?.id}
-            isJoined={userVoiceState.roomId === recentRoom?.room?.id}
-            room={recentRoom?.room}
-            onClick={handleJoinRoom}
-          />
-        ))}
-    </Scrollbar>
   );
 
   const filter = <VoiceRoomsFilter onFilterChange={() => {}} />;

@@ -79,18 +79,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const [hideFullRooms, setHideFullRooms] = useState(initialFilters.hideFullRooms || false);
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
 
-  // Get selected language and level labels for display
-  const selectedLanguageLabel = useMemo(() => {
-    const option = LANGUAGE_OPTIONS.find((opt) => opt.value === selectedLanguage);
-    return option ? `${option.emoji} ${option.label}` : 'All Languages';
-  }, [selectedLanguage]);
-
-  const selectedLevelLabel = useMemo(() => {
-    const option = LEVEL_OPTIONS.find((opt) => opt.value === selectedLevel);
-    return option ? `${option.emoji} ${option.label}` : 'All Levels';
-  }, [selectedLevel]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -102,17 +91,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     return count;
   }, [selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly]);
 
-  // Debounced filter change
-  const handleFilterChange = useCallback(() => {
-    const filters: FilterState = {
-      searchQuery,
-      selectedLanguage,
-      selectedLevel,
-      hideFullRooms,
-      showActiveOnly,
-    };
-    onFilterChange(filters);
-  }, [searchQuery, selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, onFilterChange]);
 
   // Debounce search input
   const handleSearchChange = useCallback(

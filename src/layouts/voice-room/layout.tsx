@@ -245,7 +245,7 @@ export function VoiceRoomLayout({
   return (
     <>
       <Container
-        maxWidth={'lg'}
+        maxWidth='lg'
         disableGutters
         component="main"
         sx={{
