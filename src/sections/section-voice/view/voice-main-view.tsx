@@ -1,48 +1,45 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import { LanguagesIcon, PhoneOffIcon, VerifiedIcon } from 'lucide-react';
-import React, { useState, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+import React, { useMemo, useState, useCallback } from 'react';
+import { PhoneOffIcon, VerifiedIcon, LanguagesIcon } from 'lucide-react';
 
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SettingsIcon from '@mui/icons-material/Settings';
-import PeopleIcon from '@mui/icons-material/People';
 import ShareIcon from '@mui/icons-material/Share';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { AutoAwesomeMosaicOutlined } from '@mui/icons-material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {
   Box,
+  Chip,
+  Stack,
+  alpha,
+  Paper,
   Button,
   Tooltip,
-  Typography,
-  Stack,
-  Chip,
-  Avatar,
-  AvatarGroup,
-  alpha,
-  IconButton,
-  Badge,
   useTheme,
-  Paper,
+  Typography,
+  IconButton,
   useMediaQuery,
 } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
 import { toastErrorResponse } from 'src/utils/response';
+
 import { useCredentials } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
+
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
-import { AvatarUser } from 'src/components/avatar-user';
 
 import VoiceRoomsView from './voice-rooms-view';
-import VoiceRoomsFilter from './voice-rooms-filter';
+import { VoiceRoomsFilter } from './voice-rooms-filter';
 import { CreateRoomModal } from '../voice-create-room-modal';
 import { VoiceRoomView } from '../voice-room-view/voice-room-view';
-import { toast } from 'sonner';
-import { AutoAwesomeMosaicOutlined } from '@mui/icons-material';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -123,7 +120,12 @@ export const RoomInfoHeader = ({
         spacing={2}
       >
         {/* Left Section: Back Action & Details */}
-        <Stack direction="row" alignItems="flex-start" spacing={{ xs: 1.5, sm: 2 }} sx={{ minWidth: 0, flex: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="flex-start"
+          spacing={{ xs: 1.5, sm: 2 }}
+          sx={{ minWidth: 0, flex: 1 }}
+        >
           <IconButton
             onClick={onBack}
             size={isMobile ? 'small' : 'medium'}
@@ -144,13 +146,7 @@ export const RoomInfoHeader = ({
 
           <Box sx={{ minWidth: 0, flex: 1 }}>
             {/* Title & Metadata Badges */}
-            <Stack
-              direction="row"
-              alignItems="center"
-              gap={1}
-              flexWrap="wrap"
-              sx={{ mb: 0.75 }}
-            >
+            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" sx={{ mb: 0.75 }}>
               <Typography
                 variant={isMobile ? 'subtitle1' : 'h6'}
                 fontWeight={800}
@@ -195,7 +191,11 @@ export const RoomInfoHeader = ({
                   }}
                 >
                   <FiberManualRecordIcon sx={{ fontSize: 8, color: 'success.main' }} />
-                  <Typography variant="caption" fontWeight={700} sx={{ fontSize: 10, textTransform: 'uppercase' }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    sx={{ fontSize: 10, textTransform: 'uppercase' }}
+                  >
                     Live
                   </Typography>
                 </Box>
@@ -214,7 +214,8 @@ export const RoomInfoHeader = ({
                 fontSize: { xs: '0.8rem', sm: '0.875rem' },
               }}
             >
-              {room?.welcome_message || 'Welcome to the channel! Take turns speaking and enjoy the discussion.'}
+              {room?.welcome_message ||
+                'Welcome to the channel! Take turns speaking and enjoy the discussion.'}
             </Typography>
           </Box>
         </Stack>
@@ -231,7 +232,12 @@ export const RoomInfoHeader = ({
             borderTop: { xs: `1px solid ${alpha(theme.palette.divider, 0.1)}`, md: 'none' },
           }}
         >
-          <Stack direction="row" alignItems="center" gap={1} sx={{ flex: { xs: 1, sm: 'initial' } }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            gap={1}
+            sx={{ flex: { xs: 1, sm: 'initial' } }}
+          >
             {/* Share Link Button */}
             <Button
               fullWidth={isMobile}
@@ -332,7 +338,7 @@ export const DefaultHeader = ({
     >
       <Stack
         direction={{ xs: 'column' }}
-        alignItems={{ xs: 'flex-start', }}
+        alignItems={{ xs: 'flex-start' }}
         justifyContent="space-between"
         spacing={{ xs: 1.5, sm: 2 }}
       >
@@ -353,7 +359,12 @@ export const DefaultHeader = ({
             >
               <AutoAwesomeMosaicOutlined sx={{ fontSize: 16 }} />
             </Box>
-            <Typography variant="caption" fontWeight={800} color="primary.main" sx={{ letterSpacing: 0.5, textTransform: 'uppercase' }}>
+            <Typography
+              variant="caption"
+              fontWeight={800}
+              color="primary.main"
+              sx={{ letterSpacing: 0.5, textTransform: 'uppercase' }}
+            >
               Voice Hub
             </Typography>
           </Stack>
@@ -372,7 +383,8 @@ export const DefaultHeader = ({
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
-            Join live audio rooms to practice languages, host discussions, or listen in on engaging topics with creators.
+            Join live audio rooms to practice languages, host discussions, or listen in on engaging
+            topics with creators.
           </Typography>
         </Box>
 
@@ -448,9 +460,7 @@ export function VoiceMainView() {
     return room.host?.id === user.id || room.host?.userId === user.id;
   }, [room, user]);
 
-  const participants = useMemo(() => {
-    return room?.currentParticipants || [];
-  }, [room]);
+  const participants = useMemo(() => room?.currentParticipants || [], [room]);
 
   const handleJoinRoom = useCallback(
     async (roomSelected: RoomResponse) => {
@@ -482,7 +492,15 @@ export function VoiceMainView() {
         }
       }
     },
-    [user.id, currentRooms, isAuthenticated, isAuthOpen, setCurrentRooms, updateUserRecentRooms, setRoom]
+    [
+      user.id,
+      currentRooms,
+      isAuthenticated,
+      isAuthOpen,
+      setCurrentRooms,
+      updateUserRecentRooms,
+      setRoom,
+    ]
   );
 
   const handleBackToRooms = useCallback(() => {
@@ -528,7 +546,7 @@ export function VoiceMainView() {
       );
     }
 
-    return <DefaultHeader onQuickJoin={() => { }} onCreateRoom={handleCreateRoom} />;
+    return <DefaultHeader onQuickJoin={() => {}} onCreateRoom={handleCreateRoom} />;
   }, [
     room,
     userVoiceState.hasJoined,
@@ -541,7 +559,7 @@ export function VoiceMainView() {
     handleCreateRoom,
   ]);
 
-  const filter = <VoiceRoomsFilter onFilterChange={() => { }} />;
+  const filter = <VoiceRoomsFilter onFilterChange={() => {}} />;
 
   const mainContent = (
     <>
@@ -572,7 +590,7 @@ export function VoiceMainView() {
       <CreateRoomModal
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
-        onCreateRoom={() => { }}
+        onCreateRoom={() => {}}
       />
 
       <LoginPromptDialog openBoolean={isAuthOpen} />

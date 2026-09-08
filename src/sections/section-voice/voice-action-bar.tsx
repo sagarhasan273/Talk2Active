@@ -175,8 +175,8 @@ export const VoiceActionBar = ({ screenShareButton }: { screenShareButton?: Reac
 
   // FIX 1: correctly typed ref for hand button anchor
   const handBtnRef = useRef<HTMLButtonElement>(null);
-  const toastTimeoutRef = useRef<NodeJS.Timeout>();
-  const inactivityTimeoutRef = useRef<NodeJS.Timeout>();
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const inactivityTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const raiseHandRef = useRef(raiseHand);
 
   useEffect(() => {

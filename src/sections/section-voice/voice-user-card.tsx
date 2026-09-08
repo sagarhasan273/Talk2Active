@@ -53,8 +53,8 @@ const StyledAvatar = styled(Avatar, {
   size: 'small' | 'medium' | 'large';
 }>(({ theme, isSpeaking, isActive, isSelected, size }) => {
   const sizes = {
-    small: { width: 64, height: 64 },
-    medium: { width: 96, height: 96 },
+    small: { width: 96, height: 96 },
+    medium: { width: 100, height: 100 },
     large: { width: 120, height: 120 },
   };
 
@@ -437,9 +437,11 @@ export function VoiceUserCard({
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease',
         width: '100%',
-        maxWidth: size === 'large' ? 180 : size === 'medium' ? 140 : 100,
-        mx: 'auto',
-        mt: 1,
+        height: 'fit-content',
+        border: '1px solid',
+        borderColor: theme.palette.divider,
+        borderRadius: 1,
+        minHeight: 160,
       }}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
@@ -552,7 +554,7 @@ export function VoiceUserCard({
                 height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: `8px solid ${theme.palette.warning.lighter}`,
+                borderTop: `8px solid ${theme.palette.warning.light}`,
               },
               '@keyframes float': {
                 '0%': { transform: 'translateX(-50%) translateY(0px)' },
