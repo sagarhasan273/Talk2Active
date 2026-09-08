@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 import { Box } from '@mui/material';
 
-import { slate } from './theme-tokens';
 import { RoomWorkspace } from './room-workspace';
 
 import type { ChatMessage, StageParticipant } from './types';
@@ -116,15 +115,18 @@ export const VoiceStageDemo = () => {
       {/* Action log — for demo purposes only, remove in the real app */}
       <Box
         sx={{
-          mx: { xs: 1.5, sm: 2, md: 4 },
-          mb: 2,
+          my: 2,
           p: 1.5,
-          borderRadius: 2,
-          border: `1px solid ${slate[800]}`,
-          color: slate[400],
-          fontSize: 11,
-          fontFamily: 'monospace',
-          minHeight: 32,
+          borderRadius: 1,
+          bgcolor: 'background.paper',
+          border: `1px solid`,
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          typography: 'caption',
+          color: 'text.secondary',
+          overflowX: 'auto',
         }}
       >
         {log.length === 0 ? 'Interact with the dock to see callbacks fire...' : log.join('  ·  ')}

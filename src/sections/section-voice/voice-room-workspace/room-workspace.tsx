@@ -6,6 +6,7 @@ import { ChatPanel } from './room-chat-panel';
 import { ChatDrawer } from './room-chat-drawer';
 import { RoomAudioStage } from './room-audio-stage';
 import { ResizableSidebar } from './ResizableSidebar';
+import { UserProfileDrawer } from '../voice-user-profile-drawer';
 
 import type { ChatMessage, StageParticipant } from './types';
 
@@ -51,6 +52,9 @@ export const RoomWorkspace = ({
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
 
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+
   const handleSend = (text: string) => {
     setMessages((prev) => [
       ...prev,
@@ -59,74 +63,131 @@ export const RoomWorkspace = ({
     onSendMessage?.(text);
   };
 
-  const handleSidebarResize = (newWidth: number) => {
-    // Clamp the width between min and max
-    const clampedWidth = Math.min(Math.max(newWidth, MIN_SIDEBAR_WIDTH), MAX_SIDEBAR_WIDTH);
-    setSidebarWidth(clampedWidth);
+  const handleProfileClick = (participant: any) => {
+    setSelectedUser(participant);
+    console.log('Profile clicked for participant:', participant);
+    setProfileDrawerOpen(true);
+  };
+
+  const handleProfileClose = () => {
+    setProfileDrawerOpen(false);
+    setSelectedUser(null);
+  };
+
+  // Audio control handlers
+  const handleVolumeChange = (userId: string, volume: number) => {
+    // Update user's volume in your state/context
+    console.log(`Volume for ${userId}: ${volume}`);
+  };
+
+  const handleToggleMute = (userId?: string) => {
+    // Toggle mute for user
+    console.log(`Toggle mute for ${userId}`);
+  };
+
+  const handleToggleDeafen = (userId?: string) => {
+    // Toggle deafen for user
+    console.log(`Toggle deafen for ${userId}`);
+  };
+
+  const handleFollow = (userId?: string) => {
+    console.log(`Follow ${userId}`);
+  };
+
+  const handleUnfollow = (userId?: string) => {
+    console.log(`Unfollow ${userId}`);
+  };
+
+  const handleBlock = (userId?: string) => {
+    console.log(`Block ${userId}`);
+  };
+
+  const handleReport = (userId?: string) => {
+    console.log(`Report ${userId}`);
+  };
+
+  const handleShare = (userId?: string) => {
+    console.log(`Share ${userId}`);
   };
 
   return (
-    <Box sx={{ minHeight: 'fit-content', borderRadius: 1, width: '100%' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          gap: 2,
-          alignItems: 'stretch',
-          minHeight: { md: 560 },
-          width: '100%', // Ensure the container takes full width
-        }}
-      >
-        {/* RoomAudioStage container - will shrink/grow based on sidebar width */}
+    <>
+      <Box>
         <Box
           sx={{
-            flex: 1,
-            minWidth: 0, // Prevents overflow
             display: 'flex',
-            width: '100%', // Take remaining space
+            flexDirection: { xs: 'column', lg: 'row' },
+            gap: 1,
+            alignItems: 'stretch',
+            minHeight: { lg: 560 },
+            width: '100%',
           }}
         >
-          <RoomAudioStage
-            participants={participants}
-            maxParticipants={maxParticipants}
-            topicPrompt={topicPrompt}
-            onChangePrompt={onChangePrompt}
-            onToggleMic={onToggleMic}
-            onToggleDeafen={onToggleDeafen}
-            onToggleRaiseHand={onToggleRaiseHand}
-            onOpenReactions={onOpenReactions}
-            onToggleChat={() => setChatOpen(true)}
-            onLeave={onLeave}
-          />
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              width: '100%',
+            }}
+          >
+            <RoomAudioStage
+              participants={participants}
+              maxParticipants={maxParticipants}
+              topicPrompt={topicPrompt}
+              onChangePrompt={onChangePrompt}
+              onToggleMic={onToggleMic}
+              onToggleDeafen={onToggleDeafen}
+              onToggleRaiseHand={onToggleRaiseHand}
+              onOpenReactions={onOpenReactions}
+              onToggleChat={() => setChatOpen(true)}
+              onLeave={onLeave}
+              onProfileClick={handleProfileClick} // Pass this down
+            />
+          </Box>
+
+          {/* Desktop sidebar */}
+          <Box
+            sx={{
+              display: { xs: 'none', lg: 'flex' },
+              flexShrink: 0,
+            }}
+          >
+            <ResizableSidebar
+              width={sidebarWidth}
+              onWidthChange={setSidebarWidth}
+              minWidth={MIN_SIDEBAR_WIDTH}
+              maxWidth={MAX_SIDEBAR_WIDTH}
+            >
+              <ChatPanel messages={messages} onSendMessage={handleSend} />
+            </ResizableSidebar>
+          </Box>
         </Box>
 
-        {/* Desktop sidebar — hidden below the lg breakpoint */}
-        <Box
-          sx={{
-            display: { xs: 'none', md: 'flex' },
-            flexShrink: 0, // Prevent sidebar from shrinking
-          }}
-        >
-          <ResizableSidebar
-            width={sidebarWidth}
-            onWidthChange={handleSidebarResize}
-            minWidth={MIN_SIDEBAR_WIDTH}
-            maxWidth={MAX_SIDEBAR_WIDTH}
-          >
-            <ChatPanel messages={messages} onSendMessage={handleSend} />
-          </ResizableSidebar>
-        </Box>
+        {/* Mobile chat */}
+        <ChatDrawer
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          messages={messages}
+          onSendMessage={handleSend}
+        />
       </Box>
 
-      {/* Mobile chat — opened via the chat icon in ControlDock */}
-      <ChatDrawer
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        messages={messages}
-        onSendMessage={handleSend}
+      {/* User Profile Drawer */}
+      <UserProfileDrawer
+        open={profileDrawerOpen}
+        onClose={handleProfileClose}
+        user={selectedUser}
+        onFollow={handleFollow}
+        onUnfollow={handleUnfollow}
+        onBlock={handleBlock}
+        onReport={handleReport}
+        onVolumeChange={handleVolumeChange}
+        onToggleMute={handleToggleMute}
+        onToggleDeafen={handleToggleDeafen}
+        onShare={handleShare}
       />
-    </Box>
+    </>
   );
 };
-
 export default RoomWorkspace;

@@ -36,4 +36,5 @@ export type RoomAudioStageProps = {
   onToggleDeafen?: (deafened: boolean) => void;
   /** Called with the *next* raised state after the button is pressed. */
   onToggleRaiseHand?: (raised: boolean) => void;
+  onProfileClick?: (participant: StageParticipant) => void;
 };

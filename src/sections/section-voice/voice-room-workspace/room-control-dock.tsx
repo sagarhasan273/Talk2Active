@@ -31,9 +31,9 @@ const dockIconButtonSx = {
 const mobileIconButtonSx = {
   p: 1,
   borderRadius: '50%',
-  bgcolor: slate[800],
-  color: slate[300],
-  '&:hover': { bgcolor: slate[700] },
+  bgcolor: 'background.paper',
+  color: 'text.secondary',
+  '&:hover': { bgcolor: 'background.default' },
 } as const;
 
 export const RoomControlDock = ({
@@ -51,9 +51,9 @@ export const RoomControlDock = ({
     sx={{
       mt: { xs: 2.5, md: 4 },
       borderRadius: 1,
-      bgcolor: 'rgba(2,6,23,0.9)',
-      border: `1px solid ${slate[800]}`,
-      boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
+      bgcolor: 'background.neutral',
+      border: `1px solid`,
+      borderColor: 'divider',
       overflow: 'hidden',
     }}
   >

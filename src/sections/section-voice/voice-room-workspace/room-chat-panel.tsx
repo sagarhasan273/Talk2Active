@@ -33,15 +33,16 @@ export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: 
           justifyContent: 'space-between',
           px: 2,
           py: 1.5,
-          borderBottom: `1px solid ${slate[800]}`,
+          borderBottom: `1px solid`,
+          borderColor: 'divider',
           flexShrink: 0,
         }}
       >
-        <Typography variant="subtitle2" fontWeight={700} sx={{ color: slate[100] }}>
+        <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary' }}>
           {title}
         </Typography>
         {onClose && (
-          <IconButton size="small" onClick={onClose} sx={{ color: slate[400] }}>
+          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
             <X size={16} />
           </IconButton>
         )}

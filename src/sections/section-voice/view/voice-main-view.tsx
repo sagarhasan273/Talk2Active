@@ -442,7 +442,6 @@ export const DefaultHeader = ({
 };
 
 export function VoiceMainView() {
-  const theme = useTheme();
   const { user, isAuthenticated } = useCredentials();
 
   const editRoomBoolean = useBoolean();
@@ -579,13 +578,7 @@ export function VoiceMainView() {
 
   return (
     <>
-      <VoiceRoomLayout
-        header={header}
-        filter={filter}
-        mainContent={mainContent}
-        footer={footer}
-        inVoice={userVoiceState.hasJoined}
-      />
+      <VoiceRoomLayout header={header} filter={filter} mainContent={mainContent} footer={footer} />
 
       <CreateRoomModal
         open={editRoomBoolean.value}

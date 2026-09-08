@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback } from 'react';
 
 import { Box } from '@mui/material';
 
-import { accent, slate } from './theme-tokens';
+import { accent } from './theme-tokens';
 
 type ResizableSidebarProps = {
   width: number;
@@ -65,9 +65,11 @@ export const ResizableSidebar = ({
         width,
         flexShrink: 0,
         display: 'flex',
-        borderRadius: 4,
-        border: `1px solid ${slate[800]}`,
-        bgcolor: slate[900],
+        borderRadius: 1,
+        bgcolor: 'background.paper',
+        border: `1px solid`,
+        borderColor: 'divider',
+        boxShadow: 1,
         overflow: 'hidden',
       }}
     >
@@ -91,10 +93,10 @@ export const ResizableSidebar = ({
         <Box
           className="resize-grip"
           sx={{
-            width: 3,
+            width: 10,
             height: 40,
             borderRadius: 4,
-            bgcolor: dragging ? accent.brand : slate[700],
+            bgcolor: dragging ? accent.brand : 'background.neutral',
             transition: dragging ? 'none' : 'background-color 0.15s ease',
           }}
         />

@@ -21,6 +21,7 @@ export const RoomAudioStage = ({
   onToggleMic,
   onToggleDeafen,
   onToggleRaiseHand,
+  onProfileClick,
 }: RoomAudioStageProps) => {
   // Local UI state for the dock; lifted callbacks let the parent sync this
   // with the actual audio/session layer.
@@ -100,6 +101,7 @@ export const RoomAudioStage = ({
             }}
             size="medium"
             stream={null}
+            onClick={() => onProfileClick?.(participant)}
           />
         ))}
 
