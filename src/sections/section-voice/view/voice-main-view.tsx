@@ -578,7 +578,12 @@ export function VoiceMainView() {
 
   return (
     <>
-      <VoiceRoomLayout header={header} filter={filter} mainContent={mainContent} footer={footer} />
+      <VoiceRoomLayout
+        header={header}
+        filter={selectedTab === 'find' ? filter : undefined}
+        mainContent={mainContent}
+        footer={footer}
+      />
 
       <CreateRoomModal
         open={editRoomBoolean.value}
