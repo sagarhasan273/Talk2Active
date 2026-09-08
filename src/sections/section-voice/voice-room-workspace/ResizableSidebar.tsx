@@ -1,8 +1,7 @@
+import { varAlpha } from '@/theme/styles';
 import React, { useRef, useState, useCallback } from 'react';
 
-import { Box } from '@mui/material';
-
-import { accent } from './theme-tokens';
+import { Box, useTheme } from '@mui/material';
 
 type ResizableSidebarProps = {
   width: number;
@@ -24,6 +23,8 @@ export const ResizableSidebar = ({
   maxWidth = 480,
   children,
 }: ResizableSidebarProps) => {
+  const theme = useTheme();
+
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
   const startWidth = useRef(width);
@@ -70,7 +71,6 @@ export const ResizableSidebar = ({
         border: `1px solid`,
         borderColor: 'divider',
         boxShadow: 1,
-        overflow: 'hidden',
       }}
     >
       {/* Drag handle */}
@@ -78,25 +78,30 @@ export const ResizableSidebar = ({
         onMouseDown={startDragging}
         sx={{
           position: 'absolute',
-          left: -4,
+          left: -6,
           top: 0,
           bottom: 0,
-          width: 8,
+          width: '1px',
           cursor: 'col-resize',
-          zIndex: 1,
+          zIndex: 10,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          '&:hover .resize-grip': { bgcolor: accent.brand },
+          '&:hover .resize-grip': { bgcolor: theme.palette.primary.main },
+          bgcolor: dragging ? theme.palette.primary.main : 'transparent',
         }}
       >
         <Box
           className="resize-grip"
           sx={{
-            width: 10,
+            position: 'absolute',
+            top: '46%',
+            width: 4,
             height: 40,
             borderRadius: 4,
-            bgcolor: dragging ? accent.brand : 'background.neutral',
+            bgcolor: dragging
+              ? theme.palette.primary.main
+              : varAlpha(theme.palette.text.primaryChannel, 0.2),
             transition: dragging ? 'none' : 'background-color 0.15s ease',
           }}
         />

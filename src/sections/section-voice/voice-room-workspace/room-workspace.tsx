@@ -25,7 +25,7 @@ type RoomWorkspaceProps = {
 };
 
 const DEFAULT_SIDEBAR_WIDTH = 320;
-const MIN_SIDEBAR_WIDTH = 200;
+const MIN_SIDEBAR_WIDTH = 300;
 const MAX_SIDEBAR_WIDTH = 600;
 
 /**
@@ -116,10 +116,10 @@ export const RoomWorkspace = ({
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', lg: 'row' },
+            flexDirection: { xs: 'column', md: 'row' },
             gap: 1,
             alignItems: 'stretch',
-            minHeight: { lg: 560 },
+            minHeight: { md: 560 },
             width: '100%',
           }}
         >
@@ -149,7 +149,7 @@ export const RoomWorkspace = ({
           {/* Desktop sidebar */}
           <Box
             sx={{
-              display: { xs: 'none', lg: 'flex' },
+              display: { xs: 'none', md: 'flex' },
               flexShrink: 0,
             }}
           >

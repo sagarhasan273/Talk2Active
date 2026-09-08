@@ -1,9 +1,8 @@
 import React from 'react';
+import { varAlpha } from '@/theme/styles/utils';
 import { Mic, Smile, MicOff, PhoneOff, Headphones, MessageSquare } from 'lucide-react';
 
-import { Box, alpha, Button, IconButton } from '@mui/material';
-
-import { slate, accent } from './theme-tokens';
+import { Box, Button, IconButton } from '@mui/material';
 
 type RoomControlDockProps = {
   micMuted: boolean;
@@ -18,11 +17,11 @@ type RoomControlDockProps = {
 };
 
 const dockIconButtonSx = {
-  p: 1.25,
-  borderRadius: 2,
-  bgcolor: slate[800],
-  color: slate[300],
-  '&:hover': { bgcolor: slate[700] },
+  p: 1,
+  borderRadius: 1,
+  bgcolor: 'background.paper',
+  color: 'text.secondary',
+  '&:hover': { color: 'text.primary', bgcolor: 'background.paper' },
 } as const;
 
 // Circular, icon-only variant used in the mobile row — same visual language
@@ -30,7 +29,7 @@ const dockIconButtonSx = {
 // them comfortably fit a 360px-wide screen.
 const mobileIconButtonSx = {
   p: 1,
-  borderRadius: '50%',
+  borderRadius: 1,
   bgcolor: 'background.paper',
   color: 'text.secondary',
   '&:hover': { bgcolor: 'background.default' },
@@ -52,8 +51,6 @@ export const RoomControlDock = ({
       mt: { xs: 2.5, md: 4 },
       borderRadius: 1,
       bgcolor: 'background.neutral',
-      border: `1px solid`,
-      borderColor: 'divider',
       overflow: 'hidden',
     }}
   >
@@ -62,8 +59,8 @@ export const RoomControlDock = ({
       sx={{
         display: { xs: 'flex', sm: 'none' },
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 0.5,
+        justifyContent: 'center',
+        gap: 1.5,
         px: 1.25,
         py: 1,
         overflowX: 'auto',
@@ -74,12 +71,12 @@ export const RoomControlDock = ({
         title={micMuted ? 'Unmute' : 'Mute'}
         sx={{
           ...mobileIconButtonSx,
-          bgcolor: accent.brand,
-          color: '#fff',
-          '&:hover': { bgcolor: alpha(accent.brand, 0.85) },
+          bgcolor: micMuted ? 'error.main' : 'error.main',
+          color: micMuted ? 'common.white' : 'text.secondary',
+          '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.error.mainChannel, 0.85) },
         }}
       >
-        {micMuted ? <MicOff size={17} /> : <Mic size={17} />}
+        {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
       </IconButton>
 
       <IconButton
@@ -87,10 +84,10 @@ export const RoomControlDock = ({
         title="Mute audio"
         sx={{
           ...mobileIconButtonSx,
-          ...(deafened && { color: accent.rose }),
+          ...(deafened && { color: 'error.main' }),
         }}
       >
-        <Headphones size={17} />
+        <Headphones size={18} />
       </IconButton>
 
       <IconButton
@@ -98,21 +95,23 @@ export const RoomControlDock = ({
         title="Raise hand"
         sx={{
           ...mobileIconButtonSx,
-          color: accent.amber,
-          bgcolor: alpha(accent.amber, handRaised ? 0.28 : 0.1),
-          border: `1px solid ${alpha(accent.amber, 0.2)}`,
-          '&:hover': { bgcolor: alpha(accent.amber, 0.28) },
+          width: 34,
+          height: 34,
+          color: 'warning.main',
+          bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, handRaised ? 0.28 : 0.1),
+          border: (theme) => `1px solid ${varAlpha(theme.palette.warning.mainChannel, 0.2)}`,
+          '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, 0.28) },
         }}
       >
-        <span style={{ fontSize: 15 }}>✋</span>
+        <span style={{ fontSize: 20 }}>✋</span>
       </IconButton>
 
       <IconButton onClick={onOpenReactions} title="Reactions" sx={mobileIconButtonSx}>
-        <Smile size={17} />
+        <Smile size={18} />
       </IconButton>
 
       <IconButton onClick={onToggleChat} title="Toggle chat" sx={mobileIconButtonSx}>
-        <MessageSquare size={17} />
+        <MessageSquare size={18} />
       </IconButton>
 
       <IconButton
@@ -120,12 +119,12 @@ export const RoomControlDock = ({
         title="Leave"
         sx={{
           ...mobileIconButtonSx,
-          bgcolor: accent.rose,
+          bgcolor: 'error.main',
           color: '#fff',
-          '&:hover': { bgcolor: alpha(accent.rose, 0.85) },
+          '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.error.mainChannel, 0.85) },
         }}
       >
-        <PhoneOff size={17} />
+        <PhoneOff size={18} />
       </IconButton>
     </Box>
 
@@ -140,47 +139,60 @@ export const RoomControlDock = ({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-        <Button
+        <IconButton
           onClick={onToggleMic}
-          startIcon={micMuted ? <MicOff size={16} /> : <Mic size={16} />}
           sx={{
-            px: 1.75,
-            py: 1.25,
-            minWidth: 0,
-            borderRadius: 2,
-            fontSize: 12,
-            fontWeight: 600,
-            textTransform: 'none',
-            whiteSpace: 'nowrap',
-            color: '#fff',
-            bgcolor: accent.brand,
-            '&:hover': { bgcolor: alpha(accent.brand, 0.85) },
+            ...dockIconButtonSx,
+            bgcolor: micMuted ? 'error.main' : 'primary.main',
+            color: 'common.white',
+            '&:hover': {
+              bgcolor: (theme) =>
+                micMuted
+                  ? varAlpha(theme.palette.error.mainChannel, 0.85)
+                  : varAlpha(theme.palette.primary.mainChannel, 0.85),
+            },
           }}
         >
-          {micMuted ? 'Unmute' : 'Mute'}
-        </Button>
-        <IconButton onClick={onToggleDeafen} title="Mute audio" sx={dockIconButtonSx}>
-          <Headphones size={16} color={deafened ? accent.rose : undefined} />
+          {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
+        </IconButton>
+        <IconButton
+          onClick={onToggleDeafen}
+          title="Mute audio"
+          sx={{
+            ...dockIconButtonSx,
+            color: deafened ? 'error.main' : 'none',
+            bgcolor: deafened
+              ? (theme) => varAlpha(theme.palette.error.mainChannel, 0.18)
+              : 'background.paper',
+            '&:hover': {
+              color: deafened ? 'error.main' : 'none',
+              bgcolor: deafened
+                ? (theme) => varAlpha(theme.palette.error.mainChannel, 0.18)
+                : 'background.paper',
+            },
+          }}
+        >
+          <Headphones size={16} />
         </IconButton>
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
         <Button
           onClick={onToggleRaiseHand}
-          startIcon={<span>✋</span>}
+          startIcon={<span style={{ fontSize: 16 }}>✋</span>}
           sx={{
-            px: 1.75,
-            py: 1.25,
             minWidth: 0,
-            borderRadius: 2,
+            height: 32,
+            borderRadius: 1,
             fontSize: 12,
-            fontWeight: 500,
+            fontWeight: 600,
             textTransform: 'none',
             whiteSpace: 'nowrap',
-            color: accent.amber,
-            bgcolor: alpha(accent.amber, handRaised ? 0.22 : 0.1),
-            border: `1px solid ${alpha(accent.amber, 0.2)}`,
-            '&:hover': { bgcolor: alpha(accent.amber, 0.22) },
+            color: 'warning.main',
+            bgcolor: (theme) =>
+              varAlpha(theme.palette.warning.mainChannel, handRaised ? 0.22 : 0.1),
+            border: (theme) => `1px solid ${varAlpha(theme.palette.warning.mainChannel, 0.2)}`,
+            '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, 0.22) },
           }}
         >
           Raise Hand
@@ -196,7 +208,7 @@ export const RoomControlDock = ({
         <IconButton
           onClick={onToggleChat}
           title="Toggle chat"
-          sx={{ ...dockIconButtonSx, display: { sm: 'inline-flex', lg: 'none' } }}
+          sx={{ ...dockIconButtonSx, display: { sm: 'inline-flex', md: 'none' } }}
         >
           <MessageSquare size={16} />
         </IconButton>
@@ -205,19 +217,19 @@ export const RoomControlDock = ({
           startIcon={<PhoneOff size={16} />}
           sx={{
             px: 1.75,
-            py: 1.25,
+            py: 2,
             minWidth: 0,
-            borderRadius: 2,
+            borderRadius: 1,
             fontSize: 12,
             fontWeight: 600,
             textTransform: 'none',
             whiteSpace: 'nowrap',
             color: '#fff',
-            bgcolor: accent.rose,
-            '&:hover': { bgcolor: alpha(accent.rose, 0.85) },
+            bgcolor: 'error.main',
+            '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.error.mainChannel, 0.85) },
           }}
         >
-          <Box component="span">Leave</Box>
+          Leave
         </Button>
       </Box>
     </Box>
