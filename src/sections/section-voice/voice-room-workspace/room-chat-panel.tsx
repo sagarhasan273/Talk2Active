@@ -160,7 +160,7 @@ export const RoomChatPanel = ({
             px: 1.5,
             py: 1,
             fontSize: 13,
-            color: slate[100],
+            color: 'text.primary',
             outline: 'none',
             '&::placeholder': { color: slate[400] },
             '&:focus': { borderColor: alpha(accent.brand, 0.6) },

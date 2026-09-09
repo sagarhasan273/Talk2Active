@@ -279,7 +279,7 @@ export const RoomMessageBubble = ({
                     onClick={saveEdit}
                     sx={{
                       ...linkButtonSx,
-                      color: theme.palette.primary.main,
+                      color: 'white',
                     }}
                   >
                     Save
@@ -289,7 +289,7 @@ export const RoomMessageBubble = ({
                     onClick={cancelEdit}
                     sx={{
                       ...linkButtonSx,
-                      color: theme.palette.text.secondary,
+                      color: theme.palette.text.primary,
                     }}
                   >
                     Cancel
