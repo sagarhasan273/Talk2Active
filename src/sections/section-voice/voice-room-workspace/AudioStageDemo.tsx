@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Box } from '@mui/material';
 
 import { RoomWorkspace } from './room-workspace';
+import { CURRENT_USER, DEMO_MESSAGES } from './messages-data';
 
-import type { ChatMessage, StageParticipant } from './types';
+import type { StageParticipant } from './types';
 
 const INITIAL_PARTICIPANTS: StageParticipant[] = [
   {
@@ -50,21 +51,16 @@ const INITIAL_PARTICIPANTS: StageParticipant[] = [
   },
 ];
 
-const INITIAL_MESSAGES: ChatMessage[] = [
-  { id: 'm1', authorName: 'Sagar Hasan', text: 'Welcome everyone! Feel free to jump in 🎙️' },
-  { id: 'm2', authorName: 'Anna K.', text: 'Excited for this one!' },
-];
-
 const ROOM = {
   maxParticipants: 8,
   topicPrompt: 'What is one country you wish to visit next year and why?',
 };
 
-const SELF_ID = 'u4';
+const SELF_ID = CURRENT_USER.id;
 
 /**
  * Demo call screen. Wires mock room/participant/chat data into
- * CallWorkspace and shows how each callback would typically be handled.
+ * RoomWorkspace and shows how each callback would typically be handled.
  * Drop this in a route or a Storybook story to preview the whole thing —
  * try resizing the sidebar (desktop) and opening chat via the dock's
  * message icon (mobile / narrow viewport).
@@ -94,7 +90,8 @@ export const VoiceStageDemo = () => {
 
   const onOpenReactions = () => pushLog('Reactions opened');
   const onLeave = () => pushLog('Left the call');
-  const onSendMessage = (text: string) => pushLog(`Sent: "${text}"`);
+  const onSendMessage = (text: string, replyToId?: string) =>
+    pushLog(`Sent: "${text}"${replyToId ? ` (reply)` : ''}`);
 
   return (
     <Box sx={{}}>
@@ -108,7 +105,9 @@ export const VoiceStageDemo = () => {
         onToggleRaiseHand={onToggleRaiseHand}
         onOpenReactions={onOpenReactions}
         onLeave={onLeave}
-        initialMessages={INITIAL_MESSAGES}
+        currentUserId={CURRENT_USER.id}
+        currentUserName={CURRENT_USER.name}
+        initialMessages={DEMO_MESSAGES}
         onSendMessage={onSendMessage}
       />
 

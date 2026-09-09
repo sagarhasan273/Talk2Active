@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 
 import { Box } from '@mui/material';
 
-import { ChatPanel } from './room-chat-panel';
-import { ChatDrawer } from './room-chat-drawer';
+import { RoomChatPanel } from './room-chat-panel';
 import { RoomAudioStage } from './room-audio-stage';
+import { RoomChatDrawer } from './room-chat-drawer';
 import { ResizableSidebar } from './ResizableSidebar';
 import { UserProfileDrawer } from '../voice-user-profile-drawer';
 
@@ -14,6 +14,10 @@ type RoomWorkspaceProps = {
   participants: StageParticipant[];
   maxParticipants: number;
   topicPrompt: string;
+  /** Id and name of the person viewing this workspace — used to resolve
+   * private (whisper) message visibility and to tag messages they send. */
+  currentUserId: string;
+  currentUserName: string;
   onChangePrompt?: () => void;
   onToggleMic?: (muted: boolean) => void;
   onToggleDeafen?: (deafened: boolean) => void;
@@ -21,7 +25,7 @@ type RoomWorkspaceProps = {
   onOpenReactions?: () => void;
   onLeave?: () => void;
   initialMessages?: ChatMessage[];
-  onSendMessage?: (text: string) => void;
+  onSendMessage?: (text: string, replyToId?: string) => void;
 };
 
 const DEFAULT_SIDEBAR_WIDTH = 320;
@@ -30,15 +34,22 @@ const MAX_SIDEBAR_WIDTH = 600;
 
 /**
  * Composes RoomAudioStage with a chat panel:
- * - Desktop (lg+): chat sits in a ResizableSidebar next to the stage —
+ * - Desktop (md+): chat sits in a ResizableSidebar next to the stage —
  *   drag the thin handle on its left edge to resize.
- * - Mobile: the sidebar is hidden; ControlDock's chat icon opens the same
- *   chat content in a bottom-sheet ChatDrawer instead.
+ * - Mobile: the sidebar is hidden; the control dock's chat icon opens the
+ *   same chat content in a bottom-sheet ChatDrawer instead.
+ *
+ * NOTE: the sidebar now appears starting at `md` (this file), so
+ * RoomControlDock's chat-icon button should hide at that same breakpoint
+ * rather than `lg` — otherwise both the sidebar and the mobile chat icon
+ * would be visible between md and lg.
  */
 export const RoomWorkspace = ({
   participants,
   maxParticipants,
   topicPrompt,
+  currentUserId,
+  currentUserName,
   onChangePrompt,
   onToggleMic,
   onToggleDeafen,
@@ -55,17 +66,55 @@ export const RoomWorkspace = ({
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
-  const handleSend = (text: string) => {
+  const handleSend = (text: string, replyToId?: string) => {
     setMessages((prev) => [
       ...prev,
-      { id: `local-${Date.now()}`, authorName: 'You', text, isSelf: true },
+      {
+        id: `local-${Date.now()}`,
+        authorId: currentUserId,
+        authorName: currentUserName,
+        text,
+        isSelf: true,
+        replyToId,
+      },
     ]);
-    onSendMessage?.(text);
+    onSendMessage?.(text, replyToId);
   };
 
-  const handleProfileClick = (participant: any) => {
+  const handleEditMessage = (id: string, text: string) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, text, editedAt: new Date().toISOString() } : m))
+    );
+  };
+
+  const handleReactMessage = (id: string, emoji: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== id) return m;
+        const existing = m.reactions ?? [];
+        const current = existing.find((r) => r.emoji === emoji);
+
+        if (!current) {
+          return { ...m, reactions: [...existing, { emoji, count: 1, reactedBySelf: true }] };
+        }
+
+        const nextCount = current.reactedBySelf ? current.count - 1 : current.count + 1;
+        const nextReactions =
+          nextCount <= 0
+            ? existing.filter((r) => r.emoji !== emoji)
+            : existing.map((r) =>
+                r.emoji === emoji
+                  ? { ...r, count: nextCount, reactedBySelf: !current.reactedBySelf }
+                  : r
+              );
+
+        return { ...m, reactions: nextReactions };
+      })
+    );
+  };
+
+  const handleProfileClick = (participant: StageParticipant) => {
     setSelectedUser(participant);
-    console.log('Profile clicked for participant:', participant);
     setProfileDrawerOpen(true);
   };
 
@@ -74,20 +123,19 @@ export const RoomWorkspace = ({
     setSelectedUser(null);
   };
 
-  // Audio control handlers
+  // --- Per-participant local playback controls (how *you* hear someone) ---
+  // These are distinct from onToggleMic/onToggleDeafen above, which control
+  // your own mic/audio session. TODO: wire these to your audio/session layer.
   const handleVolumeChange = (userId: string, volume: number) => {
-    // Update user's volume in your state/context
     console.log(`Volume for ${userId}: ${volume}`);
   };
 
-  const handleToggleMute = (userId?: string) => {
-    // Toggle mute for user
-    console.log(`Toggle mute for ${userId}`);
+  const handleToggleParticipantMute = (userId?: string) => {
+    console.log(`Toggle local mute for ${userId}`);
   };
 
-  const handleToggleDeafen = (userId?: string) => {
-    // Toggle deafen for user
-    console.log(`Toggle deafen for ${userId}`);
+  const handleToggleParticipantDeafen = (userId?: string) => {
+    console.log(`Toggle local deafen for ${userId}`);
   };
 
   const handleFollow = (userId?: string) => {
@@ -119,8 +167,9 @@ export const RoomWorkspace = ({
             flexDirection: { xs: 'column', md: 'row' },
             gap: 1,
             alignItems: 'stretch',
-            minHeight: { md: 560 },
             width: '100%',
+            minHeight: { md: '60vh' },
+            maxHeight: { md: '70vh' },
           }}
         >
           <Box
@@ -142,11 +191,11 @@ export const RoomWorkspace = ({
               onOpenReactions={onOpenReactions}
               onToggleChat={() => setChatOpen(true)}
               onLeave={onLeave}
-              onProfileClick={handleProfileClick} // Pass this down
+              onProfileClick={handleProfileClick}
             />
           </Box>
 
-          {/* Desktop sidebar */}
+          {/* Desktop sidebar — hidden below the md breakpoint */}
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
@@ -159,21 +208,30 @@ export const RoomWorkspace = ({
               minWidth={MIN_SIDEBAR_WIDTH}
               maxWidth={MAX_SIDEBAR_WIDTH}
             >
-              <ChatPanel messages={messages} onSendMessage={handleSend} />
+              <RoomChatPanel
+                messages={messages}
+                currentUserId={currentUserId}
+                onSendMessage={handleSend}
+                onEditMessage={handleEditMessage}
+                onReactMessage={handleReactMessage}
+              />
             </ResizableSidebar>
           </Box>
         </Box>
 
-        {/* Mobile chat */}
-        <ChatDrawer
+        {/* Mobile chat — opened via the chat icon in the control dock */}
+        <RoomChatDrawer
           open={chatOpen}
           onClose={() => setChatOpen(false)}
           messages={messages}
+          currentUserId={currentUserId}
           onSendMessage={handleSend}
+          onEditMessage={handleEditMessage}
+          onReactMessage={handleReactMessage}
         />
       </Box>
 
-      {/* User Profile Drawer */}
+      {/* User profile drawer */}
       <UserProfileDrawer
         open={profileDrawerOpen}
         onClose={handleProfileClose}
@@ -183,11 +241,12 @@ export const RoomWorkspace = ({
         onBlock={handleBlock}
         onReport={handleReport}
         onVolumeChange={handleVolumeChange}
-        onToggleMute={handleToggleMute}
-        onToggleDeafen={handleToggleDeafen}
+        onToggleMute={handleToggleParticipantMute}
+        onToggleDeafen={handleToggleParticipantDeafen}
         onShare={handleShare}
       />
     </>
   );
 };
+
 export default RoomWorkspace;

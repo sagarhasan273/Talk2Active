@@ -12,13 +12,32 @@ export type StageParticipant = {
   handRaised?: boolean;
 };
 
+export type MessageReaction = {
+  emoji: string;
+  count: number;
+  reactedBySelf: boolean;
+};
+
 export type ChatMessage = {
   id: string;
+  authorId: string;
   authorName: string;
   avatarUrl?: string;
   text: string;
   timestamp?: string;
   isSelf?: boolean;
+  /** Set when the message has been edited after sending. */
+  editedAt?: string;
+  /** id of the message this one is replying to, if any. */
+  replyToId?: string;
+  reactions?: MessageReaction[];
+  /**
+   * When set, this is a private (whisper) message meant only for the sender
+   * and this one recipient — even inside a group chat. Consumers should
+   * only render a private message if the viewer is the sender or the
+   * recipient (see filterVisibleMessages in messages-data.ts).
+   */
+  privateTo?: { id: string; name: string } | null;
 };
 
 export type RoomAudioStageProps = {

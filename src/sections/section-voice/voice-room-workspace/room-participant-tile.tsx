@@ -1,10 +1,11 @@
 import React from 'react';
-
 import { Mic, Crown, MicOff } from 'lucide-react';
+
 import { Box, alpha, Typography } from '@mui/material';
 
-import { accent, slate, badgeBounce, speakingGlow } from './theme-tokens';
 import { WaveformIndicator } from './room-audio-waveform-indicator';
+import { slate, accent, badgeBounce, speakingGlow } from './theme-tokens';
+
 import type { StageParticipant } from './types';
 
 const pillStyles = {

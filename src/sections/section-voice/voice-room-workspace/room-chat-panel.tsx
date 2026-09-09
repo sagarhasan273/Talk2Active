@@ -1,27 +1,54 @@
 import { X, Send } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Box, alpha, IconButton, Typography } from '@mui/material';
 
 import { slate, accent } from './theme-tokens';
+import { filterVisibleMessages } from './messages-data';
+import { RoomMessageBubble } from './room-message-bubble';
 
 import type { ChatMessage } from './types';
 
-type ChatPanelProps = {
+type RoomChatPanelProps = {
   messages: ChatMessage[];
-  onSendMessage?: (text: string) => void;
+  /** Id of the person viewing this chat — used to resolve which private
+   * (whisper) messages are visible to them. */
+  currentUserId: string;
+  onSendMessage?: (text: string, replyToId?: string) => void;
+  onEditMessage?: (id: string, text: string) => void;
+  onReactMessage?: (id: string, emoji: string) => void;
   onClose?: () => void;
   title?: string;
 };
 
-export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: ChatPanelProps) => {
+export const RoomChatPanel = ({
+  messages,
+  currentUserId,
+  onSendMessage,
+  onEditMessage,
+  onReactMessage,
+  onClose,
+  title = 'Chat',
+}: RoomChatPanelProps) => {
   const [draft, setDraft] = useState('');
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+
+  const visibleMessages = useMemo(
+    () => filterVisibleMessages(messages, currentUserId),
+    [messages, currentUserId]
+  );
+
+  const byId = useMemo(
+    () => Object.fromEntries(visibleMessages.map((m) => [m.id, m])),
+    [visibleMessages]
+  );
 
   const send = () => {
     const text = draft.trim();
     if (!text) return;
-    onSendMessage?.(text);
+    onSendMessage?.(text, replyingTo?.id);
     setDraft('');
+    setReplyingTo(null);
   };
 
   return (
@@ -60,43 +87,50 @@ export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: 
           gap: 1.25,
         }}
       >
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <Typography variant="caption" sx={{ color: slate[700], textAlign: 'center', mt: 2 }}>
             No messages yet — say hello!
           </Typography>
         ) : (
-          messages.map((m) => (
-            <Box
+          visibleMessages.map((m) => (
+            <RoomMessageBubble
               key={m.id}
-              sx={{
-                alignSelf: m.isSelf ? 'flex-end' : 'flex-start',
-                maxWidth: '85%',
-              }}
-            >
-              {!m.isSelf && (
-                <Typography variant="caption" sx={{ color: slate[400], ml: 0.5 }}>
-                  {m.authorName}
-                </Typography>
-              )}
-              <Box
-                sx={{
-                  mt: 0.25,
-                  px: 1.5,
-                  py: 1,
-                  borderRadius: 2,
-                  fontSize: 13,
-                  lineHeight: 1.4,
-                  color: m.isSelf ? '#fff' : slate[200],
-                  bgcolor: m.isSelf ? accent.brand : slate[800],
-                  wordBreak: 'break-word',
-                }}
-              >
-                {m.text}
-              </Box>
-            </Box>
+              message={m}
+              replyTo={m.replyToId ? byId[m.replyToId] : undefined}
+              onReply={setReplyingTo}
+              onEdit={onEditMessage}
+              onReact={onReactMessage}
+            />
           ))
         )}
       </Box>
+
+      {replyingTo && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            px: 2,
+            py: 1,
+            borderTop: (theme) => `1px solid ${theme.palette.primary.main}`,
+            bgcolor: alpha(accent.brand, 0.08),
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: 11, fontWeight: 700, color: accent.brand }}>
+              Replying to {replyingTo.authorName}
+            </Typography>
+            <Typography noWrap sx={{ fontSize: 12, color: slate[400], maxWidth: 260 }}>
+              {replyingTo.text}
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setReplyingTo(null)} sx={{ color: slate[400] }}>
+            <X size={14} />
+          </IconButton>
+        </Box>
+      )}
 
       <Box
         sx={{
@@ -104,7 +138,7 @@ export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: 
           alignItems: 'center',
           gap: 1,
           p: 1.5,
-          borderTop: `1px solid ${slate[800]}`,
+          borderTop: replyingTo ? 'none' : (theme) => `1px solid ${theme.palette.divider}`,
           flexShrink: 0,
         }}
       >
@@ -115,12 +149,13 @@ export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: 
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') send();
           }}
-          placeholder="Send a message..."
+          placeholder={replyingTo ? `Reply to ${replyingTo.authorName}...` : 'Send a message...'}
           sx={{
             flex: 1,
             minWidth: 0,
-            bgcolor: slate[800],
-            border: `1px solid ${slate[700]}`,
+            bgcolor: 'background.neutral',
+            border: `1px solid`,
+            borderColor: 'divider',
             borderRadius: 2,
             px: 1.5,
             py: 1,
@@ -135,10 +170,10 @@ export const ChatPanel = ({ messages, onSendMessage, onClose, title = 'Chat' }: 
           onClick={send}
           disabled={!draft.trim()}
           sx={{
-            bgcolor: accent.brand,
+            bgcolor: 'primary.main',
             color: '#fff',
             '&:hover': { bgcolor: alpha(accent.brand, 0.85) },
-            '&.Mui-disabled': { bgcolor: slate[800], color: slate[700] },
+            '&.Mui-disabled': { bgcolor: 'background.neutral', color: 'text.primary' },
           }}
         >
           <Send size={16} />
