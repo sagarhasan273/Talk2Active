@@ -310,7 +310,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
           flex: 1,
           overflowY: 'auto',
           px: { xs: 2.5, sm: 3.5 },
-          py: 2.5,
+          py: 2,
         }}
       >
         {/* Avatar and Identity */}
@@ -319,7 +319,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            mb: 2.5,
+            mb: 2,
           }}
         >
           <Badge
@@ -386,11 +386,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
               {name || 'Unknown User'}
             </Typography>
 
-            {verified && (
-              <Tooltip title="Verified">
-                <VerifiedIcon sx={{ color: '#5865F2', fontSize: 20 }} />
-              </Tooltip>
-            )}
+            {!verified && <VerifiedIcon sx={{ color: '#5865F2', fontSize: 20 }} />}
           </Box>
 
           <Typography
