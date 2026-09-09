@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Drawer } from '@mui/material';
 
-import { slate } from './theme-tokens';
 import { RoomChatPanel } from './room-chat-panel';
 
 import type { ChatMessage } from './types';
@@ -35,11 +34,9 @@ export const RoomChatDrawer = ({
     PaperProps={{
       sx: {
         height: '75vh',
-        maxHeight: 640,
+        maxHeight: 750,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        bgcolor: slate[900],
-        border: `1px solid ${slate[800]}`,
         borderBottom: 'none',
       },
     }}

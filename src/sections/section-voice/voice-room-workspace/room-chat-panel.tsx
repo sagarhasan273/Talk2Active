@@ -171,7 +171,7 @@ export const RoomChatPanel = ({
           disabled={!draft.trim()}
           sx={{
             bgcolor: 'primary.main',
-            color: '#fff',
+            color: 'white',
             '&:hover': { bgcolor: alpha(accent.brand, 0.85) },
             '&.Mui-disabled': { bgcolor: 'background.neutral', color: 'text.primary' },
           }}

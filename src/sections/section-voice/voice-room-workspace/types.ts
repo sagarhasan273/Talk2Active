@@ -38,6 +38,8 @@ export type ChatMessage = {
    * recipient (see filterVisibleMessages in messages-data.ts).
    */
   privateTo?: { id: string; name: string } | null;
+  isSystem?: boolean; // Added system message flag
+  systemType?: 'info' | 'warning' | 'success' | 'error'; // Added system message type
 };
 
 export type RoomAudioStageProps = {

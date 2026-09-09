@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { Lock, Reply, Smile, Pencil } from 'lucide-react';
+import {
+  Lock,
+  Info,
+  Reply,
+  Smile,
+  Pencil,
+  AlertCircle,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react';
 
-import { Box, alpha, Popover, useTheme, Typography, IconButton } from '@mui/material';
+import { Box, alpha, Avatar, Popover, useTheme, Typography, IconButton } from '@mui/material';
 
 import { QUICK_REACTIONS } from './messages-data';
 
@@ -36,6 +45,40 @@ export const RoomMessageBubble = ({
       : `Private to you`
     : null;
 
+  // System message rendering
+  if (message.isSystem) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+          my: 1,
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 0.75,
+            borderRadius: 2,
+            bgcolor: getSystemMessageBg(theme, message.systemType),
+            border: `1px solid ${getSystemMessageBorder(theme, message.systemType)}`,
+            color: getSystemMessageColor(theme, message.systemType),
+            maxWidth: '80%',
+          }}
+        >
+          {getSystemIcon(message.systemType)}
+          <Typography variant="body2" sx={{ fontSize: 13, fontWeight: 500 }}>
+            {message.text}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
   const saveEdit = () => {
     const text = draft.trim();
     if (text && text !== message.text) onEdit?.(message.id, text);
@@ -63,19 +106,56 @@ export const RoomMessageBubble = ({
         width: '100%',
       }}
     >
-      {!message.isSelf && (
-        <Typography
-          variant="caption"
-          sx={{
-            color: theme.palette.text.primary,
-            ml: 0.5,
-            fontWeight: 600,
-            fontSize: 12,
-          }}
-        >
-          {message.authorName}
-        </Typography>
-      )}
+      {/* Author name with avatar */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          ml: message.isSelf ? 'auto' : 0.5,
+          mr: message.isSelf ? 0.5 : 'auto',
+          mb: 0.25,
+        }}
+      >
+        {!message.isSelf && (
+          <>
+            <Avatar
+              src={message.avatarUrl}
+              alt={message.authorName}
+              sx={{
+                width: 24,
+                height: 24,
+                fontSize: 12,
+                bgcolor: theme.palette.primary.main,
+              }}
+            >
+              {!message.avatarUrl && message.authorName.charAt(0)}
+            </Avatar>
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme.palette.text.primary,
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            >
+              {message.authorName}
+            </Typography>
+          </>
+        )}
+        {message.isSelf && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: theme.palette.text.secondary,
+              fontWeight: 500,
+              fontSize: 12,
+            }}
+          >
+            You
+          </Typography>
+        )}
+      </Box>
 
       <Box
         sx={{
@@ -412,6 +492,68 @@ export const RoomMessageBubble = ({
       </Popover>
     </Box>
   );
+};
+
+// Helper functions for system messages
+const getSystemMessageBg = (theme: any, type?: string) => {
+  switch (type) {
+    case 'info':
+      return alpha(theme.palette.info.main, 0.08);
+    case 'success':
+      return alpha(theme.palette.success.main, 0.08);
+    case 'warning':
+      return alpha(theme.palette.warning.main, 0.08);
+    case 'error':
+      return alpha(theme.palette.error.main, 0.08);
+    default:
+      return alpha(theme.palette.grey[500], 0.08);
+  }
+};
+
+const getSystemMessageBorder = (theme: any, type?: string) => {
+  switch (type) {
+    case 'info':
+      return alpha(theme.palette.info.main, 0.2);
+    case 'success':
+      return alpha(theme.palette.success.main, 0.2);
+    case 'warning':
+      return alpha(theme.palette.warning.main, 0.2);
+    case 'error':
+      return alpha(theme.palette.error.main, 0.2);
+    default:
+      return alpha(theme.palette.grey[500], 0.2);
+  }
+};
+
+const getSystemMessageColor = (theme: any, type?: string) => {
+  switch (type) {
+    case 'info':
+      return theme.palette.info.main;
+    case 'success':
+      return theme.palette.success.main;
+    case 'warning':
+      return theme.palette.warning.main;
+    case 'error':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.text.secondary;
+  }
+};
+
+const getSystemIcon = (type?: string) => {
+  const iconProps = { size: 16 };
+  switch (type) {
+    case 'info':
+      return <Info {...iconProps} />;
+    case 'success':
+      return <CheckCircle {...iconProps} />;
+    case 'warning':
+      return <AlertTriangle {...iconProps} />;
+    case 'error':
+      return <AlertCircle {...iconProps} />;
+    default:
+      return <Info {...iconProps} />;
+  }
 };
 
 const linkButtonSx = {
