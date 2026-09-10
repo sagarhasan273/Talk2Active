@@ -9,27 +9,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useMessagesTools } from 'src/core/slices';
 
-import { Iconify } from 'src/components/iconify';
-
 import { useSocialSocketListeners } from './social-listeners';
 import SocialChat from '../../../sections/section-common/social-chat';
-
-// ----------------------------------------------------------------------
-
-const HEADER_TABS = [
-  { icon: <Iconify icon="foundation:social-myspace" />, value: 'social', label: 'People' },
-  { icon: <Iconify icon="tabler:message-filled" />, value: 'message', label: 'Message' },
-];
-
-const TABS = [
-  { label: 'All', value: 'all', icon: 'lsicon:user-all-filled' },
-  { label: 'Friends', value: 'friends', icon: 'fa-solid:user-friends' },
-  {
-    label: 'Following',
-    value: 'following',
-    icon: 'streamline-sharp:following-solid',
-  },
-];
 
 // ----------------------------------------------------------------------
 

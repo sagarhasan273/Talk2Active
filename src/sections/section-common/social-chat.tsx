@@ -851,6 +851,8 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
         height: 1,
         width: 1,
         borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
       }}
     >
       {activeFriend ? (
@@ -935,9 +937,11 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
           {tab !== 'friends' && (
             <Box
               sx={{
+                position: 'absolute',
+                bottom: 0,
                 px: 2,
                 py: 1,
-                borderTop: '1px solid',
+                border: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.neutral',
               }}
