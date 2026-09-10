@@ -38,6 +38,7 @@ import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
 import { VoiceRoomsFilter } from './voice-rooms-filter';
+import SocialChatButton from './voice-social-chat-button';
 import { CreateRoomModal } from '../voice-create-room-modal';
 import { VoiceRoomView } from '../voice-room-view/voice-room-view';
 
@@ -574,7 +575,7 @@ export function VoiceMainView() {
     </>
   );
 
-  const footer = <Box sx={{ height: 1, bgcolor: 'background.neutral' }} />;
+  const footer = <SocialChatButton />;
 
   return (
     <>
