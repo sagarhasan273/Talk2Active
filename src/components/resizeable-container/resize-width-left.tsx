@@ -3,26 +3,15 @@ import React, { useRef, useState, useCallback } from 'react';
 
 import { Box, useTheme } from '@mui/material';
 
-type ResizableSidebarProps = {
-  width: number;
-  onWidthChange: (width: number) => void;
-  minWidth?: number;
-  maxWidth?: number;
-  children: React.ReactNode;
-};
+import type { ResizeWidthLeftProps } from './types';
 
-/**
- * Wraps its children in a fixed-width panel with a drag handle on the left
- * edge. Drag the handle to resize; width is clamped to [minWidth, maxWidth]
- * and reported via onWidthChange so the parent can persist it if it wants to.
- */
-export const ResizableSidebar = ({
+export const ResizeWidthLeft = ({
   width,
   onWidthChange,
   minWidth = 260,
   maxWidth = 480,
   children,
-}: ResizableSidebarProps) => {
+}: ResizeWidthLeftProps) => {
   const theme = useTheme();
 
   const [dragging, setDragging] = useState(false);

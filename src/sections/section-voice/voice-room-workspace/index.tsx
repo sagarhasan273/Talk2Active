@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { ResizeWidthLeft } from '@/components/resizeable-container';
 
 import { Box } from '@mui/material';
 
 import { RoomChatPanel } from './room-chat-panel';
 import { RoomAudioStage } from './room-audio-stage';
 import { RoomChatDrawer } from './room-chat-drawer';
-import { ResizableSidebar } from './ResizableSidebar';
-import { VoiceUserProfile } from '../voice-user-profile';
+import { VoiceRoomUserProfile } from '../voice-room-user-profile';
 
 import type { ChatMessage, StageParticipant } from './types';
 
@@ -32,18 +32,6 @@ const DEFAULT_SIDEBAR_WIDTH = 320;
 const MIN_SIDEBAR_WIDTH = 300;
 const MAX_SIDEBAR_WIDTH = 600;
 
-/**
- * Composes RoomAudioStage with a chat panel:
- * - Desktop (md+): chat sits in a ResizableSidebar next to the stage —
- *   drag the thin handle on its left edge to resize.
- * - Mobile: the sidebar is hidden; the control dock's chat icon opens the
- *   same chat content in a bottom-sheet ChatDrawer instead.
- *
- * NOTE: the sidebar now appears starting at `md` (this file), so
- * RoomControlDock's chat-icon button should hide at that same breakpoint
- * rather than `lg` — otherwise both the sidebar and the mobile chat icon
- * would be visible between md and lg.
- */
 export const VoiceRoomWorkspace = ({
   participants,
   maxParticipants,
@@ -202,7 +190,7 @@ export const VoiceRoomWorkspace = ({
               flexShrink: 0,
             }}
           >
-            <ResizableSidebar
+            <ResizeWidthLeft
               width={sidebarWidth}
               onWidthChange={setSidebarWidth}
               minWidth={MIN_SIDEBAR_WIDTH}
@@ -215,7 +203,7 @@ export const VoiceRoomWorkspace = ({
                 onEditMessage={handleEditMessage}
                 onReactMessage={handleReactMessage}
               />
-            </ResizableSidebar>
+            </ResizeWidthLeft>
           </Box>
         </Box>
 
@@ -232,7 +220,7 @@ export const VoiceRoomWorkspace = ({
       </Box>
 
       {/* User profile drawer */}
-      <VoiceUserProfile
+      <VoiceRoomUserProfile
         open={profileDrawerOpen}
         onClose={handleProfileClose}
         user={selectedUser}

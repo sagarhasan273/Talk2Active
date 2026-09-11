@@ -1,7 +1,8 @@
+import { varAlpha } from '@/theme/styles';
 import React, { useRef, useState, useEffect } from 'react';
 
 import Hand from '@mui/icons-material/WavingHandRounded';
-import { Box, Popover, Tooltip, IconButton } from '@mui/material';
+import { Box, Popover, Tooltip, useTheme, IconButton } from '@mui/material';
 
 export const HAND_EMOJIS = {
   raised: { emoji: '✋', label: 'Raised Hand' },
@@ -31,6 +32,8 @@ export const VoiceButtonRaiseHand = ({
   onEmojiChange,
   handBtnRef,
 }: VoiceButtonRaiseHandProps) => {
+  const theme = useTheme();
+
   const internalRef = useRef<HTMLButtonElement>(null);
   const buttonRef = handBtnRef ?? internalRef;
 
@@ -120,14 +123,15 @@ export const VoiceButtonRaiseHand = ({
     height: 32,
     borderRadius: 1,
 
-    bgcolor: raiseHand ? 'rgba(249, 202, 36, 0.16)' : 'background.paper',
+    bgcolor: 'background.paper',
 
     border: '1px solid',
 
     borderColor: raiseHand ? 'rgba(249, 202, 36, 0.3)' : 'transparent',
 
     '&:hover': {
-      bgcolor: 'rgba(249, 202, 36, 0.22)',
+      color: theme.palette.mode === 'light' ? 'black' : 'white',
+      bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.15),
     },
   };
 
@@ -171,7 +175,6 @@ export const VoiceButtonRaiseHand = ({
             <Hand
               sx={{
                 fontSize: '1rem',
-                color: raiseHand ? '#f9ca24' : 'grey.500',
 
                 animation: raiseHand ? 'wave 0.5s ease infinite alternate' : 'none',
 
@@ -210,7 +213,7 @@ export const VoiceButtonRaiseHand = ({
               minWidth: 190,
               maxWidth: 230,
               bgcolor: 'background.paper',
-              boxShadow: (theme) => theme.shadows[8],
+              boxShadow: theme.shadows[8],
             },
           },
         }}

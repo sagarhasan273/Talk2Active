@@ -233,7 +233,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
   };
 });
 
-type VoiceUserCardProps = {
+type VoiceRoomUserCardProps = {
   stream: MediaStream | null;
   participant: Partial<Participant> & {
     isSpeaking?: boolean;
@@ -254,7 +254,7 @@ type VoiceUserCardProps = {
   className?: string;
 };
 
-export function VoiceUserCard({
+export function VoiceRoomUserCard({
   stream,
   participant,
   size = 'medium',
@@ -264,7 +264,7 @@ export function VoiceUserCard({
   onClick,
   onDoubleClick,
   className,
-}: VoiceUserCardProps) {
+}: VoiceRoomUserCardProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

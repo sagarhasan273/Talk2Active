@@ -1,4 +1,4 @@
-// VoiceUserProfile.tsx
+// VoiceRoomUserProfile.tsx
 
 import type { Participant } from 'src/types/type-room';
 
@@ -39,7 +39,7 @@ import {
 
 import { fUsername } from 'src/utils/helper';
 
-interface VoiceUserProfileProps {
+interface VoiceRoomUserProfileProps {
   open: boolean;
   onClose: () => void;
 
@@ -67,7 +67,7 @@ interface VoiceUserProfileProps {
   onShare?: (userId: string) => void;
 }
 
-export const VoiceUserProfile: React.FC<VoiceUserProfileProps> = ({
+export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   open,
   onClose,
   user,
@@ -774,4 +774,4 @@ export const VoiceUserProfile: React.FC<VoiceUserProfileProps> = ({
   );
 };
 
-export default VoiceUserProfile;
+export default VoiceRoomUserProfile;

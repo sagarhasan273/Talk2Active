@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 
 import { Box } from '@mui/material';
 
-import { VoiceUserCard } from '../voice-user-card';
 import { PromptBanner } from './room-prompt-banner';
 import { RoomControlDock } from './room-control-dock';
 import { EmptySlotTile } from './room-empty-slot-tile';
+import { VoiceRoomUserCard } from '../voice-room-user-card';
 
 import type { RoomAudioStageProps } from './types';
 
@@ -83,7 +83,7 @@ export const RoomAudioStage = ({
         }}
       >
         {participants.map((participant) => (
-          <VoiceUserCard
+          <VoiceRoomUserCard
             key={participant.id}
             participant={{
               userId: participant.id,

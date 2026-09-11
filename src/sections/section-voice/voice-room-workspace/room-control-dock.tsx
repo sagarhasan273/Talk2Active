@@ -22,16 +22,20 @@ const dockIconButtonSx = {
   p: 1,
   borderRadius: 1,
   bgcolor: 'background.paper',
-  color: 'text.secondary',
-  '&:hover': { color: 'text.primary', bgcolor: 'background.paper' },
+  '&:hover': {
+    color: (theme: any) => (theme.palette.mode === 'light' ? 'black' : 'white'),
+    backgroundColor: (theme: any) => varAlpha(theme.vars.palette.primary.mainChannel, 0.15),
+  },
 } as const;
 
 const mobileIconButtonSx = {
   p: 1,
   borderRadius: 1,
   bgcolor: 'background.paper',
-  color: 'text.secondary',
-  '&:hover': { bgcolor: 'background.default' },
+  '&:hover': {
+    color: (theme: any) => (theme.palette.mode === 'light' ? 'black' : 'white'),
+    backgroundColor: (theme: any) => varAlpha(theme.vars.palette.primary.mainChannel, 0.15),
+  },
 } as const;
 
 export const RoomControlDock = ({
@@ -72,7 +76,10 @@ export const RoomControlDock = ({
           ...mobileIconButtonSx,
           bgcolor: micMuted ? 'error.main' : 'error.main',
           color: micMuted ? 'common.white' : 'text.secondary',
-          '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.error.mainChannel, 0.85) },
+          '&:hover': {
+            color: (theme: any) => (theme.palette.mode === 'light' ? 'black' : 'white'),
+            bgcolor: (theme) => varAlpha(theme.palette.primary.mainChannel, 0.15),
+          },
         }}
       >
         {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
@@ -128,13 +135,16 @@ export const RoomControlDock = ({
           onClick={onToggleMic}
           sx={{
             ...dockIconButtonSx,
-            bgcolor: micMuted ? 'error.main' : 'primary.main',
-            color: 'common.white',
+            ...(micMuted && {
+              color: (theme) => (theme.palette.mode === 'light' ? 'black' : 'white'),
+            }),
+            bgcolor: micMuted ? 'error.main' : 'background.paper',
             '&:hover': {
+              color: (theme: any) => (theme.palette.mode === 'light' ? 'black' : 'white'),
               bgcolor: (theme) =>
                 micMuted
-                  ? varAlpha(theme.palette.error.mainChannel, 0.85)
-                  : varAlpha(theme.palette.primary.mainChannel, 0.85),
+                  ? varAlpha(theme.palette.error.mainChannel, 0.75)
+                  : varAlpha(theme.palette.primary.mainChannel, 0.15),
             },
           }}
         >
@@ -150,10 +160,12 @@ export const RoomControlDock = ({
               ? (theme) => varAlpha(theme.palette.error.mainChannel, 0.18)
               : 'background.paper',
             '&:hover': {
-              color: deafened ? 'error.main' : 'none',
+              color: deafened
+                ? 'error.main'
+                : (theme) => (theme.palette.mode === 'light' ? 'black' : 'white'),
               bgcolor: deafened
                 ? (theme) => varAlpha(theme.palette.error.mainChannel, 0.18)
-                : 'background.paper',
+                : (theme) => varAlpha(theme.palette.primary.mainChannel, 0.15),
             },
           }}
         >
