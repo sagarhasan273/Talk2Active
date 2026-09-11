@@ -5,7 +5,7 @@ import { Add, Mic, Chat, Group, SentimentDissatisfied } from '@mui/icons-materia
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { CreateRoomModal } from '../voice-create-room-modal';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 
 interface VoiceRoomsEmptyStateProps {
   title?: string;
@@ -242,7 +242,7 @@ export function VoiceRoomsEmptyState({
           Create Your First Channel
         </Button>
 
-        <CreateRoomModal
+        <VoiceModalCreateRoom
           open={createRoomBoolean.value}
           onClose={createRoomBoolean.onFalse}
           onCreateRoom={() => {}}

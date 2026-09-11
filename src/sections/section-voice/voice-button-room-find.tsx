@@ -24,7 +24,7 @@ interface FindRoomButtonProps {
   onClick?: () => void;
 }
 
-export function VoiceRoomFindButton({
+export function VoiceButtonRoomFind({
   selected = false,
   isJoined = false,
   onClick,

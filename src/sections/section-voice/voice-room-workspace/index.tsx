@@ -6,7 +6,7 @@ import { RoomChatPanel } from './room-chat-panel';
 import { RoomAudioStage } from './room-audio-stage';
 import { RoomChatDrawer } from './room-chat-drawer';
 import { ResizableSidebar } from './ResizableSidebar';
-import { UserProfileDrawer } from '../voice-user-profile-drawer';
+import { VoiceUserProfile } from '../voice-user-profile';
 
 import type { ChatMessage, StageParticipant } from './types';
 
@@ -232,7 +232,7 @@ export const VoiceRoomWorkspace = ({
       </Box>
 
       {/* User profile drawer */}
-      <UserProfileDrawer
+      <VoiceUserProfile
         open={profileDrawerOpen}
         onClose={handleProfileClose}
         user={selectedUser}

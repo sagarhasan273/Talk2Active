@@ -80,7 +80,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -90,7 +89,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     if (showActiveOnly) count += 1;
     return count;
   }, [selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly]);
-
 
   // Debounce search input
   const handleSearchChange = useCallback(

@@ -47,6 +47,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
       setRooms(getRooms?.data || []);
     }
   }, [getRooms]);
+
   // Empty state
   if (rooms.length === 0) {
     return <VoiceRoomsEmptyState />;

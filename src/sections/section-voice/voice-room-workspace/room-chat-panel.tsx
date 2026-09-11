@@ -4,8 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { Box, alpha, IconButton, Typography } from '@mui/material';
 
 import { slate, accent } from './theme-tokens';
-import { filterVisibleMessages } from '../@mock_/messages-data';
 import { RoomMessageBubble } from './room-message-bubble';
+import { filterVisibleMessages } from '../@mock_/messages-data';
 
 import type { ChatMessage } from './types';
 

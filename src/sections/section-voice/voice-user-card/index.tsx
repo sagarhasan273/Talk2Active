@@ -27,7 +27,7 @@ import { fUsername } from 'src/utils/helper';
 
 import { useRoomTools } from 'src/core/slices';
 
-import { VoiceSpeakingIndicator } from './voice-speaking-indicator';
+import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
 // Animation for the active speaker
 const pulse = keyframes`

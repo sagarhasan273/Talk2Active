@@ -47,7 +47,7 @@ const levelColors: Record<string, string> = {
   mixed: '#818cf8',
 };
 
-export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
+export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
   open,
   onClose,
   onCreateRoom,

@@ -174,7 +174,7 @@ function StatusGrid({
 }
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const ChatStatusButton: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
+export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useResponsive('down', 'sm');

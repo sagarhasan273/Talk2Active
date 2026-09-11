@@ -16,7 +16,7 @@ export const HAND_EMOJIS = {
 
 export type HandEmojiKey = keyof typeof HAND_EMOJIS;
 
-type VoiceRaiseHandButtonProps = {
+type VoiceButtonRaiseHandProps = {
   raiseHand?: boolean;
   selectedEmoji?: string;
   onToggle?: () => void;
@@ -24,13 +24,13 @@ type VoiceRaiseHandButtonProps = {
   handBtnRef?: React.RefObject<HTMLButtonElement>;
 };
 
-export const VoiceRaiseHandButton = ({
+export const VoiceButtonRaiseHand = ({
   raiseHand = false,
   selectedEmoji = HAND_EMOJIS.raised.emoji,
   onToggle,
   onEmojiChange,
   handBtnRef,
-}: VoiceRaiseHandButtonProps) => {
+}: VoiceButtonRaiseHandProps) => {
   const internalRef = useRef<HTMLButtonElement>(null);
   const buttonRef = handBtnRef ?? internalRef;
 

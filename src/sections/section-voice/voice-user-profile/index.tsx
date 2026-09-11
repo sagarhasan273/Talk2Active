@@ -1,4 +1,4 @@
-// UserProfileDrawer.tsx
+// VoiceUserProfile.tsx
 
 import type { Participant } from 'src/types/type-room';
 
@@ -39,7 +39,7 @@ import {
 
 import { fUsername } from 'src/utils/helper';
 
-interface UserProfileDrawerProps {
+interface VoiceUserProfileProps {
   open: boolean;
   onClose: () => void;
 
@@ -67,7 +67,7 @@ interface UserProfileDrawerProps {
   onShare?: (userId: string) => void;
 }
 
-export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
+export const VoiceUserProfile: React.FC<VoiceUserProfileProps> = ({
   open,
   onClose,
   user,
@@ -774,4 +774,4 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({
   );
 };
 
-export default UserProfileDrawer;
+export default VoiceUserProfile;

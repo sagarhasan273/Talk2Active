@@ -4,7 +4,7 @@ import { Mic, Smile, MicOff, PhoneOff, Headphones, MessageSquare } from 'lucide-
 
 import { Box, Button, IconButton } from '@mui/material';
 
-import { VoiceRaiseHandButton } from '../voice-raise-hand-button';
+import { VoiceButtonRaiseHand } from '../voice-button-raise-hand';
 
 type RoomControlDockProps = {
   micMuted: boolean;
@@ -26,9 +26,6 @@ const dockIconButtonSx = {
   '&:hover': { color: 'text.primary', bgcolor: 'background.paper' },
 } as const;
 
-// Circular, icon-only variant used in the mobile row — same visual language
-// (bg/hover) as dockIconButtonSx, just round and slightly smaller so six of
-// them comfortably fit a 360px-wide screen.
 const mobileIconButtonSx = {
   p: 1,
   borderRadius: 1,
@@ -92,7 +89,7 @@ export const RoomControlDock = ({
         <Headphones size={18} />
       </IconButton>
 
-      <VoiceRaiseHandButton />
+      <VoiceButtonRaiseHand />
 
       <IconButton onClick={onOpenReactions} title="Reactions" sx={mobileIconButtonSx}>
         <Smile size={18} />
@@ -165,7 +162,7 @@ export const RoomControlDock = ({
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-        <VoiceRaiseHandButton />
+        <VoiceButtonRaiseHand />
         <IconButton onClick={onOpenReactions} title="Reactions" sx={dockIconButtonSx}>
           <Smile size={16} />
         </IconButton>

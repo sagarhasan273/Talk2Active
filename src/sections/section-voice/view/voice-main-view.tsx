@@ -38,9 +38,9 @@ import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
 import { VoiceRoomView } from './voice-room-view';
-import { VoiceRoomsFilter } from '../voice-rooms-filter';
-import SocialChatButton from '../voice-social-chat-button';
-import { CreateRoomModal } from '../voice-create-room-modal';
+import { VoiceRoomsFilter } from '../voice-filter-rooms';
+import VoiceButtonSocialChat from '../voice-button-social-chat';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -575,7 +575,7 @@ export function VoiceMainView() {
     </>
   );
 
-  const footer = <SocialChatButton />;
+  const footer = <VoiceButtonSocialChat />;
 
   return (
     <>
@@ -586,7 +586,7 @@ export function VoiceMainView() {
         footer={footer}
       />
 
-      <CreateRoomModal
+      <VoiceModalCreateRoom
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
         onCreateRoom={() => {}}
