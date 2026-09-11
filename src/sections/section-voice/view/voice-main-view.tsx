@@ -37,10 +37,10 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-rooms-view';
-import { VoiceRoomsFilter } from './voice-rooms-filter';
-import SocialChatButton from './voice-social-chat-button';
+import { VoiceRoomView } from './voice-room-view';
+import { VoiceRoomsFilter } from '../voice-rooms-filter';
+import SocialChatButton from '../voice-social-chat-button';
 import { CreateRoomModal } from '../voice-create-room-modal';
-import { VoiceRoomView } from '../voice-room-view/voice-room-view';
 
 interface TabPanelProps {
   children?: React.ReactNode;

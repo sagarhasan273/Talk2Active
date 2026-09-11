@@ -29,11 +29,8 @@ import { useRoomTools, useCredentials } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
-
 import { VoiceAudioControls } from 'src/sections/section-voice/voice-audio-controls';
 
-import { VoiceMessageGroup } from './voice-message-group';
 import { ChatStatusButton } from './voice-user-status-button';
 
 // ── Mic popover ───────────────────────────────────────────────────────────────
@@ -431,10 +428,6 @@ export const VoiceActionBar = ({ screenShareButton }: { screenShareButton?: Reac
             alignItems="center"
             sx={{ bgcolor: 'background.neutral', borderRadius: 1, p: 0.5, height: 40 }}
           >
-            <VoiceRoomMessageGroupDrawer>
-              <VoiceMessageGroup />
-            </VoiceRoomMessageGroupDrawer>
-
             {hasJoined && (
               <Tooltip title="Leave voice">
                 <IconButton size="small" onClick={() => onLeaveRoom()} sx={iconBtnSx(false, true)}>

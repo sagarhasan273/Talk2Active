@@ -4,6 +4,8 @@ import { Mic, Smile, MicOff, PhoneOff, Headphones, MessageSquare } from 'lucide-
 
 import { Box, Button, IconButton } from '@mui/material';
 
+import { VoiceRaiseHandButton } from '../voice-raise-hand-button';
+
 type RoomControlDockProps = {
   micMuted: boolean;
   deafened: boolean;
@@ -90,21 +92,7 @@ export const RoomControlDock = ({
         <Headphones size={18} />
       </IconButton>
 
-      <IconButton
-        onClick={onToggleRaiseHand}
-        title="Raise hand"
-        sx={{
-          ...mobileIconButtonSx,
-          width: 34,
-          height: 34,
-          color: 'warning.main',
-          bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, handRaised ? 0.28 : 0.1),
-          border: (theme) => `1px solid ${varAlpha(theme.palette.warning.mainChannel, 0.2)}`,
-          '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, 0.28) },
-        }}
-      >
-        <span style={{ fontSize: 20 }}>✋</span>
-      </IconButton>
+      <VoiceRaiseHandButton />
 
       <IconButton onClick={onOpenReactions} title="Reactions" sx={mobileIconButtonSx}>
         <Smile size={18} />
@@ -177,26 +165,7 @@ export const RoomControlDock = ({
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-        <Button
-          onClick={onToggleRaiseHand}
-          startIcon={<span style={{ fontSize: 16 }}>✋</span>}
-          sx={{
-            minWidth: 0,
-            height: 32,
-            borderRadius: 1,
-            fontSize: 12,
-            fontWeight: 600,
-            textTransform: 'none',
-            whiteSpace: 'nowrap',
-            color: 'warning.main',
-            bgcolor: (theme) =>
-              varAlpha(theme.palette.warning.mainChannel, handRaised ? 0.22 : 0.1),
-            border: (theme) => `1px solid ${varAlpha(theme.palette.warning.mainChannel, 0.2)}`,
-            '&:hover': { bgcolor: (theme) => varAlpha(theme.palette.warning.mainChannel, 0.22) },
-          }}
-        >
-          Raise Hand
-        </Button>
+        <VoiceRaiseHandButton />
         <IconButton onClick={onOpenReactions} title="Reactions" sx={dockIconButtonSx}>
           <Smile size={16} />
         </IconButton>

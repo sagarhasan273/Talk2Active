@@ -12,9 +12,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useRoomTools } from 'src/core/slices';
 import { useWebRTCContext } from 'src/core/contexts/webRTC-context';
 
-import { VoiceRoomMessageGroupDrawer } from 'src/components/drawers';
-
-import { VoiceMessageGroup } from './voice-message-group';
 import { VoiceParticipantSettings } from './voice-participant-settings';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -151,17 +148,6 @@ export function VoiceParticipantSettingsPopup({
           </Box>
         </Portal>
       )}
-
-      <VoiceRoomMessageGroupDrawer openDrawer={privateMessageOpen}>
-        <VoiceMessageGroup
-          privateMessage={{
-            userId: targetUserId,
-            socketId: targetSocketId,
-            name: targetName,
-            profilePhoto: targetProfilePhoto,
-          }}
-        />
-      </VoiceRoomMessageGroupDrawer>
     </Box>
   );
 }

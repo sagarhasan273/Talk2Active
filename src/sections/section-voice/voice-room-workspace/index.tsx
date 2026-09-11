@@ -44,7 +44,7 @@ const MAX_SIDEBAR_WIDTH = 600;
  * rather than `lg` — otherwise both the sidebar and the mobile chat icon
  * would be visible between md and lg.
  */
-export const RoomWorkspace = ({
+export const VoiceRoomWorkspace = ({
   participants,
   maxParticipants,
   topicPrompt,
@@ -249,4 +249,4 @@ export const RoomWorkspace = ({
   );
 };
 
-export default RoomWorkspace;
+export default VoiceRoomWorkspace;

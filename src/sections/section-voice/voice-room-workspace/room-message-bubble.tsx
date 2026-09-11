@@ -12,7 +12,7 @@ import {
 
 import { Box, alpha, Avatar, Popover, useTheme, Typography, IconButton } from '@mui/material';
 
-import { QUICK_REACTIONS } from './messages-data';
+import { QUICK_REACTIONS } from '../@mock_/messages-data';
 
 import type { ChatMessage } from './types';
 
