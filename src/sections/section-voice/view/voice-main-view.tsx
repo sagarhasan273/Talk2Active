@@ -256,10 +256,6 @@ export function VoiceMainView() {
                 height: 1,
               }}
             >
-              {/*
-                VoiceRoomsView remains mounted
-                when switching tabs.
-              */}
               <VoiceRoomsView onJoinRoom={handleJoinRoom} />
             </Scrollbar>
           </Box>
