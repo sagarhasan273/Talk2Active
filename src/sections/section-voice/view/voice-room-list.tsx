@@ -7,7 +7,7 @@ import { Box } from '@mui/material';
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 import { useSocketContext } from 'src/core/contexts/socket-context';
 
-import { VoiceRoomsEmptyState } from './voice-no-rooms-view';
+import { VoiceRoomsEmptyState } from './voice-room-empty';
 import { VoiceRoomCard, RoomCardCreation } from '../voice-room-card';
 
 interface RoomListProps {
