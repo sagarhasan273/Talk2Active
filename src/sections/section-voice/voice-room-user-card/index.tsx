@@ -1,4 +1,4 @@
-import type { Participant } from 'src/types/type-room';
+import type { VoiceParticipant } from 'src/types/type-room';
 import type { ChatUserStatus } from 'src/types/type-chat';
 import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
 
@@ -235,7 +235,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
 
 type VoiceRoomUserCardProps = {
   stream: MediaStream | null;
-  participant: Partial<Participant> & {
+  participant: Partial<VoiceParticipant> & {
     isSpeaking?: boolean;
     isActive?: boolean;
     isSelected?: boolean;

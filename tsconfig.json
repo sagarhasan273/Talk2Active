@@ -4,9 +4,7 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "strict": true,
     "noEmit": true,
-    "ignoreDeprecations": "6.0",
     "allowJs": true,
-    "baseUrl": ".",
     "module": "ESNext",
     "jsx": "react-jsx",
     "skipLibCheck": true,
@@ -21,8 +19,10 @@
     "useUnknownInCatchVariables": false,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"],
+      "src/*": ["./src/*"]
     }
   },
   "include": ["src"],

@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import type { EmojiClickData } from 'emoji-picker-react';
-import type { Message, Participant } from 'src/types/type-room';
+import type { Message, VoiceParticipant } from 'src/types/type-room';
 
 import { useSelector } from 'react-redux';
 import EmojiPicker from 'emoji-picker-react';
@@ -133,7 +133,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   // Mention a participant
-  const mentionParticipant = (participant: Participant) => {
+  const mentionParticipant = (participant: VoiceParticipant) => {
     setMentions((prev) => [
       ...(prev || []),
       {
@@ -155,7 +155,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   // Start a private message
-  const startPrivateMessage = (participant: Participant) => {
+  const startPrivateMessage = (participant: VoiceParticipant) => {
     setIsPrivateMessage(true);
     setPrivateRecipient?.({
       socketId: participant.socketId,
@@ -483,7 +483,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                                 width: 8,
                                 height: 8,
                                 borderRadius: '50%',
-                                backgroundColor: statusConfig[participant.status || 'online'].color,
+                                backgroundColor:
+                                  statusConfig[
+                                    (participant.status || 'online') as keyof typeof statusConfig
+                                  ].color,
                               }}
                             />
                             <Typography variant="caption" color="text.secondary">
