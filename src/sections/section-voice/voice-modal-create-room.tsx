@@ -1,15 +1,15 @@
-import type { CreateRoomInput } from 'src/types/type-chat';
+import type { RoomResponse } from '@/types/type-chat';
 
-import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 
 import { Close, Cancel, MicNone, RecordVoiceOver } from '@mui/icons-material';
 import {
   Box,
   Chip,
   alpha,
-  Dialog,
   Button,
+  Dialog,
   Slider,
   MenuItem,
   useTheme,
@@ -17,8 +17,8 @@ import {
   Typography,
   DialogTitle,
   Autocomplete,
-  DialogContent,
   DialogActions,
+  DialogContent,
 } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -31,23 +31,87 @@ import { Scrollbar } from 'src/components/scrollbar';
 
 import { languages } from '../../_mock/data/languages';
 
-interface CreateRoomModalProps {
-  open: boolean;
-  onClose: () => void;
-  onCreateRoom: (roomData: any) => void;
-  currentRoom?: CreateRoomInput & {
-    roomId: string;
-  };
-}
+// ----------------------------------------------------------------------
 
-const levelColors: Record<string, string> = {
+export const LanguageLevelEnum = {
+  ALL: 'all',
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  IELTS: 'ielts',
+  BUSINESS: 'business',
+  CONVERSATION: 'conversation',
+} as const;
+
+export type LanguageLevel = (typeof LanguageLevelEnum)[keyof typeof LanguageLevelEnum];
+
+const LEVEL_OPTIONS = [
+  ['all', '🎯 All Levels'],
+  ['beginner', '🌱 A1-A2 Beginner'],
+  ['intermediate', '📈 B1-B2 Intermediate'],
+  ['advanced', '🏆 C1-C2 Advanced'],
+  ['ielts', '📝 IELTS / Exam Prep'],
+  ['business', '💼 Business English'],
+  ['conversation', '🗣️ Conversation Practice'],
+] as const;
+
+const LEVEL_COLORS: Record<LanguageLevel, string> = {
+  all: '#818cf8',
   beginner: '#4ade80',
   intermediate: '#facc15',
   advanced: '#f87171',
-  mixed: '#818cf8',
+  ielts: '#38bdf8',
+  business: '#c084fc',
+  conversation: '#fb923c',
 };
 
-export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
+const LEVEL_LABELS: Record<LanguageLevel, string> = LEVEL_OPTIONS.reduce(
+  (acc, [value, label]) => ({ ...acc, [value]: label }),
+  {} as Record<LanguageLevel, string>
+);
+
+type FormData = {
+  topic: string;
+  welcome_message: string;
+  languages: string[];
+  level: LanguageLevel;
+  max_participants: number;
+};
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onCreateRoom: (data: FormData) => void;
+  currentRoom: RoomResponse | null;
+}
+
+// ----------------------------------------------------------------------
+
+const isValidLevel = (value: unknown): value is LanguageLevel =>
+  Object.values(LanguageLevelEnum).includes(value as LanguageLevel);
+
+const getInitialForm = (room: Props['currentRoom']): FormData => {
+  if (!room) {
+    return {
+      topic: '',
+      welcome_message: '',
+      languages: ['en'],
+      level: LanguageLevelEnum.ALL,
+      max_participants: 5,
+    };
+  }
+  return {
+    topic: room.topic || '',
+    welcome_message: room.welcome_message || '',
+    languages: room.languages.length ? [...room.languages] : ['en'],
+    level: isValidLevel(room.level) ? room.level : LanguageLevelEnum.ALL,
+    max_participants: room.max_participants || 5,
+  };
+};
+
+// ----------------------------------------------------------------------
+
+export const VoiceModalCreateRoom: React.FC<Props> = ({
   open,
   onClose,
   onCreateRoom,
@@ -57,84 +121,136 @@ export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
   const isMobile = useResponsive('down', 'sm');
   const user = useSelector(selectAccount);
 
-  const [formData, setFormData] = useState({
-    name: currentRoom?.topic || '',
-    description: currentRoom?.welcome_message || '',
-    languages: currentRoom?.language ? [currentRoom.language] : ['en'],
-    level: currentRoom?.level || 'mixed',
-    maxParticipants: currentRoom?.maxParticipants || 8,
-  });
+  const isEditMode = Boolean(currentRoom);
 
+  const [formData, setFormData] = useState<FormData>(getInitialForm(currentRoom));
   const [inputValue, setInputValue] = useState('');
-  const [createRoom] = useCreateRoomMutation();
-  const [updateRoom, { isLoading: isLoadingUpdate }] = useUpdateRoomMutation();
 
-  const handleRemoveLanguage = (languageToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      languages: prev.languages.filter((language) => language !== languageToRemove),
-    }));
+  const [createRoom, { isLoading: creating }] = useCreateRoomMutation();
+  const [updateRoom, { isLoading: updating }] = useUpdateRoomMutation();
+
+  const loading = creating || updating;
+  const isDark = theme.palette.mode === 'dark';
+
+  useEffect(() => {
+    if (open) {
+      setFormData(getInitialForm(currentRoom));
+      setInputValue('');
+    }
+  }, [open, currentRoom]);
+
+  // ----------------------------------------------------------------------
+  // Helpers
+  // ----------------------------------------------------------------------
+
+  const updateForm = <K extends keyof FormData>(key: K, value: FormData[K]) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleAddLanguage = (languageCode: string) => {
-    if (languageCode && !formData.languages.includes(languageCode)) {
-      setFormData((prev) => ({ ...prev, languages: [...prev.languages, languageCode] }));
+  const addLanguage = (code: string) => {
+    if (!code || formData.languages.includes(code) || formData.languages.length >= 2) {
+      return;
     }
+
+    updateForm('languages', [...formData.languages, code]);
     setInputValue('');
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && inputValue) {
-      event.preventDefault();
-      const matched = languages.find(
-        (lang) => lang.name.toLowerCase() === inputValue.toLowerCase()
-      );
-      if (matched) {
-        handleAddLanguage(matched.code);
-      } else {
-        const partials = languages.filter((lang) =>
-          lang.name.toLowerCase().includes(inputValue.toLowerCase())
-        );
-        if (partials.length >= 1) handleAddLanguage(partials[0].code);
-      }
+  const removeLanguage = (code: string) => {
+    updateForm(
+      'languages',
+      formData.languages.filter((item) => item !== code)
+    );
+  };
+
+  const handleLanguageKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter' || !inputValue.trim()) return;
+
+    event.preventDefault();
+
+    const value = inputValue.toLowerCase().trim();
+
+    const language =
+      languages.find((item) => item.name.toLowerCase() === value) ||
+      languages.find((item) => item.name.toLowerCase().includes(value));
+
+    if (language) addLanguage(language.code);
+  };
+
+  // ----------------------------------------------------------------------
+  // Submit
+  // ----------------------------------------------------------------------
+
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+
+    if (!formData.topic.trim() || !formData.languages.length) return;
+
+    const payload = isEditMode
+      ? {
+          roomId: (currentRoom as any)?.id,
+          topic: formData.topic.trim(),
+          welcome_message: currentRoom?.welcome_message || '',
+          languages: formData.languages,
+          level: isValidLevel(currentRoom?.level) ? currentRoom.level : formData.level,
+          max_participants: formData.max_participants,
+          isActive: true,
+        }
+      : {
+          topic: formData.topic.trim(),
+          welcome_message: formData.welcome_message.trim(),
+          languages: formData.languages,
+          level: formData.level,
+          max_participants: formData.max_participants,
+        };
+
+    onCreateRoom(payload);
+
+    try {
+      const response = currentRoom
+        ? await updateRoom({
+            roomId: currentRoom.roomId,
+            ...payload,
+            host: (currentRoom?.host as any)?.userId || user.userId,
+          }).unwrap()
+        : await createRoom({
+            ...payload,
+            host: user.userId,
+          }).unwrap();
+
+      if (response?.status) onClose();
+    } catch (error) {
+      console.error('Failed to save voice room:', error);
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    onCreateRoom(formData);
-    let response = null;
-    if (currentRoom) {
-      response = await updateRoom({
-        roomId: currentRoom?.roomId,
-        ...formData,
-        host: currentRoom?.host || user.id,
-      }).unwrap();
-    } else {
-      response = await createRoom({ ...formData, host: user.id }).unwrap();
-    }
-    if (response.status) onClose();
-  };
+  // ----------------------------------------------------------------------
+  // Styles
+  // ----------------------------------------------------------------------
 
-  const isDark = theme.palette.mode === 'dark';
-
-  const sectionStyle = {
-    borderRadius: 2,
-    border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+  const sectionSx = {
     p: 1.5,
-    background: isDark
+    borderRadius: 1,
+    border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+    bgcolor: isDark
       ? alpha(theme.palette.background.paper, 0.4)
       : alpha(theme.palette.grey[50], 0.8),
   };
 
-  const labelStyle = {
+  const sectionLabelSx = {
+    mb: 1,
     fontSize: 11,
     fontWeight: 700,
-    letterSpacing: '0.08em',
+    letterSpacing: '.08em',
     textTransform: 'uppercase' as const,
     color: theme.palette.text.disabled,
-    mb: 1,
   };
+
+  const primaryColor = varAlpha(theme.vars.palette.primary.lightChannel, 1);
+
+  const lockedLevel = isValidLevel(currentRoom?.level) ? currentRoom.level : formData.level;
+
+  // ----------------------------------------------------------------------
 
   return (
     <Dialog
@@ -147,27 +263,31 @@ export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
         sx: {
           borderRadius: isMobile ? 0 : 1,
           overflow: 'hidden',
-          background: theme.palette.background.paper,
-          boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+          boxShadow: '0 24px 64px rgba(0,0,0,.18)',
         },
       }}
     >
-      {/* ── Header ── */}
+      {/* Header */}
+
       <DialogTitle
         sx={{
           p: 0,
-          background: isDark
-            ? `linear-gradient(135deg, ${varAlpha(theme.vars.palette.primary.mainChannel, 0.25)} 0%, ${varAlpha(theme.vars.palette.primary.lightChannel, 0.15)} 100%)`
-            : `linear-gradient(135deg, ${varAlpha(theme.vars.palette.primary.mainChannel, 0.08)} 0%, ${varAlpha(theme.vars.palette.primary.lightChannel, 0.05)} 100%)`,
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          background: isDark
+            ? `linear-gradient(135deg,
+                ${varAlpha(theme.vars.palette.primary.mainChannel, 0.25)},
+                ${varAlpha(theme.vars.palette.primary.lightChannel, 0.15)})`
+            : `linear-gradient(135deg,
+                ${varAlpha(theme.vars.palette.primary.mainChannel, 0.08)},
+                ${varAlpha(theme.vars.palette.primary.lightChannel, 0.05)})`,
         }}
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
             p: isMobile ? 2 : 2.5,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -175,44 +295,41 @@ export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
               sx={{
                 width: 40,
                 height: 40,
-                borderRadius: 2,
-                background: `linear-gradient(135deg, ${varAlpha(theme.vars.palette.primary.mainChannel, 1)} 0%, ${varAlpha(theme.vars.palette.primary.lightChannel, 0.7)} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderRadius: 1,
+                display: 'grid',
+                placeItems: 'center',
                 flexShrink: 0,
-                boxShadow: `0 4px 12px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.5)}`,
+                background: `linear-gradient(
+                  135deg,
+                  ${varAlpha(theme.vars.palette.primary.mainChannel, 1)},
+                  ${varAlpha(theme.vars.palette.primary.lightChannel, 0.7)}
+                )`,
               }}
             >
               <MicNone sx={{ color: '#fff', fontSize: 20 }} />
             </Box>
+
             <Box>
-              <Typography
-                sx={{
-                  fontWeight: 700,
-                  fontSize: isMobile ? 15 : 16,
-                  lineHeight: 1.2,
-                  color: theme.palette.text.primary,
-                }}
-              >
-                {currentRoom ? 'Update Voice Channel' : 'Create Voice Channel'}
+              <Typography fontWeight={700} fontSize={isMobile ? 15 : 16}>
+                {isEditMode ? 'Update Voice Channel' : 'Create Voice Channel'}
               </Typography>
-              <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary, mt: 0.25 }}>
-                Set up your language learning space
+
+              <Typography fontSize={12} color="text.secondary">
+                {isEditMode
+                  ? 'Update the topic, languages, or capacity'
+                  : 'Set up your language learning space'}
               </Typography>
             </Box>
           </Box>
+
           <Button
             onClick={onClose}
-            size="small"
             sx={{
               minWidth: 32,
               width: 32,
               height: 32,
               p: 0,
-              borderRadius: 1.5,
-              color: theme.palette.text.secondary,
-              '&:hover': { background: alpha(theme.palette.text.primary, 0.06) },
+              color: 'text.secondary',
             }}
           >
             <Close fontSize="small" />
@@ -220,208 +337,238 @@ export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
         </Box>
       </DialogTitle>
 
-      {/* ── Body ── */}
+      {/* Body */}
+
       <DialogContent sx={{ p: 0 }}>
-        <Scrollbar sx={{ maxHeight: isMobile ? 'calc(100vh - 140px)' : '55vh' }}>
+        <Scrollbar
+          sx={{
+            maxHeight: isMobile ? 'calc(100vh - 140px)' : '55vh',
+          }}
+        >
           <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ p: isMobile ? 1.5 : 2, display: 'flex', flexDirection: 'column', gap: 0 }}
+            sx={{
+              p: isMobile ? 1.5 : 2,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
           >
-            {/* Section: Basic Info */}
-            <Box sx={sectionStyle}>
-              <Typography sx={labelStyle}>Basic Info</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {/* Basic Info */}
+
+            <Box sx={sectionSx}>
+              <Typography sx={sectionLabelSx}>Basic Info</Typography>
+
+              <Box sx={{ display: 'grid', gap: 1 }}>
                 <TextField
-                  fullWidth
-                  label="Channel Name"
-                  required
-                  size="small"
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  label="Choose a topic"
                   placeholder="e.g., Spanish Conversation Circle"
-                />
-                <TextField
-                  fullWidth
-                  label="Description"
-                  required
                   size="small"
-                  multiline
-                  rows={2}
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  placeholder="What will learners practice here?"
+                  required
+                  fullWidth
+                  value={formData.topic}
+                  onChange={(e) => updateForm('topic', e.target.value)}
                 />
+
+                {isEditMode ? (
+                  formData.welcome_message && (
+                    <Box>
+                      <Typography fontSize={11} color="text.disabled" mb={0.5}>
+                        Welcome message (not editable)
+                      </Typography>
+                      <Typography fontSize={13} color="text.secondary" fontStyle="italic">
+                        {formData.welcome_message}
+                      </Typography>
+                    </Box>
+                  )
+                ) : (
+                  <TextField
+                    label="Welcome message.."
+                    placeholder="What will learners practice here?"
+                    size="small"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={formData.welcome_message}
+                    onChange={(e) => updateForm('welcome_message', e.target.value)}
+                  />
+                )}
               </Box>
             </Box>
 
-            {/* Section: Languages */}
-            <Box sx={sectionStyle}>
-              <Typography sx={labelStyle}>Languages</Typography>
+            {/* Languages */}
 
-              {formData.languages.length > 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                  {formData.languages.map((code) => {
-                    const lang = languages.find((l) => l.code === code);
-                    return (
-                      <Chip
-                        key={code}
-                        label={lang ? `${lang.flag} ${lang.name}` : code}
-                        size="small"
-                        onDelete={() => handleRemoveLanguage(code)}
-                        deleteIcon={<Cancel sx={{ fontSize: '14px !important' }} />}
-                        sx={{
-                          fontSize: 12,
-                          height: 26,
-                          fontWeight: 500,
-                          background: varAlpha(theme.vars.palette.primary.lightChannel, 0.15),
-                          color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
-                          border: `1px solid ${varAlpha(theme.vars.palette.primary.lightChannel, 0.25)}`,
-                          '& .MuiChip-deleteIcon': {
-                            color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
-                          },
-                          '&:hover': {
-                            background: varAlpha(theme.vars.palette.primary.lightChannel, 0.35),
-                            color: varAlpha(theme.vars.palette.primary.mainChannel, 1),
-                            border: `1px solid ${varAlpha(theme.vars.palette.primary.lightChannel, 0.25)}`,
-                          },
-                        }}
-                      />
-                    );
-                  })}
-                </Box>
-              )}
+            <Box sx={sectionSx}>
+              <Typography sx={sectionLabelSx}>Languages</Typography>
+
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                {formData.languages.map((code) => {
+                  const lang = languages.find((item) => item.code === code);
+
+                  return (
+                    <Chip
+                      key={code}
+                      size="small"
+                      label={lang ? `${lang.flag} ${lang.name}` : code}
+                      onDelete={() => removeLanguage(code)}
+                      deleteIcon={<Cancel sx={{ fontSize: 14 }} />}
+                      sx={{
+                        height: 26,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: primaryColor,
+                        bgcolor: varAlpha(theme.vars.palette.primary.lightChannel, 0.15),
+                        '&:hover': {
+                          bgcolor: varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
 
               <Autocomplete
                 freeSolo
                 size="small"
+                disabled={formData.languages.length >= 2}
                 options={languages.map((lang) => ({
                   code: lang.code,
                   label: `${lang.flag} ${lang.name}`,
                 }))}
                 inputValue={inputValue}
-                onInputChange={(_, v) => setInputValue(v)}
-                onChange={(_, newValue) => {
-                  if (newValue && typeof newValue === 'object') {
-                    handleAddLanguage(newValue.code);
+                onInputChange={(_, value) => setInputValue(value)}
+                onChange={(_, value) => {
+                  if (value && typeof value !== 'string') {
+                    addLanguage(value.code);
                   }
                 }}
+                getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    size="small"
                     placeholder="Search language & press Enter…"
-                    onKeyDown={handleKeyDown}
-                    disabled={formData.languages.length >= 2}
+                    onKeyDown={handleLanguageKeyDown}
                   />
                 )}
                 renderOption={(props, option) => (
-                  <MenuItem {...props} sx={{ fontSize: 13 }}>
+                  <MenuItem {...props} key={option.code}>
                     {option.label}
                   </MenuItem>
                 )}
-                disabled={formData.languages.length >= 2}
               />
             </Box>
 
-            {/* Section: Settings */}
-            <Box sx={sectionStyle}>
-              <Typography sx={labelStyle}>Settings</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {/* Skill Level */}
-                <Box>
-                  <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary, mb: 0.75 }}>
+            {/* Settings */}
+
+            <Box sx={sectionSx}>
+              <Typography sx={sectionLabelSx}>Settings</Typography>
+
+              {/* Level — editable on create, fixed on edit */}
+
+              {isEditMode ? (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography fontSize={12} color="text.secondary" mb={0.75}>
+                    Skill Level (not editable)
+                  </Typography>
+                  <Chip
+                    label={LEVEL_LABELS[lockedLevel]}
+                    size="small"
+                    sx={{
+                      height: 28,
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      border: `1px solid ${LEVEL_COLORS[lockedLevel]}`,
+                      bgcolor: alpha(LEVEL_COLORS[lockedLevel], 0.12),
+                      color: LEVEL_COLORS[lockedLevel],
+                    }}
+                  />
+                </Box>
+              ) : (
+                <>
+                  <Typography fontSize={12} color="text.secondary" mb={0.75}>
                     Skill Level
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                    {(['beginner', 'intermediate', 'advanced', 'mixed'] as const).map((lvl) => {
-                      const selected = formData.level === lvl;
-                      const color = levelColors[lvl];
+
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    {LEVEL_OPTIONS.map(([value, label]) => {
+                      const selected = formData.level === value;
+                      const color = LEVEL_COLORS[value];
+
                       return (
                         <Chip
-                          key={lvl}
-                          label={lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                          key={value}
+                          label={label}
                           size="small"
-                          onClick={() => setFormData((prev) => ({ ...prev, level: lvl }))}
+                          clickable
+                          onClick={() => updateForm('level', value)}
                           sx={{
+                            height: 28,
                             fontSize: 11.5,
-                            height: 26,
-                            fontWeight: selected ? 700 : 400,
-                            cursor: 'pointer',
+                            fontWeight: selected ? 700 : 500,
                             border: `1px solid ${selected ? color : alpha(theme.palette.divider, 0.7)}`,
-                            background: selected ? alpha(color, 0.12) : 'transparent',
+                            bgcolor: selected ? alpha(color, 0.12) : 'transparent',
                             color: selected ? color : theme.palette.text.secondary,
-                            transition: 'all 0.15s',
-                            '&:hover': { background: alpha(color, 0.08), borderColor: color },
+                            '&:hover': {
+                              bgcolor: selected
+                                ? alpha(color, 0.02)
+                                : varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
+                            },
                           }}
                         />
                       );
                     })}
                   </Box>
-                </Box>
+                </>
+              )}
 
-                {/* Max Participants */}
-                <Box>
-                  <Box
+              {/* Participants — always editable */}
+
+              <Box sx={{ mt: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography fontSize={12} color="text.secondary">
+                    Max Participants
+                  </Typography>
+
+                  <Chip
+                    size="small"
+                    label={formData.max_participants}
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 0.5,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary }}>
-                      Max Participants
-                    </Typography>
-                    <Box
-                      sx={{
-                        px: 1,
-                        py: 0.25,
-                        borderRadius: 1,
-                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.1),
-                        border: `1px solid ${varAlpha(theme.vars.palette.primary.lightChannel, 0.2)}`,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
-                        }}
-                      >
-                        {formData.maxParticipants}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Slider
-                    value={formData.maxParticipants}
-                    onChange={(_, value) =>
-                      setFormData((prev) => ({ ...prev, maxParticipants: value as number }))
-                    }
-                    min={2}
-                    max={20}
-                    marks
-                    valueLabelDisplay="auto"
-                    sx={{
-                      color: varAlpha(theme.vars.palette.primary.lightChannel, 1),
-                      '& .MuiSlider-rail': {
-                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.55),
-                      },
-                      '& .MuiSlider-mark': {
-                        background: varAlpha(theme.vars.palette.primary.lightChannel, 0.55),
-                      },
+                      height: 24,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: primaryColor,
                     }}
                   />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography sx={{ fontSize: 10, color: theme.palette.text.disabled }}>
-                      2
-                    </Typography>
-                    <Typography sx={{ fontSize: 10, color: theme.palette.text.disabled }}>
-                      20
-                    </Typography>
-                  </Box>
+                </Box>
+
+                <Slider
+                  value={formData.max_participants}
+                  min={2}
+                  max={20}
+                  marks
+                  valueLabelDisplay="auto"
+                  onChange={(_, value) => updateForm('max_participants', value as number)}
+                  sx={{ color: primaryColor }}
+                />
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography fontSize={10} color="text.disabled">
+                    2
+                  </Typography>
+                  <Typography fontSize={10} color="text.disabled">
+                    20
+                  </Typography>
                 </Box>
               </Box>
             </Box>
@@ -429,46 +576,47 @@ export const VoiceModalCreateRoom: React.FC<CreateRoomModalProps> = ({
         </Scrollbar>
       </DialogContent>
 
-      {/* ── Actions ── */}
+      {/* Actions */}
+
       <DialogActions
         sx={{
           p: isMobile ? 1.5 : 2,
           gap: 1,
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-          background: isDark
-            ? alpha(theme.palette.background.paper, 0.6)
-            : alpha(theme.palette.grey[50], 0.8),
         }}
       >
         <Button
           onClick={onClose}
           variant="outlined"
-          size={isMobile ? 'medium' : 'small'}
           fullWidth={isMobile}
-          sx={{ borderRadius: 2, fontWeight: 600, flex: isMobile ? 1 : 'unset' }}
+          sx={{
+            borderRadius: 2,
+            fontWeight: 600,
+            flex: isMobile ? 1 : undefined,
+          }}
         >
           Cancel
         </Button>
+
         <Button
-          onClick={() => handleSubmit()}
+          type="submit"
           variant="contained"
-          size={isMobile ? 'medium' : 'small'}
+          disabled={loading}
+          onClick={() => handleSubmit()}
           fullWidth={isMobile}
           startIcon={<RecordVoiceOver />}
           sx={{
             borderRadius: 2,
             fontWeight: 700,
-            px: 2,
-            flex: isMobile ? 2 : 'unset',
-            background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-            boxShadow: '0 4px 14px rgba(217, 218, 240, 0.45)',
-            '&:hover': {
-              boxShadow: '0 6px 20px rgba(215, 215, 241, 0.45)',
-            },
+            flex: isMobile ? 2 : undefined,
+            background: `linear-gradient(
+              135deg,
+              ${theme.palette.primary.dark},
+              ${theme.palette.primary.main}
+            )`,
           }}
-          disabled={isLoadingUpdate}
         >
-          Create Channel
+          {isEditMode ? 'Update Channel' : 'Create Channel'}
         </Button>
       </DialogActions>
     </Dialog>

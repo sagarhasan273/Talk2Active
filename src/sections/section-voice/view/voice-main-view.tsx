@@ -7,12 +7,9 @@ import { Box } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { toastErrorResponse } from 'src/utils/response';
-
 import { useCredentials } from 'src/core/slices';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useRoomTools } from 'src/core/slices/slice-room';
-import { useUpdateUserRecentRoomsMutation } from 'src/core/apis';
 
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
@@ -37,11 +34,9 @@ export function VoiceMainView() {
   const isAuthOpen = useBoolean();
   const settingsOpen = useBoolean();
 
-  const { room, currentRooms, setRoom, setCurrentRooms } = useRoomTools();
+  const { room, setRoom } = useRoomTools();
 
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('find');
-
-  const [updateUserRecentRooms] = useUpdateUserRecentRoomsMutation();
 
   // ---------------------------------------------------------
   // HOST
@@ -50,7 +45,7 @@ export function VoiceMainView() {
   const isHost = useMemo(() => {
     if (!room || !user) return false;
 
-    return room.host?.id === user.id || room.host?.userId === user.id;
+    return room.host.userId === user.userId;
   }, [room, user]);
 
   // ---------------------------------------------------------
@@ -58,7 +53,7 @@ export function VoiceMainView() {
   // ---------------------------------------------------------
 
   const participants = useMemo(
-    () => (room?.currentParticipants || []) as VoiceParticipant[],
+    () => (room ? room.participants || [] : []) as VoiceParticipant[],
     [room]
   );
 
@@ -87,39 +82,8 @@ export function VoiceMainView() {
 
       // Move to active room tab
       setSelectedTab('entry');
-
-      const roomExists = currentRooms.some((roomProp) => roomProp.room?.id === roomSelected.id);
-
-      if (!roomExists && user?.id) {
-        const formData = {
-          id: user.id,
-          roomId: roomSelected.id,
-        };
-
-        const response = await updateUserRecentRooms(formData);
-
-        if (response.data?.status) {
-          setCurrentRooms([
-            {
-              room: roomSelected,
-              joinedAt: new Date().toISOString(),
-            },
-            ...currentRooms,
-          ]);
-        } else {
-          toastErrorResponse(response);
-        }
-      }
     },
-    [
-      user,
-      currentRooms,
-      isAuthenticated,
-      isAuthOpen,
-      setCurrentRooms,
-      updateUserRecentRooms,
-      setRoom,
-    ]
+    [isAuthenticated, isAuthOpen, setRoom]
   );
 
   // ---------------------------------------------------------
@@ -159,7 +123,7 @@ export function VoiceMainView() {
   const handleShareLink = useCallback(() => {
     if (!room) return;
 
-    const url = `${window.location.origin}/room/${room.id}`;
+    const url = `${window.location.origin}/room/${room.roomId}`;
 
     navigator.clipboard?.writeText(url);
 
@@ -299,6 +263,7 @@ export function VoiceMainView() {
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
         onCreateRoom={() => {}}
+        currentRoom={room}
       />
 
       {/* =====================================================

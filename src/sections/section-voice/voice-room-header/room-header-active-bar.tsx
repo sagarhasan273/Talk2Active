@@ -225,7 +225,7 @@ export const VoiceRoomActiveBar = ({
                 fontWeight: 600,
               }}
             >
-              {room?.language || 'English'}
+              {room?.languages || 'English'}
             </Typography>
 
             <Box

@@ -3,7 +3,7 @@ import type { Language } from 'src/types/type-room';
 export const languages: Language[] = [
   // Most Spoken Languages (1B+ speakers)
   { code: 'en', name: 'English', flag: '🇬🇧', nativeSpeakers: 379000000 },
-  { code: 'zh', name: 'Chinese (Mandarin)', flag: '🇨🇳', nativeSpeakers: 918000000 },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeSpeakers: 918000000 },
   { code: 'hi', name: 'Hindi', flag: '🇮🇳', nativeSpeakers: 602000000 },
   { code: 'es', name: 'Spanish', flag: '🇪🇸', nativeSpeakers: 460000000 },
   { code: 'fr', name: 'French', flag: '🇫🇷', nativeSpeakers: 280000000 },

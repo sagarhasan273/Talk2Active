@@ -214,7 +214,7 @@ export const CompactRoomHeader = ({
               mt: 0.15,
             }}
           >
-            {room?.language || 'English'} • {room?.level || 'All Levels'}
+            {room?.languages || 'English'} • {room?.level || 'All Levels'}
           </Typography>
         </Box>
 

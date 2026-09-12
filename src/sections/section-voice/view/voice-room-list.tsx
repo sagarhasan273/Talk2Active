@@ -1,6 +1,7 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
 import { useState, useEffect } from 'react';
+import { useCredentials } from '@/core/slices';
 
 import { Box } from '@mui/material';
 
@@ -17,6 +18,8 @@ interface RoomListProps {
 export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
   const { on, off } = useSocketContext();
 
+  const { user } = useCredentials();
+
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
 
   const { data: getRooms } = useGetRoomsQuery(null);
@@ -27,7 +30,7 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
     };
 
     const handleBroadcastRemoveRoom = (data: any) => {
-      setRooms((prev) => prev.filter((room) => room.id !== data?.roomId));
+      setRooms((prev) => prev.filter((room) => room.roomId !== data.roomId));
     };
 
     off('new-room-created', handleBroadcastNewRoom);
@@ -78,7 +81,12 @@ export default function VoiceRoomsView({ onJoinRoom }: RoomListProps) {
         }}
       />
       {rooms.map((room) => (
-        <VoiceRoomCard key={room.id} roomData={room} onJoinRoom={onJoinRoom} />
+        <VoiceRoomCard
+          key={room.roomId}
+          roomData={room}
+          currentUserId={user.id}
+          onJoinRoom={onJoinRoom}
+        />
       ))}
     </Box>
   );

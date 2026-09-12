@@ -7,12 +7,11 @@ import { UserSchema } from './schema-user';
 export const RoomBaseSchema = z.object({
   topic: z.string().min(1, 'topic is required'),
   welcome_message: z.string().optional().default('Welcome to the room!'),
-  language: z.string().min(1, 'language is required'),
   languages: z.array(z.string().min(1, 'language is required')),
   level: z.nativeEnum(LanguageLevelEnum),
-  maxParticipants: z.number().int().nonnegative().optional().default(10),
+  max_participants: z.number().int().nonnegative().optional().default(10),
   host: z.string(),
-  currentParticipants: z
+  participants: z
     .array(
       z.object({
         user: z.string(),
@@ -22,28 +21,25 @@ export const RoomBaseSchema = z.object({
     .optional()
     .default([]),
   isActive: z.boolean().optional().default(true),
-  roomType: z.string(),
 });
 
 // Schema to validate incoming create payloads (timestamps not expected)
 export const RoomCreateSchema = RoomBaseSchema.pick({
   topic: true,
   welcome_message: true,
-  language: true,
+  languages: true,
   level: true,
-  maxParticipants: true,
+  max_participants: true,
   host: true,
-  roomType: true,
 });
 
 export const RoomUpdateSchema = RoomBaseSchema.pick({
   topic: true,
   welcome_message: true,
-  language: true,
+  languages: true,
   level: true,
-  maxParticipants: true,
+  max_participants: true,
   host: true,
-  roomType: true,
   isActive: true,
 })
   .partial()
@@ -53,9 +49,9 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
 
 // Schema to validate objects returned from DB (includes mongoose timestamps)
 export const RoomResponseSchema = RoomBaseSchema.extend({
-  id: z.string(),
+  roomId: z.string(),
   host: UserSchema,
-  currentParticipants: z
+  participants: z
     .array(
       z.object({
         user: UserSchema,

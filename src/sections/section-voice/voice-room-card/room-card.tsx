@@ -1,22 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-import CloseIcon from '@mui/icons-material/Close';
 import { DisabledByDefaultRounded } from '@mui/icons-material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import {
-  Box,
-  Chip,
-  Fade,
-  Stack,
-  alpha,
-  Button,
-  Dialog,
-  useTheme,
-  IconButton,
-  Typography,
-  AvatarGroup,
-  DialogContent,
-} from '@mui/material';
+import { Box, Chip, Stack, alpha, Button, useTheme, Typography, AvatarGroup } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -28,15 +14,35 @@ import { AvatarUser } from 'src/components/avatar-user';
 
 import { getLevelColor } from './styles';
 import { ImageLightbox } from './image-lightbox';
-import { RoomCardParticipant } from './room-card-participant';
+import { RoomParticipantsDialog } from './room-card-dialog';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 
 import type { VoiceRoomCardProps } from './types';
 
-export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
+// NOTE: this assumes VoiceRoomCardProps carries (or is extended with) the
+// current viewer's id, plus optional handlers for host-only actions. Adjust
+// the import/prop wiring to whatever auth context / socket emit your app
+// already uses for "remove participant" and "transfer host".
+type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
+  currentUserId?: string;
+  onRemoveParticipant?: (roomId: string, userId: string) => void;
+  onTransferHost?: (roomId: string, userId: string) => void;
+  onRoomUpdated?: (roomData: any) => void;
+};
+
+export const VoiceRoomCard = ({
+  roomData,
+  onJoinRoom,
+  currentUserId,
+  onRemoveParticipant,
+  onTransferHost,
+  onRoomUpdated,
+}: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
   const { on, off } = useSocketContext();
   const [room, setRoom] = useState(roomData);
   const participantsOpen = useBoolean();
+  const editRoomOpen = useBoolean();
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   // Keep internal state in sync if prop changes from parent
@@ -103,13 +109,42 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
     isHost: Boolean(hostId && (p.user?.id === hostId || p.user?.userId === hostId)),
   }));
 
-  const max = room?.maxParticipants ?? 0;
+  const max = room?.max_participants ?? 0;
   const isFull = allUsers.length >= max;
   const levelColor = getLevelColor(room?.level);
+
+  // The viewer only gets management controls in the dialog if they created this room
+  const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
   const openLightbox = (src: string, name: string) => {
     participantsOpen.onFalse();
     setLightbox({ src, name });
+  };
+
+  const handleRemoveParticipant = (userId: string) => {
+    onRemoveParticipant?.(room.id, userId);
+    // Optimistically drop them from the local list; the socket broadcast
+    // (leaveInfo) will reconcile this across all viewers.
+    setRoom((prev) => ({
+      ...prev,
+      currentParticipants: (prev.currentParticipants || []).filter(
+        (p) => ![p.user?.userId, p.user?.id].includes(userId)
+      ),
+    }));
+  };
+
+  const handleTransferHost = (userId: string) => {
+    onTransferHost?.(room.id, userId);
+  };
+
+  const handleEditRoom = () => {
+    participantsOpen.onFalse();
+    editRoomOpen.onTrue();
+  };
+
+  const handleRoomUpdated = (updatedRoomData: any) => {
+    setRoom((prev) => ({ ...prev, ...updatedRoomData }));
+    onRoomUpdated?.(updatedRoomData);
   };
 
   return (
@@ -290,102 +325,29 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         </Stack>
       </Box>
 
-      {/* Participants dialog */}
-      <Dialog
+      {/* Participants dialog — read-only for guests, manageable for the host */}
+      <RoomParticipantsDialog
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
-        TransitionComponent={Fade}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none' },
-        }}
-      >
-        <Box
-          sx={{
-            px: 2.5,
-            pt: 2.5,
-            pb: 1.5,
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={800} noWrap>
-              {room?.topic || 'Untitled room'}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {allUsers.length} {allUsers.length === 1 ? 'person' : 'people'} in this room
-            </Typography>
-          </Box>
-          <IconButton
-            size="small"
-            onClick={participantsOpen.onFalse}
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
+        room={room}
+        allUsers={allUsers}
+        isFull={isFull}
+        isHost={isHost}
+        onJoinRoom={onJoinRoom}
+        onImageClick={openLightbox}
+        onRemoveParticipant={isHost ? handleRemoveParticipant : undefined}
+        onTransferHost={isHost ? handleTransferHost : undefined}
+        onEditRoom={isHost ? handleEditRoom : undefined}
+      />
 
-        <DialogContent sx={{ p: 2.5, pt: 2 }}>
-          {room?.welcome_message && (
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
-              {room.welcome_message}
-            </Typography>
-          )}
-
-          {allUsers.length === 0 ? (
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary', textAlign: 'center', py: 3 }}
-            >
-              No participants yet
-            </Typography>
-          ) : (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))',
-                gap: 0.5,
-              }}
-            >
-              {allUsers
-                .filter(
-                  (entry, index, self) =>
-                    index ===
-                    self.findIndex(
-                      (e) =>
-                        (e.user?.id || e.user?.userId) === (entry.user?.id || entry.user?.userId)
-                    )
-                )
-                .map((entry, i) => (
-                  <RoomCardParticipant
-                    key={entry.user?.id || entry.user?.userId || i}
-                    user={{ ...entry.user, verified: entry.user?.verified ?? false }}
-                    isHost={entry.isHost}
-                    onImageClick={openLightbox}
-                  />
-                ))}
-            </Box>
-          )}
-
-          <Button
-            variant="contained"
-            fullWidth
-            disabled={isFull}
-            onClick={() => {
-              participantsOpen.onFalse();
-              onJoinRoom(room);
-            }}
-            sx={{ mt: 2.5, borderRadius: 1.5, py: 1, fontWeight: 700, textTransform: 'none' }}
-          >
-            {isFull ? 'Channel full' : 'Join channel'}
-          </Button>
-        </DialogContent>
-      </Dialog>
+      {isHost && editRoomOpen.value && (
+        <VoiceModalCreateRoom
+          open={editRoomOpen.value}
+          onClose={editRoomOpen.onFalse}
+          onCreateRoom={handleRoomUpdated}
+          currentRoom={room as any}
+        />
+      )}
 
       {lightbox && (
         <ImageLightbox

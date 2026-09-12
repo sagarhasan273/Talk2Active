@@ -11,7 +11,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 
 // Define auth state interface
 interface RoomState {
-  room: RoomResponse;
+  room: null | RoomResponse;
   currentRooms: RecentRoomResponse;
   loading: boolean;
   participants: { [userId: string]: Participant };
@@ -24,7 +24,7 @@ interface RoomState {
 
 // Initial state
 const initialState: RoomState = {
-  room: {} as RoomResponse,
+  room: null,
   currentRooms: [],
   loading: false,
   participants: {} as { [socketId: string]: Participant },
@@ -273,7 +273,7 @@ export const useRoomTools = () => {
   const userActionsInVoice = useSelector(selectUserActionInVoiceState);
   const privateMessageFor = useSelector(selectprivateMessageFor);
 
-  const setTimeOutRef = useRef<NodeJS.Timeout>();
+  const setTimeOutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const memoizedRoom = useMemo(
     () => ({

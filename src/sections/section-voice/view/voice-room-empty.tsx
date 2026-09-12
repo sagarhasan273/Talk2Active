@@ -1,5 +1,7 @@
 // src/sections/section-voice-room/components/voice-rooms-empty-state.tsx
 
+import { useRoomTools } from '@/core/slices';
+
 import { Box, Fade, Paper, alpha, Button, Typography } from '@mui/material';
 import { Add, Mic, Chat, Group, SentimentDissatisfied } from '@mui/icons-material';
 
@@ -19,6 +21,8 @@ export function VoiceRoomsEmptyState({
   suggestions = ['🗣️ Language Exchange', '💬 Discussion', '🎯 Practice', '🎉 Social'],
 }: VoiceRoomsEmptyStateProps) {
   const createRoomBoolean = useBoolean();
+
+  const { room } = useRoomTools();
 
   return (
     <Fade in timeout={500}>
@@ -243,6 +247,7 @@ export function VoiceRoomsEmptyState({
         </Button>
 
         <VoiceModalCreateRoom
+          currentRoom={room}
           open={createRoomBoolean.value}
           onClose={createRoomBoolean.onFalse}
           onCreateRoom={() => {}}
