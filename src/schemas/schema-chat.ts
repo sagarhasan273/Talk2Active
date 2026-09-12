@@ -8,6 +8,7 @@ export const RoomBaseSchema = z.object({
   topic: z.string().min(1, 'topic is required'),
   welcome_message: z.string().optional().default('Welcome to the room!'),
   language: z.string().min(1, 'language is required'),
+  languages: z.array(z.string().min(1, 'language is required')),
   level: z.nativeEnum(LanguageLevelEnum),
   maxParticipants: z.number().int().nonnegative().optional().default(10),
   host: z.string(),

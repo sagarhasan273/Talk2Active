@@ -1,7 +1,7 @@
 import React from 'react';
 
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import GraphicEqIcon from '@mui/icons-material/GraphicEq';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { Box, Stack, alpha, Button, useTheme, Typography } from '@mui/material';
 
 type RoomCardCreationProps = {
@@ -30,7 +30,9 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
         justify: 'space-between',
         transition: 'all 200ms ease-in-out',
         width: '100%',
-        minHeight: 280, // Matches standard VoiceRoomCard height profile
+        height: 260,
+        minHeight: 240,
+        maxHeight: 280,
         '&:hover': {
           borderColor: 'primary.main',
           bgcolor:
@@ -60,7 +62,11 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
             }}
           >
             <GraphicEqIcon sx={{ fontSize: 14 }} />
-            <Typography variant="caption" fontWeight={700} sx={{ fontSize: 10, letterSpacing: 0.4 }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{ fontSize: 10, letterSpacing: 0.4 }}
+            >
               HOST YOUR OWN
             </Typography>
           </Box>
@@ -95,12 +101,19 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
             <AddRoundedIcon sx={{ fontSize: 28 }} />
           </Box>
 
-          <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+          <Typography
+            variant="subtitle1"
+            fontWeight={800}
+            sx={{ color: 'text.primary', lineHeight: 1.2 }}
+          >
             Start a Voice Room
           </Typography>
 
-          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.75, maxWidth: 240, lineHeight: 1.4 }}>
-            Can't find the topic you want? Host your own conversation space and invite others.
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', mt: 0.75, maxWidth: 240, lineHeight: 1.4 }}
+          >
+            Can&lsquo;t find the topic you want? Host your own conversation space and invite others.
           </Typography>
         </Box>
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import CloseIcon from '@mui/icons-material/Close';
+import { DisabledByDefaultRounded } from '@mui/icons-material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import {
   Box,
   Chip,
@@ -29,8 +31,6 @@ import { ImageLightbox } from './image-lightbox';
 import { RoomCardParticipant } from './room-card-participant';
 
 import type { VoiceRoomCardProps } from './types';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { DisabledByDefault, DisabledByDefaultRounded } from '@mui/icons-material';
 
 export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
   const theme = useTheme();
@@ -117,6 +117,9 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
       <Box
         onClick={participantsOpen.onTrue}
         sx={{
+          height: 260,
+          minHeight: 240,
+          maxHeight: 280,
           position: 'relative',
           p: { xs: 1.5, sm: 2 },
           borderRadius: 1,
@@ -133,19 +136,40 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
           <Stack direction="row" alignItems="center" gap={1}>
-            <Chip
-              label={room?.language ? fgetLanguageName(room.language) : 'Unknown language'}
-              size="small"
-              variant="outlined"
-              sx={{ height: 22, fontSize: 11, fontWeight: 600, borderRadius: 1 }}
-            />
+            {(room.languages?.length ? room.languages : ['unknown', 'unknown'])
+              .slice(0, 2)
+              .map((language, index) => (
+                <Chip
+                  key={`${language}-${index}`}
+                  label={language !== 'unknown' ? fgetLanguageName(language) : 'Unknown language'}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 22,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 1,
+                  }}
+                />
+              ))}
 
             <Stack direction="row" alignItems="center" gap={0.5}>
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: levelColor }} />
+              <Box
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: levelColor,
+                }}
+              />
+
               <Typography
                 variant="caption"
                 fontWeight={700}
-                sx={{ color: levelColor, textTransform: 'capitalize' }}
+                sx={{
+                  color: levelColor,
+                  textTransform: 'capitalize',
+                }}
               >
                 {room?.level}
               </Typography>
@@ -169,16 +193,8 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
           )}
         </Stack>
 
-        <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary', mt: 1 }}>
+        <Typography variant="body2" fontWeight={600} noWrap sx={{ color: 'text.primary', my: 1 }}>
           {room?.topic || 'Untitled room'}
-        </Typography>
-
-        <Typography
-          variant="caption"
-          noWrap
-          sx={{ color: 'text.secondary', mt: 0.25, mb: 1.5, display: 'block' }}
-        >
-          {room?.welcome_message || 'No welcome message'}
         </Typography>
 
         {/* Host */}
@@ -219,7 +235,7 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         </Box>
 
         {/* Participants */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5, minHeight: 40 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', m: 1, minHeight: 40 }}>
           {allUsers.length === 0 ? (
             <Typography
               variant="body2"
@@ -250,7 +266,7 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
         </Box>
 
         {/* Footer */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" gap={1}>
           <Button
             size="small"
             variant="contained"
@@ -260,7 +276,14 @@ export const VoiceRoomCard = ({ roomData, onJoinRoom }: VoiceRoomCardProps) => {
               onJoinRoom(room);
             }}
             endIcon={isFull ? <DisabledByDefaultRounded /> : <ArrowForwardIcon />}
-            sx={{ ml: 'auto', borderRadius: 1, textTransform: 'none', fontWeight: 700, py: 2 }}
+            sx={{
+              ml: 'auto',
+              mt: 1.5,
+              borderRadius: 1,
+              textTransform: 'none',
+              fontWeight: 700,
+              py: 2,
+            }}
           >
             {isFull ? 'Full room' : 'Join room'}
           </Button>
