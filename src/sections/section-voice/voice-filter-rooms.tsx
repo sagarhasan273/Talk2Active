@@ -24,6 +24,7 @@ import {
   Typography,
   IconButton,
   FormControl,
+  useMediaQuery,
   InputAdornment,
   FormControlLabel,
 } from '@mui/material';
@@ -71,6 +72,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   initialFilters = {},
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || '');
   const [selectedLanguage, setSelectedLanguage] = useState(
     initialFilters.selectedLanguage || 'all'
@@ -149,11 +152,25 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     [searchQuery, selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, onFilterChange]
   );
 
+  // Shared compact sizing for the two select fields
+  const selectSx = {
+    borderRadius: 1,
+    bgcolor: alpha(theme.palette.background.default, 0.5),
+    '&:hover': {
+      bgcolor: alpha(theme.palette.background.default, 0.8),
+    },
+    '& .MuiSelect-select': {
+      px: { xs: 1, sm: 1.2 },
+      py: { xs: 0.65, sm: 0.85 },
+      fontSize: { xs: '0.78rem', sm: '0.875rem' },
+    },
+  } as const;
+
   return (
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 1.5, sm: 2 },
+        p: { xs: 1, sm: 2 },
         bgcolor: 'background.paper',
         borderRadius: 1,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
@@ -164,19 +181,19 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       }}
     >
       {/* Search Bar - Always Visible */}
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
         {/* Search Field */}
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             fullWidth
             size="small"
-            placeholder="Search title, topic, or host..."
+            placeholder={isMobile ? 'Search rooms...' : 'Search title, topic, or host...'}
             value={searchQuery}
             onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon color="action" />
+                  <SearchIcon color="action" fontSize="small" />
                 </InputAdornment>
               ),
               endAdornment: searchQuery && (
@@ -195,9 +212,13 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               '& .MuiOutlinedInput-root': {
                 borderRadius: 1,
                 bgcolor: alpha(theme.palette.background.default, 0.5),
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
                 '&:hover': {
                   bgcolor: alpha(theme.palette.background.default, 0.8),
                 },
+              },
+              '& .MuiOutlinedInput-input': {
+                py: { xs: 0.6, sm: 1 },
               },
             }}
           />
@@ -213,27 +234,23 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               renderValue={(selected) => {
                 if (!selected || selected === 'all') {
                   return (
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={0.75} alignItems="center">
                       <LanguageIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Language
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}
+                      >
+                        {isMobile ? 'Language' : 'Language'}
                       </Typography>
                     </Stack>
                   );
                 }
                 const option = LANGUAGE_OPTIONS.find((opt) => opt.value === selected);
-                return option ? `${option.emoji} ${option.label}` : selected;
+                if (!option) return selected;
+                return `${option.emoji} ${option.label}`;
               }}
-              sx={{
-                borderRadius: 1,
-                bgcolor: alpha(theme.palette.background.default, 0.5),
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.background.default, 0.8),
-                },
-                '& .MuiSelect-select': {
-                  px: 1.2,
-                },
-              }}
+              sx={selectSx}
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -253,27 +270,23 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               renderValue={(selected) => {
                 if (!selected || selected === 'all') {
                   return (
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={0.75} alignItems="center">
                       <SchoolIcon fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.78rem', sm: '0.875rem' } }}
+                      >
                         Level
                       </Typography>
                     </Stack>
                   );
                 }
                 const option = LEVEL_OPTIONS.find((opt) => opt.value === selected);
-                return option ? `${option.emoji} ${option.label}` : selected;
+                if (!option) return selected;
+                return `${option.emoji} ${option.label}`;
               }}
-              sx={{
-                borderRadius: 1,
-                bgcolor: alpha(theme.palette.background.default, 0.5),
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.background.default, 0.8),
-                },
-                '& .MuiSelect-select': {
-                  px: 1.2,
-                },
-              }}
+              sx={selectSx}
             >
               {LEVEL_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -290,12 +303,19 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            justifyContent: { xs: 'space-between', sm: 'flex-start', md: 'flex-end' },
             gap: 1,
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" alignItems="center" spacing={{ xs: 0.5, sm: 1 }}>
             <FormControlLabel
+              sx={{
+                ml: 0,
+                mr: { xs: 0.25, sm: 1 },
+                '& .MuiFormControlLabel-label': {
+                  ml: 0.25,
+                },
+              }}
               control={
                 <Switch
                   checked={hideFullRooms}
@@ -307,7 +327,11 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               label={
                 <Stack direction="row" spacing={0.5} alignItems="center">
                   <PeopleIcon fontSize="small" color="action" />
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: { xs: 'none', sm: 'inline' } }}
+                  >
                     Hide full
                   </Typography>
                 </Stack>
@@ -318,6 +342,9 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               onClick={() => setIsExpanded(!isExpanded)}
               size="small"
               sx={{
+                position: 'relative',
+                width: { xs: 32, sm: 36 },
+                height: { xs: 32, sm: 36 },
                 bgcolor:
                   activeFilterCount > 0 ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                 color: activeFilterCount > 0 ? 'primary.main' : 'action.active',
@@ -358,7 +385,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       {isExpanded && (
         <Box
           sx={{
-            pt: 2,
+            pt: { xs: 1.25, sm: 2 },
+            mt: { xs: 1, sm: 1.5 },
             borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
             animation: 'fadeIn 0.3s ease',
             '@keyframes fadeIn': {
@@ -367,7 +395,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             },
           }}
         >
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
             {/* Active Only Toggle */}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControlLabel
@@ -375,11 +403,16 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   <Switch
                     checked={showActiveOnly}
                     onChange={(e) => handleFilterUpdate({ showActiveOnly: e.target.checked })}
+                    size="small"
                     color="success"
                   />
                 }
                 label={
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                  >
                     🔴 Active rooms only
                   </Typography>
                 }
@@ -388,11 +421,11 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
 
             {/* Quick Chips */}
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap alignItems="center">
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ mr: 1, alignSelf: 'center' }}
+                  sx={{ mr: 0.5, alignSelf: 'center', display: { xs: 'none', sm: 'inline' } }}
                 >
                   Quick filters:
                 </Typography>
@@ -407,6 +440,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                     sx={{
                       borderRadius: 2,
                       cursor: 'pointer',
+                      fontSize: { xs: '0.7rem', sm: '0.8125rem' },
+                      height: { xs: 24, sm: 28 },
                       '&:hover': {
                         transform: 'scale(1.05)',
                       },
@@ -430,10 +465,11 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 variant="text"
                 color="error"
                 onClick={handleClearFilters}
-                startIcon={<ClearIcon />}
+                startIcon={<ClearIcon fontSize="small" />}
                 sx={{
                   textTransform: 'none',
                   fontWeight: 600,
+                  fontSize: { xs: '0.78rem', sm: '0.8125rem' },
                   '&:hover': {
                     bgcolor: alpha(theme.palette.error.main, 0.05),
                   },
@@ -448,19 +484,20 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
           {activeFilterCount > 0 && (
             <Stack
               direction="row"
-              spacing={1}
+              spacing={0.75}
               flexWrap="wrap"
               useFlexGap
+              alignItems="center"
               sx={{
-                mt: 2,
-                pt: 2,
+                mt: { xs: 1.25, sm: 2 },
+                pt: { xs: 1.25, sm: 2 },
                 borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
               }}
             >
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ mr: 1, alignSelf: 'center' }}
+                sx={{ mr: 0.5, alignSelf: 'center' }}
               >
                 Active filters:
               </Typography>
@@ -471,6 +508,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onDelete={() => handleFilterUpdate({ selectedLanguage: 'all' })}
                   color="primary"
                   variant="outlined"
+                  sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, height: { xs: 24, sm: 28 } }}
                 />
               )}
               {selectedLevel !== 'all' && (
@@ -480,6 +518,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onDelete={() => handleFilterUpdate({ selectedLevel: 'all' })}
                   color="secondary"
                   variant="outlined"
+                  sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, height: { xs: 24, sm: 28 } }}
                 />
               )}
               {hideFullRooms && (
@@ -489,6 +528,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onDelete={() => handleFilterUpdate({ hideFullRooms: false })}
                   color="info"
                   variant="outlined"
+                  sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, height: { xs: 24, sm: 28 } }}
                 />
               )}
               {showActiveOnly && (
@@ -498,6 +538,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onDelete={() => handleFilterUpdate({ showActiveOnly: false })}
                   color="success"
                   variant="outlined"
+                  sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, height: { xs: 24, sm: 28 } }}
                 />
               )}
             </Stack>

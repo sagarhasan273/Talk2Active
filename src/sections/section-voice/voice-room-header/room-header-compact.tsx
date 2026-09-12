@@ -35,20 +35,9 @@ export const CompactRoomHeader = ({
       elevation={0}
       sx={{
         width: '100%',
-        borderRadius: { xs: 1, sm: 1.5 },
+        borderRadius: 1,
         bgcolor: 'background.paper',
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-
-        animation: 'voiceCompactHeaderIn 0.24s ease-out',
-
-        '@keyframes voiceCompactHeaderIn': {
-          from: { opacity: 0, transform: 'translateY(-4px)' },
-          to: { opacity: 1, transform: 'translateY(0)' },
-        },
-
-        '@media (prefers-reduced-motion: reduce)': {
-          animation: 'none',
-        },
       }}
     >
       <Stack
@@ -85,21 +74,57 @@ export const CompactRoomHeader = ({
           </IconButton>
         </Tooltip>
 
-        {/* Room icon */}
+        {/* Icon with pulsing rings */}
         <Box
           sx={{
-            width: 30,
-            height: 30,
+            mx: 1,
+            position: 'relative',
+            width: 32,
+            height: 32,
             borderRadius: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha(theme.palette.primary.main, 0.09),
-            color: 'primary.main',
-            flexShrink: 0,
           }}
         >
-          <Volume2Icon size={15} />
+          {[0, 1].map((ring) => (
+            <Box
+              key={ring}
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 1,
+                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+                animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
+
+                '@keyframes voiceJoinGateRing': {
+                  '0%': { transform: 'scale(0.85)', opacity: 0.6 },
+                  '100%': { transform: 'scale(1.5)', opacity: 0 },
+                },
+
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  display: 'none',
+                },
+              }}
+            />
+          ))}
+
+          <Box
+            sx={{
+              position: 'relative',
+              width: 1,
+              height: 1,
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
+              color: 'primary.main',
+            }}
+          >
+            <Volume2Icon size={26} />
+          </Box>
         </Box>
 
         {/* Room title */}

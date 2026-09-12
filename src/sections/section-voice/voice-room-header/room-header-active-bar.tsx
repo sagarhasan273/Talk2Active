@@ -15,10 +15,10 @@ import {
   useMediaQuery,
 } from '@mui/material';
 
-import { ActiveSpeaker } from './active-bar-speaker';
-import { ParticipantAvatarStack } from './active-bar-participant-avatar-stack';
+import { ActiveSpeaker } from './room-header-active-speaker';
+import { ParticipantAvatarStack } from './room-header-participant-avatar-stack';
 
-import type { VoiceParticipant } from './Types';
+import type { VoiceParticipant } from './types';
 
 export const VoiceRoomActiveBar = ({
   room,
@@ -44,10 +44,9 @@ export const VoiceRoomActiveBar = ({
       sx={{
         width: '100%',
         overflow: 'hidden',
-        borderRadius: { xs: 1.5, sm: 2 },
+        borderRadius: 1,
         border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
         bgcolor: 'background.paper',
-
         boxShadow: {
           xs: `0 3px 14px ${alpha(theme.palette.common.black, 0.06)}`,
           sm: `0 4px 18px ${alpha(theme.palette.common.black, 0.07)}`,
@@ -79,21 +78,56 @@ export const VoiceRoomActiveBar = ({
           }}
         />
 
-        {/* Room icon */}
+        {/* Icon with pulsing rings */}
         <Box
           sx={{
-            width: { xs: 34, sm: 38 },
-            height: { xs: 34, sm: 38 },
-            borderRadius: 1.5,
+            position: 'relative',
+            width: 32,
+            height: 32,
+            borderRadius: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            color: 'primary.main',
-            flexShrink: 0,
           }}
         >
-          <Volume2Icon size={isMobile ? 17 : 19} />
+          {[0, 1].map((ring) => (
+            <Box
+              key={ring}
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 1,
+                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+                animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
+
+                '@keyframes voiceJoinGateRing': {
+                  '0%': { transform: 'scale(0.85)', opacity: 0.6 },
+                  '100%': { transform: 'scale(1.5)', opacity: 0 },
+                },
+
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  display: 'none',
+                },
+              }}
+            />
+          ))}
+
+          <Box
+            sx={{
+              position: 'relative',
+              width: 1,
+              height: 1,
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
+              color: 'primary.main',
+            }}
+          >
+            <Volume2Icon size={isMobile ? 17 : 26} />
+          </Box>
         </Box>
 
         {/* Room information */}
@@ -119,7 +153,6 @@ export const VoiceRoomActiveBar = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-
                 fontSize: {
                   xs: '0.8rem',
                   sm: '0.875rem',

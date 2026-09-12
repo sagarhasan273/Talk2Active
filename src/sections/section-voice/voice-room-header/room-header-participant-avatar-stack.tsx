@@ -2,10 +2,10 @@ import React from 'react';
 
 import { Box, Stack, Typography } from '@mui/material';
 
-import { getParticipantId, isParticipantSpeaking } from './Utils';
-import { ParticipantAvatar } from './active-bar-participant-avatar';
+import { getParticipantId, isParticipantSpeaking } from './utils';
+import { ParticipantAvatar } from './room-header-participant-avatar';
 
-import type { VoiceParticipant } from './Types';
+import type { VoiceParticipant } from './types';
 
 // ----------------------------------------------------------------------
 // Participant Avatar Stack

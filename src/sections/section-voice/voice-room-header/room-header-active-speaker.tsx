@@ -3,10 +3,10 @@ import { MicIcon } from 'lucide-react';
 
 import { Box, Stack, alpha, useTheme, Typography } from '@mui/material';
 
-import { getParticipantName } from './Utils';
-import { ParticipantAvatar } from './active-bar-participant-avatar';
+import { getParticipantName } from './utils';
+import { ParticipantAvatar } from './room-header-participant-avatar';
 
-import type { VoiceParticipant } from './Types';
+import type { VoiceParticipant } from './types';
 
 // ----------------------------------------------------------------------
 // Active Speaker

@@ -18,17 +18,17 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceRoomsView from './voice-room-list';
-import { VoiceRoomView } from './voice-room-body';
+import { VoiceRoomBody } from './voice-room-body';
 import { VoiceTabPanel } from '../voice-tab-panel';
-import { DefaultHeader } from './voice-room-header';
 import { VoiceRoomsFilter } from '../voice-filter-rooms';
-import { VoiceRoomActiveBar } from '../voice-room-active-bar';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
-import { isParticipantSpeaking } from '../voice-room-active-bar/Utils';
-import { CompactRoomHeader } from '../voice-room-active-bar/active-bar-compact-header';
+import { isParticipantSpeaking } from '../voice-room-header/utils';
+import { DefaultHeader } from '../voice-room-header/room-header-default';
+import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
+import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 
-import type { SelectedTabType, VoiceParticipant } from '../voice-room-active-bar/Types';
+import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
@@ -267,7 +267,7 @@ export function VoiceMainView() {
           ===================================================== */}
 
       <VoiceTabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
-        <VoiceRoomView />
+        <VoiceRoomBody />
       </VoiceTabPanel>
     </>
   );

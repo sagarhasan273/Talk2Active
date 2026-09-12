@@ -1,4 +1,4 @@
-import type { VoiceParticipant } from './Types';
+import type { VoiceParticipant } from './types';
 
 export function getParticipantId(participant: VoiceParticipant) {
   return participant?.id || participant?.userId || '';

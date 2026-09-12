@@ -2,9 +2,9 @@ import React from 'react';
 
 import { Box, Avatar, useTheme } from '@mui/material';
 
-import { getParticipantName, getParticipantAvatar } from './Utils';
+import { getParticipantName, getParticipantAvatar } from './utils';
 
-import type { VoiceParticipant } from './Types';
+import type { VoiceParticipant } from './types';
 
 // ----------------------------------------------------------------------
 // Participant Avatar
