@@ -1,6 +1,6 @@
 import type { NavSectionProps } from 'src/components/nav-section';
 
-import { useState } from 'react';
+import { useResponsive } from '@/hooks/use-responsive';
 
 import { Box } from '@mui/material';
 import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
@@ -17,10 +17,8 @@ import { layoutClasses } from '../classes';
 import { _user_account } from '../config-nav-account';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
-import { FeedButton } from '../components/feed-button';
 import { SocialDrawer } from '../components/social-drawer';
 import { AccountDrawer } from '../components/account-drawer';
-import { VoiceRoomButton } from '../components/voice-room-button';
 
 export type UserLayoutProps = {
   sx?: SxProps<Theme>;
@@ -38,7 +36,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
 
   const { isAuthenticated } = useCredentials();
 
-  const [active, setActive] = useState<string>('');
+  const isMobile = useResponsive('down', 'sm');
 
   const layoutQuery: Breakpoint = 'lg';
 
@@ -62,22 +60,8 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
-                {/* --Voice Chat Page */}
-                <VoiceRoomButton
-                  active={active}
-                  onClickActive={() => setActive('voice-room')}
-                  sx={{ mt: 0.5, mx: 0 }}
-                />
-
-                {/* --Feed Page */}
-                <FeedButton
-                  active={active}
-                  onClickActive={() => setActive('feed')}
-                  sx={{ mt: 0.5 }}
-                />
-
                 {/* -- Social popover -- */}
-                {isAuthenticated && <SocialDrawer sx={{ mt: 0.5 }} />}
+                {isMobile && isAuthenticated && <SocialDrawer sx={{ mt: 0.5 }} />}
 
                 {/* -- Account drawer -- */}
                 {isAuthenticated && <AccountDrawer data={_user_account} status={getUserStatus()} />}

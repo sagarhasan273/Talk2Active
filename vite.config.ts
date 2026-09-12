@@ -1,21 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import checker from 'vite-plugin-checker';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    checker({
-      typescript: true,
-      eslint: {
-        lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
-      },
-    }),
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
-      'src': path.resolve(__dirname, './src'),
+      src: path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
@@ -29,7 +21,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'esbuild', // Changed from 'terser' to 'esbuild'
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {

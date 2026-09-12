@@ -56,22 +56,6 @@ export type ReactionMessageData = {
   reaction: Reaction;
 };
 
-// Updated participant type
-export type Participant = {
-  socketId: string;
-  isLocal: boolean;
-  userId: UserType['id'];
-  name: UserType['name'];
-  profilePhoto: UserType['profilePhoto'];
-  accountType: UserType['accountType'];
-  status: UserType['status'];
-  isMuted: boolean;
-  volume?: number;
-  userType?: string;
-  verified?: UserType['verified'];
-  hasJoin?: boolean;
-};
-
 export type PrivateParticipantProps = {
   socketId: string;
   userId: UserType['id'];
@@ -79,4 +63,19 @@ export type PrivateParticipantProps = {
   profilePhoto?: UserType['profilePhoto'];
   verified?: UserType['verified'];
   accountType?: UserType['accountType'];
+};
+
+export type VoiceParticipant = {
+  socketId: string;
+  userId: UserType['id'];
+  name: UserType['name'];
+  profilePhoto: UserType['profilePhoto'];
+  accountType: UserType['accountType'];
+  status: UserType['status'];
+  isLocal: boolean;
+  isMuted: boolean;
+  volume?: number;
+  userType?: string;
+  verified?: UserType['verified'];
+  hasJoin?: boolean;
 };

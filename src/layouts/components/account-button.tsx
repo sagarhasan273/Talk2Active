@@ -83,7 +83,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
             bottom: 5,
             right: 5,
             backgroundColor: isSocketConnected ? 'success.main' : 'grey.500',
-            boxShadow: `0 0 0 1px ${theme.vars.palette.success.lighter}`,
+            boxShadow: `0 0 0 1px ${theme.vars.palette.success.light}`,
             transition: 'background-color 0.3s ease',
           },
         }}
