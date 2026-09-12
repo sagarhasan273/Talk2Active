@@ -9,7 +9,7 @@ export type PhoneInputProps = Omit<
   value: string;
   country?: Country;
   disableSelect?: boolean;
-  onChange: (newValue: string) => void;
+  onChange: (newValue: string | undefined) => void;
 };
 
 export type CountryListProps = {

@@ -1,7 +1,7 @@
 import type { TextFieldProps } from '@mui/material/TextField';
 import type { Value, Country } from 'react-phone-number-input/input';
 
-import { useState, forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import PhoneNumberInput from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
@@ -11,8 +11,8 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { inputBaseClasses } from '@mui/material/InputBase';
 
 import { Iconify } from '../iconify';
-import { getCountryCode } from './utils';
 import { CountryListPopover } from './list';
+import { getCountryCode } from './utils';
 
 import type { PhoneInputProps } from './types';
 
@@ -34,17 +34,22 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
     },
     ref
   ) => {
-    const defaultCountryCode = getCountryCode(value, inputCountryCode);
+    const defaultCountryCode = getCountryCode(
+      value,
+      inputCountryCode
+    );
 
     const [searchCountry, setSearchCountry] = useState('');
-    const [selectedCountry, setSelectedCountry] = useState(defaultCountryCode);
+
+    const [selectedCountry, setSelectedCountry] =
+      useState(defaultCountryCode);
 
     const hasLabel = !!label;
 
-    const cleanValue = value.replace(/[\s-]+/g, '');
+    const cleanValue = value?.replace(/[\s-]+/g, '') ?? '';
 
     const handleClear = useCallback(() => {
-      onChange('' as Value);
+      onChange(undefined);
     }, [onChange]);
 
     return (
@@ -52,7 +57,8 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
         sx={{
           '--popover-button-mr': '12px',
           '--popover-button-height': '22px',
-          '--popover-button-width': variant === 'standard' ? '48px' : '60px',
+          '--popover-button-width':
+            variant === 'standard' ? '48px' : '60px',
 
           position: 'relative',
 
@@ -67,28 +73,29 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
           <CountryListPopover
             searchCountry={searchCountry}
             countryCode={selectedCountry}
-            onClickCountry={(inputValue: Country) => {
-              setSelectedCountry(inputValue);
+            onClickCountry={(country: Country) => {
+              setSelectedCountry(country);
             }}
-            onSearchCountry={(inputValue: string) => {
-              setSearchCountry(inputValue);
+            onSearchCountry={(country: string) => {
+              setSearchCountry(country);
             }}
             sx={{
               pl: variant === 'standard' ? 0 : 1.5,
 
               ...(variant === 'standard' &&
                 hasLabel && {
-                  mt: size === 'small' ? '16px' : '20px',
-                }),
+                mt: size === 'small' ? '16px' : '20px',
+              }),
 
-              ...((variant === 'filled' || variant === 'outlined') && {
+              ...((variant === 'filled' ||
+                variant === 'outlined') && {
                 mt: size === 'small' ? '8px' : '16px',
               }),
 
               ...(variant === 'filled' &&
                 hasLabel && {
-                  mt: size === 'small' ? '21px' : '25px',
-                }),
+                mt: size === 'small' ? '21px' : '25px',
+              }),
             }}
           />
         )}
@@ -99,7 +106,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
           label={label}
           value={cleanValue}
           variant={variant}
-          onChange={(newValue) => onChange(newValue ?? ('' as Value))}
+          onChange={onChange}
           hiddenLabel={!label}
           country={selectedCountry}
           inputComponent={CustomInput}
@@ -150,7 +157,7 @@ const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
     <TextField
       {...props}
       inputRef={ref}
-      value={value}
+      value={value ?? ''}
       defaultValue={defaultValue}
       onChange={(event) => {
         onChange?.(event.target.value);
