@@ -37,7 +37,6 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
     const defaultCountryCode = getCountryCode(value, inputCountryCode);
 
     const [searchCountry, setSearchCountry] = useState('');
-
     const [selectedCountry, setSelectedCountry] = useState(defaultCountryCode);
 
     const hasLabel = !!label;
@@ -54,10 +53,13 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
           '--popover-button-mr': '12px',
           '--popover-button-height': '22px',
           '--popover-button-width': variant === 'standard' ? '48px' : '60px',
+
           position: 'relative',
+
           [`& .${inputBaseClasses.input}`]: {
             pl: 'calc(var(--popover-button-width) + var(--popover-button-mr))',
           },
+
           ...sx,
         }}
       >
@@ -65,17 +67,24 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
           <CountryListPopover
             searchCountry={searchCountry}
             countryCode={selectedCountry}
-            onClickCountry={(inputValue: Country) => setSelectedCountry(inputValue)}
-            onSearchCountry={(inputValue: string) => setSearchCountry(inputValue)}
+            onClickCountry={(inputValue: Country) => {
+              setSelectedCountry(inputValue);
+            }}
+            onSearchCountry={(inputValue: string) => {
+              setSearchCountry(inputValue);
+            }}
             sx={{
               pl: variant === 'standard' ? 0 : 1.5,
+
               ...(variant === 'standard' &&
                 hasLabel && {
                   mt: size === 'small' ? '16px' : '20px',
                 }),
+
               ...((variant === 'filled' || variant === 'outlined') && {
                 mt: size === 'small' ? '8px' : '16px',
               }),
+
               ...(variant === 'filled' &&
                 hasLabel && {
                   mt: size === 'small' ? '21px' : '25px',
@@ -90,20 +99,29 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
           label={label}
           value={cleanValue}
           variant={variant}
-          onChange={onChange}
+          onChange={(newValue) => onChange(newValue ?? ('' as Value))}
           hiddenLabel={!label}
           country={selectedCountry}
           inputComponent={CustomInput}
-          InputLabelProps={{ shrink: true }}
+          InputLabelProps={{
+            shrink: true,
+          }}
           placeholder={placeholder ?? 'Enter phone number'}
           InputProps={{
-            endAdornment: cleanValue && (
+            endAdornment: cleanValue ? (
               <InputAdornment position="end">
-                <IconButton size="small" edge="end" onClick={handleClear}>
-                  <Iconify width={16} icon="mingcute:close-line" />
+                <IconButton
+                  size="small"
+                  edge="end"
+                  onClick={handleClear}
+                >
+                  <Iconify
+                    width={16}
+                    icon="mingcute:close-line"
+                  />
                 </IconButton>
               </InputAdornment>
-            ),
+            ) : undefined,
           }}
           {...other}
         />
@@ -112,8 +130,33 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
   }
 );
 
+PhoneInput.displayName = 'PhoneInput';
+
+// ----------------------------------------------------------------------
+// Custom input
 // ----------------------------------------------------------------------
 
-const CustomInput = forwardRef<HTMLInputElement, TextFieldProps>(({ ...props }, ref) => (
-  <TextField inputRef={ref} {...props} />
-));
+type CustomInputProps = Omit<
+  TextFieldProps,
+  'value' | 'defaultValue' | 'onChange'
+> & {
+  value?: string;
+  defaultValue?: string;
+  onChange?: (value?: string) => void;
+};
+
+const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
+  ({ value, defaultValue, onChange, ...props }, ref) => (
+    <TextField
+      {...props}
+      inputRef={ref}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={(event) => {
+        onChange?.(event.target.value);
+      }}
+    />
+  )
+);
+
+CustomInput.displayName = 'PhoneNumberCustomInput';
