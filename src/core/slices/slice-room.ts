@@ -1,6 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { Message, Reaction, Participant } from 'src/types/type-room';
+import type { Message, Reaction, VoiceParticipant } from 'src/types/type-room';
 import type { RoomResponse, RecentRoomResponse } from 'src/types/type-chat';
 
 import { createSlice } from '@reduxjs/toolkit';
@@ -14,7 +14,7 @@ interface RoomState {
   room: null | RoomResponse;
   currentRooms: RecentRoomResponse;
   loading: boolean;
-  participants: { [userId: string]: Participant };
+  participants: { [userId: string]: VoiceParticipant };
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadRoomMessage: boolean;
@@ -27,7 +27,7 @@ const initialState: RoomState = {
   room: null,
   currentRooms: [],
   loading: false,
-  participants: {} as { [socketId: string]: Participant },
+  participants: {} as { [socketId: string]: VoiceParticipant },
   userVoiceState: {
     roomId: null,
     hasJoined: false,
@@ -60,11 +60,11 @@ export const roomSlice = createSlice({
       state.loading = action.payload;
     },
 
-    addParticipant: (state, action: PayloadAction<Participant>) => {
+    addParticipant: (state, action: PayloadAction<VoiceParticipant>) => {
       state.participants[action.payload.userId] = action.payload;
     },
 
-    updateParticipant: (state, action: PayloadAction<Partial<Participant>>) => {
+    updateParticipant: (state, action: PayloadAction<Partial<VoiceParticipant>>) => {
       if (!action.payload?.userId) {
         return;
       }
@@ -289,8 +289,8 @@ export const useRoomTools = () => {
       setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
       setCurrentRooms: (roomData: RecentRoomResponse) => dispatch(setCurrentRooms(roomData)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
-      addParticipant: (participant: Participant) => dispatch(addParticipant(participant)),
-      updateParticipant: (participant: Partial<Participant>) =>
+      addParticipant: (participant: VoiceParticipant) => dispatch(addParticipant(participant)),
+      updateParticipant: (participant: Partial<VoiceParticipant>) =>
         dispatch(updateParticipant(participant)),
       transferParticipantUserType: (payload: { newUserId: string; prevUserId?: string }) =>
         dispatch(transferParticipantUserType(payload)),

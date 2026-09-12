@@ -19,10 +19,6 @@ import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 
 import type { VoiceRoomCardProps } from './types';
 
-// NOTE: this assumes VoiceRoomCardProps carries (or is extended with) the
-// current viewer's id, plus optional handlers for host-only actions. Adjust
-// the import/prop wiring to whatever auth context / socket emit your app
-// already uses for "remove participant" and "transfer host".
 type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   currentUserId?: string;
   onRemoveParticipant?: (roomId: string, userId: string) => void;
@@ -53,7 +49,7 @@ export const VoiceRoomCard = ({
   const handleBroadcastNewRoom = useCallback((data: any) => {
     if (data?.type === 'transfer-host') {
       setRoom((prev) => {
-        if (prev.id !== data?.roomId) return prev;
+        if (prev.roomId !== data?.roomId) return prev;
         return { ...prev, host: data?.host || prev.host };
       });
       return;
@@ -61,19 +57,19 @@ export const VoiceRoomCard = ({
 
     if (data?.joinInfo?.roomId) {
       setRoom((prev) => {
-        if (prev.id !== data.joinInfo.roomId) return prev;
+        if (prev.roomId !== data.joinInfo.roomId) return prev;
         const newParticipant = data.joinInfo.participant;
 
         // Prevent duplicate entries in participant list
-        const exists = (prev.currentParticipants || []).some(
+        const exists = (prev.participants || []).some(
           (p) => (p.user?.id || p.user?.userId) === (newParticipant?.id || newParticipant?.userId)
         );
         if (exists) return prev;
 
         return {
           ...prev,
-          currentParticipants: [
-            ...(prev.currentParticipants || []),
+          participants: [
+            ...(prev.participants || []),
             { user: newParticipant, joinedAt: new Date().toISOString() },
           ],
         };
@@ -82,12 +78,12 @@ export const VoiceRoomCard = ({
 
     if (data?.leaveInfo?.roomId) {
       setRoom((prev) => {
-        if (prev.id !== data.leaveInfo.roomId) return prev;
+        if (prev.roomId !== data.leaveInfo.roomId) return prev;
         const targetId = data.leaveInfo.participant?.userId || data.leaveInfo.participant?.id;
 
         return {
           ...prev,
-          currentParticipants: (prev.currentParticipants || []).filter(
+          participants: (prev.participants || []).filter(
             (p) => ![p.user?.userId, p.user?.id].includes(targetId)
           ),
         };
@@ -102,9 +98,9 @@ export const VoiceRoomCard = ({
 
   // Derived Values
   const hostId = room?.host?.id || room?.host?.userId;
-  const currentParticipants = room?.currentParticipants || [];
+  const participants = room?.participants || [];
 
-  const allUsers = currentParticipants.map((p) => ({
+  const allUsers = participants.map((p) => ({
     ...p,
     isHost: Boolean(hostId && (p.user?.id === hostId || p.user?.userId === hostId)),
   }));
@@ -122,19 +118,19 @@ export const VoiceRoomCard = ({
   };
 
   const handleRemoveParticipant = (userId: string) => {
-    onRemoveParticipant?.(room.id, userId);
+    onRemoveParticipant?.(room.roomId, userId);
     // Optimistically drop them from the local list; the socket broadcast
     // (leaveInfo) will reconcile this across all viewers.
     setRoom((prev) => ({
       ...prev,
-      currentParticipants: (prev.currentParticipants || []).filter(
+      participants: (prev.participants || []).filter(
         (p) => ![p.user?.userId, p.user?.id].includes(userId)
       ),
     }));
   };
 
   const handleTransferHost = (userId: string) => {
-    onTransferHost?.(room.id, userId);
+    onTransferHost?.(room.roomId, userId);
   };
 
   const handleEditRoom = () => {

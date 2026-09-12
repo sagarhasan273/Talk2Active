@@ -37,7 +37,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
     const onConnect = () => {
       socket.emit('join-room', {
         userId: user.id,
-        roomIds: currentRooms?.map((room) => room?.room?.id),
+        roomIds: currentRooms?.map((room) => room?.room.roomId),
       });
     };
 

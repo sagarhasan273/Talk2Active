@@ -18,17 +18,4 @@ export default defineConfig({
     port: 8081,
     host: true,
   },
-  build: {
-    outDir: 'dist',
-    sourcemap: false,
-    minify: 'esbuild',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/icons-material', '@mui/lab'],
-        },
-      },
-    },
-  },
 });

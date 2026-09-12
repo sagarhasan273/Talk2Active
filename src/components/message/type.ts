@@ -1,5 +1,5 @@
 import type { SxProps } from '@mui/material';
-import type { Message, Participant, PrivateParticipantProps } from 'src/types/type-room';
+import type { Message, VoiceParticipant, PrivateParticipantProps } from 'src/types/type-room';
 
 export type MessageAvatarsProps = {
   message: Message;
@@ -30,7 +30,7 @@ export type MessageMentionProps = {
 
 export type MessageInputProps = {
   inputFor?: 'individual' | 'group';
-  participants?: Participant[];
+  participants?: VoiceParticipant[];
   onSendMessage: (
     isPrivate: boolean,
     targetUserInfo?: Message['receiverInfo'] & { socketId?: string },

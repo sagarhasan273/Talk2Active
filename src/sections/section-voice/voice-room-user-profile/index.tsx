@@ -1,6 +1,6 @@
 // VoiceRoomUserProfile.tsx
 
-import type { Participant } from 'src/types/type-room';
+import type { VoiceParticipant } from 'src/types/type-room';
 
 import React, { useState, useEffect } from 'react';
 
@@ -43,7 +43,7 @@ interface VoiceRoomUserProfileProps {
   open: boolean;
   onClose: () => void;
 
-  user?: Partial<Participant> & {
+  user?: Partial<VoiceParticipant> & {
     isFollowing?: boolean;
     isBlocked?: boolean;
     isMuted?: boolean;

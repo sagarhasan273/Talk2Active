@@ -1,4 +1,4 @@
-import type { TypographyStyleOptions } from '@mui/material/styles/createTypography';
+import type { CssVarsThemeOptions } from '@mui/material/styles';
 
 import { setFont, pxToRem, responsiveFontSizes } from '../styles/utils';
 
@@ -9,10 +9,12 @@ declare module '@mui/material/styles' {
     fontSecondaryFamily: React.CSSProperties['fontFamily'];
     fontWeightSemiBold: React.CSSProperties['fontWeight'];
   }
+
   interface TypographyVariantsOptions {
     fontSecondaryFamily?: React.CSSProperties['fontFamily'];
     fontWeightSemiBold?: React.CSSProperties['fontWeight'];
   }
+
   interface ThemeVars {
     typography: Theme['typography'];
   }
@@ -28,14 +30,17 @@ export const secondaryFont = setFont('Barlow');
 
 // ----------------------------------------------------------------------
 
-export const typography: TypographyStyleOptions = {
+export const typography: NonNullable<CssVarsThemeOptions['typography']> = {
   fontFamily: primaryFont,
+
   fontSecondaryFamily: secondaryFont,
+
   fontWeightLight: '300',
   fontWeightRegular: '400',
   fontWeightMedium: '500',
   fontWeightSemiBold: '600',
   fontWeightBold: '700',
+
   h1: {
     fontWeight: 800,
     lineHeight: 80 / 64,
@@ -44,6 +49,7 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 52, md: 58, lg: 64 }),
     userSelect: 'none',
   },
+
   h2: {
     fontWeight: 800,
     lineHeight: 64 / 48,
@@ -52,6 +58,7 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 40, md: 44, lg: 48 }),
     userSelect: 'none',
   },
+
   h3: {
     fontWeight: 700,
     lineHeight: 1.5,
@@ -60,6 +67,7 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 26, md: 30, lg: 32 }),
     userSelect: 'none',
   },
+
   h4: {
     fontWeight: 700,
     lineHeight: 1.5,
@@ -67,6 +75,7 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 20, md: 24, lg: 24 }),
     userSelect: 'none',
   },
+
   h5: {
     fontWeight: 700,
     lineHeight: 1.5,
@@ -74,6 +83,7 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 19, md: 20, lg: 20 }),
     userSelect: 'none',
   },
+
   h6: {
     fontWeight: 600,
     lineHeight: 24 / 15,
@@ -81,32 +91,38 @@ export const typography: TypographyStyleOptions = {
     ...responsiveFontSizes({ sm: 18, md: 18, lg: 18 }),
     userSelect: 'none',
   },
+
   subtitle1: {
     fontWeight: 600,
     lineHeight: 1.5,
     fontSize: pxToRem(16),
     userSelect: 'none',
   },
+
   subtitle2: {
     fontWeight: 600,
     lineHeight: 22 / 14,
     fontSize: pxToRem(12),
     userSelect: 'none',
   },
+
   body1: {
     lineHeight: 1.5,
     fontSize: pxToRem(14),
     userSelect: 'none',
   },
+
   body2: {
     lineHeight: 20 / 12,
     fontSize: pxToRem(12),
     userSelect: 'none',
   },
+
   caption: {
     lineHeight: 1.5,
     fontSize: pxToRem(10),
   },
+
   overline: {
     fontWeight: 700,
     lineHeight: 1.5,
@@ -114,6 +130,7 @@ export const typography: TypographyStyleOptions = {
     textTransform: 'uppercase',
     userSelect: 'none',
   },
+
   button: {
     fontWeight: 700,
     lineHeight: 22 / 12,

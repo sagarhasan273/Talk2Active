@@ -1,6 +1,6 @@
 import type { UserType } from 'src/types/type-user';
 import type { UseWebRTCReturn } from 'src/hooks/useWebRTC';
-import type { Message, Participant, ReactionMessageData } from 'src/types/type-room';
+import type { Message, VoiceParticipant, ReactionMessageData } from 'src/types/type-room';
 
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
@@ -19,7 +19,7 @@ export interface WebRTCEventData {
 }
 
 export interface ExistingParticipantsData {
-  participants: Participant[];
+  participants: VoiceParticipant[];
   roomId: string;
 }
 
@@ -141,9 +141,9 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     if (!success) return;
 
     try {
-      updateUserVoiceState({ hasJoined: true, roomId: room.id });
+      updateUserVoiceState({ hasJoined: true, roomId: room.roomId });
       const response = await joinRoom({
-        roomId: room.id,
+        roomId: room.roomId,
         socketId: socket.id,
         userId: user.id,
         name: user.name,
@@ -207,7 +207,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       });
     };
 
-    const handleUserJoined = (data: Participant) => {
+    const handleUserJoined = (data: VoiceParticipant) => {
       if (data.socketId !== socket?.id) {
         addParticipant(data);
         createOffer(data.socketId, socket);
@@ -302,12 +302,12 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
     const handleExistingRoomParticipant = (data: any) => {
       setCurrentRooms(
         currentRooms?.map((currentRoom) => {
-          if (!data?.participants?.[currentRoom?.room?.id]?.length) return currentRoom;
+          if (!data?.participants?.[currentRoom?.room.roomId]?.length) return currentRoom;
           return {
             ...currentRoom,
             room: {
               ...currentRoom.room,
-              currentParticipants: data.participants[currentRoom.room.id].map((p: any) => ({
+              participants: data.participants[currentRoom.room.roomId].map((p: any) => ({
                 user: p,
                 joinedAt: new Date().toDateString(),
               })),
@@ -321,7 +321,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
       if (data?.type === 'transfer-host') {
         setCurrentRooms(
           currentRooms.map((currentRoom) => {
-            if (currentRoom?.room?.id === data?.roomId) {
+            if (currentRoom?.room.roomId === data?.roomId) {
               transferParticipantUserType({ newUserId: data?.host?.id });
               setRoom({ ...currentRoom.room, host: data?.host });
               return {
@@ -339,7 +339,7 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
         return;
       }
 
-      const recentRoomIds = new Set(currentRooms?.map((r) => r?.room?.id) || []);
+      const recentRoomIds = new Set(currentRooms?.map((r) => r?.room.roomId) || []);
 
       const joinRoomId = data?.joinInfo?.roomId;
       const leaveRoomId = data?.leaveInfo?.roomId;
@@ -350,24 +350,24 @@ export function useChatSocketListeners(webRTC: UseWebRTCReturn): UseReturnChatSo
 
       setCurrentRooms(
         currentRooms.map((currentRoom) => {
-          if (currentRoom?.room?.id === data?.joinInfo?.roomId) {
+          if (currentRoom?.room.roomId === data?.joinInfo?.roomId) {
             return {
               ...currentRoom,
               room: {
                 ...currentRoom.room,
-                currentParticipants: [
-                  ...(currentRoom.room.currentParticipants || []),
+                participants: [
+                  ...(currentRoom.room.participants || []),
                   { user: data.joinInfo.participant, joinedAt: new Date().toISOString() },
                 ],
               },
             };
           }
-          if (currentRoom?.room?.id === data?.leaveInfo?.roomId) {
+          if (currentRoom?.room.roomId === data?.leaveInfo?.roomId) {
             return {
               ...currentRoom,
               room: {
                 ...currentRoom.room,
-                currentParticipants: (currentRoom.room.currentParticipants || []).filter(
+                participants: (currentRoom.room.participants || []).filter(
                   (p) => ![p.user.userId, p.user.id].includes(data.leaveInfo.participant.userId)
                 ),
               },

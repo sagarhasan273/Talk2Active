@@ -2,20 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import SocialChat from '@/sections/section-common/social-chat';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Box, Badge, IconButton, createTheme, useMediaQuery } from '@mui/material';
+import { Box, Badge, IconButton, useMediaQuery } from '@mui/material';
+import { useTheme } from '@mui/material';
 
-/* ------------------------------------------------------------------ */ /* Theme */ /* ------------------------------------------------------------------ */ const theme =
-  createTheme({
-    palette: {
-      mode: 'light',
-      primary: { main: '#3E6BE0', dark: '#2C4FB8' },
-      warning: { main: '#C98A2C' },
-      background: { default: '#F5F6F8', paper: '#FFFFFF', neutral: '#EEF1F5' } as any,
-      divider: '#E2E5EA',
-      text: { primary: '#1B1F27', secondary: '#6B7280' },
-    },
-    shape: { borderRadius: 10 },
-  });
 /* ------------------------------------------------------------------ */ /* Resize limits */ /* ------------------------------------------------------------------ */ const MIN_WIDTH = 280;
 const MAX_WIDTH = 500;
 const MIN_HEIGHT = 350;
@@ -24,6 +13,8 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */ /* Component */ /* ------------------------------------------------------------------ */
 const VoiceButtonSocialChat = () => {
+  const theme = useTheme();
+
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [open, setOpen] = useState(false);
   /* ---------------------------------------------------------------- */ /* Size */ /* ---------------------------------------------------------------- */ const [
@@ -54,53 +45,53 @@ const VoiceButtonSocialChat = () => {
       setIsResizing(true);
     };
   /* ------------------------------------------------------------------ */ /* Resize */ /* ------------------------------------------------------------------ */ useEffect(() => {
-    if (!isResizing) return undefined;
-    const handleMouseMove = (event: MouseEvent) => {
-      const direction = resizeDirection.current;
-      if (!direction) return;
+      if (!isResizing) return undefined;
+      const handleMouseMove = (event: MouseEvent) => {
+        const direction = resizeDirection.current;
+        if (!direction) return;
       /* -------------------------------------------------------------- */ /* Width */ /* -------------------------------------------------------------- */ if (
-        direction === 'left' ||
-        direction === 'right'
-      ) {
-        const deltaX = event.clientX - startX.current;
-        let newWidth = startWidth.current;
-        if (direction === 'left') {
+          direction === 'left' ||
+          direction === 'right'
+        ) {
+          const deltaX = event.clientX - startX.current;
+          let newWidth = startWidth.current;
+          if (direction === 'left') {
           /* * Left edge: * Moving left -> wider * Moving right -> narrower */ newWidth =
-            startWidth.current - deltaX;
-        } else {
+              startWidth.current - deltaX;
+          } else {
           /* * Right edge: * Moving right -> wider * Moving left -> narrower */ newWidth =
-            startWidth.current + deltaX;
+              startWidth.current + deltaX;
+          }
+          const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
+          newWidth = Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth);
+          setChatWidth(newWidth);
         }
-        const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
-        newWidth = Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth);
-        setChatWidth(newWidth);
-      }
       /* -------------------------------------------------------------- */ /* Height */ /* -------------------------------------------------------------- */ if (
-        direction === 'top'
-      ) {
+          direction === 'top'
+        ) {
         /* * Because the bottom is fixed: * * Moving top upward -> taller * Moving top downward -> shorter */ const deltaY =
-          startY.current - event.clientY;
+            startY.current - event.clientY;
 
-        let newHeight = startHeight.current + deltaY;
-        newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight));
-        setChatHeight(newHeight);
-      }
-    };
-    const handleMouseUp = () => {
-      resizeDirection.current = null;
-      setIsResizing(false);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'ew-resize';
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-  }, [isResizing, chatWidth, chatHeight, isMobile]);
+          let newHeight = startHeight.current + deltaY;
+          newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight));
+          setChatHeight(newHeight);
+        }
+      };
+      const handleMouseUp = () => {
+        resizeDirection.current = null;
+        setIsResizing(false);
+      };
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'ew-resize';
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      };
+    }, [isResizing, chatWidth, chatHeight, isMobile]);
   /* ------------------------------------------------------------------ */ /* Render */ /* ------------------------------------------------------------------ */ return (
     <Box
       sx={{
