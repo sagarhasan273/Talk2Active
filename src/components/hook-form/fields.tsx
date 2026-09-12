@@ -3,7 +3,6 @@ import { RHFRating } from './input-rating';
 import { RHFSlider } from './input-slider';
 import { RHFTextField } from './input-text-field';
 import { RHFRadioGroup } from './input-radio-group';
-import { RHFPhoneInput } from './input-phone-input';
 import { RHFAutocomplete } from './input-autocomplete';
 import { RHFCountrySelect } from './input-country-select';
 import { RHFSwitch, RHFMultiSwitch } from './input-switch';
@@ -22,7 +21,6 @@ export const Field = {
   Slider: RHFSlider,
   Rating: RHFRating,
   Text: RHFTextField,
-  Phone: RHFPhoneInput,
   Checkbox: RHFCheckbox,
   UploadBox: RHFUploadBox,
   RadioGroup: RHFRadioGroup,

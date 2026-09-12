@@ -22,8 +22,6 @@ export * from './input-text-field';
 
 export * from './input-radio-group';
 
-export * from './input-phone-input';
-
 export * from './input-date-picker';
 
 export * from './input-autocomplete';
