@@ -28,8 +28,7 @@ import { selectAccount } from 'src/core/slices';
 import { useCreateRoomMutation, useUpdateRoomMutation } from 'src/core/apis/api-chat';
 
 import { Scrollbar } from 'src/components/scrollbar';
-
-import { languages } from '../../_mock/data/languages';
+import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
 
 // ----------------------------------------------------------------------
 
@@ -43,19 +42,8 @@ export const LanguageLevelEnum = {
   CONVERSATION: 'conversation',
 } as const;
 
-export type LanguageLevel = (typeof LanguageLevelEnum)[keyof typeof LanguageLevelEnum];
 
-const LEVEL_OPTIONS = [
-  ['all', '🎯 All Levels'],
-  ['beginner', '🌱 A1-A2 Beginner'],
-  ['intermediate', '📈 B1-B2 Intermediate'],
-  ['advanced', '🏆 C1-C2 Advanced'],
-  ['ielts', '📝 IELTS / Exam Prep'],
-  ['business', '💼 Business English'],
-  ['conversation', '🗣️ Conversation Practice'],
-] as const;
-
-const LEVEL_COLORS: Record<LanguageLevel, string> = {
+const LEVEL_COLORS: Record<string, string> = {
   all: '#818cf8',
   beginner: '#4ade80',
   intermediate: '#facc15',
@@ -65,16 +53,16 @@ const LEVEL_COLORS: Record<LanguageLevel, string> = {
   conversation: '#fb923c',
 };
 
-const LEVEL_LABELS: Record<LanguageLevel, string> = LEVEL_OPTIONS.reduce(
-  (acc, [value, label]) => ({ ...acc, [value]: label }),
-  {} as Record<LanguageLevel, string>
+const LEVEL_LABELS: Record<string, string> = LEVEL_OPTIONS.reduce(
+  (acc, { value, label }) => ({ ...acc, [value]: label }),
+  {} as Record<string, string>
 );
 
 type FormData = {
   topic: string;
   welcome_message: string;
   languages: string[];
-  level: LanguageLevel;
+  level: string;
   max_participants: number;
 };
 
@@ -86,9 +74,6 @@ interface Props {
 }
 
 // ----------------------------------------------------------------------
-
-const isValidLevel = (value: unknown): value is LanguageLevel =>
-  Object.values(LanguageLevelEnum).includes(value as LanguageLevel);
 
 const getInitialForm = (room: Props['currentRoom']): FormData => {
   if (!room) {
@@ -104,7 +89,7 @@ const getInitialForm = (room: Props['currentRoom']): FormData => {
     topic: room.topic || '',
     welcome_message: room.welcome_message || '',
     languages: room.languages.length ? [...room.languages] : ['en'],
-    level: isValidLevel(room.level) ? room.level : LanguageLevelEnum.ALL,
+    level: room.level,
     max_participants: room.max_participants || 5,
   };
 };
@@ -188,35 +173,35 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
     const payload = isEditMode
       ? {
-          roomId: (currentRoom as any)?.id,
-          topic: formData.topic.trim(),
-          welcome_message: currentRoom?.welcome_message || '',
-          languages: formData.languages,
-          level: isValidLevel(currentRoom?.level) ? currentRoom.level : formData.level,
-          max_participants: formData.max_participants,
-          isActive: true,
-        }
+        roomId: currentRoom?.roomId,
+        topic: formData.topic.trim(),
+        welcome_message: currentRoom?.welcome_message || '',
+        languages: formData.languages,
+        level: currentRoom?.level || 'all',
+        max_participants: formData.max_participants,
+        isActive: true,
+      }
       : {
-          topic: formData.topic.trim(),
-          welcome_message: formData.welcome_message.trim(),
-          languages: formData.languages,
-          level: formData.level,
-          max_participants: formData.max_participants,
-        };
+        topic: formData.topic.trim(),
+        welcome_message: formData.welcome_message.trim(),
+        languages: formData.languages,
+        level: formData.level,
+        max_participants: formData.max_participants,
+      };
 
     onCreateRoom(payload);
 
     try {
       const response = currentRoom
         ? await updateRoom({
-            roomId: currentRoom.roomId,
-            ...payload,
-            host: (currentRoom?.host as any)?.userId || user.userId,
-          }).unwrap()
+          roomId: currentRoom.roomId,
+          ...payload,
+          host: (currentRoom?.host as any)?.userId || user.userId,
+        }).unwrap()
         : await createRoom({
-            ...payload,
-            host: user.userId,
-          }).unwrap();
+          ...payload,
+          host: user.userId,
+        }).unwrap();
 
       if (response?.status) onClose();
     } catch (error) {
@@ -248,7 +233,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
   const primaryColor = varAlpha(theme.vars.palette.primary.lightChannel, 1);
 
-  const lockedLevel = isValidLevel(currentRoom?.level) ? currentRoom.level : formData.level;
+  const lockedLevel =  currentRoom?.level || 'all';
 
   // ----------------------------------------------------------------------
 
@@ -490,7 +475,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                   </Typography>
 
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                    {LEVEL_OPTIONS.map(([value, label]) => {
+                    {LEVEL_OPTIONS.map(({ value, label }) => {
                       const selected = formData.level === value;
                       const color = LEVEL_COLORS[value];
 

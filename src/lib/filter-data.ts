@@ -143,3 +143,13 @@ export const getLanguageFlag = (code: string): string => {
   const language = getLanguageByCode(code);
   return language?.flag || '🌐';
 };
+
+export const LEVEL_OPTIONS = [
+  { value: 'all', label: 'Any Levels', emoji: '🎯' },
+  { value: 'beginner', label: 'A1-A2 Beginner', emoji: '🌱' },
+  { value: 'intermediate', label: 'B1-B2 Intermediate', emoji: '📈' },
+  { value: 'advanced', label: 'C1-C2 Advanced', emoji: '🏆' },
+  { value: 'ielts', label: 'IELTS / Exam Prep', emoji: '📝' },
+  { value: 'business', label: 'Business English', emoji: '💼' },
+  { value: 'conversation', label: 'Conversation Practice', emoji: '🗣️' },
+];

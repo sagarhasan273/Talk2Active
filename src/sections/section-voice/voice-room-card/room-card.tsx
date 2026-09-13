@@ -97,7 +97,7 @@ export const VoiceRoomCard = ({
   }, [on, off, handleBroadcastNewRoom]);
 
   // Derived Values
-  const hostId = room?.host?.id || room?.host?.userId;
+  const hostId = room.host.userId;
   const participants = room?.participants || [];
 
   const allUsers = participants.map((p) => ({

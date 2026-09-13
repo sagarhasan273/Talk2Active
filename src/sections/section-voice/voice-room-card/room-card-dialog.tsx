@@ -177,21 +177,23 @@ export const RoomParticipantsDialog = ({
       >
         <Box sx={{ minWidth: 0 }}>
           <Stack direction="row" alignItems="center" gap={1}>
-            <Typography variant="subtitle1" fontWeight={800} noWrap>
+            <Typography variant="subtitle1" fontWeight={800}>
               {room?.topic || 'Untitled room'}
             </Typography>
-            {isHost && (
+          </Stack>
+            <Stack direction={'row'} sx={{alignItems: 'center', gap: 1}}>
+              {isHost && (
               <Chip
                 label="You're hosting"
                 size="small"
                 color="primary"
-                sx={{ height: 20, fontSize: 10.5, fontWeight: 700 }}
+                sx={{ height: 20, fontSize: 10.5,  }}
               />
             )}
-          </Stack>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {dedupedUsers.length} {dedupedUsers.length === 1 ? 'person' : 'people'} in this room
           </Typography>
+            </Stack>
         </Box>
         <Stack direction="row" alignItems="center" gap={0.5} sx={{ flexShrink: 0 }}>
           {isHost && onEditRoom && (

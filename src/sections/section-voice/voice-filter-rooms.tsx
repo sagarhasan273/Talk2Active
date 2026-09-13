@@ -28,7 +28,7 @@ import {
   InputAdornment,
   FormControlLabel,
 } from '@mui/material';
-
+import { languages, LEVEL_OPTIONS } from '@/lib/filter-data'
 export interface VoiceRoomsFilterProps {
   onFilterChange: (filters: FilterState) => void;
   initialFilters?: Partial<FilterState>;
@@ -44,28 +44,13 @@ export interface FilterState {
 
 const LANGUAGE_OPTIONS = [
   { value: 'all', label: 'All Languages', emoji: '🌐' },
-  { value: 'English', label: 'English', emoji: '🇬🇧' },
-  { value: 'Spanish', label: 'Spanish', emoji: '🇪🇸' },
-  { value: 'French', label: 'French', emoji: '🇫🇷' },
-  { value: 'German', label: 'German', emoji: '🇩🇪' },
-  { value: 'Italian', label: 'Italian', emoji: '🇮🇹' },
-  { value: 'Portuguese', label: 'Portuguese', emoji: '🇵🇹' },
-  { value: 'Russian', label: 'Russian', emoji: '🇷🇺' },
-  { value: 'Japanese', label: 'Japanese', emoji: '🇯🇵' },
-  { value: 'Korean', label: 'Korean', emoji: '🇰🇷' },
-  { value: 'Chinese', label: 'Chinese', emoji: '🇨🇳' },
-  { value: 'Arabic', label: 'Arabic', emoji: '🇸🇦' },
+  ...languages.map(({ code, name, flag }) => ({
+    value: code,
+    label: name,
+    emoji: flag,
+  })),
 ];
 
-const LEVEL_OPTIONS = [
-  { value: 'all', label: 'All Levels', emoji: '🎯' },
-  { value: 'Beginner', label: 'A1-A2 Beginner', emoji: '🌱' },
-  { value: 'Intermediate', label: 'B1-B2 Intermediate', emoji: '📈' },
-  { value: 'Advanced', label: 'C1-C2 Advanced', emoji: '🏆' },
-  { value: 'IELTS', label: 'IELTS / Exam Prep', emoji: '📝' },
-  { value: 'Business', label: 'Business English', emoji: '💼' },
-  { value: 'Conversation', label: 'Conversation Practice', emoji: '🗣️' },
-];
 
 export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   onFilterChange,
@@ -251,9 +236,20 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 return `${option.emoji} ${option.label}`;
               }}
               sx={selectSx}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 400,
+                    '& .MuiMenu-list': {
+                      maxHeight: 400,
+                      overflowY: 'auto',
+                    },
+                  },
+                },
+              }}
             >
-              {LANGUAGE_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
+              {LANGUAGE_OPTIONS.map((option, index) => (
+                <MenuItem key={`${option.value}+${index}`} value={option.value}>
                   {option.emoji} {option.label}
                 </MenuItem>
               ))}
@@ -282,6 +278,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                     </Stack>
                   );
                 }
+
                 const option = LEVEL_OPTIONS.find((opt) => opt.value === selected);
                 if (!option) return selected;
                 return `${option.emoji} ${option.label}`;

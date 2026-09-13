@@ -14,10 +14,10 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
-import VoiceRoomsView from './voice-room-list';
+import VoiceRoomlist from './voice-room-list';
 import { VoiceRoomBody } from './voice-room-body';
 import { VoiceTabPanel } from '../voice-tab-panel';
-import { VoiceRoomsFilter } from '../voice-filter-rooms';
+import { FilterState, VoiceRoomsFilter } from '../voice-filter-rooms';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
@@ -37,6 +37,13 @@ export function VoiceMainView() {
   const { room, setRoom } = useRoomTools();
 
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('find');
+  const [filterRooms, setFilterRooms] = useState<FilterState>({
+    searchQuery: '',
+    selectedLanguage: 'all',
+    selectedLevel: 'all',
+    hideFullRooms: false,
+    showActiveOnly: false
+  });
 
   // ---------------------------------------------------------
   // HOST
@@ -172,7 +179,7 @@ export function VoiceMainView() {
     // DEFAULT
     // ---------------------------------------------
 
-    return <DefaultHeader onQuickJoin={() => {}} onCreateRoom={handleCreateRoom} />;
+    return <DefaultHeader onQuickJoin={() => { }} onCreateRoom={handleCreateRoom} />;
   }, [
     room,
     selectedTab,
@@ -190,7 +197,9 @@ export function VoiceMainView() {
   // FILTER
   // ---------------------------------------------------------
 
-  const filter = useMemo(() => <VoiceRoomsFilter onFilterChange={() => {}} />, []);
+  const filter = useMemo(() => <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={(filter) => {
+    setFilterRooms(filter);
+  }} />, []);
 
   const mainContent = (
     <>
@@ -199,31 +208,7 @@ export function VoiceMainView() {
           ===================================================== */}
 
       <VoiceTabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
-        <Box
-          sx={{
-            width: '100%',
-            height: 1,
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <Box
-            sx={{
-              flex: 1,
-              minHeight: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <Scrollbar
-              sx={{
-                height: 1,
-              }}
-            >
-              <VoiceRoomsView onJoinRoom={handleJoinRoom} />
-            </Scrollbar>
-          </Box>
-        </Box>
+        <VoiceRoomlist onJoinRoom={handleJoinRoom} query={filterRooms} />
       </VoiceTabPanel>
 
       {/* =====================================================
@@ -262,7 +247,7 @@ export function VoiceMainView() {
       <VoiceModalCreateRoom
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
-        onCreateRoom={() => {}}
+        onCreateRoom={() => { }}
         currentRoom={room}
       />
 

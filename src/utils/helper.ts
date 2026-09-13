@@ -5,9 +5,9 @@
 
 import { DEFAULT_AUDIO_SETTINGS } from 'src/hooks/useWebRTC/types';
 
-import { languages } from 'src/_mock/data/languages';
 
 import axiosInstance, { endpoints } from './axios';
+import { languages } from '@/lib/filter-data';
 
 // ----------------------------------------------------------------------
 
