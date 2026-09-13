@@ -5,22 +5,30 @@ import { LanguageLevelEnum } from 'src/enums/enum-chat';
 import { UserSchema } from './schema-user';
 
 export const RoomBaseSchema = z.object({
-  topic: z.string().min(1, 'topic is required'),
+  roomId: z.string(),
+  room_key: z.string().regex(/^RM[A-F0-9]{10}$/, {
+    message: 'Room key must follow the format RMXXXXXXXXXX',
+  }),
+  topic: z.string().min(1, "name is required"),
   welcome_message: z.string().optional().default('Welcome to the room!'),
-  languages: z.array(z.string().min(1, 'language is required')),
+  languages: z.array(z.string().min(1, "languages is required")),
   level: z.nativeEnum(LanguageLevelEnum),
   max_participants: z.number().int().nonnegative().optional().default(10),
-  host: z.string(),
-  participants: z
-    .array(
-      z.object({
-        user: z.string(),
-        joinedAt: z.string().datetime(),
-      })
-    )
-    .optional()
-    .default([]),
+  host: z.union([z.string(), UserSchema]),
+  participants: z.array(
+    z.object({
+      user: z.union([z.string(), UserSchema]),
+      joinedAt: z.preprocess(
+        (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
+        z.date()
+      )
+    })
+  ).optional().default([]),
   isActive: z.boolean().optional().default(true),
+  kickedUserIds: z.array(z.string()).optional(),
+
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
 
 // Schema to validate incoming create payloads (timestamps not expected)
@@ -30,7 +38,7 @@ export const RoomCreateSchema = RoomBaseSchema.pick({
   languages: true,
   level: true,
   max_participants: true,
-  host: true,
+  host: true
 });
 
 export const RoomUpdateSchema = RoomBaseSchema.pick({
@@ -41,32 +49,36 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
   max_participants: true,
   host: true,
   isActive: true,
-})
-  .partial()
-  .extend({
-    roomId: z.string(),
-  });
+}).partial().extend({
+  roomId: z.string()
+});
 
 // Schema to validate objects returned from DB (includes mongoose timestamps)
-export const RoomResponseSchema = RoomBaseSchema.extend({
-  roomId: z.string(),
+export const RoomSchema = RoomBaseSchema.extend({
   host: UserSchema,
   participants: z
     .array(
       z.object({
         user: UserSchema,
-        joinedAt: z.string().datetime(),
+        joinedAt: z.preprocess(
+          (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
+          z.date()
+        ),
       })
     )
     .optional()
     .default([]),
-  createdAt: z.string(),
-  updatedAt: z.string(),
 });
 
-export const RecentRoomSchema = z.array(
-  z.object({
-    room: RoomResponseSchema,
-    joinedAt: z.string(),
-  })
-);
+export const JoinRoomSchema = z.object({
+  roomId: z.string(),
+  userId: z.string(),
+});
+
+export const LeaveRoomSchema = z.object({
+  roomId: z.string(),
+  userId: z.string(),
+  kicked: z.boolean().optional().default(false)
+});
+
+

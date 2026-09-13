@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { DisabledByDefaultRounded } from '@mui/icons-material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Box, Chip, Stack, alpha, Button, useTheme, Typography, AvatarGroup } from '@mui/material';
+import { alpha, AvatarGroup, Box, Button, Chip, Stack, Typography, useTheme } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -12,10 +12,10 @@ import { useSocketContext } from 'src/core/contexts/socket-context';
 
 import { AvatarUser } from 'src/components/avatar-user';
 
-import { getLevelColor } from './styles';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { ImageLightbox } from './image-lightbox';
 import { RoomParticipantsDialog } from './room-card-dialog';
-import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+import { getLevelColor } from './styles';
 
 import type { VoiceRoomCardProps } from './types';
 
@@ -35,10 +35,13 @@ export const VoiceRoomCard = ({
   onRoomUpdated,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
+
   const { on, off } = useSocketContext();
+
   const [room, setRoom] = useState(roomData);
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
+
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
   // Keep internal state in sync if prop changes from parent
@@ -55,27 +58,6 @@ export const VoiceRoomCard = ({
       return;
     }
 
-    if (data?.joinInfo?.roomId) {
-      setRoom((prev) => {
-        if (prev.roomId !== data.joinInfo.roomId) return prev;
-        const newParticipant = data.joinInfo.participant;
-
-        // Prevent duplicate entries in participant list
-        const exists = (prev.participants || []).some(
-          (p) => (p.user?.id || p.user?.userId) === (newParticipant?.id || newParticipant?.userId)
-        );
-        if (exists) return prev;
-
-        return {
-          ...prev,
-          participants: [
-            ...(prev.participants || []),
-            { user: newParticipant, joinedAt: new Date().toISOString() },
-          ],
-        };
-      });
-    }
-
     if (data?.leaveInfo?.roomId) {
       setRoom((prev) => {
         if (prev.roomId !== data.leaveInfo.roomId) return prev;
@@ -84,7 +66,7 @@ export const VoiceRoomCard = ({
         return {
           ...prev,
           participants: (prev.participants || []).filter(
-            (p) => ![p.user?.userId, p.user?.id].includes(targetId)
+            (p) => ![p.user?.userId, p.user.userId].includes(targetId)
           ),
         };
       });
@@ -102,7 +84,7 @@ export const VoiceRoomCard = ({
 
   const allUsers = participants.map((p) => ({
     ...p,
-    isHost: Boolean(hostId && (p.user?.id === hostId || p.user?.userId === hostId)),
+    isHost: Boolean(hostId && (p.user.userId === hostId || p.user?.userId === hostId)),
   }));
 
   const max = room?.max_participants ?? 0;
@@ -124,7 +106,7 @@ export const VoiceRoomCard = ({
     setRoom((prev) => ({
       ...prev,
       participants: (prev.participants || []).filter(
-        (p) => ![p.user?.userId, p.user?.id].includes(userId)
+        (p) => ![p.user?.userId, p.user.userId].includes(userId)
       ),
     }));
   };
@@ -241,10 +223,10 @@ export const VoiceRoomCard = ({
           }}
         >
           <AvatarUser
-            avatarUrl={room?.host?.profilePhoto}
-            name={room?.host?.name || 'Unknown'}
-            verified={room?.host?.verified}
-            accountType={room?.host?.accountType}
+            avatarUrl={room.host.profilePhoto}
+            name={room.host.name || 'Unknown'}
+            verified={room.host.verified}
+            accountType={room.host.accountType}
             sx={{ width: 48, height: 48 }}
           />
           <Stack direction="column" sx={{ minWidth: 0 }}>
@@ -285,7 +267,7 @@ export const VoiceRoomCard = ({
             <AvatarGroup max={4} sx={{ gap: 1.5 }}>
               {allUsers.map((p, i) => (
                 <AvatarUser
-                  key={p?.user?.id || p?.user?.userId || i}
+                  key={p?.user?.userId || i}
                   avatarUrl={p?.user?.profilePhoto}
                   name={p?.user?.name || 'User'}
                   verified={p?.user?.verified}
@@ -302,7 +284,7 @@ export const VoiceRoomCard = ({
             size="small"
             variant="contained"
             disabled={isFull}
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
               onJoinRoom(room);
             }}
@@ -326,7 +308,7 @@ export const VoiceRoomCard = ({
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
         room={room}
-        allUsers={allUsers}
+        allUsers={allUsers as any}
         isFull={isFull}
         isHost={isHost}
         onJoinRoom={onJoinRoom}

@@ -1,4 +1,4 @@
-export type SelectedTabType = 'find' | 'entry';
+export type SelectedTabType = 'find' | 'enter';
 
 export type VoiceParticipant = {
   id?: string;

@@ -1,35 +1,36 @@
-import { MicIcon, UsersIcon, Volume2Icon, ArrowRightIcon } from 'lucide-react';
+import { ArrowRightIcon, MicIcon, UsersIcon, Volume2Icon, XIcon } from 'lucide-react';
 
-import { Box, Paper, alpha, Button, useTheme, Typography } from '@mui/material';
+import { alpha, Box, Button, IconButton, Paper, Typography, useTheme } from '@mui/material';
 
 // ----------------------------------------------------------------------
 // Join Room Gate
-//
-// Sits over the whole screen and freezes interaction with the room
-// behind it until the user explicitly confirms they want to join
-// (mic/camera permissions, analytics, etc. can all be kicked off from
-// the single onJoin callback). One deliberate entrance animation on
-// the card + a slow ambient pulse on the icon; everything else is
-// static so it doesn't compete with the confirm action.
 // ----------------------------------------------------------------------
 
-export function VoiceRoomJoinGate({
-  roomTopic,
-  participantCount,
-  maxParticipants,
-  onJoin,
-}: {
+interface VoiceRoomJoinGateProps {
   roomTopic?: string;
   participantCount?: number;
   maxParticipants?: number;
   onJoin: () => void;
-}) {
+  onCancel: () => void;
+}
+
+export function VoiceRoomJoinGate({
+  roomTopic,
+  participantCount = 0,
+  maxParticipants,
+  onJoin,
+  onCancel,
+}: VoiceRoomJoinGateProps) {
   const theme = useTheme();
 
-  const hasParticipants = Boolean(participantCount && participantCount > 0);
+  const hasParticipants = participantCount > 0;
+  const isFull = maxParticipants !== undefined && participantCount >= maxParticipants;
 
   return (
     <Box
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="voice-room-join-title"
       sx={{
         position: 'fixed',
         inset: 0,
@@ -65,8 +66,14 @@ export function VoiceRoomJoinGate({
           animation: 'voiceJoinGateIn 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
 
           '@keyframes voiceJoinGateIn': {
-            from: { opacity: 0, transform: 'translateY(10px) scale(0.97)' },
-            to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+            from: {
+              opacity: 0,
+              transform: 'translateY(10px) scale(0.97)',
+            },
+            to: {
+              opacity: 1,
+              transform: 'translateY(0) scale(1)',
+            },
           },
 
           '@media (prefers-reduced-motion: reduce)': {
@@ -74,6 +81,28 @@ export function VoiceRoomJoinGate({
           },
         }}
       >
+        {/* Close */}
+        <IconButton
+          aria-label="Cancel joining room"
+          onClick={onCancel}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 2,
+
+            color: 'text.secondary',
+
+            '&:hover': {
+              bgcolor: alpha(theme.palette.text.primary, 0.06),
+              color: 'text.primary',
+            },
+          }}
+        >
+          <XIcon size={18} />
+        </IconButton>
+
         {/* Ambient accent glow */}
         <Box
           sx={{
@@ -81,21 +110,26 @@ export function VoiceRoomJoinGate({
             top: -60,
             left: '50%',
             transform: 'translateX(-50%)',
+
             width: 220,
             height: 220,
+
             borderRadius: '50%',
             bgcolor: alpha(theme.palette.primary.main, 0.14),
             filter: 'blur(40px)',
+
             pointerEvents: 'none',
           }}
         />
 
-        {/* Icon with pulsing rings */}
+        {/* Icon */}
         <Box
           sx={{
             position: 'relative',
+
             width: 72,
             height: 72,
+
             mx: 'auto',
             mb: 2.5,
 
@@ -110,13 +144,21 @@ export function VoiceRoomJoinGate({
               sx={{
                 position: 'absolute',
                 inset: 0,
+
                 borderRadius: '50%',
                 border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+
                 animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
 
                 '@keyframes voiceJoinGateRing': {
-                  '0%': { transform: 'scale(0.85)', opacity: 0.6 },
-                  '100%': { transform: 'scale(1.5)', opacity: 0 },
+                  '0%': {
+                    transform: 'scale(0.85)',
+                    opacity: 0.6,
+                  },
+                  '100%': {
+                    transform: 'scale(1.5)',
+                    opacity: 0,
+                  },
                 },
 
                 '@media (prefers-reduced-motion: reduce)': {
@@ -130,12 +172,16 @@ export function VoiceRoomJoinGate({
           <Box
             sx={{
               position: 'relative',
+
               width: 60,
               height: 60,
+
               borderRadius: '50%',
+
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+
               bgcolor: alpha(theme.palette.primary.main, 0.12),
               color: 'primary.main',
             }}
@@ -144,7 +190,9 @@ export function VoiceRoomJoinGate({
           </Box>
         </Box>
 
+        {/* Title */}
         <Typography
+          id="voice-room-join-title"
           variant="h6"
           sx={{
             fontWeight: 800,
@@ -155,10 +203,12 @@ export function VoiceRoomJoinGate({
           Ready to join the room?
         </Typography>
 
+        {/* Room topic */}
         <Typography
           variant="body2"
           sx={{
             color: 'text.secondary',
+
             mb: hasParticipants ? 2 : 3,
 
             display: '-webkit-box',
@@ -170,60 +220,129 @@ export function VoiceRoomJoinGate({
           {roomTopic || 'Jump in and start talking with the room.'}
         </Typography>
 
+        {/* Participants */}
         {hasParticipants && (
           <Box
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
+
               gap: 0.6,
               mx: 'auto',
               mb: 3,
+
               px: 1.25,
               py: 0.5,
+
               borderRadius: 5,
+
               bgcolor: alpha(theme.palette.success.main, 0.1),
               color: 'success.dark',
             }}
           >
             <UsersIcon size={13} />
-            <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
               {participantCount} {participantCount === 1 ? 'person is' : 'people are'} already
-              talking{maxParticipants ? ` · ${participantCount}/${maxParticipants}` : ''}
+              talking
+              {maxParticipants ? ` · ${participantCount}/${maxParticipants}` : ''}
             </Typography>
           </Box>
         )}
 
-        <Button
-          fullWidth
-          size="large"
-          variant="contained"
-          onClick={onJoin}
-          endIcon={<ArrowRightIcon size={18} />}
-          sx={{
-            borderRadius: 2,
-            py: 1.15,
-            fontWeight: 700,
-            textTransform: 'none',
-            boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.32)}`,
-            transition: theme.transitions.create(['transform', 'box-shadow'], { duration: 150 }),
+        {/* Full room warning */}
+        {isFull && (
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mb: 2,
 
-            '&:hover': {
-              transform: 'translateY(-1px)',
-              boxShadow: `0 14px 28px ${alpha(theme.palette.primary.main, 0.4)}`,
-            },
+              color: 'error.main',
+              fontWeight: 700,
+            }}
+          >
+            This room is currently full.
+          </Typography>
+        )}
+
+        {/* Actions */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
           }}
         >
-          Click to join room
-        </Button>
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
+            disabled={isFull}
+            onClick={onJoin}
+            endIcon={<ArrowRightIcon size={18} />}
+            sx={{
+              borderRadius: 2,
+              py: 1.15,
 
+              fontWeight: 700,
+              textTransform: 'none',
+
+              boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.32)}`,
+
+              transition: theme.transitions.create(['transform', 'box-shadow'], {
+                duration: 150,
+              }),
+
+              '&:hover': {
+                transform: 'translateY(-1px)',
+                boxShadow: `0 14px 28px ${alpha(theme.palette.primary.main, 0.4)}`,
+              },
+
+              '&.Mui-disabled': {
+                boxShadow: 'none',
+              },
+            }}
+          >
+            {isFull ? 'Room is full' : 'Click to join room'}
+          </Button>
+
+          <Button
+            fullWidth
+            size="medium"
+            variant="text"
+            onClick={onCancel}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              color: 'text.secondary',
+
+              '&:hover': {
+                bgcolor: alpha(theme.palette.text.primary, 0.05),
+              },
+            }}
+          >
+            Cancel
+          </Button>
+        </Box>
+
+        {/* Mic information */}
         <Typography
           variant="caption"
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+
             gap: 0.5,
             mt: 1.5,
+
             color: 'text.disabled',
           }}
         >

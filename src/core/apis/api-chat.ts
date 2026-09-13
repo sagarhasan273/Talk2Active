@@ -1,4 +1,4 @@
-import type { RoomResponse, JoinRoomUserInput, LeaveRoomUserInput } from 'src/types/type-chat';
+import type { RoomResponse, JoinRoomUserInput, LeaveRoomUserInput, JoinRoomInput } from 'src/types/type-chat';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -47,13 +47,13 @@ export const chatApi = createApi({
       invalidatesTags: ['chat-recall'],
     }),
 
-    joinRoom: builder.mutation<{ message: string; status: boolean }, JoinRoomUserInput>({
+    joinRoom: builder.mutation<{ message: string; status: boolean }, JoinRoomInput>({
       query: (input) => ({
         url: `room/${input.roomId}/join`,
         method: 'POST',
         body: input,
       }),
-      invalidatesTags: ['chat-recall'],
+      // invalidatesTags: ['chat-recall'],
     }),
 
     leaveRoom: builder.mutation<{ message: string; status: boolean }, LeaveRoomUserInput>({
@@ -62,7 +62,7 @@ export const chatApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['chat-recall'],
+      // invalidatesTags: ['chat-recall'],
     }),
   }),
 });

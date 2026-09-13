@@ -233,7 +233,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
   const primaryColor = varAlpha(theme.vars.palette.primary.lightChannel, 1);
 
-  const lockedLevel =  currentRoom?.level || 'all';
+  const lockedLevel = currentRoom?.level || 'all';
 
   // ----------------------------------------------------------------------
 
@@ -450,61 +450,40 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
               {/* Level — editable on create, fixed on edit */}
 
-              {isEditMode ? (
-                <Box sx={{ mb: 1.5 }}>
-                  <Typography fontSize={12} color="text.secondary" mb={0.75}>
-                    Skill Level (not editable)
-                  </Typography>
-                  <Chip
-                    label={LEVEL_LABELS[lockedLevel]}
-                    size="small"
-                    sx={{
-                      height: 28,
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      border: `1px solid ${LEVEL_COLORS[lockedLevel]}`,
-                      bgcolor: alpha(LEVEL_COLORS[lockedLevel], 0.12),
-                      color: LEVEL_COLORS[lockedLevel],
-                    }}
-                  />
-                </Box>
-              ) : (
-                <>
-                  <Typography fontSize={12} color="text.secondary" mb={0.75}>
-                    Skill Level
-                  </Typography>
 
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                    {LEVEL_OPTIONS.map(({ value, label }) => {
-                      const selected = formData.level === value;
-                      const color = LEVEL_COLORS[value];
+              <Typography fontSize={12} color="text.secondary" mb={0.75}>
+                Skill Level
+              </Typography>
 
-                      return (
-                        <Chip
-                          key={value}
-                          label={label}
-                          size="small"
-                          clickable
-                          onClick={() => updateForm('level', value)}
-                          sx={{
-                            height: 28,
-                            fontSize: 11.5,
-                            fontWeight: selected ? 700 : 500,
-                            border: `1px solid ${selected ? color : alpha(theme.palette.divider, 0.7)}`,
-                            bgcolor: selected ? alpha(color, 0.12) : 'transparent',
-                            color: selected ? color : theme.palette.text.secondary,
-                            '&:hover': {
-                              bgcolor: selected
-                                ? alpha(color, 0.02)
-                                : varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
-                            },
-                          }}
-                        />
-                      );
-                    })}
-                  </Box>
-                </>
-              )}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                {LEVEL_OPTIONS.map(({ value, label }) => {
+                  const selected = formData.level === value;
+                  const color = LEVEL_COLORS[value];
+
+                  return (
+                    <Chip
+                      key={value}
+                      label={label}
+                      size="small"
+                      clickable
+                      onClick={() => updateForm('level', value)}
+                      sx={{
+                        height: 28,
+                        fontSize: 11.5,
+                        fontWeight: selected ? 700 : 500,
+                        border: `1px solid ${selected ? color : alpha(theme.palette.divider, 0.7)}`,
+                        bgcolor: selected ? alpha(color, 0.12) : 'transparent',
+                        color: selected ? color : theme.palette.text.secondary,
+                        '&:hover': {
+                          bgcolor: selected
+                            ? alpha(color, 0.02)
+                            : varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
 
               {/* Participants — always editable */}
 
@@ -526,8 +505,8 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                     sx={{
                       height: 24,
                       fontSize: 12,
-                      fontWeight: 700,
-                      color: primaryColor,
+                      color: 'text.primary',
+                      backgroundColor: 'background.neutral'
                     }}
                   />
                 </Box>
@@ -548,10 +527,10 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Typography fontSize={10} color="text.disabled">
+                  <Typography fontSize={10} color="text.primary">
                     2
                   </Typography>
-                  <Typography fontSize={10} color="text.disabled">
+                  <Typography fontSize={10} color="text.primary">
                     20
                   </Typography>
                 </Box>

@@ -1,37 +1,40 @@
-import type { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 import type {
+  JoinRoomSchema,
+  LeaveRoomSchema,
   RoomBaseSchema,
-  RecentRoomSchema,
   RoomCreateSchema,
-  RoomResponseSchema,
+  RoomSchema,
+  RoomUpdateSchema,
 } from 'src/schemas/schema-chat';
+import type { z } from 'zod';
 
 import type { UserType } from './type-user';
 
 export type RoomBase = z.infer<typeof RoomBaseSchema>;
 export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
-export type RoomResponse = z.infer<typeof RoomResponseSchema>;
-export type RecentRoomResponse = z.infer<typeof RecentRoomSchema>;
+export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
+export type RoomResponse = z.infer<typeof RoomSchema>;
+export type JoinRoomInput = z.infer<typeof JoinRoomSchema>;
+export type LeaveRoomInput = z.infer<typeof LeaveRoomSchema>;
 
 export interface ChatUserStatus {
-  name: UserType['status'];
   label: string;
   icon: LucideIcon;
   color:
-    | 'success.main'
-    | 'error.light'
-    | 'yellow.main'
-    | 'orange.main'
-    | 'stone.main'
-    | 'stone.dark';
+  | 'success.main'
+  | 'error.light'
+  | 'yellow.main'
+  | 'orange.main'
+  | 'stone.main'
+  | 'stone.dark';
   bgColor: 'success' | 'error' | 'yellow' | 'orange' | 'stone' | 'stone';
   bgColorChannel:
-    | 'mainChannel'
-    | 'lightChannel'
-    | 'lighterChannel'
-    | 'darkChannel'
-    | 'darkerChannel';
+  | 'mainChannel'
+  | 'lightChannel'
+  | 'lighterChannel'
+  | 'darkChannel'
+  | 'darkerChannel';
 }
 
 export type JoinRoomUserInput = {

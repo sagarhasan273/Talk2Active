@@ -1,8 +1,6 @@
-import React from 'react';
-
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import { Box, Stack, alpha, Button, useTheme, Typography } from '@mui/material';
+import GraphicEqIcon from '@mui/icons-material/GraphicEq';
+import { alpha, Box, Button, Stack, Typography, useTheme } from '@mui/material';
 
 type RoomCardCreationProps = {
   onCreateRoom: () => void;
@@ -30,6 +28,7 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
         justify: 'space-between',
         transition: 'all 200ms ease-in-out',
         width: '100%',
+        maxWidth: 600,
         height: 260,
         minHeight: 240,
         maxHeight: 280,

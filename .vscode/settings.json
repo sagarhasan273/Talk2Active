@@ -1,20 +1,18 @@
 {
-  "editor.formatOnSave": true,
+  // Theme
+  "workbench.colorTheme": "Dracula",
+
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.tslint": "explicit",
+    "source.organizeImports": "explicit"
   },
-  "eslint.workingDirectories": ["./"],
-  "editor.minimap.enabled": false,
-  "editor.fontSize": 13,
-  "editor.wordWrap": "wordWrapColumn",
-  "editor.wordWrapColumn": 100,
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  "eslint.validate": ["javascript", "javascriptreact"],
+  "prettier.requireConfig": true,
   "terminal.integrated.profiles.windows": {
     "Git Bash": {
       "source": "Git Bash",
@@ -22,5 +20,14 @@
       "icon": "terminal-bash"
     }
   },
-  "terminal.integrated.defaultProfile.windows": "Git Bash"
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "diffEditor.experimental.useTrueInlineView": false,
+  "diffEditor.experimental.showMoves": false,
+  "editor.fontSize": 13,
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 120,
+  "editor.minimap.enabled": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

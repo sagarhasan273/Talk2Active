@@ -112,6 +112,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       hideFullRooms: false,
       showActiveOnly: false,
     });
+    setIsExpanded(false);
   }, [onFilterChange]);
 
   // Handle filter updates with immediate callback

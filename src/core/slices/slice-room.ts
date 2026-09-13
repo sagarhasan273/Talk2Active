@@ -1,10 +1,10 @@
-import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
+import type { RoomResponse } from 'src/types/type-chat';
 import type { Message, Reaction, VoiceParticipant } from 'src/types/type-room';
-import type { RoomResponse, RecentRoomResponse } from 'src/types/type-chat';
+import type { UserType } from 'src/types/type-user';
 
 import { createSlice } from '@reduxjs/toolkit';
-import { useRef, useMemo, useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState, UserVoiceStateProps } from '../types';
@@ -12,20 +12,18 @@ import type { RootState, UserVoiceStateProps } from '../types';
 // Define auth state interface
 interface RoomState {
   room: null | RoomResponse;
-  currentRooms: RecentRoomResponse;
   loading: boolean;
   participants: { [userId: string]: VoiceParticipant };
   userVoiceState: UserVoiceStateProps;
   chatRoomMessages: Message[];
   isUnreadRoomMessage: boolean;
   userActionsInVoice: any;
-  privateMessageFor: UserType['id'];
+  privateMessageFor: UserType['userId'];
 }
 
 // Initial state
 const initialState: RoomState = {
   room: null,
-  currentRooms: [],
   loading: false,
   participants: {} as { [socketId: string]: VoiceParticipant },
   userVoiceState: {
@@ -50,10 +48,6 @@ export const roomSlice = createSlice({
   reducers: {
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
       state.room = action.payload;
-    },
-
-    setCurrentRooms: (state, action: PayloadAction<RoomState['currentRooms']>) => {
-      state.currentRooms = action.payload;
     },
 
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
@@ -111,16 +105,6 @@ export const roomSlice = createSlice({
       const participant = state.participants[action.payload.userId];
       if (participant) {
         participant.isMuted = action.payload.isMuted;
-      }
-    },
-
-    updateParticipantStatus: (
-      state,
-      action: PayloadAction<{ userId: string; status: UserType['status'] }>
-    ) => {
-      const participant = state.participants[action.payload.userId];
-      if (participant) {
-        participant.status = action.payload.status;
       }
     },
 
@@ -229,14 +213,12 @@ export const roomSlice = createSlice({
 
 const {
   setRoom,
-  setCurrentRooms,
   setRoomLoading,
   addParticipant,
   updateParticipant,
   transferParticipantUserType,
   removeParticipant,
   updateParticipantAudio,
-  updateParticipantStatus,
   resetParticipants,
   updateUserVoiceState,
   addChatRoomMessage,
@@ -251,7 +233,6 @@ const {
 
 // Selectors with proper typing
 const selectRoom = (state: RootState) => state.room.room;
-const selectCurrentRooms = (state: RootState) => state.room.currentRooms;
 const selectRoomLoading = (state: RootState) => state.room.loading;
 const selectParticipants = (state: RootState) => state.room.participants;
 const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
@@ -264,7 +245,6 @@ export const useRoomTools = () => {
   const dispatch = useDispatch();
 
   const room = useSelector(selectRoom);
-  const currentRooms = useSelector(selectCurrentRooms);
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
   const chatRoomMessages = useSelector(selectChatRoomMessages);
@@ -278,7 +258,6 @@ export const useRoomTools = () => {
   const memoizedRoom = useMemo(
     () => ({
       room,
-      currentRooms,
       loading,
       participants,
       chatRoomMessages,
@@ -286,8 +265,8 @@ export const useRoomTools = () => {
       userVoiceState,
       userActionsInVoice,
       privateMessageFor,
-      setRoom: (roomData: RoomResponse) => dispatch(setRoom(roomData)),
-      setCurrentRooms: (roomData: RecentRoomResponse) => dispatch(setCurrentRooms(roomData)),
+      setRoom: (roomData: RoomResponse | null) => dispatch(setRoom(roomData)),
+
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: VoiceParticipant) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<VoiceParticipant>) =>
@@ -297,8 +276,6 @@ export const useRoomTools = () => {
       removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
       updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
         dispatch(updateParticipantAudio(payload)),
-      updateParticipantStatus: (payload: { userId: string; status: UserType['status'] }) =>
-        dispatch(updateParticipantStatus(payload)),
       resetParticipants: () => dispatch(resetParticipants()),
       updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
         dispatch(updateUserVoiceState(payload)),
@@ -340,7 +317,6 @@ export const useRoomTools = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       room,
-      currentRooms,
       loading,
       participants,
       chatRoomMessages,
