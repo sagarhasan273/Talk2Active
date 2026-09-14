@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { LanguageLevelEnum } from 'src/enums/enum-chat';
 
-import { UserSchema } from './schema-user';
+import { UserSchema, VoiceParticipantSchema } from './schema-user';
 
 export const RoomBaseSchema = z.object({
   roomId: z.string(),
@@ -17,7 +17,7 @@ export const RoomBaseSchema = z.object({
   host: z.union([z.string(), UserSchema]),
   participants: z.array(
     z.object({
-      user: z.union([z.string(), UserSchema]),
+      user: z.union([z.string(), VoiceParticipantSchema]),
       joinedAt: z.preprocess(
         (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
         z.date()
