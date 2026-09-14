@@ -1,5 +1,3 @@
-// src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
-
 import { alpha, Avatar, Box, keyframes, Tooltip, Typography, useTheme } from '@mui/material';
 import { BadgeCheck, Crown, Hand } from 'lucide-react';
 
