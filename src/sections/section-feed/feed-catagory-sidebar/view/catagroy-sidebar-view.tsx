@@ -24,7 +24,6 @@ import { Box, Button, Card, IconButton, Stack, styled, Typography, useTheme } fr
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { useUpdateUserTagsMutation } from 'src/core/apis';
 import { useCredentials } from 'src/core/slices';
 
 import { LoginPromptDialog } from 'src/components/custom-dialog';
@@ -51,11 +50,9 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
 
   const isAuthOpen = useBoolean();
 
-  const { user, isAuthenticated } = useCredentials();
+  const { isAuthenticated } = useCredentials();
 
   const [isCreatePostOpen, setIsCreatePostOpen] = React.useState(false);
-
-  const [updateTags] = useUpdateUserTagsMutation();
 
   const categories = [
     {

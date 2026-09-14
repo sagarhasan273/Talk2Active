@@ -19,20 +19,15 @@ import {
 } from '@mui/material';
 
 import { useGetNewUsersQuery } from 'src/core/apis';
-import { useCredentials, useRoomTools } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 
 import { ButtonRelationshipToggle } from 'src/components/buttons';
 import { Iconify } from 'src/components/iconify';
 
-import EngagementProfileCard from '../engagement-profile-card';
-
 export const DiscoveryPanel: React.FC = () => {
   const theme = useTheme();
 
-  const { user, selectedUser } = useCredentials();
-  const { userVoiceState } = useRoomTools();
-
-  const { hasJoined } = userVoiceState;
+  const { user } = useCredentials();
 
   const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
 
@@ -54,9 +49,6 @@ export const DiscoveryPanel: React.FC = () => {
         gap: theme.spacing(3),
       }}
     >
-      {/* Engagement Profile Card */}
-      {Boolean(selectedUser?.userId) && <EngagementProfileCard />}
-
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
         <CardHeader

@@ -5,10 +5,6 @@ import { Box, Container, Paper, Tab, Tabs } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
 
-import { UserDislikeContainer } from '../user-dislike-container';
-import { UserLikeContainer } from '../user-like-container';
-import { UserPinContainer } from '../user-pin-container';
-import { UserPostContainer } from '../user-post-container';
 import UserProfileInfo from '../user-profile-info';
 
 interface UserProfileViewProps {
@@ -105,22 +101,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = () => {
             <Tab label="Dislikes" />
             <Tab label="Pins" />
           </Tabs>
-
-          <TabPanel value={activeTab} index={0}>
-            <UserPostContainer />
-          </TabPanel>
-
-          <TabPanel value={activeTab} index={1}>
-            <UserLikeContainer />
-          </TabPanel>
-
-          <TabPanel value={activeTab} index={2}>
-            <UserDislikeContainer />
-          </TabPanel>
-
-          <TabPanel value={activeTab} index={3}>
-            <UserPinContainer />
-          </TabPanel>
         </Paper>
       </Container>
     </Box>

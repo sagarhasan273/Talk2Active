@@ -13,7 +13,6 @@ import { selectPosts, setPosts, useCredentials } from 'src/core/slices';
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import { CreatePost } from 'src/sections/section-components/create-post';
-import { PostCard } from 'src/sections/section-components/post-card';
 
 import { CategorySidebarView } from '../../feed-catagory-sidebar';
 import { DiscoveryPanel } from '../../feed-discovery-panal';
@@ -110,11 +109,7 @@ export function FeedPostsView() {
               setIsCreatePostOpen={handleCreatePost}
             />
 
-            <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={2}>
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </Box>
+            <Box display="flex" flexDirection="column" sx={{ p: 0.5 }} gap={2}></Box>
           </Box>
 
           {/* Right — Discovery Panel */}
