@@ -58,10 +58,11 @@ export const RoomChatPanel = ({
   const [whisperTarget, setWhisperTarget] = useState<{ id: string; name: string } | null>(null);
   const [whisperAnchorEl, setWhisperAnchorEl] = useState<HTMLElement | null>(null);
 
-  // Upload state
+  // Upload & Image Preview State
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadFileName, setUploadFileName] = useState('');
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   // AI State
   const [isAskingAi, setIsAskingAi] = useState(false);
@@ -79,7 +80,6 @@ export const RoomChatPanel = ({
     [visibleMessages]
   );
 
-  // Filter participants excluding self for whisper picker
   const whisperableUsers = useMemo(() => {
     return participants.filter((p) => {
       const id = p.id || p.userId || p.user?.userId;
@@ -109,13 +109,32 @@ export const RoomChatPanel = ({
     setReplyingTo(null);
   };
 
+  const handleRemoveUploadedImage = () => {
+    setUploadedImageUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const send = () => {
     const text = draft.trim();
-    if (!text || isUploading || isAskingAi) return;
+    // Allow sending if there is text OR an uploaded image ready
+    if ((!text && !uploadedImageUrl) || isUploading || isAskingAi) return;
 
-    onSendMessage?.(text, replyingTo?.id, whisperTarget || undefined);
+    onSendMessage?.(
+      text,
+      replyingTo?.id,
+      whisperTarget || undefined,
+      uploadedImageUrl || undefined
+    );
+
     setDraft('');
     setReplyingTo(null);
+    setWhisperTarget(null);
+    setUploadedImageUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +145,6 @@ export const RoomChatPanel = ({
     setUploadProgress(20);
     setUploadFileName(file.name);
 
-    // Smooth visual progress ticker while awaiting upload
     const progressInterval = setInterval(() => {
       setUploadProgress((prev) => (prev < 85 ? prev + 15 : prev));
     }, 250);
@@ -138,9 +156,8 @@ export const RoomChatPanel = ({
       setUploadProgress(100);
 
       if (result?.imageUrl) {
-        onSendMessage?.(draft.trim(), replyingTo?.id, whisperTarget || undefined, result.imageUrl);
-        setDraft('');
-        setReplyingTo(null);
+        // Stage image for preview rather than sending immediately
+        setUploadedImageUrl(result.imageUrl);
       }
     } catch (err) {
       clearInterval(progressInterval);
@@ -152,20 +169,15 @@ export const RoomChatPanel = ({
         setUploadProgress(0);
         setUploadFileName('');
       }, 400);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
-  // Ask AI via backend Gemini endpoint
+
   const handleAskAi = async () => {
     const query = draft.trim();
     if (!query || isAskingAi) return;
 
     setIsAskingAi(true);
     try {
-      // Post user prompt
       onSendMessage?.(`❓ ${query}`, replyingTo?.id, whisperTarget || undefined);
 
       const res = await axios.post(`${API_URL}/inventory/ai/ask`, {
@@ -187,6 +199,9 @@ export const RoomChatPanel = ({
       setIsAskingAi(false);
     }
   };
+
+  const canSend =
+    (draft.trim().length > 0 || Boolean(uploadedImageUrl)) && !isUploading && !isAskingAi;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -347,7 +362,56 @@ export const RoomChatPanel = ({
         </Box>
       )}
 
-      {/* Action Toolbar (Positioned directly above Input Bar) */}
+      {/* Uploaded Image Preview Banner (Before Sending) */}
+      {uploadedImageUrl && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            py: 1,
+            borderTop: `1px solid ${theme.palette.divider}`,
+            bgcolor: alpha(theme.palette.background.paper, 0.9),
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+            <Box
+              component="img"
+              src={uploadedImageUrl}
+              alt="Attachment preview"
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 1.25,
+                objectFit: 'cover',
+                border: `1px solid ${theme.palette.divider}`,
+                flexShrink: 0,
+              }}
+            />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" fontWeight={700} sx={{ display: 'block' }} noWrap>
+                Image ready to send
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
+                Type a caption or send directly
+              </Typography>
+            </Box>
+          </Box>
+
+          <Tooltip title="Remove Image">
+            <IconButton
+              size="small"
+              onClick={handleRemoveUploadedImage}
+              sx={{ color: 'text.secondary' }}
+            >
+              <X size={16} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* Action Toolbar */}
       <Box
         sx={{
           display: 'flex',
@@ -360,7 +424,7 @@ export const RoomChatPanel = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          {/* Private / Whisper Target Button (Always Visible) */}
+          {/* Private / Whisper Target Button */}
           <Button
             size="small"
             onClick={(e) => setWhisperAnchorEl(e.currentTarget)}
@@ -433,7 +497,7 @@ export const RoomChatPanel = ({
             hidden
             onChange={handleImageFileChange}
           />
-          <Tooltip title="Send an image">
+          <Tooltip title="Attach image">
             <span>
               <IconButton
                 size="small"
@@ -441,8 +505,8 @@ export const RoomChatPanel = ({
                 onClick={() => fileInputRef.current?.click()}
                 sx={{
                   p: 0.6,
-                  color: 'text.secondary',
-                  border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                  color: uploadedImageUrl ? 'primary.main' : 'text.secondary',
+                  border: `1px solid ${uploadedImageUrl ? theme.palette.primary.main : alpha(theme.palette.divider, 0.4)}`,
                   borderRadius: 1.5,
                 }}
               >
@@ -507,11 +571,13 @@ export const RoomChatPanel = ({
               ? 'Generating AI answer...'
               : isUploading
                 ? 'Uploading image...'
-                : whisperTarget
-                  ? `Whisper to ${whisperTarget.name}...`
-                  : replyingTo
-                    ? `Reply to ${replyingTo.authorName}...`
-                    : 'Send a message or type question for AI...'
+                : uploadedImageUrl
+                  ? 'Add a caption (optional)...'
+                  : whisperTarget
+                    ? `Whisper to ${whisperTarget.name}...`
+                    : replyingTo
+                      ? `Reply to ${replyingTo.authorName}...`
+                      : 'Send a message or type question for AI...'
           }
           sx={{
             flex: 1,
@@ -535,7 +601,7 @@ export const RoomChatPanel = ({
 
         <IconButton
           onClick={send}
-          disabled={!draft.trim() || isUploading || isAskingAi}
+          disabled={!canSend}
           sx={{
             bgcolor: whisperTarget ? 'warning.main' : 'primary.main',
             color: whisperTarget ? 'common.black' : 'primary.contrastText',
