@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Box, Tab, Tabs, Paper, Container } from '@mui/material';
+import { Box, Container, Paper, Tab, Tabs } from '@mui/material';
 
 import { selectAccount } from 'src/core/slices';
 
-import UserProfileInfo from '../user-profile-info';
+import { UserDislikeContainer } from '../user-dislike-container';
+import { UserLikeContainer } from '../user-like-container';
 import { UserPinContainer } from '../user-pin-container';
 import { UserPostContainer } from '../user-post-container';
-import { UserLikeContainer } from '../user-like-container';
-import { UserDislikeContainer } from '../user-dislike-container';
+import UserProfileInfo from '../user-profile-info';
 
 interface UserProfileViewProps {
   onBack?: () => void;
@@ -60,7 +60,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = () => {
           sx={{
             height: 200,
             background: 'linear-gradient(45deg, #9333ea, #ec4899, #9333ea)',
-            backgroundImage: `url(${user?.coverPhoto})`,
+            backgroundImage: `url(${user?.profilePhoto})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             borderRadius: 1,

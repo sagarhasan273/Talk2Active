@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Add } from '@mui/icons-material';
-import { Box, Fab, Tooltip, useTheme, Container } from '@mui/material';
+import { Box, Container, Fab, Tooltip, useTheme } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { useGetPostsQuery } from 'src/core/apis/api-post';
-import { setPosts, selectPosts, useCredentials } from 'src/core/slices';
+import { selectPosts, setPosts, useCredentials } from 'src/core/slices';
 
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
-import { PostCard } from 'src/sections/section-components/post-card';
 import { CreatePost } from 'src/sections/section-components/create-post';
+import { PostCard } from 'src/sections/section-components/post-card';
 
-import { FeedPostsHeader } from '../feed-posts-header';
-import { DiscoveryPanel } from '../../feed-discovery-panal';
 import { CategorySidebarView } from '../../feed-catagory-sidebar';
+import { DiscoveryPanel } from '../../feed-discovery-panal';
+import { FeedPostsHeader } from '../feed-posts-header';
 
 export function FeedPostsView() {
   const theme = useTheme();
@@ -35,9 +35,9 @@ export function FeedPostsView() {
   const isMobile = useResponsive('down', 'sm');
 
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string[]>(user.tags || ['all']);
+  const [selectedCategory, setSelectedCategory] = useState<string[]>(['all']);
 
-  const { data, isLoading, isError } = useGetPostsQuery({ userId: user?.id || '' });
+  const { data, isLoading, isError } = useGetPostsQuery({ userId: user?.userId || '' });
 
   useEffect(() => {
     if (data && !isLoading && !isError) {

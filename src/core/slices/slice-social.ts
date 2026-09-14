@@ -1,10 +1,10 @@
-import type { UserType } from 'src/types/type-user';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { Message, Reaction } from 'src/types/type-room';
 import type { AllRelationsType } from 'src/types/type-social';
+import type { UserType } from 'src/types/type-user';
 
-import { useMemo } from 'react';
 import { createSlice } from '@reduxjs/toolkit';
+import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '../types';
@@ -66,7 +66,7 @@ export const socialSlice = createSlice({
       let hasUnreadMessages = false;
 
       state.chatPeople.forEach((person) => {
-        if (person.accountDetails.id === action.payload.id) {
+        if (person.accountDetails.userId === action.payload.userId) {
           person.latestMessage = {
             ...person.latestMessage,
             isUnread: false,
@@ -100,53 +100,19 @@ export const socialSlice = createSlice({
       let tempChatPeople = null;
       let hasUnread = false;
 
-      state.chatPeople = state.chatPeople.filter((person) => {
-        if (person.accountDetails.id === userId) {
-          tempChatPeople = {
-            ...person,
-            latestMessage: {
-              _id: action.payload.message.id || '',
-              text: action.payload.message.text,
-              time: action.payload.message.time,
-              createdAt: new Date().toISOString(),
-              isUnread:
-                person.accountDetails.id === state.selectedForMessage?.id
-                  ? false
-                  : action.payload.message.isUnread,
-            },
-          };
-
-          if (tempChatPeople.latestMessage?.isUnread) {
-            hasUnread = true;
-          }
-
-          return false;
-        }
-        return true;
-      });
-
       if (tempChatPeople) {
         state.chatPeople.unshift(tempChatPeople);
       }
 
       state.individualMessages[userId].push({
         ...action.payload.message,
-        isUnread: state.selectedForMessage.id === userId ? false : action.payload.message.isUnread,
+        isUnread: state.selectedForMessage.userId === userId ? false : action.payload.message.isUnread,
         startOfUnread:
           !state.isUnreadIndividualMessage &&
-          (state.selectedForMessage.id === userId ? false : action.payload.message.isUnread),
+          (state.selectedForMessage.userId === userId ? false : action.payload.message.isUnread),
       });
 
       state.isUnreadIndividualMessage = hasUnread;
-
-      if (
-        state.selectedForMessage.id === userId &&
-        action.payload.message.isUnread &&
-        action.payload.message.id &&
-        !state.readMessageIds.includes(action.payload.message.id)
-      ) {
-        state.readMessageIds.push(action.payload.message.id || '');
-      }
     },
 
     pushUnreadMessageId: (state, action: PayloadAction<string>) => {
@@ -155,42 +121,8 @@ export const socialSlice = createSlice({
       }
     },
 
-    editIndividualMessage: (
-      state,
-      action: PayloadAction<{
-        userId: string;
-        messageId: Message['id'];
-        text: Message['text'];
-        time?: Message['time'];
-      }>
-    ) => {
-      state.individualMessages[action.payload.userId]?.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.isEdited = true;
-          msg.text = action.payload.text || msg.text;
-          msg.time = action.payload.time || msg.time;
-        }
-      });
-    },
 
-    deleteIndividualMessage: (
-      state,
-      action: PayloadAction<{
-        userId: string;
-        messageId: Message['id'];
-        text?: Message['text'];
-        time?: Message['time'];
-      }>
-    ) => {
-      state.individualMessages[action.payload.userId]?.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.isDeleted = true;
-          msg.isEdited = false;
-          msg.text = action.payload.text || '[This message was deleted]';
-          msg.time = action.payload.time || msg.time;
-        }
-      });
-    },
+
 
     reactionIndividualMessage: (
       state,
@@ -224,8 +156,8 @@ export const socialSlice = createSlice({
 
     clearUnreadIndividualMessages: (state) => {
       state.isUnreadIndividualMessage = false;
-      if (state.selectedForMessage?.id) {
-        state.individualMessages[state.selectedForMessage.id]?.forEach((msg) => {
+      if (state.selectedForMessage?.userId) {
+        state.individualMessages[state.selectedForMessage.userId]?.forEach((msg) => {
           if (msg.isUnread && msg.id && !state.readMessageIds.includes(msg.id)) {
             state.readMessageIds.push(msg.id);
           }
@@ -237,12 +169,12 @@ export const socialSlice = createSlice({
 
     setUnreadChatPeople(
       state,
-      action: PayloadAction<{ userId: UserType['id']; isUnread?: boolean }>
+      action: PayloadAction<{ userId: UserType['userId']; isUnread?: boolean }>
     ) {
       let tempUnreadCount = false;
 
       state.chatPeople.forEach((person) => {
-        if (person.accountDetails.id === action.payload.userId) {
+        if (person.accountDetails.userId === action.payload.userId) {
           person.latestMessage = {
             ...person.latestMessage,
             isUnread: action.payload.isUnread === undefined ? false : action.payload.isUnread,
@@ -269,8 +201,6 @@ export const {
   setSelectedForMessage,
   addIndividualMessage,
   setIndividualMessages,
-  editIndividualMessage,
-  deleteIndividualMessage,
   reactionIndividualMessage,
   clearUnreadIndividualMessages,
 } = socialSlice.actions;
@@ -307,18 +237,6 @@ export const useMessagesTools = () => {
         dispatch(setIndividualMessages({ userId, messages })),
       addIndividualMessage: ({ userId, message }: { userId: string; message: Message }) =>
         dispatch(addIndividualMessage({ userId, message })),
-      editIndividualMessage: (payload: {
-        userId: string;
-        messageId: Message['id'];
-        text: Message['text'];
-        time?: Message['time'];
-      }) => dispatch(editIndividualMessage(payload)),
-      deleteIndividualMessage: (payload: {
-        userId: string;
-        messageId: Message['id'];
-        text?: Message['text'];
-        time?: Message['time'];
-      }) => dispatch(deleteIndividualMessage(payload)),
       reactionIndividualMessage: (payload: {
         userId?: string;
         messageId: Message['id'];

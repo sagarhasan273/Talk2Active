@@ -1,42 +1,31 @@
-import React from 'react';
 import {
-  Zap,
-  Star,
-  Code,
-  Quote,
-  Heart,
-  Globe,
-  Music,
-  Plane,
   Award,
-  Coffee,
-  Camera,
-  Palette,
-  Gamepad2,
-  Dumbbell,
   BookOpen,
-  Sparkles,
-  Lightbulb,
   Briefcase,
+  Camera,
+  Code,
+  Coffee,
+  Dumbbell,
+  Gamepad2,
+  Globe,
+  Heart,
+  Lightbulb,
+  Music,
+  Palette,
+  Plane,
+  Quote,
+  Sparkles,
+  Star,
+  Zap,
 } from 'lucide-react';
+import React from 'react';
 
-import {
-  Box,
-  Grid,
-  Card,
-  alpha,
-  Stack,
-  Button,
-  styled,
-  useTheme,
-  IconButton,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Card, IconButton, Stack, styled, Typography, useTheme } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { useCredentials } from 'src/core/slices';
 import { useUpdateUserTagsMutation } from 'src/core/apis';
+import { useCredentials } from 'src/core/slices';
 
 import { LoginPromptDialog } from 'src/components/custom-dialog';
 
@@ -213,60 +202,6 @@ export const CategorySidebarView: React.FC<CategorySidebarProps> = ({
               </Typography>
             </Box>
           </Box>
-        </Box>
-
-        {/* Categories */}
-        <Box sx={{ p: { xs: 1, sm: 2 }, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isSelected = selectedCategory.includes(category.key);
-            return (
-              <Grid key={category.key} sx={{ xs: 6 }}>
-                <Button
-                  startIcon={
-                    <Icon
-                      size={18}
-                      color={isSelected ? theme.palette.common.white : category.color}
-                    />
-                  }
-                  variant="outlined"
-                  sx={{
-                    width: 'fit-content',
-                    justifyContent: 'flex-start',
-                    color: isSelected ? theme.palette.common.white : 'primary',
-                    textTransform: 'none',
-                    fontWeight: isSelected ? 'bold' : 'normal',
-                    bgcolor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.1),
-                    borderColor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.3),
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      color: 'primary',
-                      bgcolor: isSelected ? alpha(category.color, 1) : alpha(category.color, 0.2),
-                    },
-                    transition: 'all 0.2s ease',
-                  }}
-                  onClick={() =>
-                    onCategorySelect((prev) => {
-                      if (category.key === 'all') {
-                        updateTags({ id: user?.id, tags: ['all'] });
-                        return ['all'];
-                      }
-                      if (prev.includes(category.key)) {
-                        const data = prev.filter((cat) => cat !== category.key && cat !== 'all');
-                        updateTags({ id: user?.id, tags: data });
-                        return data;
-                      }
-                      const data = [...prev.filter((cat) => cat !== 'all'), category.key];
-                      updateTags({ id: user?.id, tags: data });
-                      return [...prev.filter((cat) => cat !== 'all'), category.key];
-                    })
-                  }
-                >
-                  {category.label}
-                </Button>
-              </Grid>
-            );
-          })}
         </Box>
       </Card>
       {/* Quick Actions */}

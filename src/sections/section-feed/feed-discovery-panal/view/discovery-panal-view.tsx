@@ -1,28 +1,28 @@
 import type { UserType } from 'src/types/type-user';
 
 import { CheckCircle } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
+  Avatar,
   Box,
   Card,
-  List,
-  Avatar,
-  Divider,
-  ListItem,
-  useTheme,
-  CardHeader,
-  Typography,
   CardContent,
+  CardHeader,
+  Divider,
+  List,
+  ListItem,
   ListItemAvatar,
   ListItemButton,
+  Typography,
+  useTheme,
 } from '@mui/material';
 
 import { useGetNewUsersQuery } from 'src/core/apis';
-import { useRoomTools, useCredentials } from 'src/core/slices';
+import { useCredentials, useRoomTools } from 'src/core/slices';
 
-import { Iconify } from 'src/components/iconify';
 import { ButtonRelationshipToggle } from 'src/components/buttons';
+import { Iconify } from 'src/components/iconify';
 
 import EngagementProfileCard from '../engagement-profile-card';
 
@@ -36,7 +36,7 @@ export const DiscoveryPanel: React.FC = () => {
 
   const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
 
-  const { data } = useGetNewUsersQuery(user.id);
+  const { data } = useGetNewUsersQuery(user.userId);
 
   useEffect(() => {
     if (!suggestedUsers) {
@@ -55,7 +55,7 @@ export const DiscoveryPanel: React.FC = () => {
       }}
     >
       {/* Engagement Profile Card */}
-      {Boolean(selectedUser?.id) && <EngagementProfileCard />}
+      {Boolean(selectedUser?.userId) && <EngagementProfileCard />}
 
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
@@ -70,7 +70,7 @@ export const DiscoveryPanel: React.FC = () => {
         <CardContent sx={{ p: 1 }}>
           <List disablePadding>
             {suggestedUsers.map((userDetails: UserType) => (
-              <ListItem key={userDetails.id} disablePadding sx={{ p: 0 }}>
+              <ListItem key={userDetails.userId} disablePadding sx={{ p: 0 }}>
                 <ListItemButton
                   sx={{ borderRadius: 2, p: 1 }}
                   onClick={(event) => {
@@ -82,7 +82,7 @@ export const DiscoveryPanel: React.FC = () => {
                 >
                   <ListItemAvatar>
                     <Avatar src={userDetails.profilePhoto} alt={userDetails.name}>
-                      {!userDetails.profilePhoto && userDetails.name.charAt(0)}
+                      {!userDetails.profilePhoto}
                     </Avatar>
                   </ListItemAvatar>
                   <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
@@ -102,8 +102,8 @@ export const DiscoveryPanel: React.FC = () => {
 
                   <ButtonRelationshipToggle
                     targetUser={{
-                      name: userDetails.name,
-                      id: userDetails.id,
+                      name: userDetails.name as string,
+                      id: userDetails.userId,
                     }}
                   />
                 </ListItemButton>

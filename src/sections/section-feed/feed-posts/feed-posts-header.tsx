@@ -1,6 +1,6 @@
 import { Quote } from 'lucide-react';
 
-import { Box, Stack, useTheme, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Stack, Typography, useTheme } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -8,10 +8,10 @@ import { useCredentials } from 'src/core/slices';
 
 import { Iconify } from 'src/components/iconify';
 
-import { DiscoveryPanel } from '../feed-discovery-panal';
 import { CategorySidebarView } from '../feed-catagory-sidebar';
-import { DiscoveryPanalDrawer } from '../feed-discovery-panal/discovery-panal-drawer';
 import { CategorySidebarDrawer } from '../feed-catagory-sidebar/catagory-sidebar-drawer';
+import { DiscoveryPanel } from '../feed-discovery-panal';
+import { DiscoveryPanalDrawer } from '../feed-discovery-panal/discovery-panal-drawer';
 
 export function FeedPostsHeader({
   selectedCategory,

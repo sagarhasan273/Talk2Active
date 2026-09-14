@@ -1,27 +1,16 @@
 import { Edit } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Link, LocationOn, CheckCircle, CalendarToday } from '@mui/icons-material';
-import {
-  Box,
-  Paper,
-  Stack,
-  Avatar,
-  Tooltip,
-  Typography,
-  IconButton,
-  Link as MuiLink,
-} from '@mui/material';
+import { CheckCircle } from '@mui/icons-material';
+import { Avatar, Box, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/route-hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate } from 'src/utils/format-time';
-
-import { varAlpha } from 'src/theme/styles';
 import { selectAccount } from 'src/core/slices';
+import { varAlpha } from 'src/theme/styles';
 
 import { Iconify } from 'src/components/iconify';
 import { ImageViewer } from 'src/components/image';
@@ -155,38 +144,6 @@ function UserProfileInfo() {
         <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
           {user?.bio}
         </Typography>
-
-        <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', gap: 1 }}>
-          {user?.location && (
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" color="text.secondary">
-                {user?.location}
-              </Typography>
-            </Stack>
-          )}
-          {user?.website && (
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <Link sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <MuiLink
-                href={`https://${user?.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                color="primary"
-                underline="hover"
-                variant="body2"
-              >
-                {user?.website}
-              </MuiLink>
-            </Stack>
-          )}
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
-            <Typography variant="body2" color="text.secondary">
-              Joined {user?.createdAt ? fDate(user.createdAt) : ''}
-            </Typography>
-          </Stack>
-        </Stack>
 
         {/* Stats */}
         <Stack direction="row" sx={{ gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
