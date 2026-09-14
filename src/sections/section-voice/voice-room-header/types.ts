@@ -35,6 +35,7 @@ export type ChatMessage = {
   authorId: string;
   authorName: string;
   avatarUrl?: string;
+  imageUrl?: string;
   text: string;
   timestamp?: string;
   createdAt?: string;

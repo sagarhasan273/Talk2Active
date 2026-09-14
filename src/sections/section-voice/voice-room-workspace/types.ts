@@ -39,6 +39,8 @@ export type ChatMessage = {
   authorId: string;
   authorName: string;
   avatarUrl?: string;
+  /** URL of the uploaded image attachment, if any. */
+  imageUrl?: string;
   text: string;
   timestamp?: string;
   isSelf?: boolean;

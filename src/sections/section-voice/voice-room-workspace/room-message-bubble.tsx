@@ -101,7 +101,7 @@ export const RoomMessageBubble = ({
       sx={{
         position: 'relative',
         alignSelf: message.isSelf ? 'flex-end' : 'flex-start',
-        maxWidth: '80%',
+        maxWidth: '85%',
       }}
     >
       <Box
@@ -257,6 +257,30 @@ export const RoomMessageBubble = ({
               </Box>
             )}
 
+            {/* Display Image Upload If Present */}
+            {message.imageUrl && (
+              <Box
+                component="img"
+                src={message.imageUrl}
+                alt="Shared Image"
+                onClick={() => window.open(message.imageUrl, '_blank')}
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: 250,
+                  borderRadius: 1.5,
+                  mb: message.text ? 1 : 0,
+                  display: 'block',
+                  cursor: 'pointer',
+                  objectFit: 'cover',
+                  border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
+                  transition: 'transform 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.02)',
+                  },
+                }}
+              />
+            )}
+
             {editing ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Box
@@ -299,14 +323,16 @@ export const RoomMessageBubble = ({
                 </Box>
               </Box>
             ) : (
-              <>
-                {message.text}
-                {message.editedAt && (
-                  <Box component="span" sx={{ ml: 0.75, fontSize: 10, opacity: 0.7 }}>
-                    (edited)
-                  </Box>
-                )}
-              </>
+              message.text && (
+                <>
+                  {message.text}
+                  {message.editedAt && (
+                    <Box component="span" sx={{ ml: 0.75, fontSize: 10, opacity: 0.7 }}>
+                      (edited)
+                    </Box>
+                  )}
+                </>
+              )
             )}
           </Box>
 
@@ -377,22 +403,20 @@ export const RoomMessageBubble = ({
         }}
       >
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {QUICK_REACTIONS.map(
-            (emoji: string): React.ReactNode => (
-              <IconButton
-                key={emoji}
-                size="small"
-                onClick={() => pickReaction(emoji)}
-                sx={{
-                  fontSize: 16,
-                  borderRadius: 2,
-                  '&:hover': { transform: 'scale(1.2)' },
-                }}
-              >
-                {emoji}
-              </IconButton>
-            )
-          )}
+          {QUICK_REACTIONS.map((emoji: string) => (
+            <IconButton
+              key={emoji}
+              size="small"
+              onClick={() => pickReaction(emoji)}
+              sx={{
+                fontSize: 16,
+                borderRadius: 2,
+                '&:hover': { transform: 'scale(1.2)' },
+              }}
+            >
+              {emoji}
+            </IconButton>
+          ))}
         </Box>
       </Popover>
     </Box>

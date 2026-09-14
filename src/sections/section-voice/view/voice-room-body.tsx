@@ -73,7 +73,7 @@ function LiveKitRoomContent({
         const text = new TextDecoder().decode(payload);
         const data = JSON.parse(text);
 
-        // 1. Send Message
+        // 1. Send Message (with optional imageUrl)
         if (data.type === 'CHAT_MESSAGE') {
           setMessages((prev) => {
             if (prev.some((m) => m.id === data.message.id)) return prev;
@@ -126,10 +126,14 @@ function LiveKitRoomContent({
           });
         }
 
-        // 5. Host Force Mute
+        // 5. Host Force Mute / Kick
         if (data.type === 'FORCE_MUTE_PARTICIPANT') {
           if (data.targetIdentity === localParticipant?.identity) {
-            localParticipant?.setMicrophoneEnabled(!data.mute);
+            if (data.kicked) {
+              onLeaveRoom?.();
+            } else {
+              localParticipant?.setMicrophoneEnabled(!data.mute);
+            }
           }
         }
       } catch (err) {
@@ -141,7 +145,7 @@ function LiveKitRoomContent({
     return () => {
       room.off(RoomEvent.DataReceived, handleDataReceived);
     };
-  }, [room, localParticipant]);
+  }, [room, localParticipant, onLeaveRoom]);
 
   // Map participants for Audio Stage & User Profile
   const participants: StageParticipant[] = useMemo(() => {
@@ -176,10 +180,15 @@ function LiveKitRoomContent({
   // Outgoing Actions (Broadcast to Room)
   // --------------------------------------------------------------------------
 
-  // 1. Send Message
+  // 1. Send Message (handles text, replies, whispers, and uploaded image URLs)
   const handleSendMessage = useCallback(
-    async (text: string, replyToId?: string, privateTo?: { id: string; name: string }) => {
-      if (!text.trim() || !localParticipant) return;
+    async (
+      text: string,
+      replyToId?: string,
+      privateTo?: { id: string; name: string },
+      imageUrl?: string
+    ) => {
+      if ((!text.trim() && !imageUrl) || !localParticipant) return;
 
       const newMsg: ChatMessage = {
         id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -187,6 +196,7 @@ function LiveKitRoomContent({
         authorName: localParticipant.name || localParticipant.identity,
         avatarUrl: CURRENT_USER.avatarUrl,
         text,
+        imageUrl,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         replyToId,
         isSelf: true,
@@ -194,19 +204,27 @@ function LiveKitRoomContent({
         reactions: [],
       };
 
-      // Update locally
+      // 1. Optimistically update locally
       setMessages((prev) => [...prev, newMsg]);
 
-      // Broadcast over LiveKit data channel
+      // 2. Broadcast via LiveKit Data Channel
       const payload = JSON.stringify({
         type: 'CHAT_MESSAGE',
         message: { ...newMsg, isSelf: false },
       });
 
-      await localParticipant.publishData(new TextEncoder().encode(payload), {
-        reliable: true,
-        topic: 'room_chat',
-      });
+      const publishOptions: { reliable: boolean; topic: string; destinationIdentities?: string[] } =
+        {
+          reliable: true,
+          topic: 'room_chat',
+        };
+
+      // If private, send strictly to the recipient
+      if (privateTo?.id) {
+        publishOptions.destinationIdentities = [privateTo.id];
+      }
+
+      await localParticipant.publishData(new TextEncoder().encode(payload), publishOptions);
     },
     [localParticipant]
   );
@@ -260,9 +278,7 @@ function LiveKitRoomContent({
           const nextReactions =
             nextCount <= 0
               ? existing.filter((r) => r.emoji !== emoji)
-              : existing.map((r) =>
-                  r.emoji === emoji ? { ...r, count: nextCount, reactedBySelf: !decrement } : r
-                );
+              : existing.map((r) => (r.emoji === emoji ? { ...r, count: nextCount } : r));
 
           return { ...m, reactions: nextReactions };
         })

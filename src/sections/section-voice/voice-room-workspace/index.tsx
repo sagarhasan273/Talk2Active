@@ -12,7 +12,7 @@ import { RoomChatPanel } from './room-chat-panel';
 
 import type { ChatMessage, StageParticipant } from './types';
 
-type RoomWorkspaceProps = {
+export type RoomWorkspaceProps = {
   participants: StageParticipant[];
   maxParticipants: number;
   topicPrompt: string;
@@ -28,7 +28,8 @@ type RoomWorkspaceProps = {
   onSendMessage?: (
     text: string,
     replyToId?: string,
-    privateTo?: { id: string; name: string }
+    privateTo?: { id: string; name: string },
+    imageUrl?: string
   ) => void;
   onEditMessage?: (id: string, text: string) => void;
   onReactMessage?: (id: string, emoji: string) => void;
@@ -71,9 +72,10 @@ export const VoiceRoomWorkspace = ({
   const handleSend = (
     text: string,
     replyToId?: string,
-    privateTo?: { id: string; name: string }
+    privateTo?: { id: string; name: string },
+    imageUrl?: string // <- Forward imageUrl
   ) => {
-    onSendMessage?.(text, replyToId, privateTo);
+    onSendMessage?.(text, replyToId, privateTo, imageUrl);
   };
 
   const handleEdit = (id: string, text: string) => {
