@@ -1,18 +1,19 @@
-import React from 'react';
-import { Mic, Crown, MicOff } from 'lucide-react';
-
-import { Box, alpha, Typography } from '@mui/material';
+import { alpha, Box, keyframes, Typography, useTheme } from '@mui/material';
+import { Crown, Mic, MicOff } from 'lucide-react';
 
 import { WaveformIndicator } from './room-audio-waveform-indicator';
-import { slate, accent, badgeBounce, speakingGlow } from './theme-tokens';
-
 import type { StageParticipant } from './types';
 
-const pillStyles = {
-  unmuted: { color: accent.emerald, bgcolor: alpha(accent.emerald, 0.1) },
-  muted: { color: slate[400], bgcolor: slate[800] },
-  listening: { color: slate[400], bgcolor: slate[800] },
-} as const;
+// Embedded native keyframe animations
+const badgeBounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+`;
+
+const speakingGlow = keyframes`
+  0%, 100% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(88, 101, 242, 0); }
+`;
 
 const PILL_LABEL: Record<'unmuted' | 'muted' | 'listening', string> = {
   unmuted: 'Mic On',
@@ -25,11 +26,30 @@ type ParticipantTileProps = {
 };
 
 export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const { name, avatarUrl, level, audioState, isHost, isSelf, handRaised } = participant;
   const isSpeaking = audioState === 'speaking';
   const dimmed = (audioState === 'muted' || audioState === 'listening') && !handRaised;
 
   const subtitle = isSpeaking && isHost ? 'Host • Speaking...' : handRaised ? 'Hand Raised' : level;
+
+  // Dynamic status pill styling derived directly from MUI theme
+  const pillStyles = {
+    unmuted: {
+      color: theme.palette.success.main,
+      bgcolor: alpha(theme.palette.success.main, 0.12),
+    },
+    muted: {
+      color: theme.palette.text.secondary,
+      bgcolor: alpha(theme.palette.action.disabledBackground, 0.5),
+    },
+    listening: {
+      color: theme.palette.text.secondary,
+      bgcolor: alpha(theme.palette.action.disabledBackground, 0.5),
+    },
+  };
 
   return (
     <Box
@@ -41,14 +61,14 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
         justifyContent: 'center',
         p: 2,
         borderRadius: 3,
-        bgcolor: slate[950],
+        bgcolor: isDark ? 'background.paper' : 'background.neutral',
         border: '1px solid',
         borderColor: isSpeaking
-          ? alpha(accent.brand, 0.6)
+          ? alpha(theme.palette.primary.main, 0.6)
           : handRaised
-            ? alpha(accent.amber, 0.4)
-            : slate[800],
-        boxShadow: isSpeaking ? `0 10px 25px ${alpha(accent.brand, 0.1)}` : 'none',
+            ? alpha(theme.palette.warning.main, 0.4)
+            : 'divider',
+        boxShadow: isSpeaking ? `0 10px 25px ${alpha(theme.palette.primary.main, 0.15)}` : 'none',
         opacity: dimmed ? 0.85 : 1,
       }}
     >
@@ -64,7 +84,11 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
             objectFit: 'cover',
             boxSizing: 'content-box',
             border: '4px solid',
-            borderColor: isSpeaking ? accent.brand : handRaised ? accent.amber : slate[800],
+            borderColor: isSpeaking
+              ? theme.palette.primary.main
+              : handRaised
+                ? theme.palette.warning.main
+                : theme.palette.divider,
             ...(isSpeaking && {
               animation: `${speakingGlow} 1.6s infinite`,
               '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
@@ -81,7 +105,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
               display: 'flex',
               p: 0.5,
               borderRadius: '50%',
-              bgcolor: alpha(accent.brand, 0.9),
+              bgcolor: alpha(theme.palette.primary.main, 0.9),
               color: '#fff',
               boxShadow: 1,
             }}
@@ -103,8 +127,8 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
               width: 24,
               height: 24,
               borderRadius: '50%',
-              bgcolor: accent.amber,
-              color: slate[950],
+              bgcolor: theme.palette.warning.main,
+              color: theme.palette.common.black,
               fontSize: 13,
               fontWeight: 700,
               boxShadow: 1,
@@ -125,9 +149,9 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
                 display: 'flex',
                 p: 0.5,
                 borderRadius: '50%',
-                bgcolor: slate[800],
-                color: accent.rose,
-                border: `1px solid ${slate[700]}`,
+                bgcolor: 'background.paper',
+                color: theme.palette.error.main,
+                border: `1px solid ${theme.palette.divider}`,
               }}
             >
               <MicOff size={14} />
@@ -140,7 +164,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
         variant="body2"
         fontWeight={600}
         noWrap
-        sx={{ color: slate[100], mt: 1.5, maxWidth: '100%' }}
+        sx={{ color: 'text.primary', mt: 1.5, maxWidth: '100%' }}
       >
         {name}
         {isSelf && ' (You)'}
@@ -152,7 +176,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
         sx={{
           fontSize: 10,
           fontWeight: handRaised ? 600 : 400,
-          color: handRaised ? accent.amber : slate[400],
+          color: handRaised ? 'warning.main' : 'text.secondary',
         }}
       >
         {subtitle}

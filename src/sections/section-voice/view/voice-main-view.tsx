@@ -38,12 +38,9 @@ export function VoiceMainView() {
 
   const { room, setRoom } = useRoomTools();
 
-  // Room currently selected from the list
   const [selectedRoom, setSelectedRoom] = useState<RoomResponse | null>(null);
-
-  // Whether the join confirmation gate is visible
+  const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
-
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('find');
 
   const [filterRooms, setFilterRooms] = useState<FilterState>({
@@ -56,34 +53,17 @@ export function VoiceMainView() {
 
   const [joinRoomMutation] = useJoinRoomMutation();
 
-  // ---------------------------------------------------------
-  // HOST
-  // ---------------------------------------------------------
-
   const isHost = useMemo(() => {
     if (!room || !user) return false;
-
     return room.host.userId === user.userId;
   }, [room, user]);
 
-  // ---------------------------------------------------------
-  // PARTICIPANTS
-  // ---------------------------------------------------------
-
   const participants = useMemo(() => (room?.participants || []) as VoiceParticipant[], [room]);
-
-  // ---------------------------------------------------------
-  // CURRENT SPEAKER
-  // ---------------------------------------------------------
 
   const currentSpeaker = useMemo(
     () => participants.find((participant) => isParticipantSpeaking(participant)) || null,
     [participants]
   );
-
-  // ---------------------------------------------------------
-  // SELECT ROOM
-  // ---------------------------------------------------------
 
   const handleSelectRoom = useCallback(
     (roomSelected: RoomResponse) => {
@@ -91,27 +71,16 @@ export function VoiceMainView() {
         isAuthOpen.onTrue();
         return;
       }
-
-      // Only select the room.
-      // Do NOT set the active room yet.
       setSelectedRoom(roomSelected);
       setIsJoinGateOpen(true);
     },
     [isAuthenticated, isAuthOpen]
   );
 
-  // ---------------------------------------------------------
-  // CANCEL JOIN
-  // ---------------------------------------------------------
-
   const handleCancelJoin = useCallback(() => {
     setIsJoinGateOpen(false);
     setSelectedRoom(null);
   }, []);
-
-  // ---------------------------------------------------------
-  // JOIN ROOM
-  // ---------------------------------------------------------
 
   const handleJoinRoom = useCallback(async () => {
     if (!selectedRoom || !user) return;
@@ -120,16 +89,13 @@ export function VoiceMainView() {
       const response = await joinRoomMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
+        userName: (user as any).name || (user as any).username || String(user.userId),
       }).unwrap();
 
       if (response.status) {
-        // Now the user has actually joined.
         setRoom(selectedRoom);
-
-        // Close join gate.
+        setLivekitToken((response as any)?.data?.token);
         setIsJoinGateOpen(false);
-
-        // Enter room.
         setSelectedTab('enter');
       }
     } catch (error) {
@@ -137,55 +103,32 @@ export function VoiceMainView() {
     }
   }, [selectedRoom, user, joinRoomMutation, setRoom]);
 
-  // ---------------------------------------------------------
-  // BACK TO ROOMS
-  // ---------------------------------------------------------
-
   const handleBackToRooms = useCallback(() => {
     setSelectedTab('find');
   }, []);
 
-  // ---------------------------------------------------------
-  // LEAVE ROOM
-  // ---------------------------------------------------------
-
   const handleLeaveRoom = useCallback(() => {
     setSelectedTab('find');
     setSelectedRoom(null);
+    setLivekitToken(null);
     setIsJoinGateOpen(false);
     setRoom(null);
   }, [setRoom]);
-
-  // ---------------------------------------------------------
-  // CREATE ROOM
-  // ---------------------------------------------------------
 
   const handleCreateRoom = useCallback(() => {
     if (!isAuthenticated) {
       isAuthOpen.onTrue();
       return;
     }
-
     editRoomBoolean.onTrue();
   }, [isAuthenticated, isAuthOpen, editRoomBoolean]);
 
-  // ---------------------------------------------------------
-  // SHARE ROOM
-  // ---------------------------------------------------------
-
   const handleShareLink = useCallback(() => {
     if (!room) return;
-
     const url = `${window.location.origin}/room/${room.roomId}`;
-
     navigator.clipboard?.writeText(url);
-
     toast.success('Room link copied to clipboard!');
   }, [room]);
-
-  // ---------------------------------------------------------
-  // HEADER
-  // ---------------------------------------------------------
 
   const header = useMemo(() => {
     if (room && selectedTab === 'find') {
@@ -227,18 +170,10 @@ export function VoiceMainView() {
     handleCreateRoom,
   ]);
 
-  // ---------------------------------------------------------
-  // FILTER
-  // ---------------------------------------------------------
-
   const filter = useMemo(
     () => <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />,
     [filterRooms]
   );
-
-  // ---------------------------------------------------------
-  // MAIN CONTENT
-  // ---------------------------------------------------------
 
   const mainContent = (
     <>
@@ -251,20 +186,16 @@ export function VoiceMainView() {
       </VoiceTabPanel>
 
       <VoiceTabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
-        <VoiceRoomBody selectedRoom={selectedRoom} />
+        <VoiceRoomBody
+          selectedRoom={selectedRoom}
+          token={livekitToken}
+          onLeaveRoom={handleLeaveRoom}
+        />
       </VoiceTabPanel>
     </>
   );
 
-  // ---------------------------------------------------------
-  // FOOTER
-  // ---------------------------------------------------------
-
   const footer = useMemo(() => <VoiceButtonSocialChat />, []);
-
-  // ---------------------------------------------------------
-  // RETURN
-  // ---------------------------------------------------------
 
   return (
     <>
@@ -275,7 +206,6 @@ export function VoiceMainView() {
         footer={footer}
       />
 
-      {/* JOIN GATE */}
       {isJoinGateOpen && selectedRoom && (
         <Box
           sx={{
@@ -300,16 +230,12 @@ export function VoiceMainView() {
         </Box>
       )}
 
-      {/* CREATE ROOM MODAL */}
-
       <VoiceModalCreateRoom
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
         onCreateRoom={() => {}}
         currentRoom={room}
       />
-
-      {/* LOGIN DIALOG */}
 
       <LoginPromptDialog openBoolean={isAuthOpen} />
     </>

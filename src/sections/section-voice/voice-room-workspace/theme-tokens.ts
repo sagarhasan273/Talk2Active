@@ -3,7 +3,7 @@ import { keyframes } from '@mui/system';
 // Tailwind's slate scale — kept as explicit tokens rather than theme.palette
 // since this stage uses a fixed dark surface regardless of the app's
 // light/dark mode (a "stage" is meant to feel like a dim room).
-export const slate = {
+const slate = {
   950: '#020617',
   900: '#0f172a',
   800: '#1e293b',
@@ -14,7 +14,7 @@ export const slate = {
   100: '#f1f5f9',
 };
 
-export const accent = {
+const accent = {
   brand: '#6366f1', // swap for theme.palette.primary.main if the app theme should drive this
   brandSoft: 'rgba(99,102,241,0.1)',
   amber: '#f59e0b',

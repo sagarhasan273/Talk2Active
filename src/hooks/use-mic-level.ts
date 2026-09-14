@@ -1,5 +1,5 @@
 // useMicrophoneLevel.ts
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function useMicLevel(stream: MediaStream | null) {
   const [micLevel, setMicLevel] = useState(0);

@@ -19,6 +19,7 @@ export type JoinRoomInput = z.infer<typeof JoinRoomSchema>;
 export type LeaveRoomInput = z.infer<typeof LeaveRoomSchema>;
 
 export interface ChatUserStatus {
+  name: string;
   label: string;
   icon: LucideIcon;
   color:

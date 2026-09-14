@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-
 import { Box } from '@mui/material';
+import { useState } from 'react';
 
-import { PromptBanner } from './room-prompt-banner';
+import { VoiceRoomUserCard } from '../voice-room-user-card';
 import { RoomControlDock } from './room-control-dock';
 import { EmptySlotTile } from './room-empty-slot-tile';
-import { VoiceRoomUserCard } from '../voice-room-user-card';
+import { PromptBanner } from './room-prompt-banner';
 
 import type { RoomAudioStageProps } from './types';
 
@@ -23,8 +22,6 @@ export const RoomAudioStage = ({
   onToggleRaiseHand,
   onProfileClick,
 }: RoomAudioStageProps) => {
-  // Local UI state for the dock; lifted callbacks let the parent sync this
-  // with the actual audio/session layer.
   const [micMuted, setMicMuted] = useState(true);
   const [deafened, setDeafened] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
@@ -75,9 +72,6 @@ export const RoomAudioStage = ({
           display: 'grid',
           alignContent: 'center',
           justifyItems: 'stretch',
-          // auto-fill/minmax reflows based on the grid's own available width,
-          // not the viewport — so it responds correctly when the sidebar
-          // resize shrinks or grows this container, not just on window resize.
           gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
           gap: { xs: 1.5, sm: 2 },
         }}
@@ -88,15 +82,15 @@ export const RoomAudioStage = ({
             participant={{
               userId: participant.id,
               name: participant.name,
-              profilePhoto: participant.avatarUrl,
+              profilePhoto: participant.avatarUrl || '',
               status: 'online',
-              isSpeaking: false,
-              isMuted: false,
-              userType: 'host',
+              isSpeaking: Boolean(participant.isSpeaking),
+              isMuted: participant.audioState === 'muted',
+              userType: participant.role || 'member',
               verified: true,
-              accountType: 'admin',
+              accountType: 'member',
               connectionStatus: 'connected',
-              isLocal: true,
+              isLocal: participant.isSelf ?? false,
               hasJoin: true,
             }}
             size="medium"

@@ -1,35 +1,33 @@
-import type { VoiceParticipant } from 'src/types/type-room';
 import type { ChatUserStatus } from 'src/types/type-chat';
-import type { ConnectionStatus } from 'src/hooks/useWebRTC/types';
+import type { VoiceParticipant } from 'src/types/type-room';
 
-import { useState, useEffect } from 'react';
-import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
+import { useRoomContext, useTracks } from '@livekit/components-react';
+import { Track } from 'livekit-client';
+import { CheckCircle, CircleOff, Clock, Moon, Pause, UserX } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-import VerifiedIcon from '@mui/icons-material/Verified';
 import HeadsetOffIcon from '@mui/icons-material/HeadsetOff';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import {
-  Box,
-  Fade,
-  Zoom,
+  Avatar,
   Badge,
+  Box,
+  capitalize,
+  Fade,
+  keyframes,
   Paper,
   styled,
-  Avatar,
   Tooltip,
-  useTheme,
-  keyframes,
   Typography,
-  capitalize,
   useMediaQuery,
+  useTheme,
+  Zoom,
 } from '@mui/material';
 
 import { fUsername } from 'src/utils/helper';
-
-import { useRoomTools } from 'src/core/slices';
-
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
-// Animation for the active speaker
+// Animation for active speaker glow
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0px rgba(0, 255, 204, 0.7); }
   70% { box-shadow: 0 0 0 15px rgba(0, 255, 204, 0); }
@@ -170,7 +168,6 @@ const STATUS_OPTIONS: ChatUserStatus[] = [
 
 const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.name, s]));
 
-// Enhanced StatusDot with icon
 const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   const statusOption = STATUS_MAP[status || 'online'];
 
@@ -201,7 +198,6 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   };
 });
 
-// Connection status overlay component
 const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) => {
   const colors = {
     connecting: theme.palette.warning.main,
@@ -234,7 +230,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
 });
 
 type VoiceRoomUserCardProps = {
-  stream: MediaStream | null;
+  stream?: MediaStream | null;
   participant: Partial<VoiceParticipant> & {
     isSpeaking?: boolean;
     isActive?: boolean;
@@ -242,8 +238,10 @@ type VoiceRoomUserCardProps = {
     isMuted?: boolean;
     isDeafened?: boolean;
     isLocal?: boolean;
-    connectionStatus?: ConnectionStatus[string];
+    connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
     hasJoin?: boolean;
+    handRaised?: boolean;
+    activeReactionEmoji?: string | null;
   };
   size?: 'small' | 'medium' | 'large';
   showName?: boolean;
@@ -268,11 +266,12 @@ export function VoiceRoomUserCard({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { userActionsInVoice } = useRoomTools();
+  // Grab active room and audio track references from LiveKit
+  const room = useRoomContext();
+  const audioTracks = useTracks([Track.Source.Microphone]);
 
   const [isHovered, setIsHovered] = useState(false);
-  const [showHandToast, setShowHandToast] = useState(false);
-  const [handToastMessage, setHandToastMessage] = useState('');
+  const [showReaction, setShowReaction] = useState(false);
 
   const {
     userId,
@@ -288,28 +287,33 @@ export function VoiceRoomUserCard({
     isMuted = false,
     isDeafened = false,
     isLocal = false,
-    connectionStatus = null,
+    connectionStatus = 'connected',
     hasJoin = true,
+    handRaised = false,
+    activeReactionEmoji = null,
   } = participant;
 
-  // Check for hand raise action from this user
+  // Resolve native MediaStream from LiveKit for the waveform indicator
+  const livekitMediaStream = useMemo(() => {
+    if (stream) return stream;
+    const userTrack = audioTracks.find((t) => t.participant.identity === userId);
+    const mediaTrack = userTrack?.publication?.track?.mediaStreamTrack;
+    if (mediaTrack) {
+      return new MediaStream([mediaTrack]);
+    }
+    return null;
+  }, [audioTracks, userId, stream]);
+
+  // Handle transient emoji animations
   useEffect(() => {
-    if (
-      userActionsInVoice?.type === 'raise-hand' &&
-      userActionsInVoice?.senderInfo?.userId === userId
-    ) {
-      // Show toast notification
-      setHandToastMessage(
-        `${userActionsInVoice.senderInfo.label || 'Raised hand'} ${userActionsInVoice.senderInfo.emoji || '🙌'}`
-      );
-      setShowHandToast(true);
-    } else {
-      setShowHandToast(false);
+    if (activeReactionEmoji) {
+      setShowReaction(true);
+      const timer = setTimeout(() => setShowReaction(false), 2000);
+      return () => clearTimeout(timer);
     }
     return undefined;
-  }, [userActionsInVoice, userId]);
+  }, [activeReactionEmoji]);
 
-  // Memoize connection status display
   const getConnectionStatus = () => {
     if (!hasJoin) {
       return (
@@ -356,9 +360,7 @@ export function VoiceRoomUserCard({
     return null;
   };
 
-  // Memoize badge content
   const getBadgeContent = () => {
-    // Priority 1: Deafened
     if (isDeafened) {
       return (
         <Tooltip title="Deafened" arrow placement="top">
@@ -378,7 +380,6 @@ export function VoiceRoomUserCard({
       );
     }
 
-    // Priority 3: User type with verification
     if (userType === 'host' || userType === 'moderator' || userType === 'speaker') {
       return (
         <Tooltip title={userType} arrow placement="top">
@@ -390,7 +391,6 @@ export function VoiceRoomUserCard({
       );
     }
 
-    // Priority 4: Verified only
     if (verified) {
       return (
         <Tooltip title="Verified" arrow placement="top">
@@ -410,7 +410,6 @@ export function VoiceRoomUserCard({
       );
     }
 
-    // Priority 5: Local user indicator
     if (isLocal) {
       return (
         <Tooltip title="You" arrow placement="top">
@@ -463,20 +462,19 @@ export function VoiceRoomUserCard({
           },
         }}
       >
-        {/* Connection Status Overlay */}
         {connectionStatusElement}
 
-        {/* Speaking Indicator */}
+        {/* LiveKit-driven Speaking Indicator */}
         {showSpeakingIndicator && (
           <VoiceSpeakingIndicator
-            stream={stream}
+            stream={livekitMediaStream}
             size={isMobile && size === 'large' ? 'medium' : size}
             isMuted={isMuted && !isDeafened}
           />
         )}
 
         <StyledAvatar
-          src={verified ? (profilePhoto ?? undefined) : 'TS'}
+          src={profilePhoto || undefined}
           isSpeaking={isSpeaking}
           isActive={isActive}
           isSelected={isSelected}
@@ -494,12 +492,12 @@ export function VoiceRoomUserCard({
         </StyledAvatar>
       </Badge>
 
-      {/* Name and additional info */}
+      {/* Participant Name */}
       {showName && (
         <Fade in timeout={300}>
           <Box sx={{ width: '100%', textAlign: 'center', mt: 1, px: 0.5 }}>
             <Tooltip
-              title={name}
+              title={name || ''}
               arrow
               placement="top"
               disableHoverListener={!name || name.length < 12}
@@ -523,27 +521,26 @@ export function VoiceRoomUserCard({
         </Fade>
       )}
 
-      {/* Hand Raise Toast - Small and Centered */}
-      {showHandToast && (
+      {/* LiveKit Hand Raise Speech Bubble */}
+      {handRaised && (
         <Zoom in timeout={300}>
           <Paper
             sx={{
               position: 'absolute',
-              top: -10,
+              top: -12,
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 30,
               bgcolor: 'warning.lighter',
               color: 'warning.darker',
               px: 1.5,
-              py: 0.75,
-              borderRadius: '16px 16px 16px 4px', // Speech bubble style
+              py: 0.5,
+              borderRadius: '16px 16px 16px 4px',
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
+              gap: 0.75,
               boxShadow: '0 4px 15px rgba(255, 231, 194, 0.4)',
               border: '2px solid white',
-              animation: 'float 3s ease-in-out infinite',
               whiteSpace: 'nowrap',
               '&::after': {
                 content: '""',
@@ -556,66 +553,57 @@ export function VoiceRoomUserCard({
                 borderRight: '8px solid transparent',
                 borderTop: `8px solid ${theme.palette.warning.light}`,
               },
-              '@keyframes float': {
-                '0%': { transform: 'translateX(-50%) translateY(0px)' },
-                '50%': { transform: 'translateX(-50%) translateY(-5px)' },
-                '100%': { transform: 'translateX(-50%) translateY(0px)' },
-              },
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-              {handToastMessage}
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              Raised hand ✋
             </Typography>
           </Paper>
         </Zoom>
       )}
 
-      {/* Reaction Animation (existing) */}
-      {userActionsInVoice?.type === 'reaction' &&
-        userActionsInVoice?.senderInfo?.userId === userId && (
-          <Zoom in timeout={4000}>
-            <Box
+      {/* LiveKit Emoji Reaction Float Animation */}
+      {showReaction && activeReactionEmoji && (
+        <Zoom in timeout={300}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '30%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 25,
+              animation: 'floatReaction 1.8s ease-out forwards',
+              '@keyframes floatReaction': {
+                '0%': { transform: 'translateX(-50%) translateY(0) scale(0.8)', opacity: 1 },
+                '100%': { transform: 'translateX(-50%) translateY(-60px) scale(1.3)', opacity: 0 },
+              },
+            }}
+          >
+            <Avatar
               sx={{
-                position: 'absolute',
-                top: '40%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 20,
-                animation: 'float 1s ease-out',
-                '@keyframes float': {
-                  '0%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
-                  '100%': { transform: 'translateX(-50%) translateY(-50px)', opacity: 0 },
-                },
+                bgcolor: '#5865f2',
+                boxShadow: theme.shadows[6],
+                width: 44,
+                height: 44,
+                fontSize: '1.4rem',
               }}
             >
-              <Avatar
-                sx={{
-                  bgcolor: userActionsInVoice?.senderInfo?.emoji === '❤️' ? '#dbdbdb' : '#5865f2',
-                }}
-              >
-                {userActionsInVoice?.senderInfo?.emoji}
-              </Avatar>
-            </Box>
-          </Zoom>
-        )}
+              {activeReactionEmoji}
+            </Avatar>
+          </Box>
+        </Zoom>
+      )}
 
-      {/* Status indicator dot */}
-      {showStatus && status !== 'online' && (
-        <Tooltip title={STATUS_MAP[status || 'online']?.label}>
+      {/* Status Dot */}
+      {showStatus && status && status !== 'online' && (
+        <Tooltip title={STATUS_MAP[status]?.label}>
           <StatusDot status={status}>
             {(() => {
-              const renderStatus = STATUS_MAP[status || 'online'];
+              const renderStatus = STATUS_MAP[status];
               const IconComponent = renderStatus?.icon;
-
               return IconComponent ? (
                 <>
-                  <IconComponent
-                    style={{
-                      width: 14,
-                      height: 14,
-                      color: 'currentColor',
-                    }}
-                  />
+                  <IconComponent style={{ width: 14, height: 14, color: 'currentColor' }} />
                   <Typography variant="subtitle2">{renderStatus?.label}</Typography>
                 </>
               ) : null;

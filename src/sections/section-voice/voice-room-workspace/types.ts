@@ -10,6 +10,22 @@ export type StageParticipant = {
   isHost?: boolean;
   isSelf?: boolean;
   handRaised?: boolean;
+  isSpeaking?: boolean;
+
+  // Additional fields for user profile drawer & user cards
+  role?: 'host' | 'speaker' | 'moderator' | 'listener';
+  verified?: boolean;
+  bio?: string;
+  location?: string;
+  joinDate?: string;
+  followers?: number;
+  following?: number;
+  isFollowing?: boolean;
+  isBlocked?: boolean;
+  isDeafened?: boolean;
+  volume?: number;
+  activeReactionEmoji?: string | null;
+  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
 };
 
 export type MessageReaction = {

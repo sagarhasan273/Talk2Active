@@ -1,9 +1,8 @@
-import React from 'react';
-
 import { Drawer } from '@mui/material';
 
 import { RoomChatPanel } from './room-chat-panel';
 
+import type { VoiceParticipant } from '../voice-room-header/types';
 import type { ChatMessage } from './types';
 
 type ChatDrawerProps = {
@@ -11,17 +10,22 @@ type ChatDrawerProps = {
   onClose: () => void;
   messages: ChatMessage[];
   currentUserId: string;
-  onSendMessage?: (text: string, replyToId?: string) => void;
+  participants?: VoiceParticipant[];
+  onSendMessage?: (
+    text: string,
+    replyToId?: string,
+    privateTo?: { id: string; name: string }
+  ) => void;
   onEditMessage?: (id: string, text: string) => void;
   onReactMessage?: (id: string, emoji: string) => void;
 };
 
-/** Mobile-only bottom sheet — desktop uses ResizableSidebar instead. */
 export const RoomChatDrawer = ({
   open,
   onClose,
   messages,
   currentUserId,
+  participants = [],
   onSendMessage,
   onEditMessage,
   onReactMessage,
@@ -44,6 +48,7 @@ export const RoomChatDrawer = ({
     <RoomChatPanel
       messages={messages}
       currentUserId={currentUserId}
+      participants={participants}
       onSendMessage={onSendMessage}
       onEditMessage={onEditMessage}
       onReactMessage={onReactMessage}
@@ -51,3 +56,5 @@ export const RoomChatDrawer = ({
     />
   </Drawer>
 );
+
+export default RoomChatDrawer;

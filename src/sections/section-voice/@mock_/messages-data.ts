@@ -1,13 +1,12 @@
 import type { ChatMessage, StageParticipant } from '../voice-room-workspace/types';
 
-export const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢'];
-
-/** The demo viewer — matches SELF_ID used elsewhere in the audio stage demo. */
 export const CURRENT_USER = {
-  id: 'u4',
-  name: 'Sarah M.',
-  avatarUrl: 'https://i.pravatar.cc/150?img=5',
+  id: 'u1',
+  name: 'Sagar Hasan',
+  avatarUrl: 'https://i.pravatar.cc/150?img=1',
 };
+
+export const QUICK_REACTIONS = ['👍', '❤️', '👏', '😂', '🔥', '🎉'];
 
 export const DEMO_MESSAGES: ChatMessage[] = [
   {
@@ -49,7 +48,6 @@ export const DEMO_MESSAGES: ChatMessage[] = [
       { emoji: '😂', count: 1, reactedBySelf: false },
     ],
   },
-  // Private message TO the current viewer — should render for self.
   {
     id: 'm5',
     authorId: 'u2',
@@ -59,7 +57,6 @@ export const DEMO_MESSAGES: ChatMessage[] = [
     timestamp: '10:06 AM',
     privateTo: { id: CURRENT_USER.id, name: CURRENT_USER.name },
   },
-  // Private message FROM the current viewer — should render for self as sender.
   {
     id: 'm6',
     authorId: CURRENT_USER.id,
@@ -70,8 +67,6 @@ export const DEMO_MESSAGES: ChatMessage[] = [
     isSelf: true,
     privateTo: { id: 'u2', name: 'Anna K.' },
   },
-  // Private message between two OTHER users — self is neither sender nor
-  // recipient, so filterVisibleMessages below hides this from the demo view.
   {
     id: 'm7',
     authorId: 'u1',
@@ -90,7 +85,6 @@ export const DEMO_MESSAGES: ChatMessage[] = [
     timestamp: '10:09 AM',
     isSelf: true,
   },
-  // System notification example
   {
     id: 'm9',
     authorId: 'system',
@@ -111,22 +105,14 @@ export const DEMO_MESSAGES: ChatMessage[] = [
   },
 ];
 
-/**
- * A group chat can carry private (whisper) messages alongside public ones.
- * A message with `privateTo` set should only be visible to its sender and
- * its recipient — filter the full message list down to what `viewerId`
- * is actually allowed to see before rendering.
- */
-export const filterVisibleMessages = (messages: ChatMessage[], viewerId: string): ChatMessage[] =>
-  messages.filter(
-    (m) =>
-      // Always show system messages
-      m.isSystem ||
-      // Show regular messages if not private or user is involved
-      !m.privateTo ||
-      m.authorId === viewerId ||
-      m.privateTo.id === viewerId
-  );
+export function filterVisibleMessages(messages: ChatMessage[], currentUserId: string): ChatMessage[] {
+  return messages.filter((msg) => {
+    if (msg.isSystem) return true;
+    if (!msg.privateTo) return true;
+    return msg.authorId === currentUserId || msg.privateTo.id === currentUserId;
+  });
+}
+
 
 export const INITIAL_PARTICIPANTS: StageParticipant[] = [
   {

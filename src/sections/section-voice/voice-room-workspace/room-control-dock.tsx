@@ -1,6 +1,5 @@
-import React from 'react';
 import { varAlpha } from '@/theme/styles/utils';
-import { Mic, Smile, MicOff, PhoneOff, Headphones, MessageSquare } from 'lucide-react';
+import { Headphones, MessageSquare, Mic, MicOff, PhoneOff, Smile } from 'lucide-react';
 
 import { Box, Button, IconButton } from '@mui/material';
 

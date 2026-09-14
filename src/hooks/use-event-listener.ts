@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 
-import { useRef, useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 // ----------------------------------------------------------------------
 
