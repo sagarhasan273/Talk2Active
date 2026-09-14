@@ -61,9 +61,13 @@ function LiveKitRoomContent({
 
   const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES);
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
+  const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
+
+  const [micMuted, setMicMuted] = useState(true);
+  const [deafened, setDeafened] = useState(false);
 
   // --------------------------------------------------------------------------
-  // Incoming Data Channel Packet Listener
+  // Incoming Data Channel Listener
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!room) return;
@@ -73,7 +77,7 @@ function LiveKitRoomContent({
         const text = new TextDecoder().decode(payload);
         const data = JSON.parse(text);
 
-        // 1. Send Message (with optional imageUrl)
+        // 1. New Chat Message (Text / Image / Whisper / Reply)
         if (data.type === 'CHAT_MESSAGE') {
           setMessages((prev) => {
             if (prev.some((m) => m.id === data.message.id)) return prev;
@@ -90,7 +94,7 @@ function LiveKitRoomContent({
           );
         }
 
-        // 3. React to Message
+        // 3. Chat Message Emoji Reaction
         if (data.type === 'CHAT_REACTION') {
           setMessages((prev) =>
             prev.map((m) => {
@@ -116,7 +120,7 @@ function LiveKitRoomContent({
           );
         }
 
-        // 4. Hand Raise
+        // 4. Hand Raise Interaction
         if (data.type === 'HAND_RAISE') {
           setRaisedHandsSet((prev) => {
             const next = new Set(prev);
@@ -126,13 +130,31 @@ function LiveKitRoomContent({
           });
         }
 
-        // 5. Host Force Mute / Kick
+        // 5. Floating Reaction Emoji
+        if (data.type === 'FLOATING_EMOJI') {
+          setParticipantReactions((prev) => ({
+            ...prev,
+            [data.identity]: data.emoji,
+          }));
+
+          // Clear floating reaction after 3 seconds
+          setTimeout(() => {
+            setParticipantReactions((prev) => {
+              const updated = { ...prev };
+              delete updated[data.identity];
+              return updated;
+            });
+          }, 3000);
+        }
+
+        // 6. Host Moderation: Force Mute / Kick
         if (data.type === 'FORCE_MUTE_PARTICIPANT') {
           if (data.targetIdentity === localParticipant?.identity) {
             if (data.kicked) {
               onLeaveRoom?.();
             } else {
               localParticipant?.setMicrophoneEnabled(!data.mute);
+              setMicMuted(Boolean(data.mute));
             }
           }
         }
@@ -147,7 +169,16 @@ function LiveKitRoomContent({
     };
   }, [room, localParticipant, onLeaveRoom]);
 
-  // Map participants for Audio Stage & User Profile
+  // Sync mic state on mount or change
+  useEffect(() => {
+    if (localParticipant) {
+      setMicMuted(!localParticipant.isMicrophoneEnabled);
+    }
+  }, [localParticipant]);
+
+  // --------------------------------------------------------------------------
+  // Map LiveKit Remote Participants to Workspace Format
+  // --------------------------------------------------------------------------
   const participants: StageParticipant[] = useMemo(() => {
     return remoteParticipants.map((p) => {
       const isSelf = p.identity === localParticipant?.identity;
@@ -161,26 +192,34 @@ function LiveKitRoomContent({
         audioState = 'unmuted';
       }
 
+      let parsedMeta: Record<string, any> = {};
+      try {
+        if (p.metadata) parsedMeta = JSON.parse(p.metadata);
+      } catch {
+        // fallback empty
+      }
+
       return {
         id: p.identity,
         name: p.name || p.identity,
-        avatarUrl: (p.metadata && JSON.parse(p.metadata)?.avatarUrl) || '',
-        level: 'Member',
+        avatarUrl: parsedMeta.avatarUrl || '',
+        level: parsedMeta.level || 'Member',
         audioState,
         isSpeaking,
         handRaised,
+        activeReactionEmoji: participantReactions[p.identity] || null,
         isHost: String(selectedRoom.host?.userId) === p.identity,
         isSelf,
         role: String(selectedRoom.host?.userId) === p.identity ? 'host' : 'listener',
       };
     });
-  }, [remoteParticipants, localParticipant, raisedHandsSet, selectedRoom]);
+  }, [remoteParticipants, localParticipant, raisedHandsSet, participantReactions, selectedRoom]);
 
   // --------------------------------------------------------------------------
-  // Outgoing Actions (Broadcast to Room)
+  // Outgoing LiveKit Dispatches
   // --------------------------------------------------------------------------
 
-  // 1. Send Message (handles text, replies, whispers, and uploaded image URLs)
+  // 1. Send Message
   const handleSendMessage = useCallback(
     async (
       text: string,
@@ -204,10 +243,9 @@ function LiveKitRoomContent({
         reactions: [],
       };
 
-      // 1. Optimistically update locally
+      // Optimistic local update
       setMessages((prev) => [...prev, newMsg]);
 
-      // 2. Broadcast via LiveKit Data Channel
       const payload = JSON.stringify({
         type: 'CHAT_MESSAGE',
         message: { ...newMsg, isSelf: false },
@@ -219,7 +257,6 @@ function LiveKitRoomContent({
           topic: 'room_chat',
         };
 
-      // If private, send strictly to the recipient
       if (privateTo?.id) {
         publishOptions.destinationIdentities = [privateTo.id];
       }
@@ -235,7 +272,6 @@ function LiveKitRoomContent({
       if (!localParticipant) return;
 
       const editedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m)));
 
       const payload = JSON.stringify({
@@ -259,7 +295,6 @@ function LiveKitRoomContent({
       if (!localParticipant) return;
 
       let decrement = false;
-
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id !== id) return m;
@@ -299,47 +334,98 @@ function LiveKitRoomContent({
     [localParticipant]
   );
 
-  const handleToggleMic = async (muted: boolean) => {
-    if (localParticipant) {
-      await localParticipant.setMicrophoneEnabled(!muted);
-    }
+  // 4. Microphone Toggle
+  const handleToggleMic = async () => {
+    if (!localParticipant) return;
+    const nextMuted = !micMuted;
+    await localParticipant.setMicrophoneEnabled(!nextMuted);
+    setMicMuted(nextMuted);
   };
 
-  const handleToggleDeafen = async (deafened: boolean) => {
-    if (deafened && localParticipant) {
-      await localParticipant.setMicrophoneEnabled(false);
+  // 5. Deafen Toggle
+  const handleToggleDeafen = () => {
+    const nextDeafened = !deafened;
+    setDeafened(nextDeafened);
+
+    if (nextDeafened && localParticipant) {
+      localParticipant.setMicrophoneEnabled(false);
+      setMicMuted(true);
     }
+
     remoteParticipants.forEach((p) => {
       if (!p.isLocal) {
         p.audioTrackPublications.forEach((pub) => {
           if (pub.track && 'setVolume' in pub.track) {
-            (pub.track as any).setVolume(deafened ? 0 : 1);
+            (pub.track as any).setVolume(nextDeafened ? 0 : 1);
           }
         });
       }
     });
   };
 
-  const handleToggleRaiseHand = async (raised: boolean) => {
+  // 6. Raise Hand Toggle
+  const handleToggleRaiseHand = async () => {
     if (!localParticipant) return;
+    const isCurrentlyRaised = raisedHandsSet.has(localParticipant.identity);
+    const nextRaised = !isCurrentlyRaised;
+
+    setRaisedHandsSet((prev) => {
+      const next = new Set(prev);
+      if (nextRaised) next.add(localParticipant.identity);
+      else next.delete(localParticipant.identity);
+      return next;
+    });
 
     const payload = JSON.stringify({
       type: 'HAND_RAISE',
       identity: localParticipant.identity,
-      raised,
+      raised: nextRaised,
     });
 
     await localParticipant.publishData(new TextEncoder().encode(payload), {
       reliable: true,
       topic: 'room_interactions',
     });
+  };
 
-    setRaisedHandsSet((prev) => {
-      const next = new Set(prev);
-      if (raised) next.add(localParticipant.identity);
-      else next.delete(localParticipant.identity);
-      return next;
+  // 7. Floating Emoji Reaction Broadcast
+  const handleSendReaction = async (emoji: string) => {
+    if (!localParticipant) return;
+
+    setParticipantReactions((prev) => ({
+      ...prev,
+      [localParticipant.identity]: emoji,
+    }));
+
+    setTimeout(() => {
+      setParticipantReactions((prev) => {
+        const updated = { ...prev };
+        delete updated[localParticipant.identity];
+        return updated;
+      });
+    }, 3000);
+
+    const payload = JSON.stringify({
+      type: 'FLOATING_EMOJI',
+      identity: localParticipant.identity,
+      emoji,
     });
+
+    await localParticipant.publishData(new TextEncoder().encode(payload), {
+      reliable: false,
+      topic: 'room_interactions',
+    });
+  };
+
+  // 8. Screen Share Toggle
+  const handleToggleScreenShare = async () => {
+    if (!localParticipant) return;
+    try {
+      const isScreenSharing = localParticipant.isScreenShareEnabled;
+      await localParticipant.setScreenShareEnabled(!isScreenSharing);
+    } catch (err) {
+      console.error('Error toggling screen share:', err);
+    }
   };
 
   return (
@@ -348,14 +434,17 @@ function LiveKitRoomContent({
         participants={participants}
         maxParticipants={selectedRoom.max_participants || 10}
         topicPrompt={selectedRoom.topic || 'Welcome to the room'}
-        onChangePrompt={() => {}}
+        currentUserId={localParticipant?.identity || CURRENT_USER.id}
+        currentUserName={localParticipant?.name || CURRENT_USER.name}
+        micMuted={micMuted}
+        deafened={deafened}
+        handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
         onToggleMic={handleToggleMic}
         onToggleDeafen={handleToggleDeafen}
         onToggleRaiseHand={handleToggleRaiseHand}
-        onOpenReactions={() => {}}
+        onToggleScreenShare={handleToggleScreenShare}
+        onSendReaction={handleSendReaction}
         onLeave={onLeaveRoom}
-        currentUserId={localParticipant?.identity || CURRENT_USER.id}
-        currentUserName={localParticipant?.name || CURRENT_USER.name}
         initialMessages={messages}
         onSendMessage={handleSendMessage}
         onEditMessage={handleEditMessage}
