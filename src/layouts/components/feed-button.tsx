@@ -1,7 +1,7 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import IconButton from '@mui/material/IconButton';
 import { SvgIcon, Typography } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 
 import { useRouter } from 'src/routes/route-hooks';
 

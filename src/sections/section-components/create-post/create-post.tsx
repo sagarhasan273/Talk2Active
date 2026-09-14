@@ -1,29 +1,29 @@
-import { toast } from 'sonner';
+import { Sparkles, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSelector } from 'react-redux';
-import { X, Sparkles } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import {
   Box,
-  Modal,
   Button,
-  useTheme,
-  Typography,
-  IconButton,
   CircularProgress,
+  IconButton,
+  Modal,
+  Typography,
+  useTheme,
 } from '@mui/material';
 
-import { selectAccount } from 'src/core/slices';
 import { useCreatePostMutation, useUpdatePostMutation } from 'src/core/apis/api-post';
+import { selectAccount } from 'src/core/slices';
 
 import { Form } from 'src/components/hook-form';
 
-import PostTypeButtons from './post-type-buttons';
 import { PostQuoteCreate } from './post-quote-create';
+import PostTypeButtons from './post-type-buttons';
 import { PostCreator } from './post-youtube-video-create';
 
-import type { PostTypeProps, CreatePostProps } from './types';
+import type { CreatePostProps, PostTypeProps } from './types';
 
 export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
   const theme = useTheme();
@@ -66,7 +66,7 @@ export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const authorId = user?.id;
+      const authorId = user?.userId;
       if (!authorId) {
         toast.error('User not authenticated. Please log in.');
         return;

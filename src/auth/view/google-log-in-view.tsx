@@ -1,14 +1,13 @@
 import type { SxProps } from '@mui/material';
 
+import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useState } from 'react';
-import { useGoogleLogin } from '@react-oauth/google';
 
-import { Button, SvgIcon, Typography, CircularProgress } from '@mui/material';
+import { Button, CircularProgress, SvgIcon, Typography } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
 
-import { useAuthContext } from 'src/auth/hooks';
 import { STORAGE_KEY } from 'src/auth/context/jwt';
 
 // utils/is-mobile.ts
@@ -26,7 +25,6 @@ export const GoogleLogInView = ({
   title?: string;
   onSuccess?: () => void;
 }) => {
-  const { loadCredentials } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
 
   // ── Mobile: redirect flow ─────────────────────────────────────────────────
@@ -43,7 +41,6 @@ export const GoogleLogInView = ({
 
         if (response.data?.status && response.data?.token) {
           sessionStorage.setItem(STORAGE_KEY, response.data.token);
-          loadCredentials?.(response.data.user, response.data.recentRooms);
           onSuccess?.();
         } else {
           throw new Error('Invalid response format');
@@ -72,7 +69,6 @@ export const GoogleLogInView = ({
         if (data.status) {
           if (!data.token) throw new Error('Access token not found in response');
           sessionStorage.setItem(STORAGE_KEY, data.token);
-          loadCredentials?.(data.user, data.recentRooms);
           onSuccess?.();
         }
       } catch (err) {

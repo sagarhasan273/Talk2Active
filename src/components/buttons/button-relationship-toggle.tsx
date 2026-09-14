@@ -3,9 +3,9 @@ import type { SxProps } from '@mui/material';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 import { selectAccount } from 'src/core/slices';
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
-import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
 
 import { ButtonFollowIcon } from './button-follow-icon';
 import { ButtonUnfollowIcon } from './button-unfollow-icon';
@@ -40,7 +40,7 @@ export function ButtonRelationshipToggle({
           title={`Are you sure to add ${targetUser.name}?`}
           onConfirm={() => {
             followMutate({
-              requester: user.id,
+              requester: user.userId,
               recipient: targetUser.id,
               type: RelationshipTypeEnum.FOLLOW,
             });
@@ -54,7 +54,7 @@ export function ButtonRelationshipToggle({
           title={`Are you sure to remove ${targetUser.name}?`}
           onConfirm={() => {
             unfollowMutate({
-              requester: user.id,
+              requester: user.userId,
               recipient: targetUser.id,
               type: RelationshipTypeEnum.FOLLOW,
             });

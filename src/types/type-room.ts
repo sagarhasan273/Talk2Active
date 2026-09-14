@@ -58,7 +58,7 @@ export type ReactionMessageData = {
 
 export type PrivateParticipantProps = {
   socketId: string;
-  userId: UserType['id'];
+  userId: UserType['userId'];
   name: UserType['name'];
   profilePhoto?: UserType['profilePhoto'];
   verified?: UserType['verified'];
@@ -67,11 +67,11 @@ export type PrivateParticipantProps = {
 
 export type VoiceParticipant = {
   socketId: string;
-  userId: UserType['id'];
+  userId: UserType['userId'];
   name: UserType['name'];
   profilePhoto: UserType['profilePhoto'];
   accountType: UserType['accountType'];
-  status: UserType['status'];
+  status: string;
   isLocal: boolean;
   isMuted: boolean;
   volume?: number;

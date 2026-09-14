@@ -1,33 +1,33 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
+import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import Stack from '@mui/material/Stack';
-import Drawer from '@mui/material/Drawer';
 import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
-import Typography from '@mui/material/Typography';
+import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { alpha, useTheme, useColorScheme } from '@mui/material/styles';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import { alpha, useColorScheme, useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
 
+import { usePathname, useRouter } from 'src/routes/route-hooks';
 import { paths } from 'src/routes/route-paths';
-import { useRouter, usePathname } from 'src/routes/route-hooks';
 
 import { selectAccount } from 'src/core/slices';
 
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 import { AvatarUser } from 'src/components/avatar-user';
+import { Iconify } from 'src/components/iconify';
+import { Label } from 'src/components/label';
+import { Scrollbar } from 'src/components/scrollbar';
 import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
-import { UpgradeBlock } from './nav-upgrade';
 import { AccountButton } from './account-button';
+import { UpgradeBlock } from './nav-upgrade';
 import { SignOutButton } from './sign-out-button';
 
 // ─────────────────────────────────────────────
@@ -115,7 +115,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           inset: 0,
           opacity: 0.04,
           backgroundImage:
-            user.coverPhoto ??
+            user.profilePhoto ??
             `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           backgroundSize: '128px',
         }}
@@ -223,22 +223,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           {user.bio}
         </Typography>
       )}
-
-      {/* Status dot */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1 }}>
-        <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            bgcolor: user?.status === 'online' ? '#43e97b' : '#aaa',
-            boxShadow: user?.status === 'online' ? '0 0 6px #43e97b' : 'none',
-          }}
-        />
-        <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>
-          {user?.status ?? 'offline'}
-        </Typography>
-      </Box>
     </Box>
   );
 

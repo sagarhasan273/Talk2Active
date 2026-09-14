@@ -1,13 +1,7 @@
+import { Bell, Eye, Palette, Shield, User } from 'lucide-react';
 import React, { useState } from 'react';
-import { Eye, User, Bell, Shield, Palette } from 'lucide-react';
 
-import { Box, Tab, Card, Grid, Tabs, Stack, styled } from '@mui/material';
-
-import SettingsProfileAccount from '../settings-profile-account';
-import SettingsProfilePrivacy from '../settings-profile-privacy';
-import SettingsProfileAppearance from '../settings-profile-appearance';
-import SettingsProfileInformation from '../settings-profile-information';
-import SettingsProfileNotifications from '../settings-profile-notifications';
+import { Box, Grid, Stack, styled, Tab, Tabs } from '@mui/material';
 
 interface SettingsProps {
   profile: any;
@@ -91,26 +85,6 @@ export const SettingsView: React.FC<SettingsProps> = ({ profile, onUpdateProfile
                 );
               })}
             </StyledTabs>
-          </Grid>
-
-          {/* Content */}
-          <Grid sx={{ xs: 12, md: 3 }}>
-            <Card sx={{ borderRadius: { xs: 1, sm: 2, md: 3 }, boxShadow: 1, overflow: 'hidden' }}>
-              {/* Profile Tab */}
-              {activeTab === 'profile' && <SettingsProfileInformation />}
-
-              {/* Account Tab */}
-              {activeTab === 'account' && <SettingsProfileAccount />}
-
-              {/* Notifications Tab */}
-              {activeTab === 'notifications' && <SettingsProfileNotifications />}
-
-              {/* Appearance Tab */}
-              {activeTab === 'appearance' && <SettingsProfileAppearance />}
-
-              {/* Privacy Tab */}
-              {activeTab === 'privacy' && <SettingsProfilePrivacy />}
-            </Card>
           </Grid>
         </Grid>
       </Box>

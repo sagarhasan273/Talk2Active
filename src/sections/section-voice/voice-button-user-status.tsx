@@ -1,12 +1,11 @@
-import type { UserType } from 'src/types/type-user';
 import type { ChatUserStatus } from 'src/types/type-chat';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Moon, Clock, Pause, UserX, CircleOff, CheckCircle } from 'lucide-react';
+import { CheckCircle, CircleOff, Clock, Moon, Pause, UserX } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { Box, Fade, IconButton, Paper, Slide, Typography, alpha, useTheme } from '@mui/material';
 import Portal from '@mui/material/Portal';
 import { styled } from '@mui/material/styles';
-import { Box, Fade, Paper, Slide, alpha, useTheme, Typography, IconButton } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -94,7 +93,7 @@ const Sheet = styled(Box)(({ theme }) => ({
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ChatStatusButtonProps {
-  onStatusChange?: (status: UserType['status']) => void;
+  onStatusChange?: (status: string) => void;
 }
 
 // ─── Status grid (shared between mobile sheet and desktop popover) ────────────

@@ -1,42 +1,37 @@
 import type { UserType } from 'src/types/type-user';
 
 import { CheckCircle } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
+  Avatar,
   Box,
   Card,
-  List,
-  Avatar,
-  Divider,
-  ListItem,
-  useTheme,
-  CardHeader,
-  Typography,
   CardContent,
+  CardHeader,
+  Divider,
+  List,
+  ListItem,
   ListItemAvatar,
   ListItemButton,
+  Typography,
+  useTheme,
 } from '@mui/material';
 
 import { useGetNewUsersQuery } from 'src/core/apis';
-import { useRoomTools, useCredentials } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 
-import { Iconify } from 'src/components/iconify';
 import { ButtonRelationshipToggle } from 'src/components/buttons';
-
-import EngagementProfileCard from '../engagement-profile-card';
+import { Iconify } from 'src/components/iconify';
 
 export const DiscoveryPanel: React.FC = () => {
   const theme = useTheme();
 
-  const { user, selectedUser } = useCredentials();
-  const { userVoiceState } = useRoomTools();
-
-  const { hasJoined } = userVoiceState;
+  const { user } = useCredentials();
 
   const [suggestedUsers, setSuggestedUsers] = useState<UserType[]>([]);
 
-  const { data } = useGetNewUsersQuery(user.id);
+  const { data } = useGetNewUsersQuery(user.userId);
 
   useEffect(() => {
     if (!suggestedUsers) {
@@ -54,9 +49,6 @@ export const DiscoveryPanel: React.FC = () => {
         gap: theme.spacing(3),
       }}
     >
-      {/* Engagement Profile Card */}
-      {Boolean(selectedUser?.id) && <EngagementProfileCard />}
-
       {/* Suggested Users */}
       <Card sx={{ backgroundColor: 'background.paper', borderRadius: { xs: 0, sm: 1 } }}>
         <CardHeader
@@ -70,7 +62,7 @@ export const DiscoveryPanel: React.FC = () => {
         <CardContent sx={{ p: 1 }}>
           <List disablePadding>
             {suggestedUsers.map((userDetails: UserType) => (
-              <ListItem key={userDetails.id} disablePadding sx={{ p: 0 }}>
+              <ListItem key={userDetails.userId} disablePadding sx={{ p: 0 }}>
                 <ListItemButton
                   sx={{ borderRadius: 2, p: 1 }}
                   onClick={(event) => {
@@ -82,7 +74,7 @@ export const DiscoveryPanel: React.FC = () => {
                 >
                   <ListItemAvatar>
                     <Avatar src={userDetails.profilePhoto} alt={userDetails.name}>
-                      {!userDetails.profilePhoto && userDetails.name.charAt(0)}
+                      {!userDetails.profilePhoto}
                     </Avatar>
                   </ListItemAvatar>
                   <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
@@ -102,8 +94,8 @@ export const DiscoveryPanel: React.FC = () => {
 
                   <ButtonRelationshipToggle
                     targetUser={{
-                      name: userDetails.name,
-                      id: userDetails.id,
+                      name: userDetails.name as string,
+                      id: userDetails.userId,
                     }}
                   />
                 </ListItemButton>
