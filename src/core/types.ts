@@ -1,4 +1,3 @@
-import type { UserType } from 'src/types/type-user';
 
 import type { store } from './store';
 
@@ -14,6 +13,6 @@ export type UserVoiceStateProps = {
   volume: number;
   micGain: number;
   isScreenSharing: boolean;
-  statue: UserType['status'];
+  statue: string;
   micError?: string;
 };

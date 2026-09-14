@@ -4,11 +4,11 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 
 import type { UseBooleanReturn } from 'src/hooks/use-boolean';
 
+import { Chat as ChatIcon } from '@mui/icons-material';
 import { Badge } from '@mui/material';
-import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { Chat as ChatIcon } from '@mui/icons-material';
+import Stack from '@mui/material/Stack';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -17,7 +17,6 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 import { Iconify } from 'src/components/iconify';
 
 import { CtrlBtn } from '../buttons';
-import { VoiceRoomMessageGroupHeader } from './voice-room-message-group-header';
 
 export type VoiceRoomMessageGroupDrawerProps = IconButtonProps & {
   children?: React.ReactNode;
@@ -38,18 +37,6 @@ export function VoiceRoomMessageGroupDrawer({
 
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 1, pl: 2.5, pr: 1, minHeight: 68 }}>
-      <VoiceRoomMessageGroupHeader
-        roomName="Group messages"
-        users={[
-          ...(Object.values(participants)?.map((participant) => ({
-            _id: participant?.socketId,
-            name: participant.name,
-            profilePhoto: participant.profilePhoto,
-            verified: participant.verified,
-          })) || []),
-        ]}
-      />
-
       <IconButton
         onClick={openDrawer?.onFalse || drawer.onFalse}
         sx={{ ml: 'auto', display: { xs: 'inline-flex' } }}

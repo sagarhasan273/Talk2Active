@@ -1,4 +1,4 @@
-import { Box, Stack, Toolbar, Typography, AvatarGroup } from '@mui/material';
+import { AvatarGroup, Box, Stack, Toolbar, Typography } from '@mui/material';
 
 import { AvatarUser } from '../avatar-user';
 
