@@ -1,17 +1,14 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import React from 'react';
-import { Volume2Icon, PhoneOffIcon } from 'lucide-react';
+import { PhoneOffIcon, Volume2Icon } from 'lucide-react';
 
-import ShareIcon from '@mui/icons-material/Share';
-import SettingsIcon from '@mui/icons-material/Settings';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { Box, Stack, alpha, Paper, Tooltip, useTheme, Typography, IconButton } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ShareIcon from '@mui/icons-material/Share';
+import { alpha, Box, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
-// ----------------------------------------------------------------------
-// Small Room Header - shown when inside room
-// ----------------------------------------------------------------------
+import { formatLanguages } from './utils';
 
 export const CompactRoomHeader = ({
   room,
@@ -49,7 +46,6 @@ export const CompactRoomHeader = ({
           px: { xs: 0.75, sm: 1 },
         }}
       >
-        {/* Back */}
         <Tooltip title="Back to rooms">
           <IconButton
             onClick={onBack}
@@ -62,7 +58,6 @@ export const CompactRoomHeader = ({
               transition: theme.transitions.create(['background-color', 'color', 'transform'], {
                 duration: 150,
               }),
-
               '&:hover': {
                 bgcolor: alpha(theme.palette.primary.main, 0.1),
                 color: 'primary.main',
@@ -74,7 +69,6 @@ export const CompactRoomHeader = ({
           </IconButton>
         </Tooltip>
 
-        {/* Icon with pulsing rings */}
         <Box
           sx={{
             mx: 1,
@@ -96,12 +90,10 @@ export const CompactRoomHeader = ({
                 borderRadius: 1,
                 border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
                 animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
-
                 '@keyframes voiceJoinGateRing': {
                   '0%': { transform: 'scale(0.85)', opacity: 0.6 },
                   '100%': { transform: 'scale(1.5)', opacity: 0 },
                 },
-
                 '@media (prefers-reduced-motion: reduce)': {
                   animation: 'none',
                   display: 'none',
@@ -127,21 +119,8 @@ export const CompactRoomHeader = ({
           </Box>
         </Box>
 
-        {/* Room title */}
-        <Box
-          sx={{
-            minWidth: 0,
-            flex: 1,
-          }}
-        >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0.75}
-            sx={{
-              minWidth: 0,
-            }}
-          >
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0 }}>
             <Typography
               noWrap
               sx={{
@@ -149,37 +128,23 @@ export const CompactRoomHeader = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-
-                fontSize: {
-                  xs: '0.78rem',
-                  sm: '0.85rem',
-                },
-
+                fontSize: { xs: '0.78rem', sm: '0.85rem' },
                 fontWeight: 800,
               }}
             >
               {room?.topic || 'Untitled room'}
             </Typography>
 
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.35,
-                flexShrink: 0,
-              }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.35, flexShrink: 0 }}>
               <FiberManualRecordIcon
                 sx={{
                   fontSize: 6,
                   color: 'success.main',
                   animation: 'voiceLiveDotBlink 1.8s ease-in-out infinite',
-
                   '@keyframes voiceLiveDotBlink': {
                     '0%, 100%': { opacity: 1 },
                     '50%': { opacity: 0.35 },
                   },
-
                   '@media (prefers-reduced-motion: reduce)': {
                     animation: 'none',
                   },
@@ -188,11 +153,7 @@ export const CompactRoomHeader = ({
 
               <Typography
                 sx={{
-                  display: {
-                    xs: 'none',
-                    sm: 'block',
-                  },
-
+                  display: { xs: 'none', sm: 'block' },
                   fontSize: 9,
                   color: 'success.main',
                   fontWeight: 800,
@@ -214,11 +175,10 @@ export const CompactRoomHeader = ({
               mt: 0.15,
             }}
           >
-            {room?.languages || 'English'} • {room?.level || 'All Levels'}
+            {formatLanguages(room?.languages)} • {room?.level || 'All Levels'}
           </Typography>
         </Box>
 
-        {/* Share */}
         {onShareClick && (
           <Tooltip title="Share room">
             <IconButton
@@ -233,7 +193,6 @@ export const CompactRoomHeader = ({
                 transition: theme.transitions.create(['background-color', 'color'], {
                   duration: 150,
                 }),
-
                 '&:hover': {
                   color: 'primary.main',
                   bgcolor: alpha(theme.palette.primary.main, 0.1),
@@ -245,7 +204,6 @@ export const CompactRoomHeader = ({
           </Tooltip>
         )}
 
-        {/* Settings */}
         {isHost && (
           <Tooltip title="Room settings">
             <IconButton
@@ -260,7 +218,6 @@ export const CompactRoomHeader = ({
                 transition: theme.transitions.create(['background-color', 'color', 'transform'], {
                   duration: 150,
                 }),
-
                 '&:hover': {
                   color: 'primary.main',
                   bgcolor: alpha(theme.palette.primary.main, 0.1),
@@ -273,7 +230,6 @@ export const CompactRoomHeader = ({
           </Tooltip>
         )}
 
-        {/* Leave */}
         <Tooltip title="Leave room">
           <IconButton
             onClick={onLeaveRoom}
@@ -282,11 +238,9 @@ export const CompactRoomHeader = ({
               width: 32,
               height: 32,
               borderRadius: 1.25,
-
               color: 'error.main',
               bgcolor: alpha(theme.palette.error.main, 0.08),
               transition: theme.transitions.create(['background-color'], { duration: 150 }),
-
               '&:hover': {
                 bgcolor: alpha(theme.palette.error.main, 0.16),
               },

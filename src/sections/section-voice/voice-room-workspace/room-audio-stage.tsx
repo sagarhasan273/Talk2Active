@@ -1,130 +1,245 @@
-import React, { useState } from 'react';
+// src/sections/section-voice-room/voice-room-workspace/room-audio-stage.tsx
 
-import { Box } from '@mui/material';
+import { useTracks, VideoTrack } from '@livekit/components-react';
+import { Box, Button, Grid, IconButton, Stack, Tooltip } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
+import { Track } from 'livekit-client';
+import { LayoutGrid, Maximize, Minimize, Tv } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { PromptBanner } from './room-prompt-banner';
 import { RoomControlDock } from './room-control-dock';
-import { EmptySlotTile } from './room-empty-slot-tile';
-import { VoiceRoomUserCard } from '../voice-room-user-card';
+import { ParticipantTile } from './room-participant-tile';
+import type { StageParticipant } from './types';
 
-import type { RoomAudioStageProps } from './types';
+export type RoomAudioStageProps = {
+  topicPrompt: string;
+  onChangePrompt?: () => void;
+  participants: StageParticipant[];
+  maxParticipants: number;
+  micMuted?: boolean;
+  deafened?: boolean;
+  handRaised?: boolean;
+  onToggleMic?: () => void;
+  onToggleDeafen?: () => void;
+  onToggleRaiseHand?: () => void;
+  onToggleScreenShare?: () => void;
+  onSendReaction?: (emoji: string) => void;
+  onToggleChat?: () => void;
+  onLeave?: () => void;
+  onProfileClick?: (participant: StageParticipant) => void;
+};
 
-export const RoomAudioStage = ({
+export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   topicPrompt,
-  onChangePrompt,
   participants,
   maxParticipants,
-  onInviteSlot,
-  onLeave,
-  onOpenReactions,
-  onToggleChat,
+  micMuted = false,
+  deafened = false,
+  handRaised = false,
   onToggleMic,
   onToggleDeafen,
   onToggleRaiseHand,
+  onToggleScreenShare,
+  onSendReaction,
+  onToggleChat,
+  onLeave,
   onProfileClick,
-}: RoomAudioStageProps) => {
-  // Local UI state for the dock; lifted callbacks let the parent sync this
-  // with the actual audio/session layer.
-  const [micMuted, setMicMuted] = useState(true);
-  const [deafened, setDeafened] = useState(false);
-  const [handRaised, setHandRaised] = useState(false);
+}) => {
+  const theme = useTheme();
+  const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const openSlots = Math.max(maxParticipants - participants.length, 0);
+  // 3 Modes for Screen Presentation:
+  // 1. Stage (presentationOnly = false): Screen Share + Participant Grid
+  // 2. Theater (presentationOnly = true): Screen Share takes 100% canvas, hides Grid
+  // 3. Hardware Fullscreen: Requests monitor fullscreen on screenShareContainerRef
+  const [presentationOnly, setPresentationOnly] = useState(false);
+  const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
-  const handleToggleMic = () => {
-    const next = !micMuted;
-    setMicMuted(next);
-    onToggleMic?.(next);
-  };
+  const screenShareTracks = useTracks([Track.Source.ScreenShare]);
+  const activeScreenShare = screenShareTracks[0];
 
-  const handleToggleDeafen = () => {
-    const next = !deafened;
-    setDeafened(next);
-    onToggleDeafen?.(next);
-  };
+  // Auto-reset presentation-only if screen share ends
+  useEffect(() => {
+    if (!activeScreenShare?.publication) {
+      setPresentationOnly(false);
+    }
+  }, [activeScreenShare]);
 
-  const handleToggleRaiseHand = () => {
-    const next = !handRaised;
-    setHandRaised(next);
-    onToggleRaiseHand?.(next);
+  // Sync fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsElementFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const handleToggleElementFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement && screenShareContainerRef.current) {
+        await screenShareContainerRef.current.requestFullscreen();
+      } else if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.warn('Native fullscreen request blocked:', err);
+    }
   };
 
   return (
     <Box
       sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        p: { xs: 1.5, sm: 2 },
-        borderRadius: 1,
-        bgcolor: 'background.paper',
-        border: `1px solid`,
-        borderColor: 'divider',
         width: '100%',
+        height: '100%',
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        position: 'relative',
       }}
     >
-      <PromptBanner prompt={topicPrompt} onChangePrompt={onChangePrompt} />
+      {/* ----------------- Screen Share Canvas ----------------- */}
+      {activeScreenShare?.publication && (
+        <Box
+          ref={screenShareContainerRef}
+          sx={{
+            flex: presentationOnly ? 1 : 'none',
+            height: presentationOnly ? '100%' : { xs: 220, sm: 340, md: 400 },
+            width: '100%',
+            position: 'relative',
+            bgcolor: '#050505',
+            borderRadius: 1,
+            overflow: 'hidden',
+            transition: 'all 0.25s ease',
+            border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+          }}
+        >
+          <VideoTrack
+            trackRef={activeScreenShare}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
 
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          display: 'grid',
-          alignContent: 'center',
-          justifyItems: 'stretch',
-          // auto-fill/minmax reflows based on the grid's own available width,
-          // not the viewport — so it responds correctly when the sidebar
-          // resize shrinks or grows this container, not just on window resize.
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-          gap: { xs: 1.5, sm: 2 },
-        }}
-      >
-        {participants.map((participant) => (
-          <VoiceRoomUserCard
-            key={participant.id}
-            participant={{
-              userId: participant.id,
-              name: participant.name,
-              profilePhoto: participant.avatarUrl,
-              status: 'online',
-              isSpeaking: false,
-              isMuted: false,
-              userType: 'host',
-              verified: true,
-              accountType: 'admin',
-              connectionStatus: 'connected',
-              isLocal: true,
-              hasJoin: true,
+          {/* Presenter Name Badge */}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 12,
+              left: 12,
+              bgcolor: 'rgba(0,0,0,0.75)',
+              backdropFilter: 'blur(8px)',
+              color: '#fff',
+              px: 1.25,
+              py: 0.5,
+              borderRadius: 1.25,
+              fontSize: 12,
+              fontWeight: 700,
+              zIndex: 3,
             }}
-            size="medium"
-            stream={null}
-            onClick={() => onProfileClick?.(participant)}
-          />
-        ))}
+          >
+            {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
+          </Box>
 
-        {openSlots > 0 && (
-          <EmptySlotTile
-            openSlots={openSlots}
-            maxParticipants={maxParticipants}
-            onClick={onInviteSlot}
-          />
-        )}
-      </Box>
+          {/* Screen Presentation Action Controls (Top Right) */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              zIndex: 3,
+            }}
+          >
+            {/* Mode 1 & 2: Toggle between Stage Grid and Theater View */}
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => setPresentationOnly((prev) => !prev)}
+              startIcon={presentationOnly ? <LayoutGrid size={14} /> : <Tv size={14} />}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.18)',
+                backdropFilter: 'blur(8px)',
+                color: '#fff',
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'none',
+                borderRadius: 1.5,
+                border: '1px solid rgba(255,255,255,0.2)',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.3)',
+                },
+              }}
+            >
+              {presentationOnly ? 'Show Stage' : 'Presentation Only'}
+            </Button>
 
+            {/* Mode 3: Toggle Direct Hardware Fullscreen */}
+            <Tooltip title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}>
+              <IconButton
+                size="small"
+                onClick={handleToggleElementFullscreen}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 1.5,
+                  p: 0.75,
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.3)',
+                  },
+                }}
+              >
+                {isElementFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </Box>
+      )}
+
+      {/* ----------------- Participant Grid (Hidden in Presentation-Only) ----------------- */}
+      {!presentationOnly && (
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            py: 1.5,
+            mt: activeScreenShare ? 1.5 : 0,
+          }}
+        >
+          <Grid container spacing={2} justifyContent="center" alignItems="center">
+            {participants.map((p) => (
+              <Grid
+                size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}
+                key={p.id}
+                onClick={() => onProfileClick?.(p)}
+                sx={{ cursor: 'pointer' }}
+              >
+                <ParticipantTile participant={p} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* ----------------- Bottom Dock ----------------- */}
       <RoomControlDock
         micMuted={micMuted}
         deafened={deafened}
         handRaised={handRaised}
-        onToggleMic={handleToggleMic}
-        onToggleDeafen={handleToggleDeafen}
-        onToggleRaiseHand={handleToggleRaiseHand}
-        onOpenReactions={onOpenReactions}
+        isScreenSharing={Boolean(screenShareTracks.some((t) => t.participant.isLocal))}
+        onToggleMic={onToggleMic || (() => {})}
+        onToggleDeafen={onToggleDeafen || (() => {})}
+        onToggleRaiseHand={onToggleRaiseHand || (() => {})}
+        onToggleScreenShare={onToggleScreenShare}
+        onSendReaction={onSendReaction}
         onToggleChat={onToggleChat}
         onLeave={onLeave}
       />
     </Box>
   );
 };
+
+export default RoomAudioStage;

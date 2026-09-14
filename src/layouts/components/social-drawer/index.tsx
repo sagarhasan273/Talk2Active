@@ -1,15 +1,14 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
+import Diversity2Icon from '@mui/icons-material/Diversity2';
 import { Badge } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import Diversity2Icon from '@mui/icons-material/Diversity2';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useMessagesTools } from 'src/core/slices';
 
-import { useSocialSocketListeners } from './social-listeners';
 import SocialChat from '../../../sections/section-common/social-chat';
 
 // ----------------------------------------------------------------------
@@ -18,8 +17,6 @@ export type SocialDrawerProps = IconButtonProps;
 
 export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
-
-  useSocialSocketListeners();
 
   const { isUnreadIndividualMessage } = useMessagesTools();
 

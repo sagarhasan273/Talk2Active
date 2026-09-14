@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import { DisabledByDefaultRounded } from '@mui/icons-material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Box, Chip, Stack, alpha, Button, useTheme, Typography, AvatarGroup } from '@mui/material';
+import { alpha, AvatarGroup, Box, Button, Chip, Stack, Typography, useTheme } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
-
 import { fgetLanguageName } from 'src/utils/helper';
-
-import { useSocketContext } from 'src/core/contexts/socket-context';
-
 import { AvatarUser } from 'src/components/avatar-user';
 
-import { getLevelColor } from './styles';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { ImageLightbox } from './image-lightbox';
 import { RoomParticipantsDialog } from './room-card-dialog';
-import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+import { getLevelColor } from './styles';
 
 import type { VoiceRoomCardProps } from './types';
 
@@ -35,81 +31,32 @@ export const VoiceRoomCard = ({
   onRoomUpdated,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
-  const { on, off } = useSocketContext();
+
   const [room, setRoom] = useState(roomData);
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
+
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
-  // Keep internal state in sync if prop changes from parent
+  // Keep internal state in sync if prop changes from parent or RTK Query refetch
   useEffect(() => {
     setRoom(roomData);
   }, [roomData]);
 
-  const handleBroadcastNewRoom = useCallback((data: any) => {
-    if (data?.type === 'transfer-host') {
-      setRoom((prev) => {
-        if (prev.roomId !== data?.roomId) return prev;
-        return { ...prev, host: data?.host || prev.host };
-      });
-      return;
-    }
-
-    if (data?.joinInfo?.roomId) {
-      setRoom((prev) => {
-        if (prev.roomId !== data.joinInfo.roomId) return prev;
-        const newParticipant = data.joinInfo.participant;
-
-        // Prevent duplicate entries in participant list
-        const exists = (prev.participants || []).some(
-          (p) => (p.user?.id || p.user?.userId) === (newParticipant?.id || newParticipant?.userId)
-        );
-        if (exists) return prev;
-
-        return {
-          ...prev,
-          participants: [
-            ...(prev.participants || []),
-            { user: newParticipant, joinedAt: new Date().toISOString() },
-          ],
-        };
-      });
-    }
-
-    if (data?.leaveInfo?.roomId) {
-      setRoom((prev) => {
-        if (prev.roomId !== data.leaveInfo.roomId) return prev;
-        const targetId = data.leaveInfo.participant?.userId || data.leaveInfo.participant?.id;
-
-        return {
-          ...prev,
-          participants: (prev.participants || []).filter(
-            (p) => ![p.user?.userId, p.user?.id].includes(targetId)
-          ),
-        };
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    on('room-updated-with-participant', handleBroadcastNewRoom);
-    return () => off('room-updated-with-participant', handleBroadcastNewRoom);
-  }, [on, off, handleBroadcastNewRoom]);
-
   // Derived Values
-  const hostId = room.host.userId;
+  const hostId = room?.host?.userId;
   const participants = room?.participants || [];
 
   const allUsers = participants.map((p) => ({
     ...p,
-    isHost: Boolean(hostId && (p.user?.id === hostId || p.user?.userId === hostId)),
+    isHost: Boolean(hostId && (p?.user?.userId === hostId || (p as any)?.userId === hostId)),
   }));
 
   const max = room?.max_participants ?? 0;
   const isFull = allUsers.length >= max;
   const levelColor = getLevelColor(room?.level);
 
-  // The viewer only gets management controls in the dialog if they created this room
+  // The viewer only gets management controls in the dialog if they are the host
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
   const openLightbox = (src: string, name: string) => {
@@ -119,12 +66,11 @@ export const VoiceRoomCard = ({
 
   const handleRemoveParticipant = (userId: string) => {
     onRemoveParticipant?.(room.roomId, userId);
-    // Optimistically drop them from the local list; the socket broadcast
-    // (leaveInfo) will reconcile this across all viewers.
+    // Optimistically remove participant locally
     setRoom((prev) => ({
       ...prev,
       participants: (prev.participants || []).filter(
-        (p) => ![p.user?.userId, p.user?.id].includes(userId)
+        (p) => ![p?.user?.userId, (p as any)?.userId].includes(userId)
       ),
     }));
   };
@@ -285,11 +231,11 @@ export const VoiceRoomCard = ({
             <AvatarGroup max={4} sx={{ gap: 1.5 }}>
               {allUsers.map((p, i) => (
                 <AvatarUser
-                  key={p?.user?.id || p?.user?.userId || i}
-                  avatarUrl={p?.user?.profilePhoto}
-                  name={p?.user?.name || 'User'}
-                  verified={p?.user?.verified}
-                  accountType={p?.user?.accountType}
+                  key={p?.user?.userId || (p as any)?.userId || i}
+                  avatarUrl={p?.user?.profilePhoto || (p as any)?.profilePhoto}
+                  name={p?.user?.name || (p as any)?.name || 'User'}
+                  verified={p?.user?.verified || (p as any)?.verified}
+                  accountType={p?.user?.accountType || (p as any)?.accountType}
                 />
               ))}
             </AvatarGroup>
@@ -302,7 +248,7 @@ export const VoiceRoomCard = ({
             size="small"
             variant="contained"
             disabled={isFull}
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
               onJoinRoom(room);
             }}
@@ -326,7 +272,7 @@ export const VoiceRoomCard = ({
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
         room={room}
-        allUsers={allUsers}
+        allUsers={allUsers as any}
         isFull={isFull}
         isHost={isHost}
         onJoinRoom={onJoinRoom}
@@ -358,3 +304,5 @@ export const VoiceRoomCard = ({
     </>
   );
 };
+
+export default VoiceRoomCard;

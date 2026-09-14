@@ -2,36 +2,34 @@
 import type { RoomResponse } from 'src/types/type-chat';
 import type { FilterState } from '../voice-filter-rooms';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Box } from '@mui/material';
 
-import { useCredentials } from '@/core/slices';
 import { Scrollbar } from '@/components/scrollbar';
+import { useCredentials } from '@/core/slices';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
-import { VoiceRoomsEmptyState } from './voice-room-empty';
-import { VoiceRoomCard, RoomCardCreation } from '../voice-room-card';
+import { VoiceRoomCard } from '../voice-room-card';
+import { RoomCardCreation } from '../voice-room-card/room-card-creation';
 
 interface RoomListProps {
   query: FilterState;
-  onJoinRoom: (room: RoomResponse) => void;
+  onSelectRoom: (room: RoomResponse) => void;
+  onCreateRoom: () => void;
 }
 
 export default function VoiceRoomlist({
-  onJoinRoom,
   query,
+  onSelectRoom,
+  onCreateRoom
 }: RoomListProps) {
   const { user } = useCredentials();
 
   const [rooms, setRooms] = useState<RoomResponse[]>([]);
 
   const { data: getRooms } = useGetRoomsQuery(null);
-
-  useEffect(() => {
-    setRooms(getRooms?.data || []);
-  }, [getRooms]);
 
   const filteredRooms = useMemo(() => {
     const search = query.searchQuery.trim().toLowerCase();
@@ -67,9 +65,9 @@ export default function VoiceRoomlist({
     });
   }, [rooms, query]);
 
-  if (filteredRooms.length === 0) {
-    return <VoiceRoomsEmptyState />;
-  }
+  useEffect(() => {
+    setRooms(getRooms?.data || []);
+  }, [getRooms]);
 
   return (
     <Box
@@ -96,14 +94,7 @@ export default function VoiceRoomlist({
             }}
           >
             <RoomCardCreation
-              onCreateRoom={() => {
-                const createRoomEvent = new CustomEvent('create-room', {
-                  bubbles: true,
-                  cancelable: true,
-                });
-
-                window.dispatchEvent(createRoomEvent);
-              }}
+              onCreateRoom={onCreateRoom}
             />
 
             {filteredRooms.map((room) => (
@@ -111,7 +102,7 @@ export default function VoiceRoomlist({
                 key={room.roomId}
                 roomData={room}
                 currentUserId={user.userId}
-                onJoinRoom={onJoinRoom}
+                onJoinRoom={onSelectRoom}
               />
             ))}
           </Box>

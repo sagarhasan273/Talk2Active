@@ -1,8 +1,28 @@
 import { varAlpha } from '@/theme/styles';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Hand from '@mui/icons-material/WavingHandRounded';
-import { Box, Popover, Tooltip, useTheme, IconButton } from '@mui/material';
+import { Box, IconButton, keyframes, Popover, Tooltip, useTheme } from '@mui/material';
+
+// ── Keyframe Animations ───────────────────────────────────────────────────────
+
+const waveAnimation = keyframes`
+  0% { transform: rotate(-15deg); }
+  100% { transform: rotate(15deg); }
+`;
+
+const emojiPopAnimation = keyframes`
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+`;
+
+// ── Emoji Preset Map ──────────────────────────────────────────────────────────
 
 export const HAND_EMOJIS = {
   raised: { emoji: '✋', label: 'Raised Hand' },
@@ -18,17 +38,21 @@ export const HAND_EMOJIS = {
 export type HandEmojiKey = keyof typeof HAND_EMOJIS;
 
 type VoiceButtonRaiseHandProps = {
-  raiseHand?: boolean;
+  isRaised?: boolean;
+  raiseHand?: boolean; // backwards compatibility alias
   selectedEmoji?: string;
   onToggle?: () => void;
+  onClick?: () => void; // backwards compatibility alias
   onEmojiChange?: (emoji: string) => void;
   handBtnRef?: React.RefObject<HTMLButtonElement>;
 };
 
 export const VoiceButtonRaiseHand = ({
+  isRaised,
   raiseHand = false,
   selectedEmoji = HAND_EMOJIS.raised.emoji,
   onToggle,
+  onClick,
   onEmojiChange,
   handBtnRef,
 }: VoiceButtonRaiseHandProps) => {
@@ -38,19 +62,16 @@ export const VoiceButtonRaiseHand = ({
   const buttonRef = handBtnRef ?? internalRef;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
-  // Emoji temporarily displayed inside the button
   const [displayEmoji, setDisplayEmoji] = useState<string | null>(null);
 
-  // Keep track of the timeout so selecting another emoji
-  // can restart the 10-second timer.
   const emojiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Normalize raised state and toggle handler
+  const handIsActive = isRaised !== undefined ? isRaised : raiseHand;
+  const triggerToggle = onToggle || onClick;
 
   const popupOpen = Boolean(anchorEl);
 
-  /**
-   * Cleanup timeout when component unmounts.
-   */
   useEffect(
     () => () => {
       if (emojiTimeoutRef.current) {
@@ -60,56 +81,37 @@ export const VoiceButtonRaiseHand = ({
     []
   );
 
-  /**
-   * Handle main button click.
-   */
   const handleButtonClick = () => {
-    if (raiseHand) {
-      // Already raised -> lower hand
-      onToggle?.();
-
-      // Return to normal icon
+    if (handIsActive) {
+      triggerToggle?.();
       setDisplayEmoji(null);
 
       if (emojiTimeoutRef.current) {
         clearTimeout(emojiTimeoutRef.current);
         emojiTimeoutRef.current = null;
       }
-
       return;
     }
 
-    // Not raised -> open emoji selector
     setAnchorEl(buttonRef.current);
   };
 
-  /**
-   * Handle emoji selection.
-   */
   const handleEmojiSelect = (emoji: string) => {
-    // Update parent state
     onEmojiChange?.(emoji);
-
-    // Show selected emoji inside button
     setDisplayEmoji(emoji);
-
-    // Close popup
     setAnchorEl(null);
 
-    // Clear previous timer if user selects another emoji
     if (emojiTimeoutRef.current) {
       clearTimeout(emojiTimeoutRef.current);
     }
 
-    // Hide emoji after 10 seconds
     emojiTimeoutRef.current = setTimeout(() => {
       setDisplayEmoji(null);
       emojiTimeoutRef.current = null;
     }, 10_000);
 
-    // Raise hand
-    if (!raiseHand) {
-      onToggle?.();
+    if (!handIsActive) {
+      triggerToggle?.();
     }
   };
 
@@ -117,32 +119,33 @@ export const VoiceButtonRaiseHand = ({
     setAnchorEl(null);
   };
 
-  const iconBtnSx = {
-    p: 1,
-    width: 32,
-    height: 32,
-    borderRadius: 1,
-
-    bgcolor: 'background.paper',
-
-    border: '1px solid',
-
-    borderColor: raiseHand ? 'rgba(249, 202, 36, 0.3)' : 'transparent',
-
-    '&:hover': {
-      color: theme.palette.mode === 'light' ? 'black' : 'white',
-      bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.15),
-    },
-  };
+  const isLight = theme.palette.mode === 'light';
+  const primaryMainChannel =
+    theme.vars?.palette?.primary?.mainChannel || theme.palette.primary.main;
 
   return (
     <>
-      <Tooltip title={raiseHand ? `Lower hand (${selectedEmoji})` : 'Raise hand'} arrow>
-        <IconButton ref={buttonRef} size="small" onClick={handleButtonClick} sx={iconBtnSx}>
+      <Tooltip title={handIsActive ? `Lower hand (${selectedEmoji})` : 'Raise hand'} arrow>
+        <IconButton
+          ref={buttonRef}
+          size="small"
+          onClick={handleButtonClick}
+          sx={{
+            p: 1,
+            width: 32,
+            height: 32,
+            borderRadius: 1,
+            bgcolor: handIsActive ? 'warning.lighter' : 'background.paper',
+            border: '1px solid',
+            borderColor: handIsActive ? 'warning.main' : 'transparent',
+            color: handIsActive ? 'warning.dark' : 'text.primary',
+            '&:hover': {
+              color: isLight ? 'common.black' : 'common.white',
+              bgcolor: handIsActive ? 'warning.light' : varAlpha(primaryMainChannel, 0.15),
+            },
+          }}
+        >
           {displayEmoji ? (
-            /*
-             * Selected emoji is shown for 10 seconds.
-             */
             <Box
               component="span"
               sx={{
@@ -151,41 +154,16 @@ export const VoiceButtonRaiseHand = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-
-                animation: 'emojiPop 0.2s ease-out',
-
-                '@keyframes emojiPop': {
-                  from: {
-                    transform: 'scale(0.5)',
-                    opacity: 0,
-                  },
-                  to: {
-                    transform: 'scale(1)',
-                    opacity: 1,
-                  },
-                },
+                animation: `${emojiPopAnimation} 0.2s ease-out`,
               }}
             >
               {displayEmoji}
             </Box>
           ) : (
-            /*
-             * Normal waving-hand icon.
-             */
             <Hand
               sx={{
                 fontSize: '1rem',
-
-                animation: raiseHand ? 'wave 0.5s ease infinite alternate' : 'none',
-
-                '@keyframes wave': {
-                  from: {
-                    transform: 'rotate(-15deg)',
-                  },
-                  to: {
-                    transform: 'rotate(15deg)',
-                  },
-                },
+                animation: handIsActive ? `${waveAnimation} 0.5s ease infinite alternate` : 'none',
               }}
             />
           )}
@@ -238,29 +216,20 @@ export const VoiceButtonRaiseHand = ({
                     border: 'none',
                     outline: 'none',
                     cursor: 'pointer',
-
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-
                     width: 40,
                     height: 40,
-
                     borderRadius: 1.5,
-
                     fontSize: '1.35rem',
-
                     bgcolor: isSelected ? 'rgba(249, 202, 36, 0.18)' : 'transparent',
-
                     boxShadow: isSelected ? 'inset 0 0 0 1px rgba(249, 202, 36, 0.35)' : 'none',
-
                     transition: 'background-color 0.15s ease, transform 0.15s ease',
-
                     '&:hover': {
                       bgcolor: 'rgba(249, 202, 36, 0.14)',
                       transform: 'scale(1.08)',
                     },
-
                     '&:active': {
                       transform: 'scale(0.95)',
                     },
@@ -276,3 +245,5 @@ export const VoiceButtonRaiseHand = ({
     </>
   );
 };
+
+export default VoiceButtonRaiseHand;

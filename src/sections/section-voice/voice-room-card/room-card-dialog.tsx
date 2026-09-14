@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import {
   Box,
-  Chip,
-  Menu,
-  Fade,
-  Stack,
   Button,
+  Chip,
   Dialog,
-  Tooltip,
-  MenuItem,
+  DialogContent,
+  Fade,
   IconButton,
-  Typography,
   ListItemIcon,
   ListItemText,
-  DialogContent,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 
 import { RoomCardParticipant } from './room-card-participant';

@@ -10,19 +10,17 @@ import { useScrollToTop } from 'src/hooks/use-scroll-to-top';
 
 import { ThemeProvider } from 'src/theme/theme-provider';
 
-import { Snackbar } from 'src/components/snackbar';
-import { ProgressBar } from 'src/components/progress-bar';
 import { MotionLazy } from 'src/components/animate/motion-lazy';
-import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/components/settings';
+import { ProgressBar } from 'src/components/progress-bar';
+import { defaultSettings, SettingsDrawer, SettingsProvider } from 'src/components/settings';
+import { Snackbar } from 'src/components/snackbar';
 
 import { AuthProvider } from 'src/auth/context/jwt';
 
-import { store } from './core/store';
 import { CONFIG } from './config-global';
+import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/route-components';
-import { SocketProvider } from './core/contexts/socket-context';
-import { WebRTCProvider } from './core/contexts/webRTC-context';
 
 // ----------------------------------------------------------------------
 
@@ -35,20 +33,16 @@ export default function App() {
         <Provider store={store}>
           <UserProvider>
             <AuthProvider>
-              <SocketProvider>
-                <WebRTCProvider>
-                  <SettingsProvider settings={defaultSettings}>
-                    <ThemeProvider>
-                      <MotionLazy>
-                        <Snackbar />
-                        <ProgressBar />
-                        <SettingsDrawer />
-                        <Router />
-                      </MotionLazy>
-                    </ThemeProvider>
-                  </SettingsProvider>
-                </WebRTCProvider>
-              </SocketProvider>
+              <SettingsProvider settings={defaultSettings}>
+                <ThemeProvider>
+                  <MotionLazy>
+                    <Snackbar />
+                    <ProgressBar />
+                    <SettingsDrawer />
+                    <Router />
+                  </MotionLazy>
+                </ThemeProvider>
+              </SettingsProvider>
             </AuthProvider>
           </UserProvider>
         </Provider>
