@@ -496,7 +496,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
         {/* Profile Body */}
         <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2 }}>
           {/* Avatar and Badges */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
             <Badge
               overlap="circular"
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -596,9 +596,9 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             sx={{
               display: 'flex',
               justifyContent: 'space-around',
-              mb: 2.5,
-              p: 1.5,
-              borderRadius: 3,
+              mb: 1,
+              p: 1,
+              borderRadius: 1,
               backgroundColor: alpha(theme.palette.text.primary, 0.03),
               border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
             }}
@@ -630,8 +630,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               elevation={0}
               sx={{
                 p: 2,
-                mb: 2.5,
-                borderRadius: 3,
+                mb: 1,
+                borderRadius: 1,
                 backgroundColor: alpha(theme.palette.text.primary, 0.03),
                 border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
               }}
@@ -678,8 +678,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               elevation={0}
               sx={{
                 p: 2,
-                mb: 2,
-                borderRadius: 3,
+                mb: 1,
+                borderRadius: 1,
                 backgroundColor: alpha(theme.palette.text.primary, 0.03),
                 border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
               }}
@@ -692,7 +692,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
                   display: 'block',
-                  mb: 1.5,
+                  mb: 1,
                 }}
               >
                 Audio Hardware Devices (LiveKit)
@@ -743,8 +743,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             elevation={0}
             sx={{
               p: 2,
-              mb: 2.5,
-              borderRadius: 3,
+              mb: 1,
+              borderRadius: 1,
               backgroundColor: alpha(theme.palette.text.primary, 0.03),
               border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
             }}
@@ -770,7 +770,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   sx={{
                     width: 40,
                     height: 40,
-                    borderRadius: 2.5,
+                    borderRadius: 1,
                     backgroundColor: isMuted
                       ? alpha(theme.palette.error.main, 0.15)
                       : alpha(theme.palette.text.primary, 0.05),
@@ -805,7 +805,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                       sx={{
                         width: 40,
                         height: 40,
-                        borderRadius: 2.5,
+                        borderRadius: 1,
                         backgroundColor:
                           volume === 0
                             ? alpha(theme.palette.error.main, 0.15)
@@ -821,7 +821,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     </IconButton>
                   </Tooltip>
 
-                  <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
+                  <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, ml: 0.5 }}>
                     <VolumeUpIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
                     <Slider
                       value={volume}
@@ -832,7 +832,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                       valueLabelDisplay="auto"
                       sx={{ flex: 1 }}
                     />
-                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32 }}>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32, ml: 0.5 }}>
                       {Math.round(volume)}%
                     </Typography>
                   </Box>
@@ -847,13 +847,13 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               elevation={0}
               sx={{
                 p: 2,
-                mb: 2.5,
-                borderRadius: 3,
+                mb: 1,
+                borderRadius: 1,
                 bgcolor: alpha(theme.palette.warning.main, 0.06),
                 border: `1px dashed ${alpha(theme.palette.warning.main, 0.35)}`,
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
                 <GavelIcon sx={{ fontSize: 16, color: 'warning.dark' }} />
                 <Typography
                   variant="caption"
@@ -865,7 +865,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 </Typography>
               </Stack>
 
-              <Stack direction="row" spacing={1.5}>
+              <Stack direction="row" spacing={1}>
                 <Button
                   variant="contained"
                   color={isMuted ? 'success' : 'error'}
@@ -873,7 +873,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   fullWidth
                   startIcon={isMuted ? <MicIcon /> : <MicOffIcon />}
                   onClick={() => handleHostMuteParticipant(!isMuted)}
-                  sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+                  sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
                 >
                   {isMuted ? 'Request Unmute' : 'Mute for All'}
                 </Button>
@@ -885,7 +885,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   fullWidth
                   startIcon={<KickIcon />}
                   onClick={handleKickParticipant}
-                  sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+                  sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
                 >
                   Kick User
                 </Button>
@@ -899,8 +899,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               elevation={0}
               sx={{
                 p: 2,
-                mb: 2.5,
-                borderRadius: 3,
+                mb: 1,
+                borderRadius: 1,
                 bgcolor: alpha(theme.palette.primary.main, 0.04),
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
               }}
@@ -920,7 +920,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   startIcon={<StarIcon />}
                   onClick={handleOpenRating}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 1,
                     fontWeight: 700,
                     textTransform: 'none',
                     bgcolor: 'primary.main',
@@ -934,14 +934,14 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
           {/* Social Follow & Block Actions */}
           {!isSelf && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
               <Button
                 fullWidth
                 variant={isFollowing ? 'outlined' : 'contained'}
                 color="primary"
                 startIcon={isFollowing ? <UnfollowIcon /> : <FollowIcon />}
                 onClick={handleFollowToggle}
-                sx={{ minHeight: 44, borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}
+                sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
               >
                 {isFollowing ? 'Unfollow' : 'Follow'}
               </Button>
@@ -951,7 +951,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 color={isBlocked ? 'error' : 'warning'}
                 startIcon={<BlockIcon />}
                 onClick={handleBlockToggle}
-                sx={{ minHeight: 44, borderRadius: 2.5, fontWeight: 700, textTransform: 'none' }}
+                sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
               >
                 {isBlocked ? 'Unblock' : 'Block'}
               </Button>
@@ -959,7 +959,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
           )}
 
           {/* Report & Share Options */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
             <Button
               variant="outlined"
               color="error"
@@ -967,8 +967,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               disabled={!userId || isSelf}
               onClick={() => userId && onReport?.(userId)}
               sx={{
-                minHeight: 40,
-                borderRadius: 2.5,
+                borderRadius: 1,
                 fontWeight: 600,
                 textTransform: 'none',
                 fontSize: 13,
@@ -984,8 +983,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               disabled={!userId}
               onClick={() => userId && onShare?.(userId)}
               sx={{
-                minHeight: 40,
-                borderRadius: 2.5,
+                borderRadius: 1,
                 fontWeight: 600,
                 textTransform: 'none',
                 fontSize: 13,

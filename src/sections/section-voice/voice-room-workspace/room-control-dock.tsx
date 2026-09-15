@@ -174,11 +174,11 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             startIcon={<PhoneOff size={16} />}
             sx={{
               px: { xs: 1.25, sm: 2 },
-              py: 0.9,
               minWidth: 'auto',
-              borderRadius: 1.5,
+              borderRadius: 1,
               fontSize: 12,
               fontWeight: 700,
+              height: '32px',
               textTransform: 'none',
               bgcolor: 'error.main',
               color: '#fff',
