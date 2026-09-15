@@ -1,15 +1,20 @@
+// src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
+
+import { useTracks, useTrackVolume } from '@livekit/components-react';
 import { alpha, Avatar, Box, keyframes, Tooltip, Typography, useTheme } from '@mui/material';
+import { Track } from 'livekit-client';
 import { BadgeCheck, Crown, Hand } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 import type { StageParticipant } from './types';
 
 const speakingGlow = keyframes`
   0%, 100% {
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.8), 0 0 16px rgba(34, 197, 94, 0.35);
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.6), 0 0 16px rgba(88, 101, 242, 0.25);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 1), 0 0 24px rgba(34, 197, 94, 0.6);
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 1), 0 0 24px rgba(88, 101, 242, 0.5);
   }
 `;
 
@@ -28,19 +33,30 @@ const popReaction = keyframes`
 
 type ParticipantTileProps = {
   participant: StageParticipant;
-  stream?: MediaStream | null;
   onClick?: () => void;
 };
 
-export const ParticipantTile = ({ participant, stream = null, onClick }: ParticipantTileProps) => {
+export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const { name, avatarUrl, audioState, isHost, isSelf, handRaised, verified, activeReactionEmoji } =
     participant;
 
-  const isSpeaking = audioState === 'speaking';
   const isMuted = audioState === 'muted';
+
+  // --- LIVEKIT NATIVE VOLUME TRACKING ---
+  const audioTracks = useTracks([Track.Source.Microphone]);
+  const userTrackRef = useMemo(
+    () => audioTracks.find((t) => t.participant.identity === participant.id),
+    [audioTracks, participant.id]
+  );
+
+  // Extracts a highly-performant normalized volume number (0.0 to 1.0)
+  const livekitVolume = useTrackVolume(userTrackRef);
+
+  // Combine LiveKit volume threshold with manual speaking flags
+  const isSpeaking = livekitVolume > 0.05 || audioState === 'speaking' || participant.isSpeaking;
 
   const initials = name
     ?.split(' ')
@@ -76,13 +92,11 @@ export const ParticipantTile = ({ participant, stream = null, onClick }: Partici
           ? alpha(theme.palette.background.paper, 0.85)
           : alpha(theme.palette.common.white, 0.95),
         border: '1.5px solid',
-        borderColor: isSpeaking
-          ? theme.palette.success.main
-          : handRaised
-            ? theme.palette.warning.main
-            : isDark
-              ? alpha(theme.palette.common.white, 0.08)
-              : alpha(theme.palette.common.black, 0.08),
+        borderColor: handRaised
+          ? theme.palette.warning.main
+          : isDark
+            ? alpha(theme.palette.common.white, 0.08)
+            : alpha(theme.palette.common.black, 0.08),
         transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease',
         '&:hover': {
           transform: 'translateY(-0.5px)',
@@ -90,7 +104,7 @@ export const ParticipantTile = ({ participant, stream = null, onClick }: Partici
             ? alpha(theme.palette.background.paper, 0.98)
             : theme.palette.common.white,
           borderColor: isSpeaking
-            ? theme.palette.success.main
+            ? theme.palette.primary.main
             : alpha(theme.palette.primary.main, 0.4),
         },
         '&:focus-visible': {
@@ -142,14 +156,9 @@ export const ParticipantTile = ({ participant, stream = null, onClick }: Partici
             color: theme.palette.primary.main,
             borderRadius: '50%',
             border: '2px solid',
-            borderColor: isSpeaking
-              ? theme.palette.success.main
-              : isDark
-                ? alpha(theme.palette.common.white, 0.15)
-                : alpha(theme.palette.common.black, 0.08),
-            ...(isSpeaking && {
-              animation: `${speakingGlow} 1.4s ease-in-out infinite`,
-            }),
+            borderColor: isDark
+              ? alpha(theme.palette.common.white, 0.15)
+              : alpha(theme.palette.common.black, 0.08),
           }}
         >
           {initials}
@@ -219,7 +228,8 @@ export const ParticipantTile = ({ participant, stream = null, onClick }: Partici
             justifyContent: 'center',
           }}
         >
-          <VoiceSpeakingIndicator stream={stream} size="small" isMuted={isMuted} />
+          {/* Passed the livekit SFU volume level down instead of a raw stream */}
+          <VoiceSpeakingIndicator volume={livekitVolume} size="small" isMuted={isMuted} />
         </Box>
       </Box>
 

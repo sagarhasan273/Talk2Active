@@ -1,6 +1,7 @@
 // src/sections/section-voice-room/voice-room-workspace/voice-room-user-profile.tsx
 
 import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
+import { Track } from 'livekit-client';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -67,6 +68,31 @@ interface VoiceRoomUserProfileProps {
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
 }
 
+// Helper to directly manipulate the HTML5 Audio element LiveKit creates
+const setLiveKitTrackVolume = (room: any, targetUserId: string, volumeLevel: number) => {
+  if (!room || !targetUserId) return;
+  const participant = room.remoteParticipants.get(targetUserId);
+  const audioPub = participant?.getTrackPublication(Track.Source.Microphone);
+
+  if (audioPub?.track?.attachedElements) {
+    audioPub.track.attachedElements.forEach((el: HTMLMediaElement) => {
+      el.volume = volumeLevel; // 0.0 to 1.0
+    });
+  }
+};
+
+// Helper to get current volume
+const getLiveKitTrackVolume = (room: any, targetUserId: string): number => {
+  if (!room || !targetUserId) return 1;
+  const participant = room.remoteParticipants.get(targetUserId);
+  const audioPub = participant?.getTrackPublication(Track.Source.Microphone);
+
+  if (audioPub?.track?.attachedElements && audioPub.track.attachedElements.length > 0) {
+    return (audioPub.track.attachedElements[0] as HTMLMediaElement).volume;
+  }
+  return 1;
+};
+
 export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   open,
   onClose,
@@ -108,30 +134,25 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
   const isMuted = audioState === 'muted';
 
-  // Determine if the local viewer is the host of this room session
+  // Check if current logged-in user is host
   const isViewerHost = Boolean(
-    room?.localParticipant?.identity &&
-    (role !== 'host' || !isSelf) &&
-    (room.localParticipant.permissions?.canPublish ?? true)
+    room?.localParticipant && (room.localParticipant.permissions?.canPublish ?? true) && !isSelf
   );
 
   // LiveKit Device Selectors
   const {
     devices: microphones,
     activeDeviceId: activeMicId,
-    setActiveMediaDevice: setActiveMic,
+    setActiveMediaDevice: setActiveMicDevice,
   } = useMediaDeviceSelect({ kind: 'audioinput', requestPermissions: true });
 
   const {
     devices: speakers,
     activeDeviceId: activeSpeakerId,
-    setActiveMediaDevice: setActiveSpeaker,
+    setActiveMediaDevice: setActiveSpeakerDevice,
   } = useMediaDeviceSelect({ kind: 'audiooutput' });
 
-  const [volume, setVolume] = useState<number>(
-    typeof safeUser.volume === 'number' ? safeUser.volume : 100
-  );
-  const [micGain, setMicGain] = useState<number>(100);
+  const [volume, setVolume] = useState<number>(100);
   const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(safeUser.isFollowing));
   const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(safeUser.isBlocked));
 
@@ -141,10 +162,17 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   const [ratedLevel, setRatedLevel] = useState('Intermediate (B1-B2)');
 
   useEffect(() => {
-    setVolume(typeof safeUser.volume === 'number' ? safeUser.volume : 100);
-    setIsFollowing(Boolean(safeUser.isFollowing));
-    setIsBlocked(Boolean(safeUser.isBlocked));
-  }, [safeUser.volume, safeUser.isFollowing, safeUser.isBlocked, userId]);
+    if (open) {
+      if (!isSelf && room && userId) {
+        const currentVol = getLiveKitTrackVolume(room, userId);
+        setVolume(currentVol * 100);
+      } else {
+        setVolume(typeof safeUser.volume === 'number' ? safeUser.volume : 100);
+      }
+      setIsFollowing(Boolean(safeUser.isFollowing));
+      setIsBlocked(Boolean(safeUser.isBlocked));
+    }
+  }, [safeUser.volume, safeUser.isFollowing, safeUser.isBlocked, userId, room, isSelf, open]);
 
   const handleFollowToggle = () => {
     if (!userId) return;
@@ -153,54 +181,78 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     } else {
       onFollow?.(userId);
     }
-    setIsFollowing((previous) => !previous);
+    setIsFollowing((prev) => !prev);
   };
 
   const handleBlockToggle = () => {
     if (!userId) return;
-    const nextBlockedState = !isBlocked;
-    setIsBlocked(nextBlockedState);
+    const nextState = !isBlocked;
+    setIsBlocked(nextState);
     onBlock?.(userId);
   };
 
+  // 1. HARDWARE VOLUME CONTROL
   const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
-    const value = Array.isArray(newValue) ? newValue[0] : newValue;
-    setVolume(value);
+    const val = Array.isArray(newValue) ? newValue[0] : newValue;
+    setVolume(val);
+
+    if (room && userId && !isSelf) {
+      setLiveKitTrackVolume(room, userId, val / 100);
+    }
     if (userId) {
-      onVolumeChange?.(userId, value / 100);
+      onVolumeChange?.(userId, val / 100);
     }
   };
 
-  // Self Microphone Sensitivity Gain
-  const handleMicGainChange = (_event: Event, newValue: number | number[]) => {
-    const value = Array.isArray(newValue) ? newValue[0] : newValue;
-    setMicGain(value);
-
-    if (room?.localParticipant) {
-      const pub = Array.from(room.localParticipant.audioTrackPublications.values())[0];
-      const mediaStreamTrack = pub?.track?.mediaStreamTrack;
-      if (mediaStreamTrack) {
-        const constraints = mediaStreamTrack.getConstraints();
-        mediaStreamTrack
-          .applyConstraints({
-            ...constraints,
-            advanced: [{ ...(constraints as any).advanced?.[0], volume: value / 100 }],
-          } as any)
-          .catch(() => {});
+  // 2. HARDWARE DEVICE SWITCHER
+  const handleMicDeviceChange = async (deviceId: string) => {
+    try {
+      await setActiveMicDevice(deviceId);
+      if (room && typeof room.switchActiveDevice === 'function') {
+        await room.switchActiveDevice('audioinput', deviceId);
       }
+    } catch (err) {
+      console.error('Failed to change microphone device:', err);
     }
   };
 
-  // Toggle local mic
-  const handleToggleSelfMic = async () => {
+  const handleSpeakerDeviceChange = async (deviceId: string) => {
+    try {
+      await setActiveSpeakerDevice(deviceId);
+      if (room && typeof room.switchActiveDevice === 'function') {
+        await room.switchActiveDevice('audiooutput', deviceId);
+      }
+    } catch (err) {
+      console.error('Failed to change speaker device:', err);
+    }
+  };
+
+  // 3. LOCAL OR HOST FORCE MUTE TOGGLE
+  const handleToggleMic = async () => {
     if (isSelf && room?.localParticipant) {
-      await room.localParticipant.setMicrophoneEnabled(!room.localParticipant.isMicrophoneEnabled);
+      const isEnabled = room.localParticipant.isMicrophoneEnabled;
+      await room.localParticipant.setMicrophoneEnabled(!isEnabled);
+    } else if (userId && isViewerHost && !isSelf) {
+      handleHostMuteParticipant(!isMuted);
     } else if (userId) {
       onToggleMute?.(userId);
     }
   };
 
-  // Host: Force-mute participant over LiveKit data channel
+  // 4. HARDWARE DEAFEN (Set volume to 0 or restore)
+  const handleToggleDeafen = () => {
+    if (!userId || isSelf || !room) return;
+
+    const nextDeafened = volume > 0;
+    const targetVolume = nextDeafened ? 0 : 100;
+
+    setVolume(targetVolume);
+    setLiveKitTrackVolume(room, userId, targetVolume / 100);
+
+    onToggleDeafen?.(userId);
+  };
+
+  // 5. HOST FORCE MUTE BROADCAST
   const handleHostMuteParticipant = async (shouldMute: boolean) => {
     if (!userId || !room?.localParticipant) return;
 
@@ -216,35 +268,31 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     });
   };
 
-  // Host: Kick participant from the room
+  // 6. HOST KICK USER BROADCAST
   const handleKickParticipant = async () => {
-    if (!userId) return;
+    if (!userId || !room?.localParticipant) return;
 
-    if (room?.localParticipant) {
-      const payload = JSON.stringify({
-        type: 'FORCE_MUTE_PARTICIPANT',
-        targetIdentity: userId,
-        mute: true,
-        kicked: true,
-      });
+    const payload = JSON.stringify({
+      type: 'FORCE_MUTE_PARTICIPANT',
+      targetIdentity: userId,
+      mute: true,
+      kicked: true,
+    });
 
-      await room.localParticipant.publishData(new TextEncoder().encode(payload), {
-        reliable: true,
-        topic: 'room_interactions',
-      });
-    }
+    await room.localParticipant.publishData(new TextEncoder().encode(payload), {
+      reliable: true,
+      topic: 'room_interactions',
+    });
 
     onKickParticipant?.(userId);
     onClose();
   };
 
-  // Open Rating modal and dismiss user profile drawer
   const handleOpenRating = () => {
     onClose();
     setRatingOpen(true);
   };
 
-  // Submit Rating
   const handleSaveRating = () => {
     if (userId && starRating) {
       onRateUser?.(userId, starRating, ratedLevel);
@@ -278,7 +326,6 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
           ? 'SPEAKER'
           : 'LISTENER';
 
-  // Common elevated MenuProps to make Select popups sit above the drawer modal
   const elevatedSelectMenuProps = {
     PaperProps: {
       sx: {
@@ -464,7 +511,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   }}
                 />
               )}
-              {(isMuted || isDeafened) && (
+              {(isMuted || volume === 0) && (
                 <Chip
                   label={isMuted ? 'Muted' : 'Deafened'}
                   size="small"
@@ -561,7 +608,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             </Paper>
           )}
 
-          {/* Device Settings Panel (Microphone & Speaker Selection) */}
+          {/* Self: LiveKit Device Settings Panel */}
           {isSelf && (
             <Paper
               elevation={0}
@@ -584,7 +631,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   mb: 1.5,
                 }}
               >
-                Audio Hardware Devices
+                Audio Hardware Devices (LiveKit)
               </Typography>
 
               <Stack spacing={1.5}>
@@ -595,7 +642,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     labelId="user-mic-select-label"
                     value={activeMicId || ''}
                     label="Input Microphone"
-                    onChange={(e) => setActiveMic(e.target.value)}
+                    onChange={(e) => handleMicDeviceChange(e.target.value)}
                     MenuProps={elevatedSelectMenuProps}
                   >
                     {microphones.map((device) => (
@@ -613,7 +660,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     labelId="user-speaker-select-label"
                     value={activeSpeakerId || ''}
                     label="Output Speaker"
-                    onChange={(e) => setActiveSpeaker(e.target.value)}
+                    onChange={(e) => handleSpeakerDeviceChange(e.target.value)}
                     MenuProps={elevatedSelectMenuProps}
                   >
                     {speakers.map((device) => (
@@ -627,7 +674,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             </Paper>
           )}
 
-          {/* Audio Adjustments (Volume & Gain) */}
+          {/* Volume Control / Mic Toggle */}
           <Paper
             elevation={0}
             sx={{
@@ -649,14 +696,13 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 mb: 1.5,
               }}
             >
-              {isSelf ? 'Microphone Gain & Sensitivity' : 'Participant Volume'}
+              {isSelf ? 'Microphone Status' : 'Participant LiveKit Volume'}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Tooltip title={isMuted ? 'Unmute' : 'Mute'}>
                 <IconButton
-                  onClick={handleToggleSelfMic}
-                  disabled={!userId && !isSelf}
+                  onClick={handleToggleMic}
                   sx={{
                     width: 40,
                     height: 40,
@@ -672,67 +718,50 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               </Tooltip>
 
               {!isSelf && (
-                <Tooltip title={isDeafened ? 'Enable audio' : 'Deafen'}>
-                  <IconButton
-                    onClick={() => userId && onToggleDeafen?.(userId)}
-                    disabled={!userId}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 2.5,
-                      backgroundColor: isDeafened
-                        ? alpha(theme.palette.error.main, 0.15)
-                        : alpha(theme.palette.text.primary, 0.05),
-                      color: isDeafened ? theme.palette.error.main : theme.palette.text.primary,
-                    }}
-                  >
-                    {isDeafened ? (
-                      <HeadsetOffIcon fontSize="small" />
-                    ) : (
-                      <HeadsetIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Tooltip>
-              )}
+                <>
+                  <Tooltip title={volume === 0 ? 'Restore Audio' : 'Mute/Deafen Track'}>
+                    <IconButton
+                      onClick={handleToggleDeafen}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 2.5,
+                        backgroundColor:
+                          volume === 0
+                            ? alpha(theme.palette.error.main, 0.15)
+                            : alpha(theme.palette.text.primary, 0.05),
+                        color: volume === 0 ? theme.palette.error.main : theme.palette.text.primary,
+                      }}
+                    >
+                      {volume === 0 ? (
+                        <HeadsetOffIcon fontSize="small" />
+                      ) : (
+                        <HeadsetIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
 
-              {isSelf ? (
-                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
-                  <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                  <Slider
-                    value={micGain}
-                    onChange={handleMicGainChange}
-                    min={0}
-                    max={200}
-                    step={5}
-                    valueLabelDisplay="auto"
-                    sx={{ flex: 1 }}
-                  />
-                  <Typography variant="caption" fontWeight={700} color="text.secondary">
-                    {micGain}%
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
-                  <VolumeUpIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                  <Slider
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    min={0}
-                    max={100}
-                    step={1}
-                    disabled={!userId}
-                    valueLabelDisplay="auto"
-                    sx={{ flex: 1 }}
-                  />
-                  <Typography variant="caption" fontWeight={700} color="text.secondary">
-                    {Math.round(volume)}%
-                  </Typography>
-                </Box>
+                  <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
+                    <VolumeUpIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
+                    <Slider
+                      value={volume}
+                      onChange={handleVolumeChange}
+                      min={0}
+                      max={100}
+                      step={1}
+                      valueLabelDisplay="auto"
+                      sx={{ flex: 1 }}
+                    />
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                      {Math.round(volume)}%
+                    </Typography>
+                  </Box>
+                </>
               )}
             </Box>
           </Paper>
 
-          {/* Host Moderation Section (Mute & Kick) */}
+          {/* Host Moderation Section */}
           {isViewerHost && !isSelf && (
             <Paper
               elevation={0}
@@ -823,7 +852,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             </Paper>
           )}
 
-          {/* Follow & Block Actions */}
+          {/* Social Follow & Block Actions */}
           {!isSelf && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.5 }}>
               <Button
@@ -894,9 +923,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
         onClose={() => setRatingOpen(false)}
         maxWidth="xs"
         fullWidth
-        sx={{
-          zIndex: theme.zIndex.modal + 10,
-        }}
+        sx={{ zIndex: theme.zIndex.modal + 10 }}
         PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
       >
         <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Rate Speaking Level</DialogTitle>
@@ -934,14 +961,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               label="Estimated CEFR Level"
               onChange={(e) => setRatedLevel(e.target.value)}
               MenuProps={{
-                PaperProps: {
-                  sx: {
-                    zIndex: theme.zIndex.modal + 30,
-                  },
-                },
-                sx: {
-                  zIndex: theme.zIndex.modal + 30,
-                },
+                PaperProps: { sx: { zIndex: theme.zIndex.modal + 30 } },
+                sx: { zIndex: theme.zIndex.modal + 30 },
               }}
             >
               <MenuItem value="Beginner (A1-A2)">Beginner (A1-A2)</MenuItem>
