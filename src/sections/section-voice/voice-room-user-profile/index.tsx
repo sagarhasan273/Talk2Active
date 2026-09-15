@@ -2,7 +2,7 @@
 
 import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   Block as BlockIcon,
@@ -152,7 +152,12 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     setActiveMediaDevice: setActiveSpeakerDevice,
   } = useMediaDeviceSelect({ kind: 'audiooutput' });
 
+  // Refs for Web Audio API Interception (Local Mic Gain)
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+
   const [volume, setVolume] = useState<number>(100);
+  const [micGain, setMicGain] = useState<number>(100);
   const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(safeUser.isFollowing));
   const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(safeUser.isBlocked));
 
@@ -191,7 +196,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     onBlock?.(userId);
   };
 
-  // 1. HARDWARE VOLUME CONTROL
+  // 1. HARDWARE VOLUME CONTROL (Remote)
   const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
     const val = Array.isArray(newValue) ? newValue[0] : newValue;
     setVolume(val);
@@ -204,7 +209,66 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     }
   };
 
-  // 2. HARDWARE DEVICE SWITCHER
+  // 2. TRUE WEB AUDIO API GAIN CONTROL (Local Microphone)
+  const handleMicGainChange = (_event: Event, newValue: number | number[]) => {
+    const value = Array.isArray(newValue) ? newValue[0] : newValue;
+    setMicGain(value);
+
+    if (!room?.localParticipant) return;
+
+    // Grab the local audio track publication
+    const pub = Array.from(room.localParticipant.audioTrackPublications.values())[0];
+    const localTrack = pub?.track as any;
+
+    if (!localTrack || !localTrack.sender) return;
+
+    try {
+      // 1. Initialize AudioContext once
+      if (!audioCtxRef.current) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        audioCtxRef.current = new AudioContextClass();
+      }
+
+      const ctx = audioCtxRef.current;
+
+      // Ensure context is running
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      // 2. Wrap track with GainNode if not already wrapped
+      if (!localTrack.__isGainWrapped && localTrack.mediaStreamTrack) {
+        const originalStream = new MediaStream([localTrack.mediaStreamTrack]);
+        const source = ctx.createMediaStreamSource(originalStream);
+
+        const gainNode = ctx.createGain();
+        gainNodeRef.current = gainNode;
+
+        const destination = ctx.createMediaStreamDestination();
+
+        source.connect(gainNode);
+        gainNode.connect(destination);
+
+        const processedTrack = destination.stream.getAudioTracks()[0];
+
+        // Hijack the LiveKit WebRTC sender and replace it with our processed track
+        localTrack.sender.replaceTrack(processedTrack).catch(console.warn);
+
+        // Mark to prevent infinite wrapping loops
+        localTrack.__isGainWrapped = true;
+      }
+
+      // 3. Apply smooth volume transition (100% = 1.0 multiplier)
+      if (gainNodeRef.current) {
+        // use setTargetAtTime to prevent audio clipping/popping when sliding
+        gainNodeRef.current.gain.setTargetAtTime(value / 100, ctx.currentTime, 0.1);
+      }
+    } catch (err) {
+      console.error('Failed to intercept and apply local mic gain:', err);
+    }
+  };
+
+  // 3. HARDWARE DEVICE SWITCHER
   const handleMicDeviceChange = async (deviceId: string) => {
     try {
       await setActiveMicDevice(deviceId);
@@ -227,7 +291,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     }
   };
 
-  // 3. LOCAL OR HOST FORCE MUTE TOGGLE
+  // 4. LOCAL OR HOST FORCE MUTE TOGGLE
   const handleToggleMic = async () => {
     if (isSelf && room?.localParticipant) {
       const isEnabled = room.localParticipant.isMicrophoneEnabled;
@@ -239,7 +303,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     }
   };
 
-  // 4. HARDWARE DEAFEN (Set volume to 0 or restore)
+  // 5. HARDWARE DEAFEN (Set volume to 0 or restore)
   const handleToggleDeafen = () => {
     if (!userId || isSelf || !room) return;
 
@@ -252,7 +316,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     onToggleDeafen?.(userId);
   };
 
-  // 5. HOST FORCE MUTE BROADCAST
+  // 6. HOST FORCE MUTE BROADCAST
   const handleHostMuteParticipant = async (shouldMute: boolean) => {
     if (!userId || !room?.localParticipant) return;
 
@@ -268,7 +332,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     });
   };
 
-  // 6. HOST KICK USER BROADCAST
+  // 7. HOST KICK USER BROADCAST
   const handleKickParticipant = async () => {
     if (!userId || !room?.localParticipant) return;
 
@@ -696,7 +760,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 mb: 1.5,
               }}
             >
-              {isSelf ? 'Microphone Status' : 'Participant LiveKit Volume'}
+              {isSelf ? 'Microphone Gain & Status' : 'Participant LiveKit Volume'}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -717,7 +781,23 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 </IconButton>
               </Tooltip>
 
-              {!isSelf && (
+              {isSelf ? (
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
+                  <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
+                  <Slider
+                    value={micGain}
+                    onChange={handleMicGainChange}
+                    min={0}
+                    max={200}
+                    step={5}
+                    valueLabelDisplay="auto"
+                    sx={{ flex: 1 }}
+                  />
+                  <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32 }}>
+                    {micGain}%
+                  </Typography>
+                </Box>
+              ) : (
                 <>
                   <Tooltip title={volume === 0 ? 'Restore Audio' : 'Mute/Deafen Track'}>
                     <IconButton
@@ -752,7 +832,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                       valueLabelDisplay="auto"
                       sx={{ flex: 1 }}
                     />
-                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32 }}>
                       {Math.round(volume)}%
                     </Typography>
                   </Box>

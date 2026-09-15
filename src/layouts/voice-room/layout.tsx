@@ -37,7 +37,7 @@ export function VoiceRoomLayout({
 
   return (
     <Container
-      maxWidth="lg"
+      maxWidth={!fixedHeader ? "xl" : 'lg'}
       disableGutters
       sx={{
         p: { xs: 1 },

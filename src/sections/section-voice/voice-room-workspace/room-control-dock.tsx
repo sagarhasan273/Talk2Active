@@ -65,7 +65,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         sx={{
           m: 1,
           p: { xs: 0.75, sm: 1 },
-          borderRadius: 2,
+          borderRadius: 1,
           bgcolor: alpha(theme.palette.text.primary, 0.03),
           border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           display: 'flex',
@@ -116,10 +116,10 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               textTransform: 'none',
               fontWeight: 700,
               fontSize: 12,
-              borderRadius: 1.5,
+              borderRadius: 1,
               px: { xs: 1, sm: 1.5 },
-              py: 0.8,
               minWidth: 'auto',
+              height: 1,
               bgcolor: handRaised ? 'warning.main' : 'background.paper',
               color: handRaised ? 'common.black' : 'text.primary',
               border: `1px solid ${handRaised ? theme.palette.warning.dark : alpha(theme.palette.divider, 0.1)
