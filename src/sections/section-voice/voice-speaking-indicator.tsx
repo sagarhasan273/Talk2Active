@@ -1,25 +1,22 @@
 import MicOffIcon from '@mui/icons-material/MicOff';
-import { Box, Tooltip, useTheme, useMediaQuery } from '@mui/material';
-
-import { useMicLevel } from 'src/hooks/use-mic-level';
+import { Box, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 
 export function VoiceSpeakingIndicator({
-  stream,
+  volume = 0, // Expects 0.0 to 1.0 from LiveKit
   size = 'small',
   isMuted = false,
 }: {
-  stream: MediaStream | null;
+  volume?: number;
   size?: 'small' | 'medium' | 'large';
   isMuted: boolean;
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { micLevel } = useMicLevel(stream);
-
-  const normalized = Math.min(Math.max(micLevel, 0), 50);
-  const bars = Math.ceil((normalized / 50) * 5); // 0–5 bars
-  const isTalking = normalized > 5;
+  // Normalize LiveKit's 0.0 - 1.0 volume scale to 0-5 bars
+  const normalizedVolume = Math.min(Math.max(volume, 0), 1);
+  const bars = Math.ceil(normalizedVolume * 5);
+  const isTalking = normalizedVolume > 0.05; // Slight threshold to ignore static
 
   const selectedSize = {
     small: {
@@ -47,7 +44,7 @@ export function VoiceSpeakingIndicator({
         justifyContent: 'center',
         gap: theme.spacing(0.5),
         zIndex: 10,
-        animation: 'fadeIn 0.3s ease',
+        transition: 'all 0.1s ease',
       }}
     >
       {isMuted ? (
@@ -92,10 +89,10 @@ export function VoiceSpeakingIndicator({
                 backgroundColor:
                   i <= bars
                     ? isTalking
-                      ? '#22c55e' // green
-                      : '#5865f2' // Discord blue instead of grey when not talking
+                      ? '#22c55e' // green when talking
+                      : '#5865f2' // Discord blue instead of grey
                     : '#7a7a7a', // Darker grey for inactive
-                transition: 'all 120ms ease',
+                transition: 'height 100ms ease, background-color 150ms ease',
               }}
             />
           ))}

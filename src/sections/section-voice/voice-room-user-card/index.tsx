@@ -25,7 +25,6 @@ import {
 } from '@mui/material';
 
 import { fUsername } from 'src/utils/helper';
-import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
 // Animation for active speaker glow
 const pulse = keyframes`
@@ -463,15 +462,6 @@ export function VoiceRoomUserCard({
         }}
       >
         {connectionStatusElement}
-
-        {/* LiveKit-driven Speaking Indicator */}
-        {showSpeakingIndicator && (
-          <VoiceSpeakingIndicator
-            stream={livekitMediaStream}
-            size={isMobile && size === 'large' ? 'medium' : size}
-            isMuted={isMuted && !isDeafened}
-          />
-        )}
 
         <StyledAvatar
           src={profilePhoto || undefined}
