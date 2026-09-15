@@ -1,30 +1,30 @@
 import type { Theme } from '@mui/material/styles';
 
-import React, { useMemo, useState } from 'react';
 import {
-  X,
-  Lock,
-  Send,
-  Info,
-  Reply,
-  Smile,
-  Pencil,
-  ArrowLeft,
   AlertCircle,
-  CheckCircle,
-  MessageCircle,
   AlertTriangle,
+  ArrowLeft,
+  CheckCircle,
+  Info,
+  Lock,
+  MessageCircle,
+  Pencil,
+  Reply,
+  Send,
+  Smile,
+  X,
 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import {
-  Box,
   alpha,
   Avatar,
+  Box,
+  IconButton,
   Popover,
   Tooltip,
-  useTheme,
   Typography,
-  IconButton,
+  useTheme,
 } from '@mui/material';
 
 /* ------------------------------------------------------------------ */
@@ -441,11 +441,10 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
                     bgcolor: r.reactedBySelf
                       ? alpha(t.palette.primary.main, 0.12)
                       : (t.palette.background as any).neutral,
-                    border: `1px solid ${
-                      r.reactedBySelf
+                    border: `1px solid ${r.reactedBySelf
                         ? alpha(t.palette.primary.main, 0.3)
                         : alpha(t.palette.divider, 0.4)
-                    }`,
+                      }`,
                     color: r.reactedBySelf ? t.palette.primary.main : t.palette.text.secondary,
                   }}
                 >
@@ -828,16 +827,16 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
         const found = existing.find((r) => r.emoji === emoji);
         const reactions: Reaction[] = found
           ? existing
-              .map((r) =>
-                r.emoji === emoji
-                  ? {
-                      ...r,
-                      count: r.count + (r.reactedBySelf ? -1 : 1),
-                      reactedBySelf: !r.reactedBySelf,
-                    }
-                  : r
-              )
-              .filter((r) => r.count > 0)
+            .map((r) =>
+              r.emoji === emoji
+                ? {
+                  ...r,
+                  count: r.count + (r.reactedBySelf ? -1 : 1),
+                  reactedBySelf: !r.reactedBySelf,
+                }
+                : r
+            )
+            .filter((r) => r.count > 0)
           : [...existing, { emoji, count: 1, reactedBySelf: true }];
         return { ...m, reactions };
       }),

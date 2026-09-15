@@ -1,6 +1,8 @@
-import type { Theme, SxProps } from '@mui/material/styles';
+// src/layouts/voice-room/voice-room-layout.tsx
 
-import { useRef, useEffect } from 'react';
+import type { SxProps, Theme } from '@mui/material/styles';
+
+import { useEffect, useRef } from 'react';
 
 import { Box, Container } from '@mui/material';
 
@@ -12,9 +14,17 @@ export type DashboardLayoutProps = {
   filter?: React.ReactNode;
   mainContent?: React.ReactNode;
   footer?: React.ReactNode;
+  fixedHeader?: boolean; // Determines if header sticks to top or scrolls
 };
 
-export function VoiceRoomLayout({ sx, header, filter, mainContent, footer }: DashboardLayoutProps) {
+export function VoiceRoomLayout({
+  sx,
+  header,
+  filter,
+  mainContent,
+  footer,
+  fixedHeader = false,
+}: DashboardLayoutProps) {
   const dragConstraints = useRef({ min: 10, max: window.innerHeight - 100 });
 
   useEffect(() => {
@@ -32,20 +42,24 @@ export function VoiceRoomLayout({ sx, header, filter, mainContent, footer }: Das
       sx={{
         p: { xs: 1 },
         height: { xs: 'calc(100vh - 54px)', sm: 'calc(100vh - 64px)' },
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr auto',
-        gap: { xs: 1, sm: 2 },
+        display: 'flex',
+        flexDirection: 'column',
+        gap: { xs: 1 },
         position: 'relative',
         ...sx,
       }}
     >
-      {header}
+      {/* 1. FIXED HEADER: Stays locked at the top */}
+      {fixedHeader && header}
 
-      {/* Scrollable Content */}
+      {/* Scrollable Content Container */}
       <Box
         sx={{
           flex: 1,
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
           '&::-webkit-scrollbar': {
             width: 6,
           },
@@ -55,25 +69,32 @@ export function VoiceRoomLayout({ sx, header, filter, mainContent, footer }: Das
           },
         }}
       >
+        {/* 2. SCROLLABLE HEADER: Scrolls away with the page content */}
+        {!fixedHeader && header && (
+          <Box sx={{ flexShrink: 0, mb: { xs: 1 } }}>
+            {header}
+          </Box>
+        )}
+
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 2,
+            gap: 1,
+            flex: 1,
           }}
         >
           {/* Filter */}
           {filter && (
-            <Box
-              sx={{
-                flexShrink: 0,
-              }}
-            >
+            <Box sx={{ flexShrink: 0 }}>
               {filter}
             </Box>
           )}
 
-          {mainContent}
+          {/* Main Content */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {mainContent}
+          </Box>
 
           {/* Footer */}
           {footer && (

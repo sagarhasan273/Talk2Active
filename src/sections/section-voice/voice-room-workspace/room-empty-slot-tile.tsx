@@ -14,7 +14,8 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
     <Box
       onClick={onClick}
       sx={{
-        minHeight: 160,
+        height: 1,
+        width: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -26,19 +27,19 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
         transition: 'border-color 0.2s ease',
         '&:hover': onClick
           ? {
-              borderColor: alpha(theme.palette.text.primary, 0.35),
-            }
+            borderColor: alpha(theme.palette.text.primary, 0.35),
+          }
           : undefined,
         '&:hover .empty-slot-icon': onClick
           ? {
-              bgcolor: alpha(theme.palette.action.hover, 0.1),
-              color: 'text.primary',
-            }
+            bgcolor: alpha(theme.palette.action.hover, 0.1),
+            color: 'text.primary',
+          }
           : undefined,
         '&:hover .empty-slot-label': onClick
           ? {
-              color: 'text.primary',
-            }
+            color: 'text.primary',
+          }
           : undefined,
       }}
     >

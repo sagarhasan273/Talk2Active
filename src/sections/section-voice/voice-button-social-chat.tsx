@@ -1,9 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
 import SocialChat from '@/sections/section-common/social-chat';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Box, Badge, IconButton, useMediaQuery } from '@mui/material';
-import { useTheme } from '@mui/material';
+import { Badge, Box, IconButton, useMediaQuery, useTheme } from '@mui/material';
 
 /* ------------------------------------------------------------------ */ /* Resize limits */ /* ------------------------------------------------------------------ */ const MIN_WIDTH = 280;
 const MAX_WIDTH = 500;
@@ -96,20 +95,19 @@ const VoiceButtonSocialChat = () => {
     <Box
       sx={{
         position: 'absolute',
-        right: { xs: 0, sm: 24 },
-        bottom: { xs: 0, sm: 24 },
+        right: { xs: 0, sm: 10 },
+        bottom: { xs: 0, sm: 0 },
         top: {
           xs: 0,
           sm: 'auto',
         },
         left: { xs: 0, sm: 'auto' },
-        zIndex: 1300,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
         gap: 1.5,
-        /* * Width changes with resize. */ width: { xs: '100%', sm: `${chatWidth}px` },
-        /* * Chat height is resizable between * 35vh and 65vh. */ height: {
+        width: { xs: '100%', sm: `${chatWidth}px` },
+        height: {
           xs: '100%',
           sm: `${chatHeight}px`,
         },
@@ -259,14 +257,16 @@ const VoiceButtonSocialChat = () => {
               bgcolor: 'primary.main',
               color: '#fff',
               textTransform: 'none',
-              fontSize: 18,
+              fontSize: 16,
               borderRadius: 1,
-              px: 2,
-              py: 1.5,
+              px: 4,
+              py: 1,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
               '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            <Diversity2Icon style={{ fontSize: 18, marginRight: 8 }} /> Social
+            <Diversity2Icon style={{ fontSize: 16, marginRight: 8 }} /> Social Messages
           </IconButton>
         </Badge>
       )}

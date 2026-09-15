@@ -48,7 +48,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 
   const buttonSx = {
     p: { xs: 0.9, sm: 1.1 },
-    borderRadius: 1.5,
+    borderRadius: 1,
     bgcolor: 'background.paper',
     border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
     color: 'text.primary',
@@ -63,7 +63,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     <>
       <Box
         sx={{
-          mt: 2,
+          m: 1,
           p: { xs: 0.75, sm: 1 },
           borderRadius: 2,
           bgcolor: alpha(theme.palette.text.primary, 0.03),
@@ -122,9 +122,8 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               minWidth: 'auto',
               bgcolor: handRaised ? 'warning.main' : 'background.paper',
               color: handRaised ? 'common.black' : 'text.primary',
-              border: `1px solid ${
-                handRaised ? theme.palette.warning.dark : alpha(theme.palette.divider, 0.1)
-              }`,
+              border: `1px solid ${handRaised ? theme.palette.warning.dark : alpha(theme.palette.divider, 0.1)
+                }`,
               '&:hover': {
                 bgcolor: handRaised ? 'warning.dark' : alpha(theme.palette.primary.main, 0.08),
               },

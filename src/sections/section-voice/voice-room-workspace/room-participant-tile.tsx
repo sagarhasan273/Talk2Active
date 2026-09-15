@@ -1,3 +1,5 @@
+// src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
+
 import { useTracks, useTrackVolume } from '@livekit/components-react';
 import {
   alpha,
@@ -103,6 +105,7 @@ const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.name, s]));
 const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   const statusOption = STATUS_MAP[status || 'online'];
   const paletteColor = theme.palette[statusOption?.bgColor as keyof typeof theme.palette];
+
   return {
     position: 'absolute',
     top: -4,
@@ -165,6 +168,7 @@ type ParticipantTileProps = {
     status?: string;
     connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
     hasJoin?: boolean;
+    isSpeaking?: boolean;
   };
   onClick?: () => void;
 };
@@ -185,6 +189,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
     status,
     connectionStatus = 'connected',
     hasJoin = true,
+    isSpeaking: participantIsSpeaking = false,
   } = participant;
 
   const isMuted = audioState === 'muted';
@@ -197,7 +202,9 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
   );
 
   const livekitVolume = useTrackVolume(userTrackRef);
-  const isSpeaking = livekitVolume > 0.05 || audioState === 'speaking' || participant.isSpeaking;
+
+  // Safe null-check for livekitVolume using fallback (?? 0)
+  const isSpeaking = (livekitVolume ?? 0) > 0.05 || audioState === 'speaking' || participantIsSpeaking;
 
   const [showReaction, setShowReaction] = useState(false);
 
@@ -282,7 +289,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
         alignItems: 'center',
         justifyContent: 'space-between',
         p: 1.25,
-        borderRadius: 2.5,
+        borderRadius: 1,
         cursor: 'pointer',
         userSelect: 'none',
         outline: 'none',
@@ -373,11 +380,6 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
             borderColor: isDark
               ? alpha(theme.palette.common.white, 0.15)
               : alpha(theme.palette.common.black, 0.08),
-            ...(isSpeaking &&
-              !connectionOverlayElement && {
-                animation: `${speakingGlow} 1.4s ease-in-out infinite`,
-                borderColor: theme.palette.primary.main,
-              }),
             transition: 'all 0.3s ease',
           }}
         >

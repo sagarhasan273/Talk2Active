@@ -1,5 +1,3 @@
-// src/sections/section-voice-room/voice-room-workspace/index.tsx
-
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 import { useTracks } from '@livekit/components-react';
 import { Box, Tooltip, useTheme } from '@mui/material';
@@ -101,7 +99,7 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
-            gap: 1.5,
+            gap: 1,
             alignItems: 'stretch',
             width: '100%',
             height: { md: '75vh' },

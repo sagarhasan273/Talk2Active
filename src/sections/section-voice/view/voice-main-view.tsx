@@ -10,7 +10,6 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
-import { LoginPromptDialog } from 'src/components/custom-dialog';
 
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { FilterState, VoiceRoomsFilter } from '../voice-filter-rooms';
@@ -156,7 +155,7 @@ export function VoiceMainView() {
       );
     }
 
-    return <DefaultHeader onQuickJoin={() => {}} onCreateRoom={handleCreateRoom} />;
+    return <DefaultHeader onQuickJoin={() => { }} onCreateRoom={handleCreateRoom} />;
   }, [
     room,
     selectedTab,
@@ -197,10 +196,14 @@ export function VoiceMainView() {
 
   const footer = useMemo(() => <VoiceButtonSocialChat />, []);
 
+  // Determines if the header is VoiceRoomActiveBar
+  const isHeaderFixed = Boolean(room && selectedTab === 'find');
+
   return (
     <>
       <VoiceRoomLayout
         header={header}
+        fixedHeader={isHeaderFixed}
         filter={selectedTab === 'find' ? filter : undefined}
         mainContent={mainContent}
         footer={footer}
@@ -233,11 +236,9 @@ export function VoiceMainView() {
       <VoiceModalCreateRoom
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
-        onCreateRoom={() => {}}
+        onCreateRoom={() => { }}
         currentRoom={room}
       />
-
-      <LoginPromptDialog openBoolean={isAuthOpen} />
     </>
   );
 }

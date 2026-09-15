@@ -1,13 +1,14 @@
 // src/sections/section-voice-room/voice-room-workspace/room-audio-stage.tsx
 
 import { useTracks, VideoTrack } from '@livekit/components-react';
-import { Box, Button, Grid, IconButton, Stack, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Track } from 'livekit-client';
-import { LayoutGrid, Maximize, Minimize, Tv } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, Maximize, Minimize, Tv } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { RoomControlDock } from './room-control-dock';
+import { EmptySlotTile } from './room-empty-slot-tile';
 import { ParticipantTile } from './room-participant-tile';
 import type { StageParticipant } from './types';
 
@@ -31,6 +32,7 @@ export type RoomAudioStageProps = {
 
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   topicPrompt,
+  onChangePrompt,
   participants,
   maxParticipants,
   micMuted = false,
@@ -46,24 +48,26 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onProfileClick,
 }) => {
   const theme = useTheme();
-  const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // 3 Modes for Screen Presentation:
-  // 1. Stage (presentationOnly = false): Screen Share + Participant Grid
-  // 2. Theater (presentationOnly = true): Screen Share takes 100% canvas, hides Grid
-  // 3. Hardware Fullscreen: Requests monitor fullscreen on screenShareContainerRef
+  // Refs
+  const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // States
   const [presentationOnly, setPresentationOnly] = useState(false);
   const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
+  // LiveKit Screen Share
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const activeScreenShare = screenShareTracks[0];
+  const hasScreenShare = Boolean(activeScreenShare?.publication);
 
   // Auto-reset presentation-only if screen share ends
   useEffect(() => {
-    if (!activeScreenShare?.publication) {
+    if (!hasScreenShare) {
       setPresentationOnly(false);
     }
-  }, [activeScreenShare]);
+  }, [hasScreenShare]);
 
   // Sync fullscreen state
   useEffect(() => {
@@ -86,6 +90,16 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     }
   };
 
+  // Horizontal Scroll Logic for Desktop
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const openSlots = Math.max(0, maxParticipants - participants.length);
+
   return (
     <Box
       sx={{
@@ -97,132 +111,228 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         borderRadius: 1,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* ----------------- Screen Share Canvas ----------------- */}
-      {activeScreenShare?.publication && (
-        <Box
-          ref={screenShareContainerRef}
-          sx={{
-            flex: presentationOnly ? 1 : 'none',
-            height: presentationOnly ? '100%' : { xs: 220, sm: 340, md: 400 },
-            width: '100%',
-            position: 'relative',
-            bgcolor: '#050505',
-            borderRadius: 1,
-            overflow: 'hidden',
-            transition: 'all 0.25s ease',
-            border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
-          }}
-        >
-          <VideoTrack
-            trackRef={activeScreenShare}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
 
-          {/* Presenter Name Badge */}
+      {/* ----------------- Main Content Canvas ----------------- */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+        {/* Screen Share Viewer */}
+        {hasScreenShare && (
           <Box
+            ref={screenShareContainerRef}
             sx={{
-              position: 'absolute',
-              bottom: 12,
-              left: 12,
-              bgcolor: 'rgba(0,0,0,0.75)',
-              backdropFilter: 'blur(8px)',
-              color: '#fff',
-              px: 1.25,
-              py: 0.5,
-              borderRadius: 1.25,
-              fontSize: 12,
-              fontWeight: 700,
-              zIndex: 3,
+              flex: presentationOnly ? 1 : 'none',
+              height: presentationOnly ? '100%' : { xs: 260, sm: 380, md: '60%' },
+              width: '100%',
+              position: 'relative',
+              bgcolor: '#050505',
+              overflow: 'hidden',
+              transition: 'all 0.25s ease',
+              borderBottom: !presentationOnly ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
             }}
           >
-            {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
-          </Box>
+            <VideoTrack
+              trackRef={activeScreenShare}
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
 
-          {/* Screen Presentation Action Controls (Top Right) */}
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              zIndex: 3,
-            }}
-          >
-            {/* Mode 1 & 2: Toggle between Stage Grid and Theater View */}
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() => setPresentationOnly((prev) => !prev)}
-              startIcon={presentationOnly ? <LayoutGrid size={14} /> : <Tv size={14} />}
+            {/* Presenter Name Badge */}
+            <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.18)',
+                position: 'absolute',
+                bottom: 12,
+                left: 12,
+                bgcolor: 'rgba(0,0,0,0.75)',
                 backdropFilter: 'blur(8px)',
                 color: '#fff',
-                fontSize: 11,
+                px: 1.25,
+                py: 0.5,
+                borderRadius: 1.25,
+                fontSize: 12,
                 fontWeight: 700,
-                textTransform: 'none',
-                borderRadius: 1.5,
-                border: '1px solid rgba(255,255,255,0.2)',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.3)',
-                },
+                zIndex: 3,
               }}
             >
-              {presentationOnly ? 'Show Stage' : 'Presentation Only'}
-            </Button>
+              {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
+            </Box>
 
-            {/* Mode 3: Toggle Direct Hardware Fullscreen */}
-            <Tooltip title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}>
-              <IconButton
+            {/* Screen Presentation Action Controls (Top Right) */}
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                zIndex: 3,
+              }}
+            >
+              <Button
                 size="small"
-                onClick={handleToggleElementFullscreen}
+                variant="contained"
+                onClick={() => setPresentationOnly((prev) => !prev)}
+                startIcon={presentationOnly ? <LayoutGrid size={14} /> : <Tv size={14} />}
                 sx={{
                   bgcolor: 'rgba(255,255,255,0.18)',
                   backdropFilter: 'blur(8px)',
                   color: '#fff',
-                  border: '1px solid rgba(255,255,255,0.2)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'none',
                   borderRadius: 1.5,
-                  p: 0.75,
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.3)',
-                  },
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
                 }}
               >
-                {isElementFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Box>
-      )}
+                {presentationOnly ? 'Show Grid' : 'Presentation Only'}
+              </Button>
 
-      {/* ----------------- Participant Grid (Hidden in Presentation-Only) ----------------- */}
-      {!presentationOnly && (
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            py: 1.5,
-            mt: activeScreenShare ? 1.5 : 0,
-          }}
-        >
-          <Grid container spacing={2} justifyContent="center" alignItems="center">
-            {participants.map((p) => (
-              <Grid
-                size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}
-                key={p.id}
-                onClick={() => onProfileClick?.(p)}
-                sx={{ cursor: 'pointer' }}
+              <Tooltip title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}>
+                <IconButton
+                  size="small"
+                  onClick={handleToggleElementFullscreen}
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.18)',
+                    backdropFilter: 'blur(8px)',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 1.5,
+                    p: 0.75,
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                  }}
+                >
+                  {isElementFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          </Box>
+        )}
+
+        {/* ----------------- Participant Renders ----------------- */}
+        {!presentationOnly && (
+          <>
+            {/* View A: Horizontal Scroll (Active when Screen Sharing) */}
+            {hasScreenShare ? (
+              <Box sx={{ position: 'relative', width: '100%', flexShrink: 0, bgcolor: alpha(theme.palette.background.default, 0.4) }}>
+
+                {/* Desktop Left Scroll Button */}
+                <IconButton
+                  onClick={() => handleScroll('left')}
+                  sx={{
+                    display: { xs: 'none', md: 'flex' },
+                    position: 'absolute',
+                    left: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 5,
+                    bgcolor: theme.palette.background.paper,
+                    boxShadow: theme.shadows[4],
+                    '&:hover': { bgcolor: theme.palette.background.neutral },
+                  }}
+                >
+                  <ChevronLeft size={20} />
+                </IconButton>
+
+                {/* Horizontal Scroll Container */}
+                <Box
+                  ref={scrollContainerRef}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    overflowX: 'auto',
+                    scrollbarWidth: 'none', // Firefox
+                    '&::-webkit-scrollbar': { display: 'none' }, // Chrome/Safari
+                  }}
+                >
+                  {participants.map((p) => (
+                    <Box key={p.id} sx={{ width: 140, minWidth: 140, height: 140 }}>
+                      <ParticipantTile participant={p} onClick={() => onProfileClick?.(p)} />
+                    </Box>
+                  ))}
+
+                  {openSlots > 0 && (
+                    <Box sx={{ width: 140, minWidth: 140, height: 140 }}>
+                      <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Desktop Right Scroll Button */}
+                <IconButton
+                  onClick={() => handleScroll('right')}
+                  sx={{
+                    display: { xs: 'none', md: 'flex' },
+                    position: 'absolute',
+                    right: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 5,
+                    bgcolor: theme.palette.background.paper,
+                    boxShadow: theme.shadows[4],
+                    '&:hover': { bgcolor: theme.palette.background.neutral },
+                  }}
+                >
+                  <ChevronRight size={20} />
+                </IconButton>
+              </Box>
+            ) : (
+              /* View B: Centered Grid (Active when NO Screen Share) */
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center', // Centers the whole block vertically if few users
+                  justifyContent: 'center',
+                  overflowY: 'auto',
+                  overflowX: 'hidden', // Enforce vertical scroll only
+                  p: { xs: 2, sm: 3 },
+                }}
               >
-                <ParticipantTile participant={p} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      )}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center', // Centers the cards horizontally
+                    alignItems: 'stretch',
+                    gap: 2,
+                    maxWidth: 1200,
+                    width: '100%',
+                    m: 'auto', // Ensures perfect centering
+                  }}
+                >
+                  {participants.map((p) => (
+                    <Box
+                      key={p.id}
+                      sx={{
+                        // Mobile: 2 per row exactly. Desktop/Tablet: Fixed width to prevent squeezing
+                        width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
+                        minHeight: 160,
+                      }}
+                    >
+                      <ParticipantTile participant={p} onClick={() => onProfileClick?.(p)} />
+                    </Box>
+                  ))}
+
+                  {openSlots > 0 && (
+                    <Box
+                      sx={{
+                        width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
+                        minHeight: 160,
+                      }}
+                    >
+                      <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
 
       {/* ----------------- Bottom Dock ----------------- */}
       <RoomControlDock
@@ -230,9 +340,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         deafened={deafened}
         handRaised={handRaised}
         isScreenSharing={Boolean(screenShareTracks.some((t) => t.participant.isLocal))}
-        onToggleMic={onToggleMic || (() => {})}
-        onToggleDeafen={onToggleDeafen || (() => {})}
-        onToggleRaiseHand={onToggleRaiseHand || (() => {})}
+        onToggleMic={onToggleMic || (() => { })}
+        onToggleDeafen={onToggleDeafen || (() => { })}
+        onToggleRaiseHand={onToggleRaiseHand || (() => { })}
         onToggleScreenShare={onToggleScreenShare}
         onSendReaction={onSendReaction}
         onToggleChat={onToggleChat}
