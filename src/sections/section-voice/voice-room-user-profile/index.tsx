@@ -405,7 +405,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   return (
     <>
       <Drawer
-        anchor="bottom"
+        anchor={isMobile ? "bottom" : undefined}
         open={open}
         onClose={onClose}
         PaperProps={{ elevation: 0 }}
@@ -424,7 +424,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             top: { xs: 'auto', sm: '50%' },
             left: { sm: '50%' },
             transform: { xs: 'none', sm: 'translate(-50%, -50%) !important' },
-            borderRadius: { xs: '24px 24px 0 0', sm: 5 },
+            borderRadius: { xs: 1 },
             maxHeight: { xs: '90vh', sm: '88vh' },
             minHeight: { xs: '65vh', sm: 'auto' },
             overflow: 'hidden',
@@ -445,8 +445,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            backgroundColor: alpha(theme.palette.background.paper, 0.4),
+            backgroundColor: alpha(theme.palette.background.neutral, 0.4),
           }}
         >
           {isMobile && (
@@ -494,133 +493,138 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
         </Box>
 
         {/* Profile Body */}
-        <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2 }}>
-          {/* Avatar and Badges */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
-            <Badge
-              overlap="circular"
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              badgeContent={
-                <Box
-                  sx={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    backgroundColor: isSpeaking
-                      ? theme.palette.success.main
-                      : theme.palette.grey[500],
-                    border: `3px solid ${theme.palette.background.paper}`,
-                  }}
-                />
-              }
-            >
-              <Avatar
-                src={profilePhoto || undefined}
-                alt={name}
-                sx={{
-                  width: { xs: 80, sm: 90 },
-                  height: { xs: 80, sm: 90 },
-                  fontSize: 32,
-                  fontWeight: 800,
-                  backgroundColor: alpha(roleColor, 0.15),
-                  color: roleColor,
-                  border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
-                }}
+        <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
+
+          {/* COMBINED PROFILE & STATS SECTION */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 3 }}>
+
+            {/* LEFT: Avatar with Speaking Badge */}
+            <Box sx={{ position: 'relative', flexShrink: 0 }}>
+              <Badge
+                overlap="circular"
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                badgeContent={
+                  <Box
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      backgroundColor: isSpeaking
+                        ? theme.palette.success.main
+                        : theme.palette.grey[500],
+                      border: `3px solid ${theme.palette.background.paper}`,
+                    }}
+                  />
+                }
               >
-                {initials}
-              </Avatar>
-            </Badge>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5, mb: 0.5 }}>
-              <Typography variant="h6" fontWeight={800}>
-                {name || 'Unknown User'} {isSelf && '(You)'}
-              </Typography>
-              {verified && <VerifiedIcon sx={{ color: '#5865F2', fontSize: 20 }} />}
+                <Avatar
+                  src={profilePhoto || undefined}
+                  alt={name}
+                  sx={{
+                    width: { xs: 120, sm: 160 },
+                    height: { xs: 120, sm: 160 },
+                    fontSize: 28,
+                    fontWeight: 800,
+                    backgroundColor: alpha(roleColor, 0.15),
+                    color: roleColor,
+                    border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
+                  }}
+                  variant='rounded'
+                >
+                  {initials}
+                </Avatar>
+              </Badge>
             </Box>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: 13 }}>
-              @{userId || 'username'}
-            </Typography>
+            {/* RIGHT: Name, Username, Stats, Chips */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
 
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Chip
-                label={roleLabel}
-                size="small"
-                sx={{
-                  height: 24,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: roleColor,
-                  backgroundColor: alpha(roleColor, 0.12),
-                }}
-              />
-              {level && (
+              {/* Name & Verified */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
+                  {name || 'Unknown User'} {isSelf && '(You)'}
+                </Typography>
+                {verified && <VerifiedIcon sx={{ color: '#5865F2', fontSize: 18, flexShrink: 0 }} />}
+              </Box>
+
+              {/* Username */}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }} noWrap>
+                @{userId || 'username'}
+              </Typography>
+
+              {/* Stats: Followers / Following */}
+              <Stack
+                direction="row"
+                spacing={2.5}
+                sx={{ mb: 1.5 }}
+                divider={<Divider orientation="vertical" flexItem sx={{ opacity: 0.4 }} />}
+              >
+                <Box>
+                  <Typography component="span" variant="subtitle2" fontWeight={800}>
+                    {followers}
+                  </Typography>
+                  <Typography component="span" variant="caption" color="text.secondary" fontWeight={600} sx={{ ml: 0.5 }}>
+                    Followers
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography component="span" variant="subtitle2" fontWeight={800}>
+                    {following}
+                  </Typography>
+                  <Typography component="span" variant="caption" color="text.secondary" fontWeight={600} sx={{ ml: 0.5 }}>
+                    Following
+                  </Typography>
+                </Box>
+              </Stack>
+
+              {/* Tags / Chips */}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
-                  label={level}
-                  size="small"
-                  variant="outlined"
-                  sx={{ height: 24, fontSize: 10 }}
-                />
-              )}
-              {isSpeaking && (
-                <Chip
-                  label="Speaking"
+                  label={roleLabel}
                   size="small"
                   sx={{
                     height: 24,
                     fontSize: 10,
                     fontWeight: 800,
-                    color: theme.palette.success.main,
-                    backgroundColor: alpha(theme.palette.success.main, 0.12),
+                    color: roleColor,
+                    backgroundColor: alpha(roleColor, 0.12),
                   }}
                 />
-              )}
-              {(isMuted || volume === 0) && (
-                <Chip
-                  label={isMuted ? 'Muted' : 'Deafened'}
-                  size="small"
-                  sx={{
-                    height: 24,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: theme.palette.error.main,
-                    backgroundColor: alpha(theme.palette.error.main, 0.12),
-                  }}
-                />
-              )}
-            </Box>
-          </Box>
-
-          {/* Stats Section */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-around',
-              mb: 1,
-              p: 1,
-              borderRadius: 1,
-              backgroundColor: alpha(theme.palette.text.primary, 0.03),
-              border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            }}
-          >
-            <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" fontWeight={800} lineHeight={1.2}>
-                {followers}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" fontWeight={600} fontSize={11}>
-                Followers
-              </Typography>
-            </Box>
-
-            <Divider orientation="vertical" flexItem sx={{ opacity: 0.15 }} />
-
-            <Box sx={{ textAlign: 'center', flex: 1 }}>
-              <Typography variant="h6" fontWeight={800} lineHeight={1.2}>
-                {following}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" fontWeight={600} fontSize={11}>
-                Following
-              </Typography>
+                {level && (
+                  <Chip
+                    label={level}
+                    size="small"
+                    variant="outlined"
+                    sx={{ height: 24, fontSize: 10 }}
+                  />
+                )}
+                {isSpeaking && (
+                  <Chip
+                    label="Speaking"
+                    size="small"
+                    sx={{
+                      height: 24,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: theme.palette.success.main,
+                      backgroundColor: alpha(theme.palette.success.main, 0.12),
+                    }}
+                  />
+                )}
+                {(isMuted || volume === 0) && (
+                  <Chip
+                    label={isMuted ? 'Muted' : 'Deafened'}
+                    size="small"
+                    sx={{
+                      height: 24,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: theme.palette.error.main,
+                      backgroundColor: alpha(theme.palette.error.main, 0.12),
+                    }}
+                  />
+                )}
+              </Box>
             </Box>
           </Box>
 

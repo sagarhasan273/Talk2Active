@@ -6,9 +6,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
-import { alpha, Box, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { alpha, Box, Chip, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
-import { formatLanguages } from './utils';
+import { getLanguageDetails, getLevelLabel } from './utils';
 
 export const CompactRoomHeader = ({
   room,
@@ -26,6 +26,8 @@ export const CompactRoomHeader = ({
   onLeaveRoom: () => void;
 }) => {
   const theme = useTheme();
+
+  const languageDetails = getLanguageDetails(room?.languages);
 
   return (
     <Paper
@@ -165,18 +167,42 @@ export const CompactRoomHeader = ({
             </Box>
           </Stack>
 
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{
-              display: 'block',
-              color: 'text.secondary',
-              fontSize: 9,
-              mt: 0.15,
-            }}
-          >
-            {formatLanguages(room?.languages)} • {room?.level || 'All Levels'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+            {languageDetails.map((lang) => (
+              <Chip
+                key={lang.code}
+                label={`${lang.flag} ${lang.name}`}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  backgroundColor: 'background.paper',
+                  '& .MuiChip-label': {
+                    px: 1,
+                  }
+                }}
+              />
+            ))}
+            {room?.level && (
+              <Chip
+                label={getLevelLabel(room.level, true)}
+                size="small"
+                variant="outlined"
+                sx={{
+                  height: 20,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  borderColor: 'divider'
+                }}
+              />
+            )}
+          </Box>
         </Box>
 
         {onShareClick && (
