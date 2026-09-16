@@ -1,46 +1,45 @@
+// src/sections/section-voice/view/voice-main-view.tsx
+
 import type { RoomResponse } from 'src/types/type-chat';
+import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Box } from '@mui/material';
 
+import { useJoinRoomMutation } from '@/core/apis';
+import { toastErrorResponse } from '@/utils/response';
 import { useCredentials } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
-
+import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { FilterState, VoiceRoomsFilter } from '../voice-filter-rooms';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
-import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { VoiceTabPanel } from '../voice-tab-panel';
-import { VoiceRoomBody } from './voice-room-body';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 import VoiceRoomlist from './voice-room-list';
-
-import { useJoinRoomMutation } from '@/core/apis';
-import { toastErrorResponse } from '@/utils/response';
-
-import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
+import { VoiceRoomBody } from './voice-room-space';
 
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
+  const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
+  const { room, setRoom } = useRoomTools();
 
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
-  const settingsOpen = useBoolean();
 
-  const { room, setRoom } = useRoomTools();
 
   const [selectedRoom, setSelectedRoom] = useState<RoomResponse | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<SelectedTabType>('find');
+  const [selectedTab, setSelectedTab] = useState<SelectedTabType>('room-list');
 
   const [filterRooms, setFilterRooms] = useState<FilterState>({
     searchQuery: '',
@@ -92,27 +91,34 @@ export function VoiceMainView() {
       }).unwrap();
 
       if (response.status) {
+        const token = (response as any)?.data?.token;
+
         setRoom(selectedRoom);
-        setLivekitToken((response as any)?.data?.token);
+        setLivekitToken(token);
         setIsJoinGateOpen(false);
-        setSelectedTab('enter');
+        setSelectedTab('room-space');
+
+        if (token) {
+          await connectToRoom(token);
+        }
       }
     } catch (error) {
       toastErrorResponse(error);
     }
-  }, [selectedRoom, user, joinRoomMutation, setRoom]);
+  }, [selectedRoom, user, joinRoomMutation, setRoom, connectToRoom]);
 
   const handleBackToRooms = useCallback(() => {
-    setSelectedTab('find');
+    setSelectedTab('room-list');
   }, []);
 
-  const handleLeaveRoom = useCallback(() => {
-    setSelectedTab('find');
+  const handleLeaveRoom = useCallback(async () => {
+    await disconnectRoom();
+    setSelectedTab('room-list');
     setSelectedRoom(null);
     setLivekitToken(null);
     setIsJoinGateOpen(false);
     setRoom(null);
-  }, [setRoom]);
+  }, [setRoom, disconnectRoom]);
 
   const handleCreateRoom = useCallback(() => {
     if (!isAuthenticated) {
@@ -130,26 +136,17 @@ export function VoiceMainView() {
   }, [room]);
 
   const header = useMemo(() => {
-    if (room && selectedTab === 'find') {
+    if (room && selectedTab === 'room-space') {
+      return null;
+    }
+
+    if (isInRoom && room && selectedTab === 'room-list') {
       return (
         <VoiceRoomActiveBar
           room={room}
           participants={participants}
           currentSpeaker={currentSpeaker}
-          onEnterRoom={() => setSelectedTab('enter')}
-          onLeaveRoom={handleLeaveRoom}
-        />
-      );
-    }
-
-    if (room && selectedTab === 'enter') {
-      return (
-        <CompactRoomHeader
-          room={room}
-          isHost={isHost}
-          onBack={handleBackToRooms}
-          onSettingsClick={settingsOpen.onTrue}
-          onShareClick={handleShareLink}
+          onEnterRoom={() => setSelectedTab('room-space')}
           onLeaveRoom={handleLeaveRoom}
         />
       );
@@ -160,11 +157,8 @@ export function VoiceMainView() {
     room,
     selectedTab,
     participants,
-    currentSpeaker,
-    isHost,
     handleBackToRooms,
     handleLeaveRoom,
-    settingsOpen.onTrue,
     handleShareLink,
     handleCreateRoom,
   ]);
@@ -176,7 +170,7 @@ export function VoiceMainView() {
 
   const mainContent = (
     <>
-      <VoiceTabPanel value={selectedTab === 'find' ? 0 : 1} index={0}>
+      <VoiceTabPanel value={selectedTab === 'room-list' ? 0 : 1} index={0}>
         <VoiceRoomlist
           query={filterRooms}
           onSelectRoom={handleSelectRoom}
@@ -184,11 +178,13 @@ export function VoiceMainView() {
         />
       </VoiceTabPanel>
 
-      <VoiceTabPanel value={selectedTab !== 'find' ? 1 : 0} index={1}>
+      <VoiceTabPanel value={selectedTab !== 'room-list' ? 1 : 0} index={1}>
         <VoiceRoomBody
           selectedRoom={selectedRoom}
           token={livekitToken}
           onLeaveRoom={handleLeaveRoom}
+          onSettingsClick={editRoomBoolean.onTrue}
+          onBack={handleBackToRooms}
         />
       </VoiceTabPanel>
     </>
@@ -196,17 +192,15 @@ export function VoiceMainView() {
 
   const footer = useMemo(() => <VoiceButtonSocialChat />, []);
 
-  // Determines if the header is VoiceRoomActiveBar
-  const isHeaderFixed = Boolean(room && selectedTab === 'find');
-
   return (
     <>
       <VoiceRoomLayout
         header={header}
-        fixedHeader={isHeaderFixed}
-        filter={selectedTab === 'find' ? filter : undefined}
+        fixedHeader={Boolean(isInRoom && selectedTab === 'room-list')}
+        filter={selectedTab === 'room-list' ? filter : undefined}
         mainContent={mainContent}
         footer={footer}
+        maxWidth={selectedTab === 'room-space' ? 'xl' : 'lg'}
       />
 
       {isJoinGateOpen && selectedRoom && (
@@ -242,3 +236,5 @@ export function VoiceMainView() {
     </>
   );
 }
+
+export default VoiceMainView;

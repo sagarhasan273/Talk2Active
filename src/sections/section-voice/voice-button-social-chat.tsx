@@ -16,82 +16,72 @@ const VoiceButtonSocialChat = () => {
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [open, setOpen] = useState(false);
-  /* ---------------------------------------------------------------- */ /* Size */ /* ---------------------------------------------------------------- */ const [
-    chatWidth,
-    setChatWidth,
-  ] = useState(DEFAULT_WIDTH);
+  const [chatWidth, setChatWidth] = useState(DEFAULT_WIDTH);
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
-  /* ---------------------------------------------------------------- */ /* Resize state */ /* ---------------------------------------------------------------- */ const [
-    isResizing,
-    setIsResizing,
-  ] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
   const startX = useRef(0);
   const startY = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
   const startHeight = useRef(DEFAULT_HEIGHT);
   const totalUnreadFriends = 1;
-  /* ------------------------------------------------------------------ */ /* Start resize */ /* ------------------------------------------------------------------ */ const startResize =
-    (direction: 'left' | 'right' | 'top', event: React.MouseEvent<HTMLDivElement>) => {
-      if (isMobile) return;
-      event.preventDefault();
-      event.stopPropagation();
-      resizeDirection.current = direction;
-      startX.current = event.clientX;
-      startY.current = event.clientY;
-      startWidth.current = chatWidth;
-      startHeight.current = chatHeight;
-      setIsResizing(true);
-    };
-  /* ------------------------------------------------------------------ */ /* Resize */ /* ------------------------------------------------------------------ */ useEffect(() => {
-      if (!isResizing) return undefined;
-      const handleMouseMove = (event: MouseEvent) => {
-        const direction = resizeDirection.current;
-        if (!direction) return;
-      /* -------------------------------------------------------------- */ /* Width */ /* -------------------------------------------------------------- */ if (
-          direction === 'left' ||
-          direction === 'right'
-        ) {
-          const deltaX = event.clientX - startX.current;
-          let newWidth = startWidth.current;
-          if (direction === 'left') {
-          /* * Left edge: * Moving left -> wider * Moving right -> narrower */ newWidth =
-              startWidth.current - deltaX;
-          } else {
-          /* * Right edge: * Moving right -> wider * Moving left -> narrower */ newWidth =
-              startWidth.current + deltaX;
-          }
-          const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
-          newWidth = Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth);
-          setChatWidth(newWidth);
-        }
-      /* -------------------------------------------------------------- */ /* Height */ /* -------------------------------------------------------------- */ if (
-          direction === 'top'
-        ) {
-        /* * Because the bottom is fixed: * * Moving top upward -> taller * Moving top downward -> shorter */ const deltaY =
-            startY.current - event.clientY;
+  const startResize = (
+    direction: 'left' | 'right' | 'top',
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    if (isMobile) return;
+    event.preventDefault();
+    event.stopPropagation();
+    resizeDirection.current = direction;
+    startX.current = event.clientX;
+    startY.current = event.clientY;
+    startWidth.current = chatWidth;
+    startHeight.current = chatHeight;
+    setIsResizing(true);
+  };
 
-          let newHeight = startHeight.current + deltaY;
-          newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight));
-          setChatHeight(newHeight);
+  useEffect(() => {
+    if (!isResizing) return undefined;
+    const handleMouseMove = (event: MouseEvent) => {
+      const direction = resizeDirection.current;
+      if (!direction) return;
+      if (direction === 'left' || direction === 'right') {
+        const deltaX = event.clientX - startX.current;
+        let newWidth = startWidth.current;
+        if (direction === 'left') {
+          newWidth = startWidth.current - deltaX;
+        } else {
+          newWidth = startWidth.current + deltaX;
         }
-      };
-      const handleMouseUp = () => {
-        resizeDirection.current = null;
-        setIsResizing(false);
-      };
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'ew-resize';
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
-      };
-    }, [isResizing, chatWidth, chatHeight, isMobile]);
-  /* ------------------------------------------------------------------ */ /* Render */ /* ------------------------------------------------------------------ */ return (
+        const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
+        newWidth = Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth);
+        setChatWidth(newWidth);
+      }
+      if (direction === 'top') {
+        const deltaY = startY.current - event.clientY;
+
+        let newHeight = startHeight.current + deltaY;
+        newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight));
+        setChatHeight(newHeight);
+      }
+    };
+    const handleMouseUp = () => {
+      resizeDirection.current = null;
+      setIsResizing(false);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing, chatWidth, chatHeight, isMobile]);
+
+  return (
     <Box
       sx={{
         position: 'absolute',
@@ -231,8 +221,7 @@ const VoiceButtonSocialChat = () => {
           />
         </Box>
       )}
-      {/* ============================================================ */} {/* SOCIAL BUTTON */}
-      {/* ============================================================ */}
+
       {!open && (
         <Badge
           color="error"

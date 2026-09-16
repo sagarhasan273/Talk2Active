@@ -2,8 +2,6 @@
 
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { useEffect, useRef } from 'react';
-
 import { Box, Container } from '@mui/material';
 
 // ----------------------------------------------------------------------
@@ -14,7 +12,8 @@ export type DashboardLayoutProps = {
   filter?: React.ReactNode;
   mainContent?: React.ReactNode;
   footer?: React.ReactNode;
-  fixedHeader?: boolean; // Determines if header sticks to top or scrolls
+  fixedHeader?: boolean;
+  maxWidth?: 'lg' | 'xl' | 'md';
 };
 
 export function VoiceRoomLayout({
@@ -24,38 +23,35 @@ export function VoiceRoomLayout({
   mainContent,
   footer,
   fixedHeader = false,
+  maxWidth = 'lg',
 }: DashboardLayoutProps) {
-  const dragConstraints = useRef({ min: 10, max: window.innerHeight - 100 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      dragConstraints.current.max = window.innerHeight - 100;
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   return (
     <Container
-      maxWidth={!fixedHeader ? "xl" : 'lg'}
+      maxWidth={maxWidth}
       disableGutters
       sx={{
         p: { xs: 1 },
-        height: { xs: 'calc(100vh - 54px)', sm: 'calc(100vh - 64px)' },
+        pb: { xs: 0, sm: 1 },
+        height: '100%',
+        maxHeight: '100%',
+        flex: 1,
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 1 },
         position: 'relative',
+        overflow: 'hidden',
         ...sx,
       }}
     >
       {/* 1. FIXED HEADER: Stays locked at the top */}
-      {fixedHeader && header}
+      {fixedHeader && header && <Box sx={{ flexShrink: 0 }}>{header}</Box>}
 
       {/* Scrollable Content Container */}
       <Box
         sx={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
           overflowX: 'hidden',
           display: 'flex',
@@ -82,6 +78,7 @@ export function VoiceRoomLayout({
             flexDirection: 'column',
             gap: 1,
             flex: 1,
+            minHeight: 0,
           }}
         >
           {/* Filter */}
@@ -92,7 +89,7 @@ export function VoiceRoomLayout({
           )}
 
           {/* Main Content */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {mainContent}
           </Box>
 
@@ -102,7 +99,7 @@ export function VoiceRoomLayout({
               sx={{
                 flexShrink: 0,
                 display: { xs: 'none', sm: 'block' },
-                mt: 1,
+                mt: 'auto',
               }}
             >
               {footer}

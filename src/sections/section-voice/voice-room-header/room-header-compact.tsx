@@ -1,6 +1,7 @@
-import type { RoomResponse } from 'src/types/type-chat';
+// src/sections/section-voice-room/voice-room-header/room-header-compact.tsx
 
-import { PhoneOffIcon, Volume2Icon } from 'lucide-react';
+import { Volume2Icon } from 'lucide-react';
+import type { RoomResponse } from 'src/types/type-chat';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
@@ -8,35 +9,48 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
 import { alpha, Box, Chip, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
+import { useCredentials } from '@/core/slices';
+import { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { getLanguageDetails, getLevelLabel } from './utils';
 
 export const CompactRoomHeader = ({
   room,
-  isHost,
   onBack,
   onSettingsClick,
-  onShareClick,
-  onLeaveRoom,
 }: {
   room: RoomResponse;
-  isHost: boolean;
-  onBack: () => void;
-  onSettingsClick: () => void;
+  onBack?: () => void;
+  onSettingsClick?: () => void;
   onShareClick?: () => void;
-  onLeaveRoom: () => void;
 }) => {
   const theme = useTheme();
 
+  const { user } = useCredentials();
+
   const languageDetails = getLanguageDetails(room?.languages);
+
+  const isHost = useMemo(() => {
+    if (!room || !user) return false;
+    return room.host.userId === user.userId;
+  }, [room, user]);
+
+  const handleShareLink = useCallback(() => {
+    if (!room) return;
+    const url = `${window.location.origin}/room/${room.roomId}`;
+    navigator.clipboard?.writeText(url);
+    toast.success('Room link copied to clipboard!');
+  }, [room]);
+
 
   return (
     <Paper
       elevation={0}
       sx={{
         width: '100%',
-        borderRadius: 1,
+        borderRadius: 0,
         bgcolor: 'background.paper',
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        borderBottom: `1px solid ${alpha(theme.palette.background.neutral, 1)}`,
       }}
     >
       <Stack
@@ -45,31 +59,33 @@ export const CompactRoomHeader = ({
         spacing={{ xs: 0.75, sm: 1 }}
         sx={{
           minHeight: { xs: 48, sm: 54 },
-          px: { xs: 0.75, sm: 1 },
+          px: { xs: 1, sm: 1.5 },
         }}
       >
-        <Tooltip title="Back to rooms">
-          <IconButton
-            onClick={onBack}
-            size="small"
-            sx={{
-              width: 34,
-              height: 34,
-              borderRadius: 1.25,
-              bgcolor: alpha(theme.palette.text.primary, 0.04),
-              transition: theme.transitions.create(['background-color', 'color', 'transform'], {
-                duration: 150,
-              }),
-              '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: 'primary.main',
-                transform: 'translateX(-2px)',
-              },
-            }}
-          >
-            <ArrowBackIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
+        {onBack && (
+          <Tooltip title="Back to rooms">
+            <IconButton
+              onClick={onBack}
+              size="small"
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: 1.25,
+                bgcolor: alpha(theme.palette.text.primary, 0.04),
+                transition: theme.transitions.create(['background-color', 'color', 'transform'], {
+                  duration: 150,
+                }),
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  transform: 'translateX(-2px)',
+                },
+              }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        )}
 
         <Box
           sx={{
@@ -184,7 +200,7 @@ export const CompactRoomHeader = ({
                   backgroundColor: 'background.paper',
                   '& .MuiChip-label': {
                     px: 1,
-                  }
+                  },
                 }}
               />
             ))}
@@ -198,39 +214,39 @@ export const CompactRoomHeader = ({
                   fontSize: 10,
                   fontWeight: 600,
                   color: 'text.secondary',
-                  borderColor: 'divider'
+                  borderColor: 'divider',
                 }}
               />
             )}
           </Box>
         </Box>
 
-        {onShareClick && (
-          <Tooltip title="Share room">
-            <IconButton
-              onClick={onShareClick}
-              size="small"
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: 1.25,
-                color: 'text.secondary',
-                bgcolor: alpha(theme.palette.text.primary, 0.04),
-                transition: theme.transitions.create(['background-color', 'color'], {
-                  duration: 150,
-                }),
-                '&:hover': {
-                  color: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <ShareIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-        )}
 
-        {isHost && (
+        <Tooltip title="Share room">
+          <IconButton
+            onClick={handleShareLink}
+            size="small"
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: 1.25,
+              color: 'text.secondary',
+              bgcolor: alpha(theme.palette.text.primary, 0.04),
+              transition: theme.transitions.create(['background-color', 'color'], {
+                duration: 150,
+              }),
+              '&:hover': {
+                color: 'primary.main',
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
+          >
+            <ShareIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </Tooltip>
+
+
+        {isHost && onSettingsClick && (
           <Tooltip title="Room settings">
             <IconButton
               onClick={onSettingsClick}
@@ -255,26 +271,6 @@ export const CompactRoomHeader = ({
             </IconButton>
           </Tooltip>
         )}
-
-        <Tooltip title="Leave room">
-          <IconButton
-            onClick={onLeaveRoom}
-            size="small"
-            sx={{
-              width: 32,
-              height: 32,
-              borderRadius: 1.25,
-              color: 'error.main',
-              bgcolor: alpha(theme.palette.error.main, 0.08),
-              transition: theme.transitions.create(['background-color'], { duration: 150 }),
-              '&:hover': {
-                bgcolor: alpha(theme.palette.error.main, 0.16),
-              },
-            }}
-          >
-            <PhoneOffIcon size={15} />
-          </IconButton>
-        </Tooltip>
       </Stack>
     </Paper>
   );

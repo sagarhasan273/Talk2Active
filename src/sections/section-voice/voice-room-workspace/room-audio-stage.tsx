@@ -1,5 +1,6 @@
 // src/sections/section-voice-room/voice-room-workspace/room-audio-stage.tsx
 
+
 import { useTracks, VideoTrack } from '@livekit/components-react';
 import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -7,12 +8,18 @@ import { Track } from 'livekit-client';
 import { ChevronLeft, ChevronRight, LayoutGrid, Maximize, Minimize, Tv } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { useLiveKitSession } from '@/core/contexts/livekit-context';
+import { useRoomTools } from '@/core/slices';
+import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-control-dock';
 import { EmptySlotTile } from './room-empty-slot-tile';
 import { ParticipantTile } from './room-participant-tile';
 import type { StageParticipant } from './types';
 
 export type RoomAudioStageProps = {
+  onBack?: () => void;
+  onSettingsClick?: () => void;
+  onShareClick?: () => void;
   topicPrompt: string;
   onChangePrompt?: () => void;
   participants: StageParticipant[];
@@ -31,6 +38,8 @@ export type RoomAudioStageProps = {
 };
 
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
+  onBack,
+  onShareClick,
   topicPrompt,
   onChangePrompt,
   participants,
@@ -46,8 +55,12 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onToggleChat,
   onLeave,
   onProfileClick,
+  onSettingsClick,
 }) => {
   const theme = useTheme();
+
+  const { isInRoom } = useLiveKitSession();
+  const { room } = useRoomTools();
 
   // Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
@@ -114,10 +127,18 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         overflow: 'hidden',
       }}
     >
+      {/* ----------------- Top Header Placement ----------------- */}
+      {isInRoom && room && (
+        <CompactRoomHeader
+          room={room}
+          onBack={onBack}
+          onSettingsClick={onSettingsClick}
+          onShareClick={onShareClick}
+        />
+      )}
 
       {/* ----------------- Main Content Canvas ----------------- */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-
         {/* Screen Share Viewer */}
         {hasScreenShare && (
           <Box
@@ -130,7 +151,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
               bgcolor: '#050505',
               overflow: 'hidden',
               transition: 'all 0.25s ease',
-              borderBottom: !presentationOnly ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
+              borderBottom: !presentationOnly
+                ? `1px solid ${alpha(theme.palette.divider, 0.1)}`
+                : 'none',
             }}
           >
             <VideoTrack
@@ -189,7 +212,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 {presentationOnly ? 'Show Grid' : 'Presentation Only'}
               </Button>
 
-              <Tooltip title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}>
+              <Tooltip
+                title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}
+              >
                 <IconButton
                   size="small"
                   onClick={handleToggleElementFullscreen}
@@ -215,8 +240,14 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           <>
             {/* View A: Horizontal Scroll (Active when Screen Sharing) */}
             {hasScreenShare ? (
-              <Box sx={{ position: 'relative', width: '100%', flexShrink: 0, bgcolor: alpha(theme.palette.background.default, 0.4) }}>
-
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  flexShrink: 0,
+                  bgcolor: alpha(theme.palette.background.default, 0.4),
+                }}
+              >
                 {/* Desktop Left Scroll Button */}
                 <IconButton
                   onClick={() => handleScroll('left')}
@@ -244,13 +275,16 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     gap: 2,
                     p: 2,
                     overflowX: 'auto',
-                    scrollbarWidth: 'none', // Firefox
-                    '&::-webkit-scrollbar': { display: 'none' }, // Chrome/Safari
+                    scrollbarWidth: 'none',
+                    '&::-webkit-scrollbar': { display: 'none' },
                   }}
                 >
                   {participants.map((p) => (
                     <Box key={p.id} sx={{ width: 140, minWidth: 140, height: 140 }}>
-                      <ParticipantTile participant={p} onClick={() => onProfileClick?.(p)} />
+                      <ParticipantTile
+                        participant={p}
+                        onClick={() => onProfileClick?.(p)}
+                      />
                     </Box>
                   ))}
 
@@ -285,10 +319,10 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 sx={{
                   flex: 1,
                   display: 'flex',
-                  alignItems: 'center', // Centers the whole block vertically if few users
+                  alignItems: 'center',
                   justifyContent: 'center',
                   overflowY: 'auto',
-                  overflowX: 'hidden', // Enforce vertical scroll only
+                  overflowX: 'hidden',
                   p: { xs: 2, sm: 3 },
                 }}
               >
@@ -296,24 +330,26 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   sx={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    justifyContent: 'center', // Centers the cards horizontally
+                    justifyContent: 'center',
                     alignItems: 'stretch',
                     gap: 2,
                     maxWidth: 1200,
                     width: '100%',
-                    m: 'auto', // Ensures perfect centering
+                    m: 'auto',
                   }}
                 >
                   {participants.map((p) => (
                     <Box
                       key={p.id}
                       sx={{
-                        // Mobile: 2 per row exactly. Desktop/Tablet: Fixed width to prevent squeezing
                         width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
                         minHeight: 160,
                       }}
                     >
-                      <ParticipantTile participant={p} onClick={() => onProfileClick?.(p)} />
+                      <ParticipantTile
+                        participant={p}
+                        onClick={() => onProfileClick?.(p)}
+                      />
                     </Box>
                   ))}
 
@@ -349,6 +385,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         onLeave={onLeave}
       />
     </Box>
+
   );
 };
 

@@ -1,5 +1,6 @@
+// src/sections/section-voice/view/voice-room-body.tsx
+
 import {
-  LiveKitRoom,
   RoomAudioRenderer,
   useLocalParticipant,
   useParticipants,
@@ -9,21 +10,20 @@ import { Box, CircularProgress } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { RoomResponse } from '@/types/type-chat';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 import { VoiceRoomWorkspace } from '../voice-room-workspace';
-
-import { RoomResponse } from '@/types/type-chat';
 import type { ChatMessage, StageParticipant } from '../voice-room-workspace/types';
-
-const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL;
 
 interface VoiceRoomBodyProps {
   selectedRoom: RoomResponse | null;
   token?: string | null;
   onLeaveRoom?: () => void;
+  onSettingsClick?: () => void;
+  onBack?: () => void;
 }
 
-export function VoiceRoomBody({ selectedRoom, token, onLeaveRoom }: VoiceRoomBodyProps) {
+export function VoiceRoomBody({ selectedRoom, token, onLeaveRoom, onSettingsClick, onBack }: VoiceRoomBodyProps) {
   if (!token || !selectedRoom) {
     return (
       <Box
@@ -35,25 +35,27 @@ export function VoiceRoomBody({ selectedRoom, token, onLeaveRoom }: VoiceRoomBod
   }
 
   return (
-    <LiveKitRoom
-      serverUrl={LIVEKIT_URL}
-      token={token}
-      audio={false}
-      video={false}
-      onDisconnected={onLeaveRoom}
-    >
+    <>
       <RoomAudioRenderer />
-      <LiveKitRoomContent selectedRoom={selectedRoom} onLeaveRoom={onLeaveRoom} />
-    </LiveKitRoom>
+      <LiveKitRoomContent
+      selectedRoom={selectedRoom}
+      onLeaveRoom={onLeaveRoom}
+      onBack={onBack}
+      onSettingsClick={onSettingsClick} />
+    </>
   );
 }
 
 function LiveKitRoomContent({
   selectedRoom,
   onLeaveRoom,
+  onSettingsClick,
+  onBack
 }: {
   selectedRoom: RoomResponse;
   onLeaveRoom?: () => void;
+  onSettingsClick?: () => void;
+  onBack?: () => void;
 }) {
   const room = useRoomContext();
   const remoteParticipants = useParticipants();
@@ -66,9 +68,6 @@ function LiveKitRoomContent({
   const [micMuted, setMicMuted] = useState(true);
   const [deafened, setDeafened] = useState(false);
 
-  // --------------------------------------------------------------------------
-  // Incoming Data Channel Listener
-  // --------------------------------------------------------------------------
   useEffect(() => {
     if (!room) return;
 
@@ -77,7 +76,6 @@ function LiveKitRoomContent({
         const text = new TextDecoder().decode(payload);
         const data = JSON.parse(text);
 
-        // 1. New Chat Message (Text / Image / Whisper / Reply)
         if (data.type === 'CHAT_MESSAGE') {
           setMessages((prev) => {
             if (prev.some((m) => m.id === data.message.id)) return prev;
@@ -85,7 +83,6 @@ function LiveKitRoomContent({
           });
         }
 
-        // 2. Edit Message
         if (data.type === 'CHAT_EDIT') {
           setMessages((prev) =>
             prev.map((m) =>
@@ -94,7 +91,6 @@ function LiveKitRoomContent({
           );
         }
 
-        // 3. Chat Message Emoji Reaction
         if (data.type === 'CHAT_REACTION') {
           setMessages((prev) =>
             prev.map((m) => {
@@ -120,7 +116,6 @@ function LiveKitRoomContent({
           );
         }
 
-        // 4. Hand Raise Interaction
         if (data.type === 'HAND_RAISE') {
           setRaisedHandsSet((prev) => {
             const next = new Set(prev);
@@ -130,14 +125,12 @@ function LiveKitRoomContent({
           });
         }
 
-        // 5. Floating Reaction Emoji
         if (data.type === 'FLOATING_EMOJI') {
           setParticipantReactions((prev) => ({
             ...prev,
             [data.identity]: data.emoji,
           }));
 
-          // Clear floating reaction after 3 seconds
           setTimeout(() => {
             setParticipantReactions((prev) => {
               const updated = { ...prev };
@@ -147,7 +140,6 @@ function LiveKitRoomContent({
           }, 3000);
         }
 
-        // 6. Host Moderation: Force Mute / Kick
         if (data.type === 'FORCE_MUTE_PARTICIPANT') {
           if (data.targetIdentity === localParticipant?.identity) {
             if (data.kicked) {
@@ -169,16 +161,12 @@ function LiveKitRoomContent({
     };
   }, [room, localParticipant, onLeaveRoom]);
 
-  // Sync mic state on mount or change
   useEffect(() => {
     if (localParticipant) {
       setMicMuted(!localParticipant.isMicrophoneEnabled);
     }
   }, [localParticipant]);
 
-  // --------------------------------------------------------------------------
-  // Map LiveKit Remote Participants to Workspace Format
-  // --------------------------------------------------------------------------
   const participants: StageParticipant[] = useMemo(() => {
     return remoteParticipants.map((p) => {
       const isSelf = p.identity === localParticipant?.identity;
@@ -196,7 +184,7 @@ function LiveKitRoomContent({
       try {
         if (p.metadata) parsedMeta = JSON.parse(p.metadata);
       } catch {
-        // fallback empty
+        // Fallback default
       }
 
       return {
@@ -215,11 +203,6 @@ function LiveKitRoomContent({
     });
   }, [remoteParticipants, localParticipant, raisedHandsSet, participantReactions, selectedRoom]);
 
-  // --------------------------------------------------------------------------
-  // Outgoing LiveKit Dispatches
-  // --------------------------------------------------------------------------
-
-  // 1. Send Message
   const handleSendMessage = useCallback(
     async (
       text: string,
@@ -243,7 +226,6 @@ function LiveKitRoomContent({
         reactions: [],
       };
 
-      // Optimistic local update
       setMessages((prev) => [...prev, newMsg]);
 
       const payload = JSON.stringify({
@@ -251,11 +233,10 @@ function LiveKitRoomContent({
         message: { ...newMsg, isSelf: false },
       });
 
-      const publishOptions: { reliable: boolean; topic: string; destinationIdentities?: string[] } =
-        {
-          reliable: true,
-          topic: 'room_chat',
-        };
+      const publishOptions: { reliable: boolean; topic: string; destinationIdentities?: string[] } = {
+        reliable: true,
+        topic: 'room_chat',
+      };
 
       if (privateTo?.id) {
         publishOptions.destinationIdentities = [privateTo.id];
@@ -266,7 +247,6 @@ function LiveKitRoomContent({
     [localParticipant]
   );
 
-  // 2. Edit Message
   const handleEditMessage = useCallback(
     async (id: string, text: string) => {
       if (!localParticipant) return;
@@ -289,7 +269,6 @@ function LiveKitRoomContent({
     [localParticipant]
   );
 
-  // 3. React to Message
   const handleReactMessage = useCallback(
     async (id: string, emoji: string) => {
       if (!localParticipant) return;
@@ -334,7 +313,6 @@ function LiveKitRoomContent({
     [localParticipant]
   );
 
-  // 4. Microphone Toggle
   const handleToggleMic = async () => {
     if (!localParticipant) return;
     const nextMuted = !micMuted;
@@ -342,7 +320,6 @@ function LiveKitRoomContent({
     setMicMuted(nextMuted);
   };
 
-  // 5. Deafen Toggle
   const handleToggleDeafen = () => {
     const nextDeafened = !deafened;
     setDeafened(nextDeafened);
@@ -363,7 +340,6 @@ function LiveKitRoomContent({
     });
   };
 
-  // 6. Raise Hand Toggle
   const handleToggleRaiseHand = async () => {
     if (!localParticipant) return;
     const isCurrentlyRaised = raisedHandsSet.has(localParticipant.identity);
@@ -388,7 +364,6 @@ function LiveKitRoomContent({
     });
   };
 
-  // 7. Floating Emoji Reaction Broadcast
   const handleSendReaction = async (emoji: string) => {
     if (!localParticipant) return;
 
@@ -417,7 +392,6 @@ function LiveKitRoomContent({
     });
   };
 
-  // 8. Screen Share Toggle
   const handleToggleScreenShare = async () => {
     if (!localParticipant) return;
     try {
@@ -429,27 +403,29 @@ function LiveKitRoomContent({
   };
 
   return (
-    <Box sx={{ position: 'relative' }}>
-      <VoiceRoomWorkspace
-        participants={participants}
-        maxParticipants={selectedRoom.max_participants || 10}
-        topicPrompt={selectedRoom.topic || 'Welcome to the room'}
-        currentUserId={localParticipant?.identity || CURRENT_USER.id}
-        currentUserName={localParticipant?.name || CURRENT_USER.name}
-        micMuted={micMuted}
-        deafened={deafened}
-        handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
-        onToggleMic={handleToggleMic}
-        onToggleDeafen={handleToggleDeafen}
-        onToggleRaiseHand={handleToggleRaiseHand}
-        onToggleScreenShare={handleToggleScreenShare}
-        onSendReaction={handleSendReaction}
-        onLeave={onLeaveRoom}
-        initialMessages={messages}
-        onSendMessage={handleSendMessage}
-        onEditMessage={handleEditMessage}
-        onReactMessage={handleReactMessage}
-      />
-    </Box>
+    <VoiceRoomWorkspace
+      participants={participants}
+      maxParticipants={selectedRoom.max_participants || 10}
+      topicPrompt={selectedRoom.topic || 'Welcome to the room'}
+      currentUserId={localParticipant?.identity || CURRENT_USER.id}
+      currentUserName={localParticipant?.name || CURRENT_USER.name}
+      micMuted={micMuted}
+      deafened={deafened}
+      handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
+      onToggleMic={handleToggleMic}
+      onToggleDeafen={handleToggleDeafen}
+      onToggleRaiseHand={handleToggleRaiseHand}
+      onToggleScreenShare={handleToggleScreenShare}
+      onSendReaction={handleSendReaction}
+      onLeave={onLeaveRoom}
+      initialMessages={messages}
+      onSendMessage={handleSendMessage}
+      onEditMessage={handleEditMessage}
+      onReactMessage={handleReactMessage}
+      onSettingsClick={onSettingsClick}
+      onBack={onBack}
+    />
   );
 }
+
+export default VoiceRoomBody;

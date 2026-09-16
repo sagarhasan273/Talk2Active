@@ -1,9 +1,9 @@
-import type { Breakpoint } from '@mui/material/styles';
 import type { ContainerProps } from '@mui/material/Container';
+import type { Breakpoint } from '@mui/material/styles';
 
-import { useTheme } from '@mui/material/styles';
-import Container from '@mui/material/Container';
 import { Box, type BoxProps } from '@mui/material';
+import Container from '@mui/material/Container';
+import { useTheme } from '@mui/material/styles';
 
 import { useSettingsContext } from 'src/components/settings';
 
@@ -11,24 +11,22 @@ import { layoutClasses } from '../classes';
 
 // ----------------------------------------------------------------------
 
-type MainProps = BoxProps & {
-  isNavHorizontal?: boolean;
-};
-
-export function UserMain({ children, isNavHorizontal, sx, ...other }: MainProps) {
+export function UserMain({ children, sx, ...other }: BoxProps) {
   return (
     <Box
       component="main"
-      className={layoutClasses.main}
       sx={{
-        position: 'relative',
-        display: 'flex',
-        flex: '1 1 auto',
-        flexDirection: 'column',
-        ...(isNavHorizontal && {
-          '--layout-dashboard-content-pt': '40px',
-        }),
         backgroundColor: 'background.neutral',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '1 1 auto',
+        minHeight: 0,
+        height: {
+          xs: 'calc(100vh - var(--layout-header-mobile-height))',
+          sm: 'calc(100vh - var(--layout-header-desktop-height))',
+        },
+        overflow: 'hidden',
+        position: 'relative',
         ...sx,
       }}
       {...other}
@@ -37,6 +35,7 @@ export function UserMain({ children, isNavHorizontal, sx, ...other }: MainProps)
     </Box>
   );
 }
+
 type UserContentProps = ContainerProps & {
   disablePadding?: boolean;
 };

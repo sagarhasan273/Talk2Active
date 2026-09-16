@@ -1,34 +1,34 @@
 import type { RoomResponse } from '@/types/type-chat';
 
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import React, { useState, useEffect } from 'react';
 
-import { Close, Cancel, MicNone, RecordVoiceOver } from '@mui/icons-material';
+import { Cancel, Close, MicNone, RecordVoiceOver } from '@mui/icons-material';
 import {
-  Box,
-  Chip,
   alpha,
-  Button,
-  Dialog,
-  Slider,
-  MenuItem,
-  useTheme,
-  TextField,
-  Typography,
-  DialogTitle,
   Autocomplete,
+  Box,
+  Button,
+  Chip,
+  Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
+  MenuItem,
+  Slider,
+  TextField,
+  Typography,
+  useTheme,
 } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { varAlpha } from 'src/theme/styles';
-import { selectAccount } from 'src/core/slices';
 import { useCreateRoomMutation, useUpdateRoomMutation } from 'src/core/apis/api-chat';
+import { selectAccount } from 'src/core/slices';
+import { varAlpha } from 'src/theme/styles';
 
-import { Scrollbar } from 'src/components/scrollbar';
 import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
+import { Scrollbar } from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
 
@@ -243,7 +243,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
-      fullScreen={isMobile}
+      // fullScreen={isMobile}
       PaperProps={{
         sx: {
           borderRadius: isMobile ? 0 : 1,
@@ -269,7 +269,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       >
         <Box
           sx={{
-            p: isMobile ? 2 : 2.5,
+            p: 2,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -327,14 +327,14 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       <DialogContent sx={{ p: 0 }}>
         <Scrollbar
           sx={{
-            maxHeight: isMobile ? 'calc(100vh - 140px)' : '55vh',
+            maxHeight: 1,
           }}
         >
           <Box
             component="form"
             onSubmit={handleSubmit}
             sx={{
-              p: isMobile ? 1.5 : 2,
+              p: 1,
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -447,9 +447,6 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
             <Box sx={sectionSx}>
               <Typography sx={sectionLabelSx}>Settings</Typography>
-
-              {/* Level — editable on create, fixed on edit */}
-
 
               <Typography fontSize={12} color="text.secondary" mb={0.75}>
                 Skill Level

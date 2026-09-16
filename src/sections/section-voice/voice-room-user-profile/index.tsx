@@ -425,6 +425,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
             left: { sm: '50%' },
             transform: { xs: 'none', sm: 'translate(-50%, -50%) !important' },
             borderRadius: { xs: 1 },
+            height: 'fit-content',
             maxHeight: { xs: '90vh', sm: '88vh' },
             minHeight: { xs: '65vh', sm: 'auto' },
             overflow: 'hidden',

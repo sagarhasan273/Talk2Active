@@ -1,5 +1,5 @@
 
-export type SelectedTabType = 'find' | 'enter';
+export type SelectedTabType = 'room-list' | 'room-space';
 
 export interface VoiceParticipant {
   id?: string;

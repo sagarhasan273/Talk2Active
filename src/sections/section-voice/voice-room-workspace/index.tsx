@@ -38,6 +38,8 @@ type RoomWorkspaceProps = {
   ) => void;
   onEditMessage?: (id: string, text: string) => void;
   onReactMessage?: (id: string, emoji: string) => void;
+  onSettingsClick?: () => void;
+  onBack?: () => void;
 };
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
@@ -49,7 +51,6 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
   maxParticipants,
   topicPrompt,
   currentUserId,
-  currentUserName,
   micMuted = false,
   deafened = false,
   handRaised = false,
@@ -64,6 +65,8 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
   onSendMessage,
   onEditMessage,
   onReactMessage,
+  onSettingsClick,
+  onBack
 }) => {
   const theme = useTheme();
 
@@ -91,7 +94,8 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
     <>
       <Box
         sx={{
-          width: '100%',
+          width: 1,
+          height: 1,
           position: 'relative',
         }}
       >
@@ -101,37 +105,38 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
             flexDirection: { xs: 'column', md: 'row' },
             gap: 1,
             alignItems: 'stretch',
-            width: '100%',
-            height: { md: '75vh' },
+            width: 1,
+            height: { xs: 1, md: '75vh' },
             minHeight: { md: '65vh' },
           }}
         >
           {/* Main Voice, Presentation & Video Stage */}
-          <Box sx={{ flex: 1, minWidth: 0, display: 'flex', height: '100%' }}>
-            <RoomAudioStage
-              participants={participants}
-              maxParticipants={maxParticipants}
-              topicPrompt={topicPrompt}
-              micMuted={micMuted}
-              deafened={deafened}
-              handRaised={handRaised}
-              onChangePrompt={onChangePrompt}
-              onToggleMic={onToggleMic}
-              onToggleDeafen={onToggleDeafen}
-              onToggleRaiseHand={onToggleRaiseHand}
-              onToggleScreenShare={onToggleScreenShare}
-              onSendReaction={onSendReaction}
-              onToggleChat={() => {
-                setChatCollapsed((prev) => !prev);
-                setChatOpen(true);
-              }}
-              onLeave={onLeave}
-              onProfileClick={(p) => {
-                setSelectedUser(p);
-                setProfileDrawerOpen(true);
-              }}
-            />
-          </Box>
+          <RoomAudioStage
+            participants={participants}
+            maxParticipants={maxParticipants}
+            topicPrompt={topicPrompt}
+            micMuted={micMuted}
+            deafened={deafened}
+            handRaised={handRaised}
+            onChangePrompt={onChangePrompt}
+            onToggleMic={onToggleMic}
+            onToggleDeafen={onToggleDeafen}
+            onToggleRaiseHand={onToggleRaiseHand}
+            onToggleScreenShare={onToggleScreenShare}
+            onSendReaction={onSendReaction}
+            onToggleChat={() => {
+              setChatCollapsed((prev) => !prev);
+              setChatOpen(true);
+            }}
+            onLeave={onLeave}
+            onProfileClick={(p) => {
+              setSelectedUser(p);
+              setProfileDrawerOpen(true);
+            }}
+            onSettingsClick={onSettingsClick}
+            onBack={onBack}
+          />
+
 
           {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
           <Box
@@ -152,7 +157,7 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
                     height: '100%',
                     borderRadius: 1,
                     bgcolor: 'background.paper',
-                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',

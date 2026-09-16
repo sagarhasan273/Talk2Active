@@ -18,6 +18,7 @@ import { Snackbar } from 'src/components/snackbar';
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { CONFIG } from './config-global';
+import { LiveKitProvider } from './core/contexts/livekit-context';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 import { UserProvider } from './routes/route-components';
@@ -33,16 +34,18 @@ export default function App() {
         <Provider store={store}>
           <UserProvider>
             <AuthProvider>
-              <SettingsProvider settings={defaultSettings}>
-                <ThemeProvider>
-                  <MotionLazy>
-                    <Snackbar />
-                    <ProgressBar />
-                    <SettingsDrawer />
-                    <Router />
-                  </MotionLazy>
-                </ThemeProvider>
-              </SettingsProvider>
+              <LiveKitProvider>
+                <SettingsProvider settings={defaultSettings}>
+                  <ThemeProvider>
+                    <MotionLazy>
+                      <Snackbar />
+                      <ProgressBar />
+                      <SettingsDrawer />
+                      <Router />
+                    </MotionLazy>
+                  </ThemeProvider>
+                </SettingsProvider>
+              </LiveKitProvider>
             </AuthProvider>
           </UserProvider>
         </Provider>

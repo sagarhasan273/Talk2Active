@@ -1,4 +1,6 @@
-import type { Theme, SxProps, CSSObject } from '@mui/material/styles';
+// src/layouts/core/layout-section.tsx
+
+import type { CSSObject, SxProps, Theme } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
 import GlobalStyles from '@mui/material/GlobalStyles';
@@ -42,7 +44,19 @@ export function LayoutSection({
     <>
       {inputGlobalStyles}
 
-      <Box id="root__layout" className={layoutClasses.root} sx={sx}>
+      <Box
+        id="root__layout"
+        className={layoutClasses.root}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          minHeight: '100vh',
+          maxHeight: '100vh',
+          overflow: 'hidden',
+          ...sx,
+        }}
+      >
         {headerSection}
         {children}
         {footerSection}
