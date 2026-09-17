@@ -1,6 +1,5 @@
 import type { Theme } from '@mui/material/styles';
 
-import { RemoteParticipant, Room, RoomEvent } from 'livekit-client';
 import {
   AlertCircle,
   AlertTriangle,
@@ -16,7 +15,14 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Socket } from 'socket.io-client';
 
+import {
+  useGetHistoryQuery,
+  useSaveMessageMutation,
+  useToggleReactionMutation,
+  useUpdateMessageMutation,
+} from '@/core/apis';
 import { AllRelationsType } from '@/types/type-social';
 import {
   alpha,
@@ -30,16 +36,8 @@ import {
   useTheme,
 } from '@mui/material';
 
-// Import RTK Query Hooks
-import {
-  useGetHistoryQuery,
-  useSaveMessageMutation,
-  useToggleReactionMutation,
-  useUpdateMessageMutation,
-} from '@/core/apis';
-
 /* ------------------------------------------------------------------ */
-/*  Types                                                             */
+/* Types                                                              */
 /* ------------------------------------------------------------------ */
 
 type SystemType = 'info' | 'success' | 'warning' | 'error';
@@ -66,7 +64,7 @@ export interface ChatMessage {
 }
 
 export interface SocialChatProps {
-  livekitRoom?: Room;
+  socket?: Socket | null;
   friends?: AllRelationsType[];
   followers?: AllRelationsType[];
   following?: AllRelationsType[];
@@ -79,7 +77,7 @@ export interface SocialChatProps {
 const QUICK_REACTIONS: string[] = ['👍', '🎉', '❤️', '😂', '👀'];
 
 /* ------------------------------------------------------------------ */
-/*  Helpers                                                           */
+/* Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
 const getInitials = (name?: string): string => {
@@ -106,7 +104,7 @@ const systemColorMap = (t: Theme): Record<SystemType, string> => ({
 });
 
 /* ------------------------------------------------------------------ */
-/*  Message Bubble Subcomponent                                       */
+/* Message Bubble Component                                           */
 /* ------------------------------------------------------------------ */
 
 const MessageBubble = ({
@@ -400,11 +398,11 @@ const MessageBubble = ({
 };
 
 /* ------------------------------------------------------------------ */
-/*  Main SocialChat Component                                         */
+/* Main SocialChat Component                                          */
 /* ------------------------------------------------------------------ */
 
 export const SocialChat = ({
-  livekitRoom,
+  socket,
   friends = [],
   followers = [],
   following = [],
@@ -413,7 +411,6 @@ export const SocialChat = ({
   isLoading = false,
   onClose,
 }: SocialChatProps) => {
-
   const [tab, setTab] = useState<TabKey>('friends');
   const [activeFriend, setActiveFriend] = useState<AllRelationsType | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -423,15 +420,15 @@ export const SocialChat = ({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const friendId = activeFriend?.accountDetails?.userId || '';
 
-  // RTK Query Hooks
+  // RTK Query
   const { data: historyResponse, isFetching: fetchingHistory } = useGetHistoryQuery(friendId, {
     skip: !friendId,
+    refetchOnMountOrArgChange: true,
   });
   const [saveMessage] = useSaveMessageMutation();
   const [updateMessage] = useUpdateMessageMutation();
   const [toggleReaction] = useToggleReactionMutation();
 
-  // Set of approved friend IDs capable of 1-on-1 private messaging
   const friendIds = useMemo(
     () => new Set(friends.map((f) => f.accountDetails.userId)),
     [friends]
@@ -451,12 +448,11 @@ export const SocialChat = ({
     return map;
   }, [messages]);
 
-  // Keep feed scrolled to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Sync RTK Query history response to local state
+  // Load history into local state
   useEffect(() => {
     if (!activeFriend) {
       setMessages([]);
@@ -465,52 +461,56 @@ export const SocialChat = ({
     }
   }, [historyResponse, activeFriend, fetchingHistory]);
 
-  // Real-time updates via LiveKit Data Channel
+  /* ------------------------------------------------------------------ */
+  /* Real-Time Socket.io Listeners                                      */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!livekitRoom) return;
+    if (!socket) return;
 
-    const handleDataReceived = (payload: Uint8Array, participant?: RemoteParticipant) => {
-      try {
-        const decoded = new TextDecoder().decode(payload);
-        const data = JSON.parse(decoded);
-
-        if (data.type === 'CHAT_MESSAGE') {
-          // If this message belongs to active conversation, append
-          if (
-            activeFriend &&
-            (data.payload.authorId === activeFriend.accountDetails.userId ||
-              data.payload.recipientId === activeFriend.accountDetails.userId)
-          ) {
-            setMessages((prev) => [
-              ...prev,
-              { ...data.payload, isSelf: data.payload.authorId === currentUserId },
-            ]);
-          }
-        } else if (data.type === 'MESSAGE_EDIT') {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === data.payload.id
-                ? { ...m, text: data.payload.text, editedAt: data.payload.editedAt }
-                : m
-            )
-          );
-        } else if (data.type === 'MESSAGE_REACTION') {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === data.payload.id ? { ...m, reactions: data.payload.reactions } : m
-            )
-          );
-        }
-      } catch (err) {
-        console.error('Failed to parse LiveKit data packet', err);
+    const handleNewMessage = (incomingMsg: ChatMessage) => {
+      if (
+        activeFriend &&
+        (incomingMsg.authorId === activeFriend.accountDetails.userId ||
+          (incomingMsg as any).recipientId === activeFriend.accountDetails.userId)
+      ) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === incomingMsg.id)) return prev;
+          return [
+            ...prev,
+            { ...incomingMsg, isSelf: incomingMsg.authorId === currentUserId },
+          ];
+        });
       }
     };
 
-    livekitRoom.on(RoomEvent.DataReceived, handleDataReceived);
-    return () => {
-      livekitRoom.off(RoomEvent.DataReceived, handleDataReceived);
+    const handleMessageEdited = (editedMsg: ChatMessage) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editedMsg.id
+            ? { ...m, text: editedMsg.text, editedAt: editedMsg.editedAt }
+            : m
+        )
+      );
     };
-  }, [livekitRoom, activeFriend, currentUserId]);
+
+    const handleReactionToggled = (reactionData: { messageId: string; reactions: Reaction[] }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === reactionData.messageId ? { ...m, reactions: reactionData.reactions } : m
+        )
+      );
+    };
+
+    socket.on('receive_new_message', handleNewMessage);
+    socket.on('message_edited', handleMessageEdited);
+    socket.on('message_reaction', handleReactionToggled);
+
+    return () => {
+      socket.off('receive_new_message', handleNewMessage);
+      socket.off('message_edited', handleMessageEdited);
+      socket.off('message_reaction', handleReactionToggled);
+    };
+  }, [socket, activeFriend, currentUserId]);
 
   const handleSend = async () => {
     if (!draft.trim() || !activeFriend) return;
@@ -526,29 +526,18 @@ export const SocialChat = ({
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Optimistic Update
+    // 1. Instant local screen update
     setMessages((prev) => [...prev, newMsg]);
     setDraft('');
     setReplyingTo(null);
 
-    // 2. Publish real-time LiveKit Data Packet
-    if (livekitRoom?.state === 'connected') {
-      const packet = JSON.stringify({
-        type: 'CHAT_MESSAGE',
-        payload: { ...newMsg, recipientId: friendId },
-      });
-      livekitRoom.localParticipant
-        .publishData(new TextEncoder().encode(packet), { reliable: true })
-        .catch((err) => console.error('LiveKit publish error:', err));
-    }
-
-    // 3. Persist to Backend DB via RTK Query
+    // 2. Persist to MongoDB (Backend handles socket emission to recipient)
     saveMessage({
       userId: currentUserId,
       recipientId: friendId,
       text: newMsg.text,
       replyToId: newMsg.replyToId,
-    }).catch((err) => console.error('Failed to persist message:', err));
+    }).catch((err) => console.error('Failed to save message:', err));
   };
 
   const handleEdit = (id: string, text: string) => {
@@ -557,17 +546,10 @@ export const SocialChat = ({
       prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m))
     );
 
-    if (livekitRoom?.state === 'connected') {
-      const packet = JSON.stringify({ type: 'MESSAGE_EDIT', payload: { id, text, editedAt } });
-      livekitRoom.localParticipant
-        .publishData(new TextEncoder().encode(packet), { reliable: true })
-        .catch((err) => console.error('LiveKit publish edit error:', err));
-    }
-
     updateMessage({
       messageId: id,
       text,
-    }).catch((err) => console.error('Failed to patch edit:', err));
+    }).catch((err) => console.error('Failed to update message:', err));
   };
 
   const handleReact = (id: string, emoji: string) => {
@@ -597,20 +579,10 @@ export const SocialChat = ({
       })
     );
 
-    if (livekitRoom?.state === 'connected') {
-      const packet = JSON.stringify({
-        type: 'MESSAGE_REACTION',
-        payload: { id, reactions: updatedReactions },
-      });
-      livekitRoom.localParticipant
-        .publishData(new TextEncoder().encode(packet), { reliable: true })
-        .catch((err) => console.error('LiveKit publish reaction error:', err));
-    }
-
     toggleReaction({
       messageId: id,
       emoji,
-    }).catch((err) => console.error('Failed to post reaction:', err));
+    }).catch((err) => console.error('Failed to toggle reaction:', err));
   };
 
   return (
@@ -655,10 +627,9 @@ export const SocialChat = ({
                 <Typography
                   sx={{
                     fontSize: 10.5,
-                    color:
-                      isOnline(activeFriend.accountDetails.lastActive)
-                        ? '#2E9E5B'
-                        : 'text.secondary',
+                    color: isOnline(activeFriend.accountDetails.lastActive)
+                      ? '#2E9E5B'
+                      : 'text.secondary',
                   }}
                 >
                   {isOnline(activeFriend.accountDetails.lastActive) ? 'Online' : 'Offline'}
@@ -683,7 +654,7 @@ export const SocialChat = ({
               gap: 1,
             }}
           >
-            {fetchingHistory ? (
+            {fetchingHistory && messages.length === 0 ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 'auto' }}>
                 <CircularProgress size={24} />
               </Box>
@@ -793,7 +764,6 @@ export const SocialChat = ({
       ) : (
         /* Contact Directory */
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-          {/* Header */}
           <Box
             sx={{
               display: 'flex',
@@ -947,7 +917,6 @@ export const SocialChat = ({
             )}
           </Box>
 
-          {/* Explanatory Footer for non-friend tabs */}
           {tab !== 'friends' && (
             <Box
               sx={{

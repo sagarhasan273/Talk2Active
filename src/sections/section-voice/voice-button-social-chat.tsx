@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
 import { Badge, Box, CircularProgress, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
 import { useCredentials } from '@/core/slices';
+import { connectSocket } from '@/core/socket';
 import SocialChat from '@/sections/section-common/social-chat';
 
 /* ------------------------------------------------------------------ */
@@ -24,7 +26,6 @@ const VoiceButtonSocialChat = () => {
   const theme = useTheme();
   const { user } = useCredentials();
 
-  // Safely fallback if credentials are not ready
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
 
@@ -33,6 +34,7 @@ const VoiceButtonSocialChat = () => {
   const [chatWidth, setChatWidth] = useState(DEFAULT_WIDTH);
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
 
   const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
   const startX = useRef(0);
@@ -51,13 +53,35 @@ const VoiceButtonSocialChat = () => {
     skip: !currentUserId,
   });
 
-  // Handle both possible response shapes: { relationships: [...] } or { data: [...] }
   const friends = (friendsData as any)?.relationships || (friendsData as any)?.data || [];
   const followers = (followersData as any)?.relationships || (followersData as any)?.data || [];
   const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
 
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
 
+  /* ------------------------------------------------------------------ */
+  /* Socket Setup                                                       */
+  /* ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const s = connectSocket(currentUserId);
+    setSocketInstance(s);
+
+    const onReconnect = () => {
+      s.emit('join_global_chat', currentUserId);
+    };
+
+    s.on('connect', onReconnect);
+
+    return () => {
+      s.off('connect', onReconnect);
+    };
+  }, [currentUserId]);
+
+  /* ------------------------------------------------------------------ */
+  /* Resize Handlers                                                    */
+  /* ------------------------------------------------------------------ */
   const startResize = (
     direction: 'left' | 'right' | 'top',
     event: React.MouseEvent<HTMLDivElement>
@@ -129,9 +153,6 @@ const VoiceButtonSocialChat = () => {
         pointerEvents: 'none',
       }}
     >
-      {/* ============================================================ */}
-      {/* CHAT CONTAINER                                               */}
-      {/* ============================================================ */}
       {open && (
         <Box
           sx={{
@@ -218,6 +239,7 @@ const VoiceButtonSocialChat = () => {
               </Box>
             ) : (
               <SocialChat
+                socket={socketInstance}
                 friends={friends}
                 followers={followers}
                 following={following}
@@ -257,9 +279,7 @@ const VoiceButtonSocialChat = () => {
         </Box>
       )}
 
-      {/* ============================================================ */}
-      {/* FLOATING TRIGGER BUTTON                                      */}
-      {/* ============================================================ */}
+      {/* Floating Action Badge */}
       {!open && (
         <Badge
           color="error"
