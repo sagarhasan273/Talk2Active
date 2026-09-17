@@ -141,6 +141,8 @@ const MessageBubble = ({
             bgcolor: alpha(sysColor, 0.08),
             border: `1px solid ${alpha(sysColor, 0.2)}`,
             color: sysColor,
+            width: 'fit-content',
+            minWidth: "35%",
             maxWidth: '85%',
           }}
         >
@@ -168,8 +170,8 @@ const MessageBubble = ({
       sx={{
         position: 'relative',
         alignSelf: message.isSelf ? 'flex-end' : 'flex-start',
+        minWidth: '35%',
         maxWidth: '82%',
-        width: '100%',
       }}
     >
       {!message.isSelf && (
@@ -192,20 +194,22 @@ const MessageBubble = ({
               gap: 0.25,
               bgcolor: 'background.paper',
               border: `1px solid ${t.palette.divider}`,
-              borderRadius: 2,
+              borderRadius: 1,
               boxShadow: t.shadows[3],
               zIndex: 10,
               transform: 'translateY(-50%)',
             }}
           >
-            <IconButton
-              size="small"
-              onClick={(e) => setReactAnchor(e.currentTarget)}
-              sx={{ p: 0.5 }}
-              title="React"
-            >
-              <Smile size={14} />
-            </IconButton>
+            {!message.isSelf && (
+              <IconButton
+                size="small"
+                onClick={(e) => setReactAnchor(e.currentTarget)}
+                sx={{ p: 0.5 }}
+                title="React"
+              >
+                <Smile size={14} />
+              </IconButton>
+            )}
             <IconButton
               size="small"
               onClick={() => onReply?.(message)}
@@ -232,7 +236,7 @@ const MessageBubble = ({
             sx={{
               px: 1.25,
               py: 0.85,
-              borderRadius: 2,
+              borderRadius: 1,
               fontSize: 12.5,
               lineHeight: 1.4,
               color: message.isSelf ? '#fff' : 'text.primary',
@@ -763,7 +767,12 @@ export const SocialChat = ({
         </Box>
       ) : (
         /* Contact Directory */
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: 0,
+        }}>
           <Box
             sx={{
               display: 'flex',
@@ -833,7 +842,7 @@ export const SocialChat = ({
                 No {tab} found.
               </Typography>
             ) : (
-              dataByTab[tab].map((item) => {
+              dataByTab[tab]?.map((item) => {
                 const person = item.accountDetails;
                 const canChat = friendIds.has(person.userId);
 

@@ -363,11 +363,10 @@ export const RoomMessageBubble = ({
                     bgcolor: r.reactedBySelf
                       ? alpha(theme.palette.primary.main, 0.15)
                       : 'background.paper',
-                    border: `1px solid ${
-                      r.reactedBySelf
-                        ? theme.palette.primary.main
-                        : alpha(theme.palette.divider, 0.3)
-                    }`,
+                    border: `1px solid ${r.reactedBySelf
+                      ? theme.palette.primary.main
+                      : alpha(theme.palette.divider, 0.3)
+                      }`,
                     color: r.reactedBySelf
                       ? theme.palette.primary.main
                       : theme.palette.text.secondary,

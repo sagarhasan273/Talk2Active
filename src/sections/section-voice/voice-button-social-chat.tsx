@@ -53,9 +53,9 @@ const VoiceButtonSocialChat = () => {
     skip: !currentUserId,
   });
 
-  const friends = (friendsData as any)?.relationships || (friendsData as any)?.data || [];
-  const followers = (followersData as any)?.relationships || (followersData as any)?.data || [];
-  const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
+  const friends = (friendsData as any)?.data || [];
+  const followers = (followersData as any)?.data || [];
+  const following = (followingData as any)?.data || [];
 
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
 
@@ -227,7 +227,6 @@ const VoiceButtonSocialChat = () => {
               minHeight: 0,
               overflow: 'hidden',
               bgcolor: 'background.paper',
-              boxShadow: theme.shadows[16],
               borderRadius: 1,
               border: `1px solid ${theme.palette.divider}`,
               ...(isResizing && { transition: 'none !important' }),
