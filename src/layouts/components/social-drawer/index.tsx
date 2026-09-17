@@ -1,13 +1,16 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Badge } from '@mui/material';
+import { Badge, Box, CircularProgress } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
+import { useEffect, useState } from 'react';
+import { Socket } from 'socket.io-client';
 
+import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from 'src/core/apis';
+import { useCredentials, useMessagesTools } from 'src/core/slices';
+import { connectSocket } from 'src/core/socket';
 import { useBoolean } from 'src/hooks/use-boolean';
-
-import { useMessagesTools } from 'src/core/slices';
 
 import SocialChat from '../../../sections/section-common/social-chat';
 
@@ -17,8 +20,50 @@ export type SocialDrawerProps = IconButtonProps;
 
 export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
-
   const { isUnreadIndividualMessage } = useMessagesTools();
+
+  const { user } = useCredentials();
+  const currentUserId = user?.userId || '';
+  const currentUserName = user?.name || user?.username || 'You';
+
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+
+  // Queries
+  const { data: friendsData, isLoading: loadingFriends } = useGetFriendsQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+  const { data: followersData, isLoading: loadingFollowers } = useGetFollowersQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+  const { data: followingData, isLoading: loadingFollowing } = useGetFollowingQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+
+  const friends = (friendsData as any)?.relationships || (friendsData as any)?.data || [];
+  const followers = (followersData as any)?.relationships || (followersData as any)?.data || [];
+  const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
+
+  const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
+
+  /* ------------------------------------------------------------------ */
+  /* Socket Setup                                                       */
+  /* ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const s = connectSocket(currentUserId);
+    setSocketInstance(s);
+
+    const onReconnect = () => {
+      s.emit('join_global_chat', currentUserId);
+    };
+
+    s.on('connect', onReconnect);
+
+    return () => {
+      s.off('connect', onReconnect);
+    };
+  }, [currentUserId]);
 
   return (
     <>
@@ -63,11 +108,22 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
         slotProps={{ backdrop: { invisible: true } }}
         PaperProps={{ sx: { width: 1, maxWidth: 420 } }}
       >
-        <SocialChat
-          onClose={() => {
-            drawer.onFalse();
-          }}
-        />
+        {isAnyLoading && !friends.length && !followers.length && !following.length ? (
+          <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress size={26} />
+          </Box>
+        ) : (
+          <SocialChat
+            socket={socketInstance}
+            friends={friends}
+            followers={followers}
+            following={following}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            isLoading={isAnyLoading}
+            onClose={drawer.onFalse}
+          />
+        )}
       </Drawer>
     </>
   );

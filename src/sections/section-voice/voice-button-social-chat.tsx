@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Badge, Box, CircularProgress, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Badge, Box, CircularProgress, IconButton, SxProps, useMediaQuery, useTheme } from '@mui/material';
 import { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
@@ -22,7 +22,7 @@ const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */
 /* Component                                                          */
 /* ------------------------------------------------------------------ */
-const VoiceButtonSocialChat = () => {
+const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const theme = useTheme();
   const { user } = useCredentials();
 
@@ -35,6 +35,9 @@ const VoiceButtonSocialChat = () => {
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
   const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+
+  // Ref for the main chat window to detect outside clicks
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
   const startX = useRef(0);
@@ -136,6 +139,38 @@ const VoiceButtonSocialChat = () => {
     };
   }, [isResizing]);
 
+  /* ------------------------------------------------------------------ */
+  /* Click Outside (Clickaway) Listener                                 */
+  /* ------------------------------------------------------------------ */
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      // Do nothing if it's closed or currently being resized
+      if (!open || isResizing) return;
+
+      const target = event.target as Element;
+
+      // 1. Ignore if clicking inside the chat container
+      if (chatContainerRef.current?.contains(target)) return;
+
+      // 2. Ignore if clicking inside MUI Popovers/Portals (like the Emoji Picker)
+      if (target.closest('.MuiPopover-root') || target.closest('.MuiPopper-root')) return;
+
+      // 3. Otherwise, close the chat
+      setOpen(false);
+    };
+
+    if (open) {
+      // Listen on capture phase to ensure it triggers before other elements consume it
+      document.addEventListener('mousedown', handleClickOutside, true);
+      document.addEventListener('touchstart', handleClickOutside, true);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+    };
+  }, [open, isResizing]);
+
   return (
     <Box
       sx={{
@@ -155,6 +190,7 @@ const VoiceButtonSocialChat = () => {
     >
       {open && (
         <Box
+          ref={chatContainerRef} // <-- Attached the ref here to detect clicks
           sx={{
             position: 'relative',
             width: '100%',
@@ -227,6 +263,7 @@ const VoiceButtonSocialChat = () => {
               minHeight: 0,
               overflow: 'hidden',
               bgcolor: 'background.paper',
+              boxShadow: theme.shadows[16],
               borderRadius: 1,
               border: `1px solid ${theme.palette.divider}`,
               ...(isResizing && { transition: 'none !important' }),
@@ -304,6 +341,7 @@ const VoiceButtonSocialChat = () => {
               borderBottomLeftRadius: 0,
               borderBottomRightRadius: 0,
               '&:hover': { bgcolor: 'primary.dark' },
+              ...sx
             }}
           >
             <Diversity2Icon style={{ fontSize: 16, marginRight: 8 }} /> Social Messages
