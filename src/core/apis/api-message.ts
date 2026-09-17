@@ -11,7 +11,7 @@ import { STORAGE_KEY } from 'src/auth/context/jwt';
 /* ------------------------------------------------------------------ */
 
 export interface SendMessagePayload {
-  userId?: string;
+  userId?: string; // Optional if you pass it, but normally inferred from token
   recipientId: string;
   text: string;
   replyToId?: string;
@@ -27,6 +27,11 @@ export interface UpdateMessagePayload {
 export interface ToggleReactionPayload {
   messageId: string;
   emoji: string;
+}
+
+export interface ReadMessagesPayload {
+  userId1: string;
+  userId2: string;
 }
 
 export interface MessageResponse<T = any> {
@@ -67,6 +72,8 @@ export const messageApi = createApi({
         method: 'POST',
         body,
       }),
+      // We don't necessarily invalidate tags here because we update UI optimistically via Socket.io/State
+      // but leaving it in keeps things perfectly synced if a refresh is needed.
       invalidatesTags: ['chat-recall'],
     }),
 
@@ -89,6 +96,15 @@ export const messageApi = createApi({
       }),
       invalidatesTags: ['chat-recall'],
     }),
+
+    // Matches: POST /message/:userId1/:userId2/read
+    readMessages: builder.mutation<MessageResponse<null>, ReadMessagesPayload>({
+      query: ({ userId1, userId2 }) => ({
+        url: `message/${userId1}/${userId2}/read`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['chat-recall'],
+    }),
   }),
 });
 
@@ -97,4 +113,5 @@ export const {
   useSaveMessageMutation,
   useUpdateMessageMutation,
   useToggleReactionMutation,
+  useReadMessagesMutation,
 } = messageApi;

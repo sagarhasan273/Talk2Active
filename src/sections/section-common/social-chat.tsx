@@ -19,6 +19,7 @@ import { Socket } from 'socket.io-client';
 
 import {
   useGetHistoryQuery,
+  useReadMessagesMutation,
   useSaveMessageMutation,
   useToggleReactionMutation,
   useUpdateMessageMutation,
@@ -27,6 +28,7 @@ import { AllRelationsType } from '@/types/type-social';
 import {
   alpha,
   Avatar,
+  Badge,
   Box,
   CircularProgress,
   IconButton,
@@ -37,7 +39,7 @@ import {
 } from '@mui/material';
 
 /* ------------------------------------------------------------------ */
-/* Types                                                              */
+/*  Types                                                             */
 /* ------------------------------------------------------------------ */
 
 type SystemType = 'info' | 'success' | 'warning' | 'error';
@@ -77,7 +79,7 @@ export interface SocialChatProps {
 const QUICK_REACTIONS: string[] = ['👍', '🎉', '❤️', '😂', '👀'];
 
 /* ------------------------------------------------------------------ */
-/* Helpers                                                            */
+/*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
 const getInitials = (name?: string): string => {
@@ -104,7 +106,7 @@ const systemColorMap = (t: Theme): Record<SystemType, string> => ({
 });
 
 /* ------------------------------------------------------------------ */
-/* Message Bubble Component                                           */
+/*  Message Bubble Subcomponent                                       */
 /* ------------------------------------------------------------------ */
 
 const MessageBubble = ({
@@ -142,7 +144,7 @@ const MessageBubble = ({
             border: `1px solid ${alpha(sysColor, 0.2)}`,
             color: sysColor,
             width: 'fit-content',
-            minWidth: "35%",
+            minWidth: '35%',
             maxWidth: '85%',
           }}
         >
@@ -421,6 +423,9 @@ export const SocialChat = ({
   const [draft, setDraft] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
 
+  // Track unread messages per user ID natively in the component
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const friendId = activeFriend?.accountDetails?.userId || '';
 
@@ -432,6 +437,7 @@ export const SocialChat = ({
   const [saveMessage] = useSaveMessageMutation();
   const [updateMessage] = useUpdateMessageMutation();
   const [toggleReaction] = useToggleReactionMutation();
+  const [readMessages] = useReadMessagesMutation();
 
   const friendIds = useMemo(
     () => new Set(friends.map((f) => f.accountDetails.userId)),
@@ -461,7 +467,11 @@ export const SocialChat = ({
     if (!activeFriend) {
       setMessages([]);
     } else if (!fetchingHistory && historyResponse?.data) {
-      setMessages(historyResponse.data as ChatMessage[]);
+      const fetched = historyResponse.data as ChatMessage[];
+      setMessages((prev) => {
+        if (prev.length === 0 || prev[0]?.id !== fetched[0]?.id) return fetched;
+        return prev.length > fetched.length ? prev : fetched;
+      });
     }
   }, [historyResponse, activeFriend, fetchingHistory]);
 
@@ -472,18 +482,34 @@ export const SocialChat = ({
     if (!socket) return;
 
     const handleNewMessage = (incomingMsg: ChatMessage) => {
-      if (
+      const senderId = incomingMsg.authorId;
+      if (!senderId) return;
+
+      const isFromSelf = senderId === currentUserId;
+      const isCurrentlyActive =
         activeFriend &&
-        (incomingMsg.authorId === activeFriend.accountDetails.userId ||
-          (incomingMsg as any).recipientId === activeFriend.accountDetails.userId)
-      ) {
+        (senderId === activeFriend.accountDetails.userId ||
+          (incomingMsg as any).recipientId === activeFriend.accountDetails.userId);
+
+      if (isCurrentlyActive) {
+        // We are currently chatting with this user
         setMessages((prev) => {
           if (prev.some((m) => m.id === incomingMsg.id)) return prev;
-          return [
-            ...prev,
-            { ...incomingMsg, isSelf: incomingMsg.authorId === currentUserId },
-          ];
+          return [...prev, { ...incomingMsg, isSelf: isFromSelf }];
         });
+
+        // Mark immediately as read if it came from the other person
+        if (!isFromSelf) {
+          readMessages({ userId1: currentUserId, userId2: senderId }).catch(console.error);
+        }
+      } else {
+        // Message is from someone else while chat is closed or we are talking to someone else
+        if (!isFromSelf) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [senderId]: (prev[senderId] || 0) + 1,
+          }));
+        }
       }
     };
 
@@ -514,7 +540,28 @@ export const SocialChat = ({
       socket.off('message_edited', handleMessageEdited);
       socket.off('message_reaction', handleReactionToggled);
     };
-  }, [socket, activeFriend, currentUserId]);
+  }, [socket, activeFriend, currentUserId, readMessages]);
+
+  /* ------------------------------------------------------------------ */
+  /* Actions                                                            */
+  /* ------------------------------------------------------------------ */
+
+  const handleOpenChat = (item: AllRelationsType) => {
+    setActiveFriend(item);
+    const targetUserId = item.accountDetails.userId;
+
+    // Clear local unread badge count for this user
+    if (unreadCounts[targetUserId]) {
+      setUnreadCounts((prev) => {
+        const next = { ...prev };
+        delete next[targetUserId];
+        return next;
+      });
+    }
+
+    // Ping the backend to mark messages as seen
+    readMessages({ userId1: currentUserId, userId2: targetUserId }).catch(console.error);
+  };
 
   const handleSend = async () => {
     if (!draft.trim() || !activeFriend) return;
@@ -530,12 +577,12 @@ export const SocialChat = ({
       createdAt: new Date().toISOString(),
     };
 
-    // 1. Instant local screen update
+    // Optimistic UI update
     setMessages((prev) => [...prev, newMsg]);
     setDraft('');
     setReplyingTo(null);
 
-    // 2. Persist to MongoDB (Backend handles socket emission to recipient)
+    // Backend persists and routes to Socket.io
     saveMessage({
       userId: currentUserId,
       recipientId: friendId,
@@ -550,10 +597,8 @@ export const SocialChat = ({
       prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m))
     );
 
-    updateMessage({
-      messageId: id,
-      text,
-    }).catch((err) => console.error('Failed to update message:', err));
+    updateMessage({ messageId: id, text })
+      .catch((err) => console.error('Failed to update message:', err));
   };
 
   const handleReact = (id: string, emoji: string) => {
@@ -583,10 +628,8 @@ export const SocialChat = ({
       })
     );
 
-    toggleReaction({
-      messageId: id,
-      emoji,
-    }).catch((err) => console.error('Failed to toggle reaction:', err));
+    toggleReaction({ messageId: id, emoji })
+      .catch((err) => console.error('Failed to toggle reaction:', err));
   };
 
   return (
@@ -845,11 +888,12 @@ export const SocialChat = ({
               dataByTab[tab]?.map((item) => {
                 const person = item.accountDetails;
                 const canChat = friendIds.has(person.userId);
+                const unreadCount = unreadCounts[person.userId] || 0; // Check local unread state
 
                 return (
                   <Box
                     key={person.userId}
-                    onClick={() => canChat && setActiveFriend(item)}
+                    onClick={() => canChat && handleOpenChat(item)} // Changed to handleOpenChat
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -863,12 +907,19 @@ export const SocialChat = ({
                     }}
                   >
                     <Box sx={{ position: 'relative', flexShrink: 0 }}>
-                      <Avatar
-                        src={person.profilePhoto}
-                        sx={{ width: 36, height: 36, fontSize: 13, bgcolor: 'primary.main' }}
+                      <Badge
+                        color="error"
+                        badgeContent={unreadCount}
+                        invisible={unreadCount === 0}
+                        overlap="circular"
                       >
-                        {getInitials(person.name)}
-                      </Avatar>
+                        <Avatar
+                          src={person.profilePhoto}
+                          sx={{ width: 36, height: 36, fontSize: 13, bgcolor: 'primary.main' }}
+                        >
+                          {getInitials(person.name)}
+                        </Avatar>
+                      </Badge>
                       {isOnline(person.lastActive) && (
                         <Box
                           sx={{
@@ -886,10 +937,17 @@ export const SocialChat = ({
                     </Box>
 
                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 600 }} noWrap>
+                      <Typography sx={{ fontSize: 13, fontWeight: unreadCount > 0 ? 800 : 600 }} noWrap>
                         {person.name}
                       </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }} noWrap>
+                      <Typography
+                        sx={{
+                          fontSize: 11.5,
+                          color: unreadCount > 0 ? 'text.primary' : 'text.secondary',
+                          fontWeight: unreadCount > 0 ? 600 : 400
+                        }}
+                        noWrap
+                      >
                         {person.bio || `@${person.username}`}
                       </Typography>
                     </Box>
@@ -899,7 +957,7 @@ export const SocialChat = ({
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveFriend(item);
+                          handleOpenChat(item);
                         }}
                         sx={{ color: 'primary.main' }}
                         title={`Message ${person.name}`}
