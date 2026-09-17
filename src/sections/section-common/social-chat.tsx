@@ -1,5 +1,6 @@
 import type { Theme } from '@mui/material/styles';
 
+import { RemoteParticipant, Room, RoomEvent } from 'livekit-client';
 import {
   AlertCircle,
   AlertTriangle,
@@ -14,18 +15,28 @@ import {
   Smile,
   X,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AllRelationsType } from '@/types/type-social';
 import {
   alpha,
   Avatar,
   Box,
+  CircularProgress,
   IconButton,
   Popover,
   Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
+
+// Import RTK Query Hooks
+import {
+  useGetHistoryQuery,
+  useSaveMessageMutation,
+  useToggleReactionMutation,
+  useUpdateMessageMutation,
+} from '@/core/apis';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -34,20 +45,13 @@ import {
 type SystemType = 'info' | 'success' | 'warning' | 'error';
 type TabKey = 'friends' | 'followers' | 'following';
 
-interface Person {
-  id: string;
-  name: string;
-  headline: string;
-  online: boolean;
-}
-
-interface Reaction {
+export interface Reaction {
   emoji: string;
   count: number;
   reactedBySelf: boolean;
 }
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   text: string;
   isSelf?: boolean;
@@ -58,98 +62,41 @@ interface ChatMessage {
   editedAt?: number;
   reactions?: Reaction[];
   replyToId?: string;
+  createdAt?: string;
 }
 
-type ConversationMap = Record<string, ChatMessage[]>;
-
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                         */
-/* ------------------------------------------------------------------ */
-
-const ME = 'me';
-
-const FRIENDS: Person[] = [
-  { id: 'u1', name: 'Ariana Cole', headline: 'Product Design Lead', online: true },
-  { id: 'u2', name: 'Marcus Webb', headline: 'Backend Engineer', online: false },
-  { id: 'u3', name: 'Priya Nandan', headline: 'Growth Marketing', online: true },
-];
-
-const FOLLOWERS: Person[] = [
-  ...FRIENDS,
-  { id: 'u4', name: 'Diego Alvarez', headline: 'Founder, Loopwork', online: false },
-  { id: 'u5', name: 'Hana Kobayashi', headline: 'UX Researcher', online: true },
-];
-
-const FOLLOWING: Person[] = [
-  FRIENDS[0],
-  FRIENDS[2],
-  { id: 'u6', name: 'Tomasz Nowak', headline: 'DevRel, Fluxbase', online: false },
-];
+export interface SocialChatProps {
+  livekitRoom?: Room;
+  friends?: AllRelationsType[];
+  followers?: AllRelationsType[];
+  following?: AllRelationsType[];
+  currentUserId: string;
+  currentUserName?: string;
+  isLoading?: boolean;
+  onClose?: () => void;
+}
 
 const QUICK_REACTIONS: string[] = ['👍', '🎉', '❤️', '😂', '👀'];
-
-const SEED_MESSAGES: ConversationMap = {
-  u1: [
-    {
-      id: 'm0',
-      isSystem: true,
-      systemType: 'success',
-      text: 'You and Ariana Cole are now connected.',
-    },
-    {
-      id: 'm1',
-      authorId: 'u1',
-      authorName: 'Ariana Cole',
-      text: 'Hey! Did you get a chance to look at the new nav mocks?',
-      isSelf: false,
-    },
-    {
-      id: 'm2',
-      authorId: ME,
-      authorName: 'You',
-      text: 'Just opened them — the sidebar collapse feels much cleaner now.',
-      isSelf: true,
-      reactions: [{ emoji: '👍', count: 1, reactedBySelf: false }],
-    },
-  ],
-  u2: [
-    {
-      id: 'm1',
-      authorId: 'u2',
-      authorName: 'Marcus Webb',
-      text: 'Deploy is green ✅ — shipping to staging now.',
-      isSelf: false,
-    },
-  ],
-  u3: [
-    {
-      id: 'm1',
-      authorId: ME,
-      authorName: 'You',
-      text: 'Loved the campaign numbers this week.',
-      isSelf: true,
-    },
-    {
-      id: 'm2',
-      authorId: 'u3',
-      authorName: 'Priya Nandan',
-      text: 'Thank you! CTR is up 18% since the subject-line test.',
-      isSelf: false,
-    },
-  ],
-};
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-const initials = (name: string): string =>
-  name
+const getInitials = (name?: string): string => {
+  if (!name) return 'U';
+  return name
     .split(' ')
+    .filter(Boolean)
     .map((p) => p.charAt(0))
     .slice(0, 2)
     .join('')
     .toUpperCase();
+};
+
+const isOnline = (lastActive?: Date): boolean => {
+  if (!lastActive) return false;
+  return Date.now() - new Date(lastActive).getTime() < 5 * 60 * 1000;
+};
 
 const systemColorMap = (t: Theme): Record<SystemType, string> => ({
   info: t.palette.info.main,
@@ -158,54 +105,31 @@ const systemColorMap = (t: Theme): Record<SystemType, string> => ({
   error: '#D64545',
 });
 
-const getSystemMessageBg = (t: Theme, type: SystemType = 'info'): string =>
-  alpha(systemColorMap(t)[type], 0.08);
-
-const getSystemMessageBorder = (t: Theme, type: SystemType = 'info'): string =>
-  alpha(systemColorMap(t)[type], 0.2);
-
-const getSystemMessageColor = (t: Theme, type: SystemType = 'info'): string =>
-  systemColorMap(t)[type];
-
-const getSystemIcon = (type?: SystemType) => {
-  const p = { size: 14 };
-  if (type === 'success') return <CheckCircle {...p} />;
-  if (type === 'warning') return <AlertTriangle {...p} />;
-  if (type === 'error') return <AlertCircle {...p} />;
-  return <Info {...p} />;
-};
-
-const linkButtonSx = {
-  border: 'none',
-  bgcolor: 'transparent',
-  cursor: 'pointer',
-  fontWeight: 700,
-  p: 0,
-  fontSize: 11,
-  transition: 'all 0.15s ease',
-  '&:hover': { opacity: 1, textDecoration: 'underline' },
-} as const;
-
 /* ------------------------------------------------------------------ */
-/*  Message bubble                                                    */
+/*  Message Bubble Subcomponent                                       */
 /* ------------------------------------------------------------------ */
 
-interface MessageBubbleProps {
+const MessageBubble = ({
+  message,
+  replyTo,
+  onReply,
+  onEdit,
+  onReact,
+}: {
   message: ChatMessage;
   replyTo?: ChatMessage;
   onReply?: (message: ChatMessage) => void;
   onEdit?: (id: string, text: string) => void;
   onReact?: (id: string, emoji: string) => void;
-}
-
-const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBubbleProps) => {
+}) => {
   const t = useTheme();
-  const [hovered, setHovered] = useState<boolean>(false);
-  const [editing, setEditing] = useState<boolean>(false);
-  const [draft, setDraft] = useState<string>(message.text);
+  const [hovered, setHovered] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(message.text);
   const [reactAnchor, setReactAnchor] = useState<HTMLElement | null>(null);
 
   if (message.isSystem) {
+    const sysColor = systemColorMap(t)[message.systemType || 'info'];
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', my: 0.5 }}>
         <Box
@@ -216,36 +140,28 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
             px: 1.5,
             py: 0.5,
             borderRadius: 2,
-            bgcolor: getSystemMessageBg(t, message.systemType),
-            border: `1px solid ${getSystemMessageBorder(t, message.systemType)}`,
-            color: getSystemMessageColor(t, message.systemType),
+            bgcolor: alpha(sysColor, 0.08),
+            border: `1px solid ${alpha(sysColor, 0.2)}`,
+            color: sysColor,
             maxWidth: '85%',
           }}
         >
-          {getSystemIcon(message.systemType)}
+          {message.systemType === 'success' && <CheckCircle size={14} />}
+          {message.systemType === 'warning' && <AlertTriangle size={14} />}
+          {message.systemType === 'error' && <AlertCircle size={14} />}
+          {(!message.systemType || message.systemType === 'info') && <Info size={14} />}
           <Typography sx={{ fontSize: 11.5, fontWeight: 500 }}>{message.text}</Typography>
         </Box>
       </Box>
     );
   }
 
-  const saveEdit = (): void => {
-    const text = draft.trim();
-    if (text && text !== message.text) onEdit?.(message.id, text);
+  const handleSave = () => {
+    if (draft.trim() && draft !== message.text) {
+      onEdit?.(message.id, draft.trim());
+    }
     setEditing(false);
   };
-
-  const cancelEdit = (): void => {
-    setDraft(message.text);
-    setEditing(false);
-  };
-
-  const pickReaction = (emoji: string): void => {
-    onReact?.(message.id, emoji);
-    setReactAnchor(null);
-  };
-
-  const toolbarPositionSx = message.isSelf ? { left: 0 } : { right: 0 };
 
   return (
     <Box
@@ -272,7 +188,7 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
             sx={{
               position: 'absolute',
               top: -8,
-              ...toolbarPositionSx,
+              ...(message.isSelf ? { left: 0 } : { right: 0 }),
               display: 'flex',
               alignItems: 'center',
               gap: 0.25,
@@ -286,7 +202,7 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
           >
             <IconButton
               size="small"
-              onClick={(e: React.MouseEvent<HTMLButtonElement>) => setReactAnchor(e.currentTarget)}
+              onClick={(e) => setReactAnchor(e.currentTarget)}
               sx={{ p: 0.5 }}
               title="React"
             >
@@ -371,8 +287,8 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
                   value={draft}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key === 'Enter') saveEdit();
-                    if (e.key === 'Escape') cancelEdit();
+                    if (e.key === 'Enter') handleSave();
+                    if (e.key === 'Escape') setEditing(false);
                   }}
                   sx={{
                     bgcolor: alpha('#000', 0.06),
@@ -386,20 +302,18 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
                   }}
                 />
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Box
-                    component="button"
-                    onClick={saveEdit}
-                    sx={{ ...linkButtonSx, color: 'inherit' }}
+                  <Typography
+                    onClick={handleSave}
+                    sx={{ fontSize: 11, fontWeight: 700, cursor: 'pointer', color: 'inherit' }}
                   >
                     Save
-                  </Box>
-                  <Box
-                    component="button"
-                    onClick={cancelEdit}
-                    sx={{ ...linkButtonSx, color: 'inherit', opacity: 0.75 }}
+                  </Typography>
+                  <Typography
+                    onClick={() => setEditing(false)}
+                    sx={{ fontSize: 11, cursor: 'pointer', opacity: 0.75, color: 'inherit' }}
                   >
                     Cancel
-                  </Box>
+                  </Typography>
                 </Box>
               </Box>
             ) : (
@@ -424,11 +338,11 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
                 justifyContent: message.isSelf ? 'flex-end' : 'flex-start',
               }}
             >
-              {message.reactions!.map((r) => (
+              {message.reactions.map((r) => (
                 <Box
                   key={r.emoji}
                   component="button"
-                  onClick={() => pickReaction(r.emoji)}
+                  onClick={() => onReact?.(message.id, r.emoji)}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -442,8 +356,8 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
                       ? alpha(t.palette.primary.main, 0.12)
                       : (t.palette.background as any).neutral,
                     border: `1px solid ${r.reactedBySelf
-                        ? alpha(t.palette.primary.main, 0.3)
-                        : alpha(t.palette.divider, 0.4)
+                      ? alpha(t.palette.primary.main, 0.3)
+                      : alpha(t.palette.divider, 0.4)
                       }`,
                     color: r.reactedBySelf ? t.palette.primary.main : t.palette.text.secondary,
                   }}
@@ -470,7 +384,10 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
             <IconButton
               key={emoji}
               size="small"
-              onClick={() => pickReaction(emoji)}
+              onClick={() => {
+                onReact?.(message.id, emoji);
+                setReactAnchor(null);
+              }}
               sx={{ fontSize: 16 }}
             >
               {emoji}
@@ -483,32 +400,50 @@ const MessageBubble = ({ message, replyTo, onReply, onEdit, onReact }: MessageBu
 };
 
 /* ------------------------------------------------------------------ */
-/*  Chat panel for a single friend                                    */
+/*  Main SocialChat Component                                         */
 /* ------------------------------------------------------------------ */
 
-interface FriendChatPanelProps {
-  friend: Person;
-  messages: ChatMessage[];
-  onSend: (text: string, replyToId?: string) => void;
-  onEdit: (id: string, text: string) => void;
-  onReact: (id: string, emoji: string) => void;
-  onBack: () => void;
-  onClose: () => void;
-}
-
-const FriendChatPanel = ({
-  friend,
-  messages,
-  onSend,
-  onEdit,
-  onReact,
-  onBack,
+export const SocialChat = ({
+  livekitRoom,
+  friends = [],
+  followers = [],
+  following = [],
+  currentUserId,
+  currentUserName = 'You',
+  isLoading = false,
   onClose,
-}: FriendChatPanelProps) => {
-  const [draft, setDraft] = useState<string>('');
+}: SocialChatProps) => {
+
+  const [tab, setTab] = useState<TabKey>('friends');
+  const [activeFriend, setActiveFriend] = useState<AllRelationsType | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
 
-  const byId = useMemo<Record<string, ChatMessage>>(() => {
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const friendId = activeFriend?.accountDetails?.userId || '';
+
+  // RTK Query Hooks
+  const { data: historyResponse, isFetching: fetchingHistory } = useGetHistoryQuery(friendId, {
+    skip: !friendId,
+  });
+  const [saveMessage] = useSaveMessageMutation();
+  const [updateMessage] = useUpdateMessageMutation();
+  const [toggleReaction] = useToggleReactionMutation();
+
+  // Set of approved friend IDs capable of 1-on-1 private messaging
+  const friendIds = useMemo(
+    () => new Set(friends.map((f) => f.accountDetails.userId)),
+    [friends]
+  );
+
+  const dataByTab: Record<TabKey, AllRelationsType[]> = {
+    friends,
+    followers,
+    following,
+  };
+
+  const messageMap = useMemo(() => {
     const map: Record<string, ChatMessage> = {};
     messages.forEach((m) => {
       map[m.id] = m;
@@ -516,317 +451,136 @@ const FriendChatPanel = ({
     return map;
   }, [messages]);
 
-  const send = (): void => {
-    const text = draft.trim();
-    if (!text) return;
-    onSend(text, replyingTo?.id);
+  // Keep feed scrolled to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Sync RTK Query history response to local state
+  useEffect(() => {
+    if (!activeFriend) {
+      setMessages([]);
+    } else if (!fetchingHistory && historyResponse?.data) {
+      setMessages(historyResponse.data as ChatMessage[]);
+    }
+  }, [historyResponse, activeFriend, fetchingHistory]);
+
+  // Real-time updates via LiveKit Data Channel
+  useEffect(() => {
+    if (!livekitRoom) return;
+
+    const handleDataReceived = (payload: Uint8Array, participant?: RemoteParticipant) => {
+      try {
+        const decoded = new TextDecoder().decode(payload);
+        const data = JSON.parse(decoded);
+
+        if (data.type === 'CHAT_MESSAGE') {
+          // If this message belongs to active conversation, append
+          if (
+            activeFriend &&
+            (data.payload.authorId === activeFriend.accountDetails.userId ||
+              data.payload.recipientId === activeFriend.accountDetails.userId)
+          ) {
+            setMessages((prev) => [
+              ...prev,
+              { ...data.payload, isSelf: data.payload.authorId === currentUserId },
+            ]);
+          }
+        } else if (data.type === 'MESSAGE_EDIT') {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === data.payload.id
+                ? { ...m, text: data.payload.text, editedAt: data.payload.editedAt }
+                : m
+            )
+          );
+        } else if (data.type === 'MESSAGE_REACTION') {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === data.payload.id ? { ...m, reactions: data.payload.reactions } : m
+            )
+          );
+        }
+      } catch (err) {
+        console.error('Failed to parse LiveKit data packet', err);
+      }
+    };
+
+    livekitRoom.on(RoomEvent.DataReceived, handleDataReceived);
+    return () => {
+      livekitRoom.off(RoomEvent.DataReceived, handleDataReceived);
+    };
+  }, [livekitRoom, activeFriend, currentUserId]);
+
+  const handleSend = async () => {
+    if (!draft.trim() || !activeFriend) return;
+
+    const clientGeneratedId = `msg_${Date.now()}`;
+    const newMsg: ChatMessage = {
+      id: clientGeneratedId,
+      text: draft.trim(),
+      isSelf: true,
+      authorId: currentUserId,
+      authorName: currentUserName,
+      replyToId: replyingTo?.id,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 1. Optimistic Update
+    setMessages((prev) => [...prev, newMsg]);
     setDraft('');
     setReplyingTo(null);
+
+    // 2. Publish real-time LiveKit Data Packet
+    if (livekitRoom?.state === 'connected') {
+      const packet = JSON.stringify({
+        type: 'CHAT_MESSAGE',
+        payload: { ...newMsg, recipientId: friendId },
+      });
+      livekitRoom.localParticipant
+        .publishData(new TextEncoder().encode(packet), { reliable: true })
+        .catch((err) => console.error('LiveKit publish error:', err));
+    }
+
+    // 3. Persist to Backend DB via RTK Query
+    saveMessage({
+      userId: currentUserId,
+      recipientId: friendId,
+      text: newMsg.text,
+      replyToId: newMsg.replyToId,
+    }).catch((err) => console.error('Failed to persist message:', err));
   };
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 1.5,
-          py: 1.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-          <IconButton size="small" onClick={onBack} sx={{ color: 'text.secondary' }} title="Back">
-            <ArrowLeft size={16} />
-          </IconButton>
-          <Avatar sx={{ width: 30, height: 30, fontSize: 12, bgcolor: 'primary.main' }}>
-            {initials(friend.name)}
-          </Avatar>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color: 'text.primary' }} noWrap>
-              {friend.name}
-            </Typography>
-            <Typography
-              sx={{ fontSize: 10.5, color: friend.online ? '#2E9E5B' : 'text.secondary' }}
-            >
-              {friend.online ? 'Online' : 'Offline'}
-            </Typography>
-          </Box>
-        </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }} title="Close">
-          <X size={16} />
-        </IconButton>
-      </Box>
+  const handleEdit = (id: string, text: string) => {
+    const editedAt = Date.now();
+    setMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m))
+    );
 
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          px: 1.5,
-          py: 1.25,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-        }}
-      >
-        {messages.length === 0 ? (
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}
-          >
-            No messages yet — say hello to {friend.name.split(' ')[0]}!
-          </Typography>
-        ) : (
-          messages.map((m) => (
-            <MessageBubble
-              key={m.id}
-              message={m}
-              replyTo={m.replyToId ? byId[m.replyToId] : undefined}
-              onReply={setReplyingTo}
-              onEdit={onEdit}
-              onReact={onReact}
-            />
-          ))
-        )}
-      </Box>
+    if (livekitRoom?.state === 'connected') {
+      const packet = JSON.stringify({ type: 'MESSAGE_EDIT', payload: { id, text, editedAt } });
+      livekitRoom.localParticipant
+        .publishData(new TextEncoder().encode(packet), { reliable: true })
+        .catch((err) => console.error('LiveKit publish edit error:', err));
+    }
 
-      {replyingTo && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 1,
-            px: 1.5,
-            py: 0.75,
-            borderTop: (t: Theme) => `1px solid ${t.palette.primary.main}`,
-            bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
-          }}
-        >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: 'primary.main' }}>
-              Replying to {replyingTo.authorName}
-            </Typography>
-            <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', maxWidth: 220 }}>
-              {replyingTo.text}
-            </Typography>
-          </Box>
-          <IconButton
-            size="small"
-            onClick={() => setReplyingTo(null)}
-            sx={{ color: 'text.secondary' }}
-          >
-            <X size={13} />
-          </IconButton>
-        </Box>
-      )}
-
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-          p: 1.25,
-          borderTop: replyingTo ? 'none' : '1px solid',
-          borderColor: 'divider',
-          flexShrink: 0,
-        }}
-      >
-        <Box
-          component="input"
-          value={draft}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') send();
-          }}
-          placeholder={replyingTo ? `Reply to ${replyingTo.authorName}...` : 'Write a message...'}
-          sx={{
-            flex: 1,
-            mt: 'auto',
-            minWidth: 0,
-            bgcolor: 'background.neutral',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2,
-            px: 1.25,
-            py: 0.85,
-            fontSize: 12.5,
-            color: 'text.primary',
-            outline: 'none',
-          }}
-        />
-        <IconButton
-          onClick={send}
-          disabled={!draft.trim()}
-          size="small"
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'white',
-            '&:hover': { bgcolor: 'primary.dark' },
-            '&.Mui-disabled': { bgcolor: 'background.neutral', color: 'text.secondary' },
-          }}
-        >
-          <Send size={14} />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Contact row                                                       */
-/* ------------------------------------------------------------------ */
-
-interface ContactRowProps {
-  person: Person;
-  canChat: boolean;
-  onChat: () => void;
-}
-
-const ContactRow = ({ person, canChat, onChat }: ContactRowProps) => {
-  const t = useTheme();
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.25,
-        px: 1.5,
-        py: 1,
-        cursor: canChat ? 'pointer' : 'default',
-        borderRadius: 1.5,
-        transition: 'background-color 0.12s ease',
-        '&:hover': canChat ? { bgcolor: 'background.neutral' } : undefined,
-      }}
-      onClick={canChat ? onChat : undefined}
-    >
-      <Box sx={{ position: 'relative', flexShrink: 0 }}>
-        <Avatar sx={{ width: 36, height: 36, fontSize: 13, bgcolor: 'primary.main' }}>
-          {initials(person.name)}
-        </Avatar>
-        {person.online && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -1,
-              right: -1,
-              width: 9,
-              height: 9,
-              borderRadius: '50%',
-              bgcolor: '#2E9E5B',
-              border: `2px solid ${t.palette.background.paper}`,
-            }}
-          />
-        )}
-      </Box>
-
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }} noWrap>
-          {person.name}
-        </Typography>
-        <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }} noWrap>
-          {person.headline}
-        </Typography>
-      </Box>
-
-      {canChat ? (
-        <IconButton
-          size="small"
-          onClick={onChat}
-          sx={{ color: 'primary.main', flexShrink: 0 }}
-          title={`Message ${person.name}`}
-        >
-          <MessageCircle size={16} />
-        </IconButton>
-      ) : (
-        <Tooltip title="You can only chat with friends">
-          <Box sx={{ color: 'text.secondary', opacity: 0.4, display: 'flex', flexShrink: 0 }}>
-            <Lock size={14} />
-          </Box>
-        </Tooltip>
-      )}
-    </Box>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Main widget                                                       */
-/* ------------------------------------------------------------------ */
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'friends', label: 'Friends' },
-  { key: 'followers', label: 'Followers' },
-  { key: 'following', label: 'Following' },
-];
-
-const DATA_BY_TAB: Record<TabKey, Person[]> = {
-  friends: FRIENDS,
-  followers: FOLLOWERS,
-  following: FOLLOWING,
-};
-
-const SocialChat = ({ onClose }: { onClose?: () => void }) => {
-  const [tab, setTab] = useState<TabKey>('friends');
-  const [activeFriendId, setActiveFriendId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<ConversationMap>(SEED_MESSAGES);
-
-  const friendIds = useMemo<Set<string>>(() => new Set(FRIENDS.map((f) => f.id)), []);
-  const activeFriend: Person | undefined = activeFriendId
-    ? FRIENDS.find((f) => f.id === activeFriendId)
-    : undefined;
-
-  const openChat = (friend: Person): void => {
-    setActiveFriendId(friend.id);
-    setConversations((prev) => (prev[friend.id] ? prev : { ...prev, [friend.id]: [] }));
+    updateMessage({
+      messageId: id,
+      text,
+    }).catch((err) => console.error('Failed to patch edit:', err));
   };
 
-  const handleClosePanel = (): void => {
-    setActiveFriendId(null);
-    onClose?.();
-  };
+  const handleReact = (id: string, emoji: string) => {
+    let updatedReactions: Reaction[] = [];
 
-  const handleSend = (text: string, replyToId?: string): void => {
-    if (!activeFriendId) return;
-    setConversations((prev) => ({
-      ...prev,
-      [activeFriendId]: [
-        ...(prev[activeFriendId] || []),
-        {
-          id: `m${Date.now()}`,
-          authorId: ME,
-          authorName: 'You',
-          text,
-          isSelf: true,
-          replyToId,
-        },
-      ],
-    }));
-  };
-
-  const handleEdit = (id: string, text: string): void => {
-    if (!activeFriendId) return;
-    setConversations((prev) => ({
-      ...prev,
-      [activeFriendId]: (prev[activeFriendId] || []).map((m) =>
-        m.id === id ? { ...m, text, editedAt: Date.now() } : m
-      ),
-    }));
-  };
-
-  const handleReact = (id: string, emoji: string): void => {
-    if (!activeFriendId) return;
-    setConversations((prev) => ({
-      ...prev,
-      [activeFriendId]: (prev[activeFriendId] || []).map((m) => {
+    setMessages((prev) =>
+      prev.map((m) => {
         if (m.id !== id) return m;
-        const existing: Reaction[] = m.reactions || [];
-        const found = existing.find((r) => r.emoji === emoji);
-        const reactions: Reaction[] = found
-          ? existing
+        const current = m.reactions || [];
+        const existing = current.find((r) => r.emoji === emoji);
+
+        updatedReactions = existing
+          ? current
             .map((r) =>
               r.emoji === emoji
                 ? {
@@ -837,35 +591,209 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
                 : r
             )
             .filter((r) => r.count > 0)
-          : [...existing, { emoji, count: 1, reactedBySelf: true }];
-        return { ...m, reactions };
-      }),
-    }));
+          : [...current, { emoji, count: 1, reactedBySelf: true }];
+
+        return { ...m, reactions: updatedReactions };
+      })
+    );
+
+    if (livekitRoom?.state === 'connected') {
+      const packet = JSON.stringify({
+        type: 'MESSAGE_REACTION',
+        payload: { id, reactions: updatedReactions },
+      });
+      livekitRoom.localParticipant
+        .publishData(new TextEncoder().encode(packet), { reliable: true })
+        .catch((err) => console.error('LiveKit publish reaction error:', err));
+    }
+
+    toggleReaction({
+      messageId: id,
+      emoji,
+    }).catch((err) => console.error('Failed to post reaction:', err));
   };
 
   return (
     <Box
       sx={{
         bgcolor: 'background.paper',
-        height: 1,
-        width: 1,
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {activeFriend ? (
-        <FriendChatPanel
-          friend={activeFriend}
-          messages={conversations[activeFriend.id] || []}
-          onSend={handleSend}
-          onEdit={handleEdit}
-          onReact={handleReact}
-          onBack={() => setActiveFriendId(null)}
-          onClose={handleClosePanel}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+          {/* Active Chat Header */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 1.5,
+              py: 1.25,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              flexShrink: 0,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+              <IconButton size="small" onClick={() => setActiveFriend(null)} title="Back">
+                <ArrowLeft size={16} />
+              </IconButton>
+              <Avatar
+                src={activeFriend.accountDetails.profilePhoto}
+                sx={{ width: 32, height: 32, fontSize: 12, bgcolor: 'primary.main' }}
+              >
+                {getInitials(activeFriend.accountDetails.name)}
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700 }} noWrap>
+                  {activeFriend.accountDetails.name}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 10.5,
+                    color:
+                      isOnline(activeFriend.accountDetails.lastActive)
+                        ? '#2E9E5B'
+                        : 'text.secondary',
+                  }}
+                >
+                  {isOnline(activeFriend.accountDetails.lastActive) ? 'Online' : 'Offline'}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton size="small" onClick={onClose} title="Close">
+              <X size={16} />
+            </IconButton>
+          </Box>
+
+          {/* Chat Messages Feed */}
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              px: 1.5,
+              py: 1.25,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+            }}
+          >
+            {fetchingHistory ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 'auto' }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : messages.length === 0 ? (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', textAlign: 'center', mt: 3 }}
+              >
+                No messages yet. Say hello to {activeFriend.accountDetails.name?.split(' ')[0] ?? 'there'}!
+              </Typography>
+            ) : (
+              messages.map((m) => (
+                <MessageBubble
+                  key={m.id}
+                  message={m}
+                  replyTo={m.replyToId ? messageMap[m.replyToId] : undefined}
+                  onReply={setReplyingTo}
+                  onEdit={handleEdit}
+                  onReact={handleReact}
+                />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </Box>
+
+          {/* Replying Context Bar */}
+          {replyingTo && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                px: 1.5,
+                py: 0.75,
+                borderTop: (t: Theme) => `1px solid ${t.palette.primary.main}`,
+                bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+                flexShrink: 0,
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: 'primary.main' }}>
+                  Replying to {replyingTo.authorName}
+                </Typography>
+                <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', maxWidth: 220 }}>
+                  {replyingTo.text}
+                </Typography>
+              </Box>
+              <IconButton size="small" onClick={() => setReplyingTo(null)}>
+                <X size={13} />
+              </IconButton>
+            </Box>
+          )}
+
+          {/* Input Bar */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              p: 1.25,
+              borderTop: replyingTo ? 'none' : '1px solid',
+              borderColor: 'divider',
+              flexShrink: 0,
+            }}
+          >
+            <Box
+              component="input"
+              value={draft}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === 'Enter') handleSend();
+              }}
+              placeholder={
+                replyingTo
+                  ? `Reply to ${replyingTo.authorName}...`
+                  : 'Write a message...'
+              }
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                bgcolor: 'background.neutral',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                px: 1.25,
+                py: 0.85,
+                fontSize: 12.5,
+                color: 'text.primary',
+                outline: 'none',
+              }}
+            />
+            <IconButton
+              onClick={handleSend}
+              disabled={!draft.trim()}
+              size="small"
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
+                '&.Mui-disabled': { bgcolor: 'background.neutral', color: 'text.secondary' },
+              }}
+            >
+              <Send size={14} />
+            </IconButton>
+          </Box>
+        </Box>
       ) : (
-        <>
+        /* Contact Directory */
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+          {/* Header */}
           <Box
             sx={{
               display: 'flex',
@@ -875,21 +803,16 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
               py: 1.5,
               borderBottom: '1px solid',
               borderColor: 'divider',
+              flexShrink: 0,
             }}
           >
-            <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}>
-              Social
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={handleClosePanel}
-              sx={{ color: 'text.secondary' }}
-              title="Close"
-            >
+            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>Social</Typography>
+            <IconButton size="small" onClick={onClose}>
               <X size={16} />
             </IconButton>
           </Box>
 
+          {/* Navigation Tabs */}
           <Box
             sx={{
               display: 'flex',
@@ -898,59 +821,150 @@ const SocialChat = ({ onClose }: { onClose?: () => void }) => {
               flexShrink: 0,
             }}
           >
-            {TABS.map(({ key, label }) => (
-              <Box
-                key={key}
-                onClick={() => setTab(key)}
-                sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  py: 1,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  color: tab === key ? 'primary.main' : 'text.secondary',
-                  borderBottom: tab === key ? '2px solid' : '2px solid transparent',
-                  borderColor: tab === key ? 'primary.main' : 'transparent',
-                }}
-              >
-                {label}
-                <Box component="span" sx={{ ml: 0.5, opacity: 0.6 }}>
-                  ({DATA_BY_TAB[key].length})
+            {(['friends', 'followers', 'following'] as TabKey[]).map((key) => {
+              const count = dataByTab[key]?.length || 0;
+              return (
+                <Box
+                  key={key}
+                  onClick={() => setTab(key)}
+                  sx={{
+                    flex: 1,
+                    textAlign: 'center',
+                    py: 1,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: tab === key ? 'primary.main' : 'text.secondary',
+                    borderBottom: tab === key ? '2px solid' : '2px solid transparent',
+                    borderColor: tab === key ? 'primary.main' : 'transparent',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {key}
+                  <Box component="span" sx={{ ml: 0.5, opacity: 0.6 }}>
+                    ({count})
+                  </Box>
                 </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
 
+          {/* Directory List */}
           <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', py: 0.5 }}>
-            {DATA_BY_TAB[tab].map((person) => (
-              <ContactRow
-                key={person.id}
-                person={person}
-                canChat={friendIds.has(person.id)}
-                onChat={() => openChat(person)}
-              />
-            ))}
+            {isLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : dataByTab[tab].length === 0 ? (
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 3 }}
+              >
+                No {tab} found.
+              </Typography>
+            ) : (
+              dataByTab[tab].map((item) => {
+                const person = item.accountDetails;
+                const canChat = friendIds.has(person.userId);
+
+                return (
+                  <Box
+                    key={person.userId}
+                    onClick={() => canChat && setActiveFriend(item)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.25,
+                      px: 1.5,
+                      py: 1,
+                      cursor: canChat ? 'pointer' : 'default',
+                      borderRadius: 1.5,
+                      transition: 'background-color 0.12s ease',
+                      '&:hover': canChat ? { bgcolor: 'background.neutral' } : undefined,
+                    }}
+                  >
+                    <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                      <Avatar
+                        src={person.profilePhoto}
+                        sx={{ width: 36, height: 36, fontSize: 13, bgcolor: 'primary.main' }}
+                      >
+                        {getInitials(person.name)}
+                      </Avatar>
+                      {isOnline(person.lastActive) && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: -1,
+                            right: -1,
+                            width: 9,
+                            height: 9,
+                            borderRadius: '50%',
+                            bgcolor: '#2E9E5B',
+                            border: (t) => `2px solid ${t.palette.background.paper}`,
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography sx={{ fontSize: 13, fontWeight: 600 }} noWrap>
+                        {person.name}
+                      </Typography>
+                      <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }} noWrap>
+                        {person.bio || `@${person.username}`}
+                      </Typography>
+                    </Box>
+
+                    {canChat ? (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveFriend(item);
+                        }}
+                        sx={{ color: 'primary.main' }}
+                        title={`Message ${person.name}`}
+                      >
+                        <MessageCircle size={16} />
+                      </IconButton>
+                    ) : (
+                      <Tooltip title="Chat is only available with mutual friends">
+                        <Box
+                          sx={{
+                            color: 'text.secondary',
+                            opacity: 0.4,
+                            display: 'flex',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Lock size={14} />
+                        </Box>
+                      </Tooltip>
+                    )}
+                  </Box>
+                );
+              })
+            )}
           </Box>
 
+          {/* Explanatory Footer for non-friend tabs */}
           {tab !== 'friends' && (
             <Box
               sx={{
-                position: 'absolute',
-                bottom: 0,
                 px: 2,
                 py: 1,
-                border: '1px solid',
+                borderTop: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.neutral',
+                flexShrink: 0,
               }}
             >
               <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>
-                Chat is only available with friends. Connect with someone to start a conversation.
+                Chat is enabled only for mutual friends. Follow each other back to unlock conversations.
               </Typography>
             </Box>
           )}
-        </>
+        </Box>
       )}
     </Box>
   );

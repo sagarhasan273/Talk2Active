@@ -7,7 +7,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Block as BlockIcon,
   Close as CloseIcon,
-  PersonAdd as FollowIcon,
   Gavel as GavelIcon,
   Headset as HeadsetIcon,
   HeadsetOff as HeadsetOffIcon,
@@ -17,9 +16,8 @@ import {
   Report as ReportIcon,
   Share as ShareIcon,
   StarRounded as StarIcon,
-  PersonRemove as UnfollowIcon,
   CheckCircle as VerifiedIcon,
-  VolumeUp as VolumeUpIcon,
+  VolumeUp as VolumeUpIcon
 } from '@mui/icons-material';
 import {
   alpha,
@@ -49,6 +47,7 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { ButtonRelationshipToggle } from '@/components/buttons';
 import { fUsername } from 'src/utils/helper';
 import { StageParticipant } from '../voice-room-workspace/types';
 
@@ -940,16 +939,10 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
           {/* Social Follow & Block Actions */}
           {!isSelf && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
-              <Button
-                fullWidth
-                variant={isFollowing ? 'outlined' : 'contained'}
-                color="primary"
-                startIcon={isFollowing ? <UnfollowIcon /> : <FollowIcon />}
-                onClick={handleFollowToggle}
-                sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
-              >
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </Button>
+              <ButtonRelationshipToggle targetUser={{
+                id: userId,
+                name
+              }} />
               <Button
                 fullWidth
                 variant="outlined"

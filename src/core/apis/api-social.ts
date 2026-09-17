@@ -44,6 +44,11 @@ export const socialApi = createApi({
       providesTags: ['social-recall'],
     }),
 
+    getFollowers: builder.query<ResponseType, string>({
+      query: (userId) => `social/followers/${userId}`,
+      providesTags: ['social-recall'],
+    }),
+
     getFollowing: builder.query<ResponseType, string>({
       query: (userId) => `social/following/${userId}`,
       providesTags: ['social-recall'],
@@ -60,6 +65,7 @@ export const {
   useFollowMutation,
   useUnfollowMutation,
   useGetFriendsQuery,
+  useGetFollowersQuery,
   useGetFollowingQuery,
   useGetAllRelationsQuery,
 } = socialApi;

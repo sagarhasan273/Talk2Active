@@ -1,30 +1,63 @@
-import SocialChat from '@/sections/section-common/social-chat';
 import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Badge, Box, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Badge, Box, CircularProgress, IconButton, useMediaQuery, useTheme } from '@mui/material';
 
-/* ------------------------------------------------------------------ */ /* Resize limits */ /* ------------------------------------------------------------------ */ const MIN_WIDTH = 280;
+import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
+import { useCredentials } from '@/core/slices';
+import SocialChat from '@/sections/section-common/social-chat';
+
+/* ------------------------------------------------------------------ */
+/* Resize limits                                                      */
+/* ------------------------------------------------------------------ */
+const MIN_WIDTH = 280;
 const MAX_WIDTH = 500;
 const MIN_HEIGHT = 350;
 const MAX_HEIGHT = 650;
 const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 550;
-/* ------------------------------------------------------------------ */ /* Component */ /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/* Component                                                          */
+/* ------------------------------------------------------------------ */
 const VoiceButtonSocialChat = () => {
   const theme = useTheme();
+  const { user } = useCredentials();
+
+  // Safely fallback if credentials are not ready
+  const currentUserId = user?.userId || '';
+  const currentUserName = user?.name || user?.username || 'You';
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [open, setOpen] = useState(false);
   const [chatWidth, setChatWidth] = useState(DEFAULT_WIDTH);
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
+
   const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
   const startX = useRef(0);
   const startY = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
   const startHeight = useRef(DEFAULT_HEIGHT);
-  const totalUnreadFriends = 1;
+
+  // Queries
+  const { data: friendsData, isLoading: loadingFriends } = useGetFriendsQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+  const { data: followersData, isLoading: loadingFollowers } = useGetFollowersQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+  const { data: followingData, isLoading: loadingFollowing } = useGetFollowingQuery(currentUserId, {
+    skip: !currentUserId,
+  });
+
+  // Handle both possible response shapes: { relationships: [...] } or { data: [...] }
+  const friends = (friendsData as any)?.relationships || (friendsData as any)?.data || [];
+  const followers = (followersData as any)?.relationships || (followersData as any)?.data || [];
+  const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
+
+  const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
+
   const startResize = (
     direction: 'left' | 'right' | 'top',
     event: React.MouseEvent<HTMLDivElement>
@@ -42,44 +75,42 @@ const VoiceButtonSocialChat = () => {
 
   useEffect(() => {
     if (!isResizing) return undefined;
+
     const handleMouseMove = (event: MouseEvent) => {
       const direction = resizeDirection.current;
       if (!direction) return;
+
       if (direction === 'left' || direction === 'right') {
         const deltaX = event.clientX - startX.current;
         let newWidth = startWidth.current;
-        if (direction === 'left') {
-          newWidth = startWidth.current - deltaX;
-        } else {
-          newWidth = startWidth.current + deltaX;
-        }
+        newWidth = direction === 'left' ? startWidth.current - deltaX : startWidth.current + deltaX;
+
         const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
-        newWidth = Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth);
-        setChatWidth(newWidth);
+        setChatWidth(Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth));
       }
+
       if (direction === 'top') {
         const deltaY = startY.current - event.clientY;
-
-        let newHeight = startHeight.current + deltaY;
-        newHeight = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight));
-        setChatHeight(newHeight);
+        const newHeight = startHeight.current + deltaY;
+        setChatHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight)));
       }
     };
+
     const handleMouseUp = () => {
       resizeDirection.current = null;
       setIsResizing(false);
     };
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'ew-resize';
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = '';
-      document.body.style.cursor = '';
     };
-  }, [isResizing, chatWidth, chatHeight, isMobile]);
+  }, [isResizing]);
 
   return (
     <Box
@@ -87,24 +118,19 @@ const VoiceButtonSocialChat = () => {
         position: 'absolute',
         right: { xs: 0, sm: 10 },
         bottom: { xs: 0, sm: 0 },
-        top: {
-          xs: 0,
-          sm: 'auto',
-        },
+        top: { xs: 0, sm: 'auto' },
         left: { xs: 0, sm: 'auto' },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
         gap: 1.5,
         width: { xs: '100%', sm: `${chatWidth}px` },
-        height: {
-          xs: '100%',
-          sm: `${chatHeight}px`,
-        },
+        height: { xs: '100%', sm: `${chatHeight}px` },
         pointerEvents: 'none',
       }}
     >
-      {/* ============================================================ */} {/* CHAT */}
+      {/* ============================================================ */}
+      {/* CHAT CONTAINER                                               */}
       {/* ============================================================ */}
       {open && (
         <Box
@@ -119,11 +145,9 @@ const VoiceButtonSocialChat = () => {
             minHeight: 0,
           }}
         >
-          {/* ======================================================== */}
-          {/* TOP RESIZE HANDLE */}
-          {/* ======================================================== */}
+          {/* Top Resize Handle */}
           <Box
-            onMouseDown={(event) => startResize('top', event)}
+            onMouseDown={(e) => startResize('top', e)}
             sx={{
               display: { xs: 'none', sm: 'flex' },
               position: 'absolute',
@@ -133,8 +157,8 @@ const VoiceButtonSocialChat = () => {
               height: 10,
               zIndex: 1500,
               cursor: 'ns-resize',
-              alignItems: 'center',
               justifyContent: 'center',
+              alignItems: 'center',
               '&::after': {
                 content: '""',
                 width: 48,
@@ -146,11 +170,10 @@ const VoiceButtonSocialChat = () => {
               '&:hover::after': { backgroundColor: 'primary.main' },
             }}
           />
-          {/* ======================================================== */}
-          {/* LEFT RESIZE HANDLE */}
-          {/* ======================================================== */}
+
+          {/* Left Resize Handle */}
           <Box
-            onMouseDown={(event) => startResize('left', event)}
+            onMouseDown={(e) => startResize('left', e)}
             sx={{
               display: { xs: 'none', sm: 'flex' },
               position: 'absolute',
@@ -160,8 +183,8 @@ const VoiceButtonSocialChat = () => {
               width: 10,
               zIndex: 1500,
               cursor: 'ew-resize',
-              alignItems: 'center',
               justifyContent: 'center',
+              alignItems: 'center',
               '&::after': {
                 content: '""',
                 width: 3,
@@ -172,9 +195,9 @@ const VoiceButtonSocialChat = () => {
               },
               '&:hover::after': { backgroundColor: 'primary.main' },
             }}
-          />{' '}
-          {/* ======================================================== */} {/* CHAT CONTENT */}{' '}
-          {/* ======================================================== */}{' '}
+          />
+
+          {/* Inner Chat Box */}
           <Box
             sx={{
               width: '100%',
@@ -182,21 +205,33 @@ const VoiceButtonSocialChat = () => {
               minWidth: 0,
               minHeight: 0,
               overflow: 'hidden',
+              bgcolor: 'background.paper',
+              boxShadow: theme.shadows[16],
+              borderRadius: 1,
+              border: `1px solid ${theme.palette.divider}`,
               ...(isResizing && { transition: 'none !important' }),
             }}
           >
-            {' '}
-            <SocialChat
-              onClose={() => {
-                setOpen(false);
-              }}
-            />{' '}
+            {isAnyLoading && !friends.length && !followers.length && !following.length ? (
+              <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                <CircularProgress size={26} />
+              </Box>
+            ) : (
+              <SocialChat
+                friends={friends}
+                followers={followers}
+                following={following}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                isLoading={isAnyLoading}
+                onClose={() => setOpen(false)}
+              />
+            )}
           </Box>
-          {/* ======================================================== */}
-          {/* RIGHT RESIZE HANDLE */}
-          {/* ======================================================== */}
+
+          {/* Right Resize Handle */}
           <Box
-            onMouseDown={(event) => startResize('right', event)}
+            onMouseDown={(e) => startResize('right', e)}
             sx={{
               display: { xs: 'none', sm: 'flex' },
               position: 'absolute',
@@ -206,8 +241,8 @@ const VoiceButtonSocialChat = () => {
               width: 10,
               zIndex: 1500,
               cursor: 'ew-resize',
-              alignItems: 'center',
               justifyContent: 'center',
+              alignItems: 'center',
               '&::after': {
                 content: '""',
                 width: 3,
@@ -222,33 +257,30 @@ const VoiceButtonSocialChat = () => {
         </Box>
       )}
 
+      {/* ============================================================ */}
+      {/* FLOATING TRIGGER BUTTON                                      */}
+      {/* ============================================================ */}
       {!open && (
         <Badge
           color="error"
-          badgeContent={totalUnreadFriends}
+          badgeContent={0}
           overlap="circular"
           sx={{
             pointerEvents: 'auto',
             position: 'absolute',
             right: { xs: 0, sm: 0 },
             bottom: { xs: 0, sm: 0 },
-            top: { xs: 0, sm: 'auto' },
-            left: { xs: 0, sm: 'auto' },
             display: { xs: 'none', sm: 'flex' },
-            flexDirection: 'column',
-            gap: 1.5,
           }}
         >
           <IconButton
-            onClick={() => setOpen((value) => !value)}
+            onClick={() => setOpen(true)}
             size="small"
             sx={{
               bgcolor: 'primary.main',
               color: '#fff',
-              textTransform: 'none',
-              fontSize: 16,
               borderRadius: 1,
-              px: 4,
+              px: 3,
               py: 1,
               borderBottomLeftRadius: 0,
               borderBottomRightRadius: 0,
@@ -262,4 +294,5 @@ const VoiceButtonSocialChat = () => {
     </Box>
   );
 };
+
 export default VoiceButtonSocialChat;
