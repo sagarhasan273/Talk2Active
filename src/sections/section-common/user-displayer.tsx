@@ -18,7 +18,7 @@ import {
   useTheme
 } from '@mui/material';
 import { useState } from 'react';
-import DialogReportUser from './dialog-report-user';
+import DialogReportUser from '../../components/dialogs/dialog-report-user';
 
 
 
@@ -80,9 +80,11 @@ export const UserDisplayer = ({
   ];
 
   const handleOpenReport = () => {
-    onClose(); // Closes the user profile card first
+    onClose();
     setReportOpen(true);
+    console.log(reportOpen);
   };
+
 
   return (
     <>

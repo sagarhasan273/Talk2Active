@@ -59,6 +59,8 @@ export const VoiceRoomCard = ({
   const [room, setRoom] = useState(roomData);
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
+  const openUserDisplayer = useBoolean();
+
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
 
@@ -81,7 +83,6 @@ export const VoiceRoomCard = ({
   const handleAvatarClick = (e: React.MouseEvent, rawParticipant: any) => {
     e.stopPropagation();
     const targetUser = rawParticipant?.user || rawParticipant;
-
     setSelectedUser({
       userId: targetUser?.userId,
       name: targetUser?.name || 'User',
@@ -96,9 +97,8 @@ export const VoiceRoomCard = ({
       isFollowing: targetUser?.isFollowing,
       isBlocked: targetUser?.isBlocked,
     });
+    openUserDisplayer.onTrue();
   };
-
-  console.log(selectedUser)
 
   return (
     <>
@@ -349,10 +349,10 @@ export const VoiceRoomCard = ({
       {/* User Displayer Profile Modal */}
       {selectedUser && (
         <UserDisplayer
-          open={Boolean(selectedUser)}
+          open={openUserDisplayer.value}
           user={selectedUser}
           currentUserId={currentUserId}
-          onClose={() => setSelectedUser(null)}
+          onClose={openUserDisplayer.onFalse}
           onToggleFollow={onToggleFollow}
           onBlockUser={onBlockUser}
         />

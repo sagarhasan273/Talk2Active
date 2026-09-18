@@ -22,6 +22,7 @@ import { useState } from 'react';
 
 const SUGGESTED_REASONS = [
   'Inappropriate language or harassment',
+  'Teaser or humiliating',
   'Mic spamming / disruptive audio',
   'Impersonation or fake account',
   'Spamming links / advertising',
@@ -67,7 +68,7 @@ export function DialogReportUser({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 2.5,
+          borderRadius: 1,
           bgcolor: isDark ? alpha(theme.palette.background.paper, 0.96) : '#ffffff',
           backdropFilter: 'blur(16px)',
           border: '1px solid',
@@ -127,6 +128,7 @@ export function DialogReportUser({
                 fontSize: 11.5,
                 fontWeight: 600,
                 borderRadius: 1,
+                color: 'text.primary',
                 bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
                 border: '1px solid',
                 borderColor: theme.palette.divider,
