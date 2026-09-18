@@ -1,6 +1,8 @@
+// src/sections/section-voice/voice-room-card/room-card-creation.tsx
+
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import { alpha, Box, Button, Stack, Typography, useTheme } from '@mui/material';
+import RadioRoundedIcon from '@mui/icons-material/RadioRounded';
+import { alpha, Box, Button, Paper, Stack, Typography, useTheme } from '@mui/material';
 
 type RoomCardCreationProps = {
   onCreateRoom: () => void;
@@ -8,138 +10,120 @@ type RoomCardCreationProps = {
 
 export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   return (
-    <Box
+    <Paper
       onClick={onCreateRoom}
+      elevation={0}
       sx={{
-        position: 'relative',
-        p: { xs: 1.5, sm: 2 },
-        borderRadius: 1,
-        bgcolor: 'background.paper',
-        border: '1px dashed',
-        borderColor:
-          theme.palette.mode === 'dark'
-            ? alpha(theme.palette.primary.main, 0.3)
-            : alpha(theme.palette.primary.main, 0.25),
-        cursor: 'pointer',
+        height: 270,
+        minHeight: 270,
+        maxHeight: 270,
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justify: 'space-between',
-        transition: 'all 200ms ease-in-out',
-        width: '100%',
-        maxWidth: 600,
-        height: 260,
-        minHeight: 240,
-        maxHeight: 280,
+        justifyContent: 'space-between',
+        p: 2,
+        borderRadius: 1,
+        cursor: 'pointer',
+        userSelect: 'none',
+        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.04) : alpha(theme.palette.primary.main, 0.02),
+        border: '1.5px dashed',
+        borderColor: alpha(theme.palette.primary.main, isDark ? 0.35 : 0.28),
+        transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           borderColor: 'primary.main',
-          bgcolor:
-            theme.palette.mode === 'dark'
-              ? alpha(theme.palette.primary.main, 0.05)
-              : alpha(theme.palette.primary.main, 0.02),
-          boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
-        },
-        '&:active': {
-          transform: 'scale(0.985)',
+          bgcolor: isDark ? alpha(theme.palette.primary.main, 0.08) : alpha(theme.palette.primary.main, 0.04),
+          boxShadow: `0 12px 28px -4px ${alpha(theme.palette.primary.main, 0.16)}`,
+          '& .creation-icon-badge': {
+            transform: 'scale(1.08)',
+            bgcolor: 'primary.main',
+            color: '#fff',
+          },
         },
       }}
     >
-      <Stack spacing={2} sx={{ height: '100%' }}>
-        {/* Top Header Badge */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Box
-            sx={{
-              px: 1,
-              py: 0.3,
-              borderRadius: 1,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              color: 'primary.main',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            <GraphicEqIcon sx={{ fontSize: 14 }} />
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{ fontSize: 10, letterSpacing: 0.4 }}
-            >
-              HOST YOUR OWN
-            </Typography>
-          </Box>
-        </Stack>
-
-        {/* Central Callout Area */}
+      {/* Top Banner */}
+      <Stack direction="row" alignItems="center">
         <Box
           sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
+            px: 0.85,
+            py: 0.25,
+            borderRadius: 1,
+            bgcolor: alpha(theme.palette.primary.main, 0.12),
+            color: 'primary.main',
+            display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            py: 1,
+            gap: 0.5,
           }}
         >
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
-              color: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 1.5,
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-            }}
-          >
-            <AddRoundedIcon sx={{ fontSize: 28 }} />
-          </Box>
-
-          <Typography
-            variant="subtitle1"
-            fontWeight={800}
-            sx={{ color: 'text.primary', lineHeight: 1.2 }}
-          >
-            Start a Voice Room
-          </Typography>
-
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.secondary', mt: 0.75, maxWidth: 240, lineHeight: 1.4 }}
-          >
-            Can&lsquo;t find the topic you want? Host your own conversation space and invite others.
+          <RadioRoundedIcon sx={{ fontSize: 13 }} />
+          <Typography variant="caption" sx={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.5 }}>
+            HOST STAGE
           </Typography>
         </Box>
+      </Stack>
 
-        {/* Footer Action Button */}
-        <Button
-          fullWidth
-          size="small"
-          variant="contained"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCreateRoom();
-          }}
-          startIcon={<AddRoundedIcon />}
+      {/* Central Illustration Area */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          px: 1,
+        }}
+      >
+        <Box
+          className="creation-icon-badge"
           sx={{
-            borderRadius: 1,
-            textTransform: 'none',
-            fontWeight: 700,
-            py: 2,
-            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-            '&:hover': {
-              boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
-            },
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            bgcolor: alpha(theme.palette.primary.main, 0.12),
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 1.25,
+            transition: 'all 0.2s ease',
           }}
         >
-          Create room
-        </Button>
-      </Stack>
-    </Box>
+          <AddRoundedIcon sx={{ fontSize: 26 }} />
+        </Box>
+
+        <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+          Create Voice Room
+        </Typography>
+
+        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 210, lineHeight: 1.35 }}>
+          Pick languages, topic, and invite peers to join your discussion.
+        </Typography>
+      </Box>
+
+      {/* Action Button */}
+      <Button
+        fullWidth
+        size="small"
+        variant="contained"
+        startIcon={<AddRoundedIcon sx={{ fontSize: 18 }} />}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCreateRoom();
+        }}
+        sx={{
+          height: 38,
+          borderRadius: 1.25,
+          textTransform: 'none',
+          fontWeight: 700,
+          fontSize: 13,
+          boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.28)}`,
+        }}
+      >
+        Start Room
+      </Button>
+    </Paper>
   );
 };

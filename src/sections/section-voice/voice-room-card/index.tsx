@@ -1,18 +1,34 @@
-import { useState, useEffect } from 'react';
+// src/sections/section-voice/voice-room-card/index.tsx
 
-import { DisabledByDefaultRounded } from '@mui/icons-material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { alpha, AvatarGroup, Box, Button, Chip, Stack, Typography, useTheme } from '@mui/material';
+import { useEffect, useState } from 'react';
 
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import {
+  alpha,
+  Avatar,
+  AvatarGroup,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme
+} from '@mui/material';
+
+import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
-import { AvatarUser } from 'src/components/avatar-user';
 
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { ImageLightbox } from './image-lightbox';
 import { RoomParticipantsDialog } from './room-card-dialog';
-import { getLevelColor } from './styles';
+import { getLevelColor, livePulse } from './styles';
 
+
+import { Label, ParticipantLevel } from '@/components/label';
 import type { VoiceRoomCardProps } from './types';
 
 type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
@@ -31,159 +47,153 @@ export const VoiceRoomCard = ({
   onRoomUpdated,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [room, setRoom] = useState(roomData);
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
-
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
 
-  // Keep internal state in sync if prop changes from parent or RTK Query refetch
   useEffect(() => {
     setRoom(roomData);
   }, [roomData]);
 
-  // Derived Values
   const hostId = room?.host?.userId;
   const participants = room?.participants || [];
-
   const allUsers = participants.map((p) => ({
     ...p,
     isHost: Boolean(hostId && (p?.user?.userId === hostId || (p as any)?.userId === hostId)),
   }));
 
   const max = room?.max_participants ?? 0;
-  const isFull = allUsers.length >= max;
+  const isFull = allUsers.length >= max && max > 0;
   const levelColor = getLevelColor(room?.level);
-
-  // The viewer only gets management controls in the dialog if they are the host
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
-
-  const openLightbox = (src: string, name: string) => {
-    participantsOpen.onFalse();
-    setLightbox({ src, name });
-  };
-
-  const handleRemoveParticipant = (userId: string) => {
-    onRemoveParticipant?.(room.roomId, userId);
-    // Optimistically remove participant locally
-    setRoom((prev) => ({
-      ...prev,
-      participants: (prev.participants || []).filter(
-        (p) => ![p?.user?.userId, (p as any)?.userId].includes(userId)
-      ),
-    }));
-  };
-
-  const handleTransferHost = (userId: string) => {
-    onTransferHost?.(room.roomId, userId);
-  };
-
-  const handleEditRoom = () => {
-    participantsOpen.onFalse();
-    editRoomOpen.onTrue();
-  };
-
-  const handleRoomUpdated = (updatedRoomData: any) => {
-    setRoom((prev) => ({ ...prev, ...updatedRoomData }));
-    onRoomUpdated?.(updatedRoomData);
-  };
 
   return (
     <>
-      <Box
+      <Paper
         onClick={participantsOpen.onTrue}
+        elevation={0}
         sx={{
-          height: 260,
-          minHeight: 240,
-          maxHeight: 280,
-          position: 'relative',
-          p: { xs: 1.5, sm: 2 },
+          height: 270,
+          minHeight: 270,
+          maxHeight: 270,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          p: 2,
           borderRadius: 1,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
+          position: 'relative',
           cursor: 'pointer',
+          userSelect: 'none',
+          bgcolor: isDark ? alpha(theme.palette.background.paper, 0.85) : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.07),
+          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: isDark
+            ? '0 4px 20px -2px rgba(0, 0, 0, 0.45)'
+            : '0 4px 20px -2px rgba(145, 158, 171, 0.12)',
           '&:hover': {
-            borderColor: alpha(levelColor, 0.5),
-            boxShadow: `0 2px 12px ${alpha(levelColor, 0.12)}`,
+            borderColor: alpha(levelColor, 0.45),
+            boxShadow: `0 12px 32px -4px ${alpha(levelColor, 0.16)}`,
           },
         }}
       >
-        {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            {(room.languages?.length ? room.languages : ['unknown', 'unknown'])
-              .slice(0, 2)
-              .map((language, index) => (
-                <Chip
-                  key={`${language}-${index}`}
-                  label={language !== 'unknown' ? fgetLanguageName(language) : 'Unknown language'}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    height: 22,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    borderRadius: 1,
-                  }}
-                />
-              ))}
+        {/* Top Tag & Status Row */}
+        <Box>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1.25}>
+            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden' }}>
+              {(room.languages?.length ? room.languages : ['en'])
+                .slice(0, 2)
+                .map((lang, index) => (
+                  <Label
+                    key={`${lang}-${index}`}
+                    label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
+                    size="small"
+                    color='primary'
+                    sx={{
+                      borderRadius: 1,
+                      bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+                    }}
+                  />
+                ))}
 
-            <Stack direction="row" alignItems="center" gap={0.5}>
+
+              {room?.level && <ParticipantLevel
+                value={room.level}
+                label={room.level}
+                showEmoji={true}
+                size="small"
+                sx={{
+                  transform: 'none !important',
+                  border: '1px solid',
+                  borderColor: theme.palette.divider,
+                  bgcolor: 'transparent',
+                  color: theme.palette.text.secondary,
+                  transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                }}
+              />}
+            </Stack>
+
+            {room?.isActive && (
               <Box
                 sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: levelColor,
-                }}
-              />
-
-              <Typography
-                variant="caption"
-                fontWeight={700}
-                sx={{
-                  color: levelColor,
-                  textTransform: 'capitalize',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 0.85,
+                  py: 0.2,
+                  borderRadius: 1,
+                  bgcolor: alpha(theme.palette.success.main, 0.12),
+                  color: 'success.main',
+                  flexShrink: 0,
                 }}
               >
-                {room?.level}
-              </Typography>
-            </Stack>
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                    animation: `${livePulse} 1.8s infinite`,
+                  }}
+                />
+                <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>Live</Typography>
+              </Box>
+            )}
           </Stack>
 
-          {room?.isActive && (
-            <Stack direction="row" alignItems="center" gap={0.5} sx={{ flexShrink: 0 }}>
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: 'success.main',
-                }}
-              />
-              <Typography variant="caption" fontWeight={700} sx={{ color: 'success.main' }}>
-                Live
-              </Typography>
-            </Stack>
-          )}
-        </Stack>
+          {/* Room Topic Heading */}
+          <Tooltip title={room?.topic || 'Untitled room'} placement="top-start" arrow>
+            <Typography
+              variant="subtitle1"
+              fontWeight={800}
+              noWrap
+              sx={{
+                color: 'text.primary',
+                fontSize: '0.975rem',
+                lineHeight: 1.3,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {room?.topic || 'Untitled room'}
+            </Typography>
+          </Tooltip>
+        </Box>
 
-        <Typography variant="body2" fontWeight={600} noWrap sx={{ color: 'text.primary', my: 1 }}>
-          {room?.topic || 'Untitled room'}
-        </Typography>
-
-        {/* Host */}
+        {/* Host Identity Card */}
         <Box
           sx={{
-            mb: 1.5,
-            p: 1,
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
-            borderRadius: 1,
-            bgcolor: theme.palette.mode === 'dark' ? alpha('#fff', 0.03) : alpha('#000', 0.02),
+            gap: 1.25,
+            p: 1,
+            borderRadius: 1.5,
+            bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.025),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
           }}
         >
           <AvatarUser
@@ -191,83 +201,106 @@ export const VoiceRoomCard = ({
             name={room?.host?.name || 'Unknown'}
             verified={room?.host?.verified}
             accountType={room?.host?.accountType}
-            sx={{ width: 48, height: 48 }}
+            sx={{ width: 40, height: 40 }}
           />
-          <Stack direction="column" sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle2" noWrap sx={{ color: 'text.primary' }}>
-              {room?.host?.name || 'Unknown'}
+
+          <Stack sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+              {room?.host?.name || 'Unknown Host'}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Hosting
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11 }}>
+              Host
             </Typography>
           </Stack>
 
-          <Typography
-            variant="caption"
-            fontWeight={600}
-            sx={{ ml: 'auto', color: 'text.secondary', flexShrink: 0 }}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
+              color: 'text.secondary',
+            }}
           >
-            {allUsers.length}/{max} joined
-          </Typography>
+            <GroupsRoundedIcon sx={{ fontSize: 14 }} />
+            <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>
+              {allUsers.length}/{max}
+            </Typography>
+          </Box>
         </Box>
 
-        {/* Participants */}
-        <Box sx={{ display: 'flex', alignItems: 'center', m: 1, minHeight: 40 }}>
+        {/* Participants Presence Preview */}
+        <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 32 }}>
           {allUsers.length === 0 ? (
             <Typography
-              variant="body2"
+              variant="caption"
               sx={{
-                py: 1.25,
-                px: 1.5,
+                py: 0.6,
+                px: 1,
                 borderRadius: 1,
-                color: 'text.secondary',
-                bgcolor: 'background.neutral',
-                flex: 1,
+                color: 'text.disabled',
+                bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+                width: '100%',
+                textAlign: 'center',
               }}
             >
-              No participants yet
+              Empty stage • Be the first to speak
             </Typography>
           ) : (
-            <AvatarGroup max={4} sx={{ gap: 1.5 }}>
+            <AvatarGroup
+              max={5}
+              sx={{
+                '& .MuiAvatar-root': {
+                  width: 30,
+                  height: 30,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  border: `2px solid ${isDark ? theme.palette.background.paper : '#fff'}`,
+                },
+              }}
+            >
               {allUsers.map((p, i) => (
-                <AvatarUser
+                <Avatar
                   key={p?.user?.userId || (p as any)?.userId || i}
-                  avatarUrl={p?.user?.profilePhoto || (p as any)?.profilePhoto}
-                  name={p?.user?.name || (p as any)?.name || 'User'}
-                  verified={p?.user?.verified || (p as any)?.verified}
-                  accountType={p?.user?.accountType || (p as any)?.accountType}
-                />
+                  src={p?.user?.profilePhoto || (p as any)?.profilePhoto}
+                  alt={p?.user?.name || (p as any)?.name}
+                >
+                  {(p?.user?.name || (p as any)?.name || 'U').charAt(0).toUpperCase()}
+                </Avatar>
               ))}
             </AvatarGroup>
           )}
         </Box>
 
-        {/* Footer */}
-        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" gap={1}>
-          <Button
-            size="small"
-            variant="contained"
-            disabled={isFull}
-            onClick={async (e) => {
-              e.stopPropagation();
-              onJoinRoom(room);
-            }}
-            endIcon={isFull ? <DisabledByDefaultRounded /> : <ArrowForwardIcon />}
-            sx={{
-              ml: 'auto',
-              mt: 1.5,
-              borderRadius: 1,
-              textTransform: 'none',
-              fontWeight: 700,
-              py: 2,
-            }}
-          >
-            {isFull ? 'Full room' : 'Join room'}
-          </Button>
-        </Stack>
-      </Box>
+        {/* Footer Action Button */}
+        <Button
+          fullWidth
+          size="small"
+          variant={isFull ? 'outlined' : 'contained'}
+          disabled={isFull}
+          color={isFull ? 'inherit' : 'primary'}
+          onClick={(e) => {
+            e.stopPropagation();
+            onJoinRoom(room);
+          }}
+          endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+          sx={{
+            height: 38,
+            borderRadius: 1.25,
+            textTransform: 'none',
+            fontWeight: 700,
+            fontSize: 13,
+            boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+          }}
+        >
+          {isFull ? 'Room Full' : 'Join Stage'}
+        </Button>
+      </Paper>
 
-      {/* Participants dialog — read-only for guests, manageable for the host */}
+      {/* Participants Dialog */}
       <RoomParticipantsDialog
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
@@ -276,17 +309,27 @@ export const VoiceRoomCard = ({
         isFull={isFull}
         isHost={isHost}
         onJoinRoom={onJoinRoom}
-        onImageClick={openLightbox}
-        onRemoveParticipant={isHost ? handleRemoveParticipant : undefined}
-        onTransferHost={isHost ? handleTransferHost : undefined}
-        onEditRoom={isHost ? handleEditRoom : undefined}
+        onImageClick={(src, name) => {
+          participantsOpen.onFalse();
+          setLightbox({ src, name });
+        }}
+        onRemoveParticipant={isHost ? onRemoveParticipant : undefined}
+        onTransferHost={isHost ? onTransferHost : undefined}
+        onEditRoom={isHost ? () => { participantsOpen.onFalse(); editRoomOpen.onTrue(); } : undefined}
       />
 
       {isHost && editRoomOpen.value && (
         <VoiceModalCreateRoom
           open={editRoomOpen.value}
           onClose={editRoomOpen.onFalse}
-          onCreateRoom={handleRoomUpdated}
+          onCreateRoom={(updated) => {
+            setRoom((prev) => ({
+              ...prev,
+              ...updated,
+              level: updated.level as typeof prev.level,
+            }));
+            onRoomUpdated?.(updated);
+          }}
           currentRoom={room as any}
         />
       )}

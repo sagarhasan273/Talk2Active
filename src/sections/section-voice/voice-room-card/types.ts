@@ -1,19 +1,16 @@
+// src/sections/section-voice/voice-room-card/types.ts
+
 import type { RoomResponse } from 'src/types/type-chat';
 
-export type ParticipantUser = {
-  id: string;
+export interface ParticipantUser {
+  id?: string;
+  userId?: string;
   name: string;
-  profilePhoto: string | null;
-  verified: boolean;
-  accountType?: any;
-  status?: string;
-  username?: string;
-};
-
-export type Participant = {
-  user: ParticipantUser;
-  joinedAt: string;
-};
+  profilePhoto?: string | null;
+  verified?: boolean;
+  accountType?: string;
+  level?: string;
+}
 
 export type VoiceRoomCardProps = {
   roomData: RoomResponse;

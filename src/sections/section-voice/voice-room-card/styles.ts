@@ -1,25 +1,42 @@
-import { keyframes } from '@mui/system';
+// src/sections/section-voice/voice-room-card/styles.ts
 
-// One quiet, deliberate motion for supporter names — a slow sheen rather than
-// a stack of competing effects.
-export const supporterSheen = keyframes`
-  0% { background-position: 160% 0 }
-  100% { background-position: -40% 0 }
-`;
+import { keyframes } from '@mui/material/styles';
 
-// The "live" dot's pulse. Previously referenced as a bare string
-// (`animation: 'pulse 1.5s infinite'`) with no matching @keyframes, so it
-// silently never animated — this is the actual keyframe definition.
 export const livePulse = keyframes`
-  0% { box-shadow: 0 0 0 0 currentColor }
-  70% { box-shadow: 0 0 0 5px transparent }
-  100% { box-shadow: 0 0 0 0 transparent }
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 `;
 
-export const LEVEL_COLOR: Record<string, string> = {
-  beginner: '#43A047',
-  intermediate: '#F0A800',
-  advanced: '#E5484D',
-};
+export const supporterSheen = keyframes`
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
 
-export const getLevelColor = (level: string) => LEVEL_COLOR[level] ?? '#8A8F98';
+export const getLevelColor = (level?: string): string => {
+  switch (level?.toLowerCase()) {
+    case 'beginner':
+    case 'a1':
+    case 'a2':
+      return '#22C55E';
+    case 'intermediate':
+    case 'b1':
+    case 'b2':
+      return '#3B82F6';
+    case 'advanced':
+    case 'c1':
+    case 'c2':
+      return '#A855F7';
+    case 'native':
+    case 'fluent':
+      return '#EC4899';
+    default:
+      return '#F59E0B';
+  }
+};

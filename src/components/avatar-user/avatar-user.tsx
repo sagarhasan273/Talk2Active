@@ -1,5 +1,5 @@
 import { Avatar } from '@mui/material';
-import { styled, keyframes } from '@mui/material/styles';
+import { keyframes, styled } from '@mui/material/styles';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -216,7 +216,7 @@ const AvatarInner = styled('div')({
 
 export type AvatarUserProps = {
   name: string;
-  avatarUrl: string | null;
+  avatarUrl?: string | null;
   verified?: boolean;
   accountType?: AccountType;
   showShadow?: boolean;

@@ -3,13 +3,12 @@ import type { RoomResponse } from '@/types/type-chat';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Cancel, Close, MicNone, RecordVoiceOver } from '@mui/icons-material';
+import { Close, MicNone, RecordVoiceOver } from '@mui/icons-material';
 import {
   alpha,
   Autocomplete,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,7 +17,7 @@ import {
   Slider,
   TextField,
   Typography,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
@@ -27,7 +26,8 @@ import { useCreateRoomMutation, useUpdateRoomMutation } from 'src/core/apis/api-
 import { selectAccount } from 'src/core/slices';
 import { varAlpha } from 'src/theme/styles';
 
-import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
+import { Label, LEVEL_OPTIONS, ParticipantLevel } from '@/components/label';
+import { languages } from '@/lib/filter-data';
 import { Scrollbar } from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
@@ -175,9 +175,9 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       ? {
         roomId: currentRoom?.roomId,
         topic: formData.topic.trim(),
-        welcome_message: currentRoom?.welcome_message || '',
+        welcome_message: formData.welcome_message || '',
         languages: formData.languages,
-        level: currentRoom?.level || 'all',
+        level: formData.level || 'all',
         max_participants: formData.max_participants,
         isActive: true,
       }
@@ -391,12 +391,11 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                   const lang = languages.find((item) => item.code === code);
 
                   return (
-                    <Chip
+                    <Label
                       key={code}
                       size="small"
-                      label={lang ? `${lang.flag} ${lang.name}` : code}
+                      label={lang ? `${lang.flag} ${lang.name}` : `${code}`}
                       onDelete={() => removeLanguage(code)}
-                      deleteIcon={<Cancel sx={{ fontSize: 14 }} />}
                       sx={{
                         height: 26,
                         fontSize: 12,
@@ -446,11 +445,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
             {/* Settings */}
 
             <Box sx={sectionSx}>
-              <Typography sx={sectionLabelSx}>Settings</Typography>
-
-              <Typography fontSize={12} color="text.secondary" mb={0.75}>
-                Skill Level
-              </Typography>
+              <Typography sx={sectionLabelSx}>Skill Level</Typography>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                 {LEVEL_OPTIONS.map(({ value, label }) => {
@@ -458,23 +453,29 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                   const color = LEVEL_COLORS[value];
 
                   return (
-                    <Chip
+                    <ParticipantLevel
                       key={value}
+                      value={value}
                       label={label}
+                      showEmoji={true}
                       size="small"
-                      clickable
+                      selected={selected}
                       onClick={() => updateForm('level', value)}
                       sx={{
                         height: 28,
                         fontSize: 11.5,
                         fontWeight: selected ? 700 : 500,
-                        border: `1px solid ${selected ? color : alpha(theme.palette.divider, 0.7)}`,
+                        transform: 'none !important', // Prevents shifting neighboring chips
+                        border: '1px solid',
+                        borderColor: theme.palette.divider,
                         bgcolor: selected ? alpha(color, 0.12) : 'transparent',
                         color: selected ? color : theme.palette.text.secondary,
+                        transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
                         '&:hover': {
-                          bgcolor: selected
-                            ? alpha(color, 0.02)
-                            : varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
+                          transform: 'none !important', // Stops any vertical translation on hover
+                          bgcolor: selected ? alpha(color, 0.18) : alpha(color, 0.06),
+                          borderColor: color,
+                          color,
                         },
                       }}
                     />
@@ -492,13 +493,11 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                     alignItems: 'center',
                   }}
                 >
-                  <Typography fontSize={12} color="text.secondary">
-                    Max Participants
-                  </Typography>
+                  <Typography sx={sectionLabelSx}>Max Participants</Typography>
 
-                  <Chip
+                  <Label
                     size="small"
-                    label={formData.max_participants}
+                    label={String(formData.max_participants)}
                     sx={{
                       height: 24,
                       fontSize: 12,

@@ -81,33 +81,33 @@ export default function VoiceRoomlist({
         overflow: 'hidden',
       }}
     >
-        <Scrollbar sx={{ height: 1 }}>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-              alignItems: 'stretch',
-              justifyContent: 'center',
-              position: 'relative',
-              gap: 2,
-              mb: 10,
-            }}
-          >
-            <RoomCardCreation
-              onCreateRoom={onCreateRoom}
-            />
+      <Scrollbar sx={{ height: 1 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            position: 'relative',
+            gap: 1,
+            mb: 10,
+          }}
+        >
+          <RoomCardCreation
+            onCreateRoom={onCreateRoom}
+          />
 
-            {filteredRooms.map((room) => (
-              <VoiceRoomCard
-                key={room.roomId}
-                roomData={room}
-                currentUserId={user.userId}
-                onJoinRoom={onSelectRoom}
-              />
-            ))}
-          </Box>
-        </Scrollbar>
-      </Box>
+          {filteredRooms.map((room) => (
+            <VoiceRoomCard
+              key={room.roomId}
+              roomData={room}
+              currentUserId={user.userId}
+              onJoinRoom={onSelectRoom}
+            />
+          ))}
+        </Box>
+      </Scrollbar>
+    </Box>
   );
 }
 

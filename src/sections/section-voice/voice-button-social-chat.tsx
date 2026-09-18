@@ -36,7 +36,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
 
-  // Ref for the main chat window to detect outside clicks
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
@@ -45,7 +44,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const startWidth = useRef(DEFAULT_WIDTH);
   const startHeight = useRef(DEFAULT_HEIGHT);
 
-  // Queries
   const { data: friendsData, isLoading: loadingFriends } = useGetFriendsQuery(currentUserId, {
     skip: !currentUserId,
   });
@@ -140,27 +138,21 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   }, [isResizing]);
 
   /* ------------------------------------------------------------------ */
-  /* Click Outside (Clickaway) Listener                                 */
+  /* Click Outside Listener                                             */
   /* ------------------------------------------------------------------ */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      // Do nothing if it's closed or currently being resized
       if (!open || isResizing) return;
 
       const target = event.target as Element;
 
-      // 1. Ignore if clicking inside the chat container
       if (chatContainerRef.current?.contains(target)) return;
-
-      // 2. Ignore if clicking inside MUI Popovers/Portals (like the Emoji Picker)
       if (target.closest('.MuiPopover-root') || target.closest('.MuiPopper-root')) return;
 
-      // 3. Otherwise, close the chat
       setOpen(false);
     };
 
     if (open) {
-      // Listen on capture phase to ensure it triggers before other elements consume it
       document.addEventListener('mousedown', handleClickOutside, true);
       document.addEventListener('touchstart', handleClickOutside, true);
     }
@@ -174,8 +166,9 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   return (
     <Box
       sx={{
-        position: 'absolute',
-        right: { xs: 0, sm: 10 },
+        position: 'fixed', // Escapes parent overflow: hidden and stacking bounds
+        zIndex: (muiTheme) => muiTheme.zIndex.modal + 10, // Places it cleanly above --layout-nav-zIndex (1101)
+        right: { xs: 0, sm: 20 },
         bottom: { xs: 0, sm: 0 },
         top: { xs: 0, sm: 'auto' },
         left: { xs: 0, sm: 'auto' },
@@ -184,13 +177,13 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
         alignItems: 'flex-end',
         gap: 1.5,
         width: { xs: '100%', sm: `${chatWidth}px` },
-        height: { xs: '100%', sm: `${chatHeight}px` },
+        height: open ? { xs: '100%', sm: `${chatHeight}px` } : 'auto',
         pointerEvents: 'none',
       }}
     >
       {open && (
         <Box
-          ref={chatContainerRef} // <-- Attached the ref here to detect clicks
+          ref={chatContainerRef}
           sx={{
             position: 'relative',
             width: '100%',
@@ -263,7 +256,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               minHeight: 0,
               overflow: 'hidden',
               bgcolor: 'background.paper',
-              boxShadow: theme.shadows[16],
+              boxShadow: theme.shadows[20],
               borderRadius: 1,
               border: `1px solid ${theme.palette.divider}`,
               ...(isResizing && { transition: 'none !important' }),
@@ -286,32 +279,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               />
             )}
           </Box>
-
-          {/* Right Resize Handle */}
-          <Box
-            onMouseDown={(e) => startResize('right', e)}
-            sx={{
-              display: { xs: 'none', sm: 'flex' },
-              position: 'absolute',
-              right: -5,
-              top: 0,
-              bottom: 0,
-              width: 10,
-              zIndex: 1500,
-              cursor: 'ew-resize',
-              justifyContent: 'center',
-              alignItems: 'center',
-              '&::after': {
-                content: '""',
-                width: 3,
-                height: 48,
-                borderRadius: 3,
-                backgroundColor: 'transparent',
-                transition: 'background-color 0.15s ease',
-              },
-              '&:hover::after': { backgroundColor: 'primary.main' },
-            }}
-          />
         </Box>
       )}
 
@@ -325,7 +292,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             pointerEvents: 'auto',
             position: 'absolute',
             right: { xs: 0, sm: 0 },
-            bottom: { xs: 0, sm: 0 },
+            bottom: { xs: 0, sm: 10 },
             display: { xs: 'none', sm: 'flex' },
           }}
         >
@@ -338,13 +305,12 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               borderRadius: 1,
               px: 3,
               py: 1,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
+              boxShadow: theme.shadows[8],
               '&:hover': { bgcolor: 'primary.dark' },
-              ...sx
+              ...sx,
             }}
           >
-            <Diversity2Icon style={{ fontSize: 16, marginRight: 8 }} /> Social Messages
+            <Diversity2Icon style={{ fontSize: 16, marginRight: 8 }} /> Social
           </IconButton>
         </Badge>
       )}

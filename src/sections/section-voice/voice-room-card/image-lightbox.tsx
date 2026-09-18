@@ -1,7 +1,7 @@
-import React from 'react';
+// src/sections/section-voice/voice-room-card/image-lightbox.tsx
 
-import CloseIcon from '@mui/icons-material/Close';
-import { Box, alpha, Backdrop, IconButton, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { alpha, Backdrop, Box, Fade, IconButton, Typography } from '@mui/material';
 
 type ImageLightboxProps = {
   src: string;
@@ -9,17 +9,18 @@ type ImageLightboxProps = {
   onClose: () => void;
 };
 
-/** Full-screen image viewer for a participant's profile photo. */
 export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
   <Backdrop
     open
     onClick={onClose}
+    TransitionComponent={Fade}
     sx={{
-      zIndex: 2000,
-      bgcolor: 'rgba(0,0,0,0.92)',
+      zIndex: 2500,
+      bgcolor: 'rgba(0, 0, 0, 0.88)',
+      backdropFilter: 'blur(10px)',
       display: 'flex',
       flexDirection: 'column',
-      gap: 2,
+      p: 2,
     }}
   >
     <Box
@@ -30,6 +31,7 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
         flexDirection: 'column',
         alignItems: 'center',
         gap: 1.5,
+        m: 'auto',
       }}
     >
       <IconButton
@@ -37,14 +39,14 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
         size="small"
         sx={{
           position: 'absolute',
-          top: -40,
-          right: -8,
-          color: 'white',
-          bgcolor: alpha('#fff', 0.1),
-          '&:hover': { bgcolor: alpha('#fff', 0.2) },
+          top: -46,
+          right: 0,
+          color: '#fff',
+          bgcolor: alpha('#fff', 0.12),
+          '&:hover': { bgcolor: alpha('#fff', 0.22) },
         }}
       >
-        <CloseIcon fontSize="small" />
+        <CloseRoundedIcon sx={{ fontSize: 20 }} />
       </IconButton>
 
       <Box
@@ -52,16 +54,16 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
         src={src}
         alt={name}
         sx={{
-          width: { xs: 280, sm: 380, md: 440 },
-          height: { xs: 280, sm: 380, md: 440 },
+          width: { xs: 260, sm: 340, md: 400 },
+          height: { xs: 260, sm: 340, md: 400 },
           objectFit: 'cover',
           borderRadius: 3,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-          border: '2px solid rgba(255,255,255,0.12)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 24px 64px -8px rgba(0, 0, 0, 0.75)',
         }}
       />
 
-      <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 700, letterSpacing: 0.3 }}>
+      <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 800, letterSpacing: -0.2 }}>
         {name}
       </Typography>
     </Box>
