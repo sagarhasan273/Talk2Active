@@ -13,29 +13,33 @@ import {
   Button,
   Paper,
   Stack,
+  SxProps,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
+import { Label, ParticipantLevel } from '@/components/label';
 import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
+import UserDisplayer, { UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { ImageLightbox } from './image-lightbox';
 import { RoomParticipantsDialog } from './room-card-dialog';
 import { getLevelColor, livePulse } from './styles';
-
-
-import { Label, ParticipantLevel } from '@/components/label';
 import type { VoiceRoomCardProps } from './types';
+
 
 type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   currentUserId?: string;
   onRemoveParticipant?: (roomId: string, userId: string) => void;
   onTransferHost?: (roomId: string, userId: string) => void;
   onRoomUpdated?: (roomData: any) => void;
+  onToggleFollow?: (userId: string, isFollowing: boolean) => void;
+  onBlockUser?: (userId: string) => void;
+  sx?: SxProps
 };
 
 export const VoiceRoomCard = ({
@@ -45,6 +49,9 @@ export const VoiceRoomCard = ({
   onRemoveParticipant,
   onTransferHost,
   onRoomUpdated,
+  onToggleFollow,
+  onBlockUser,
+  sx
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -53,6 +60,7 @@ export const VoiceRoomCard = ({
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
 
   useEffect(() => {
     setRoom(roomData);
@@ -70,19 +78,34 @@ export const VoiceRoomCard = ({
   const levelColor = getLevelColor(room?.level);
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
+  const handleAvatarClick = (e: React.MouseEvent, rawParticipant: any) => {
+    e.stopPropagation();
+    const targetUser = rawParticipant?.user || rawParticipant;
+
+    setSelectedUser({
+      userId: targetUser?.userId,
+      name: targetUser?.name || 'User',
+      username: targetUser?.username,
+      profilePhoto: targetUser?.profilePhoto,
+      verified: targetUser?.verified,
+      accountType: targetUser?.accountType,
+      bio: targetUser?.bio,
+      followersCount: targetUser?.followersCount,
+      followingCount: targetUser?.followingCount,
+      friendsCount: targetUser?.friendsCount,
+      isFollowing: targetUser?.isFollowing,
+      isBlocked: targetUser?.isBlocked,
+    });
+  };
+
+  console.log(selectedUser)
+
   return (
     <>
       <Paper
         onClick={participantsOpen.onTrue}
         elevation={0}
         sx={{
-          height: 270,
-          minHeight: 270,
-          maxHeight: 270,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
           p: 2,
           borderRadius: 1,
           position: 'relative',
@@ -99,6 +122,7 @@ export const VoiceRoomCard = ({
             borderColor: alpha(levelColor, 0.45),
             boxShadow: `0 12px 32px -4px ${alpha(levelColor, 0.16)}`,
           },
+          ...sx
         }}
       >
         {/* Top Tag & Status Row */}
@@ -112,7 +136,7 @@ export const VoiceRoomCard = ({
                     key={`${lang}-${index}`}
                     label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
                     size="small"
-                    color='primary'
+                    color="primary"
                     sx={{
                       borderRadius: 1,
                       bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
@@ -120,21 +144,22 @@ export const VoiceRoomCard = ({
                   />
                 ))}
 
-
-              {room?.level && <ParticipantLevel
-                value={room.level}
-                label={room.level}
-                showEmoji={true}
-                size="small"
-                sx={{
-                  transform: 'none !important',
-                  border: '1px solid',
-                  borderColor: theme.palette.divider,
-                  bgcolor: 'transparent',
-                  color: theme.palette.text.secondary,
-                  transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
-                }}
-              />}
+              {room?.level && (
+                <ParticipantLevel
+                  value={room.level}
+                  label={room.level}
+                  showEmoji
+                  size="small"
+                  sx={{
+                    transform: 'none !important',
+                    border: '1px solid',
+                    borderColor: theme.palette.divider,
+                    bgcolor: 'transparent',
+                    color: theme.palette.text.secondary,
+                    transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                  }}
+                />
+              )}
             </Stack>
 
             {room?.isActive && (
@@ -196,13 +221,18 @@ export const VoiceRoomCard = ({
             borderColor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
           }}
         >
-          <AvatarUser
-            avatarUrl={room?.host?.profilePhoto}
-            name={room?.host?.name || 'Unknown'}
-            verified={room?.host?.verified}
-            accountType={room?.host?.accountType}
-            sx={{ width: 40, height: 40 }}
-          />
+          <Box
+            onClick={(e) => handleAvatarClick(e, room?.host)}
+            sx={{ cursor: 'pointer', transition: 'transform 0.15s ease', '&:hover': { transform: 'scale(1.05)' } }}
+          >
+            <AvatarUser
+              avatarUrl={room?.host?.profilePhoto}
+              name={room?.host?.name || 'Unknown'}
+              verified={room?.host?.verified}
+              accountType={room?.host?.accountType}
+              sx={{ width: 40, height: 40 }}
+            />
+          </Box>
 
           <Stack sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary', lineHeight: 1.2 }}>
@@ -258,19 +288,35 @@ export const VoiceRoomCard = ({
                   height: 30,
                   fontSize: 12,
                   fontWeight: 700,
+                  cursor: 'pointer',
                   border: `2px solid ${isDark ? theme.palette.background.paper : '#fff'}`,
+                  transition: 'transform 0.18s ease, z-index 0.18s ease',
+                  '&:hover': {
+                    transform: 'scale(1.18)',
+                    zIndex: 10,
+                  },
                 },
               }}
             >
-              {allUsers.map((p, i) => (
-                <Avatar
-                  key={p?.user?.userId || (p as any)?.userId || i}
-                  src={p?.user?.profilePhoto || (p as any)?.profilePhoto}
-                  alt={p?.user?.name || (p as any)?.name}
-                >
-                  {(p?.user?.name || (p as any)?.name || 'U').charAt(0).toUpperCase()}
-                </Avatar>
-              ))}
+              {allUsers.map((p, i) => {
+                const targetUser = p?.user || p;
+                return (
+                  <Tooltip
+                    key={targetUser?.userId || targetUser?.userId || i}
+                    title={targetUser?.name || 'User'}
+                    arrow
+                    placement="top"
+                  >
+                    <Avatar
+                      src={targetUser?.profilePhoto || undefined}
+                      alt={targetUser?.name}
+                      onClick={(e) => handleAvatarClick(e, p)}
+                    >
+                      {(targetUser?.name || 'U').charAt(0).toUpperCase()}
+                    </Avatar>
+                  </Tooltip>
+                );
+              })}
             </AvatarGroup>
           )}
         </Box>
@@ -299,6 +345,18 @@ export const VoiceRoomCard = ({
           {isFull ? 'Room Full' : 'Join Stage'}
         </Button>
       </Paper>
+
+      {/* User Displayer Profile Modal */}
+      {selectedUser && (
+        <UserDisplayer
+          open={Boolean(selectedUser)}
+          user={selectedUser}
+          currentUserId={currentUserId}
+          onClose={() => setSelectedUser(null)}
+          onToggleFollow={onToggleFollow}
+          onBlockUser={onBlockUser}
+        />
+      )}
 
       {/* Participants Dialog */}
       <RoomParticipantsDialog

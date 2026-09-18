@@ -69,6 +69,17 @@ export default function VoiceRoomlist({
     setRooms(getRooms?.data || []);
   }, [getRooms]);
 
+  const sxCard = {
+    height: 260,
+    minHeight: 250,
+    maxHeight: 270,
+    maxWidth: 520,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  }
+
   return (
     <Box
       sx={{
@@ -95,6 +106,7 @@ export default function VoiceRoomlist({
         >
           <RoomCardCreation
             onCreateRoom={onCreateRoom}
+            sx={sxCard}
           />
 
           {filteredRooms.map((room) => (
@@ -103,6 +115,7 @@ export default function VoiceRoomlist({
               roomData={room}
               currentUserId={user.userId}
               onJoinRoom={onSelectRoom}
+              sx={sxCard}
             />
           ))}
         </Box>

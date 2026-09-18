@@ -1,12 +1,17 @@
 import type { RoomResponse } from 'src/types/type-chat';
 
-import { ArrowRightIcon, PhoneOffIcon, UsersIcon, Volume2Icon } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  Headphones,
+  PhoneOffIcon,
+} from 'lucide-react';
 
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {
   alpha,
   Box,
+  Button,
   IconButton,
+  keyframes,
   Paper,
   Stack,
   Tooltip,
@@ -17,9 +22,23 @@ import {
 
 import { ActiveSpeaker } from './room-header-active-speaker';
 import { ParticipantAvatarStack } from './room-header-participant-avatar-stack';
+import type { VoiceParticipant } from './types';
 import { formatLanguages } from './utils';
 
-import type { VoiceParticipant } from './types';
+// ----------------------------------------------------------------------
+
+const soundwave = keyframes`
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+`;
+
+const liveGlow = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+`;
+
+// ----------------------------------------------------------------------
 
 export const VoiceRoomActiveBar = ({
   room,
@@ -35,7 +54,9 @@ export const VoiceRoomActiveBar = ({
   onLeaveRoom: () => void;
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   const participantCount = participants.length;
 
@@ -44,134 +65,143 @@ export const VoiceRoomActiveBar = ({
       elevation={0}
       sx={{
         width: '100%',
+        position: 'relative',
         overflow: 'hidden',
-        borderRadius: 1,
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
-        bgcolor: 'background.paper',
-        boxShadow: {
-          xs: `0 3px 14px ${alpha(theme.palette.common.black, 0.06)}`,
-          sm: `0 4px 18px ${alpha(theme.palette.common.black, 0.07)}`,
+        borderRadius: 2,
+        backdropFilter: 'blur(20px)',
+        bgcolor: isDark
+          ? alpha(theme.palette.background.paper, 0.82)
+          : alpha(theme.palette.common.white, 0.92),
+        border: '1px solid',
+        borderColor: isDark
+          ? alpha(theme.palette.primary.main, 0.28)
+          : alpha(theme.palette.primary.main, 0.2),
+        boxShadow: isDark
+          ? `0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}`
+          : `0 12px 30px -4px ${alpha(theme.palette.primary.main, 0.12)}, 0 4px 12px rgba(0,0,0,0.03)`,
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          borderColor: alpha(theme.palette.primary.main, 0.45),
+          boxShadow: isDark
+            ? `0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 18px ${alpha(theme.palette.primary.main, 0.15)}`
+            : `0 16px 36px -4px ${alpha(theme.palette.primary.main, 0.18)}, 0 6px 16px rgba(0,0,0,0.05)`,
         },
       }}
     >
+      {/* Top ambient color bar indicator */}
       <Box
         sx={{
-          position: 'relative',
-          px: { xs: 1, sm: 1.5 },
-          py: { xs: 0.9, sm: 1.1 },
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 2.5,
+          background: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.info.main} 100%)`,
+        }}
+      />
+
+      {/* Main Bar Content */}
+      <Box
+        sx={{
+          px: { xs: 1.25, sm: 2 },
+          py: { xs: 1, sm: 1.2 },
           display: 'flex',
           alignItems: 'center',
-          gap: { xs: 0.8, sm: 1.25 },
-          minHeight: { xs: 58, sm: 64 },
+          gap: { xs: 1, sm: 1.75 },
+          minHeight: { xs: 56, sm: 66 },
         }}
       >
+        {/* Animated Equalizer Wave Badge */}
         <Box
-          sx={{
-            width: 4,
-            alignSelf: 'stretch',
-            borderRadius: 2,
-            bgcolor: 'success.main',
-            flexShrink: 0,
-          }}
-        />
-
-        <Box
+          onClick={onEnterRoom}
           sx={{
             position: 'relative',
-            width: 32,
-            height: 32,
-            borderRadius: 1,
+            width: { xs: 38, sm: 44 },
+            height: { xs: 38, sm: 44 },
+            borderRadius: 1.75,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
+            cursor: 'pointer',
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, ${alpha(theme.palette.primary.main, 0.06)})`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+            transition: 'transform 0.2s ease, background-color 0.2s ease',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.28)}, ${alpha(theme.palette.primary.main, 0.12)})`,
+            },
           }}
         >
-          {[0, 1].map((ring) => (
-            <Box
-              key={ring}
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: 1,
-                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
-                animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
-                '@keyframes voiceJoinGateRing': {
-                  '0%': { transform: 'scale(0.85)', opacity: 0.6 },
-                  '100%': { transform: 'scale(1.5)', opacity: 0 },
-                },
-                '@media (prefers-reduced-motion: reduce)': {
-                  animation: 'none',
-                  display: 'none',
-                },
-              }}
-            />
-          ))}
-
-          <Box
-            sx={{
-              position: 'relative',
-              width: 1,
-              height: 1,
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: alpha(theme.palette.primary.main, 0.12),
-              color: 'primary.main',
-            }}
-          >
-            <Volume2Icon size={isMobile ? 17 : 26} />
-          </Box>
+          {/* Sound bars animation */}
+          <Stack direction="row" alignItems="center" spacing={0.45} sx={{ height: 18 }}>
+            {[0.1, 0.4, 0.2, 0.5].map((delay, idx) => (
+              <Box
+                key={idx}
+                sx={{
+                  width: 3,
+                  borderRadius: 1.5,
+                  bgcolor: 'primary.main',
+                  animation: `${soundwave} 1.2s ease-in-out infinite`,
+                  animationDelay: `${delay}s`,
+                }}
+              />
+            ))}
+          </Stack>
         </Box>
 
-        <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, mb: 0.25 }}>
+        {/* Room Info: Title + Tags */}
+        <Box
+          onClick={onEnterRoom}
+          sx={{
+            minWidth: 0,
+            flex: 1,
+            cursor: 'pointer',
+            overflow: 'hidden',
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, mb: 0.35 }}>
             <Typography
+              noWrap
               sx={{
-                minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                fontSize: { xs: '0.85rem', sm: '0.95rem' },
                 fontWeight: 800,
                 color: 'text.primary',
+                letterSpacing: '-0.01em',
               }}
             >
-              {room?.topic || 'Untitled room'}
+              {room?.topic || 'Untitled voice room'}
             </Typography>
 
+            {/* Pulsing Live Chip */}
             <Box
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 0.4,
-                px: 0.6,
+                gap: 0.5,
+                px: 0.75,
                 py: 0.2,
-                borderRadius: 0.75,
-                bgcolor: alpha(theme.palette.success.main, 0.1),
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.success.main, 0.12),
+                color: 'success.main',
                 flexShrink: 0,
               }}
             >
-              <FiberManualRecordIcon
+              <Box
                 sx={{
-                  fontSize: 6,
-                  color: 'success.main',
-                  animation: 'voiceLiveDotBlink 1.8s ease-in-out infinite',
-                  '@keyframes voiceLiveDotBlink': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0.35 },
-                  },
-                  '@media (prefers-reduced-motion: reduce)': {
-                    animation: 'none',
-                  },
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  bgcolor: 'success.main',
+                  animation: `${liveGlow} 1.8s infinite`,
                 }}
               />
               <Typography
                 sx={{
-                  fontSize: 8,
+                  fontSize: '0.625rem',
+                  fontWeight: 900,
                   lineHeight: 1,
-                  fontWeight: 800,
-                  color: 'success.main',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                 }}
               >
@@ -180,98 +210,168 @@ export const VoiceRoomActiveBar = ({
             </Box>
           </Stack>
 
-          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              noWrap
+          {/* Sub-meta: Languages & Listener counts */}
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+            {room?.languages?.length ? (
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{
+                  fontSize: '0.725rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  maxWidth: { xs: 110, sm: 180 },
+                }}
+              >
+                {formatLanguages(room.languages)}
+              </Typography>
+            ) : null}
+
+            <Box
               sx={{
-                fontSize: 10,
+                width: 3,
+                height: 3,
+                borderRadius: '50%',
+                bgcolor: 'text.disabled',
+                flexShrink: 0,
+              }}
+            />
+
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.4}
+              sx={{
+                flexShrink: 0,
                 color: 'text.secondary',
-                fontWeight: 600,
               }}
             >
-              {formatLanguages(room?.languages)}
-            </Typography>
-
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.disabled' }} />
-
-            <Stack direction="row" alignItems="center" spacing={0.35} sx={{ flexShrink: 0 }}>
-              <UsersIcon size={11} />
+              <Headphones size={12} />
               <Typography
                 variant="caption"
                 sx={{
-                  fontSize: 10,
-                  color: 'text.secondary',
+                  fontSize: '0.725rem',
                   fontWeight: 700,
+                  color: 'text.secondary',
                 }}
               >
-                {participantCount}
+                {participantCount} {participantCount === 1 ? 'peer' : 'peers'}
               </Typography>
             </Stack>
           </Stack>
         </Box>
 
+        {/* Participant Stack preview (Desktop / Tablet only) */}
         {!isMobile && participantCount > 0 && (
-          <ParticipantAvatarStack participants={participants} />
+          <Box sx={{ flexShrink: 0 }}>
+            <ParticipantAvatarStack participants={participants} />
+          </Box>
         )}
 
+        {/* Active Speaker Area (Desktop / Tablet) */}
         {!isMobile && (
-          <Box sx={{ pl: 1.25, borderLeft: `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+          <Box
+            sx={{
+              pl: 1.5,
+              borderLeft: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+              flexShrink: 0,
+            }}
+          >
             <ActiveSpeaker speaker={currentSpeaker} />
           </Box>
         )}
 
-        {isMobile && (
-          <Box sx={{ maxWidth: 120, overflow: 'hidden' }}>
+        {/* Mobile Active Speaker */}
+        {isMobile && currentSpeaker && (
+          <Box sx={{ maxWidth: 95, flexShrink: 0, overflow: 'hidden' }}>
             <ActiveSpeaker speaker={currentSpeaker} mobile />
           </Box>
         )}
 
-        <Tooltip title="Open room">
-          <IconButton
+        {/* Primary Action Button: Enter Stage */}
+        <Tooltip title="Expand stage dialog" arrow>
+          <Button
+            size="small"
+            variant="contained"
             onClick={onEnterRoom}
-            size={isMobile ? 'small' : 'medium'}
+            endIcon={<ArrowRightIcon size={15} />}
             sx={{
-              width: { xs: 34, sm: 38 },
               height: { xs: 34, sm: 38 },
-              borderRadius: 1.5,
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              color: 'primary.main',
+              px: { xs: 1.25, sm: 2 },
+              borderRadius: 1.25,
+              textTransform: 'none',
+              fontWeight: 800,
+              fontSize: { xs: '0.75rem', sm: '0.8125rem' },
               flexShrink: 0,
-              transition: theme.transitions.create(['background-color', 'transform'], {
-                duration: 150,
-              }),
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
               '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.18),
-                transform: 'translateX(2px)',
+                boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.45)}`,
+                transform: 'translateY(-1px)',
               },
             }}
           >
-            <ArrowRightIcon size={isMobile ? 17 : 19} />
-          </IconButton>
+            {!isTablet ? 'Open Stage' : ''}
+          </Button>
         </Tooltip>
 
-        <Tooltip title="Leave room">
+        {/* Disconnect / Leave Stage Button */}
+        <Tooltip title="Disconnect voice" arrow>
           <IconButton
             onClick={onLeaveRoom}
             size="small"
             sx={{
-              display: { xs: 'none', sm: 'flex' },
-              width: 34,
-              height: 34,
+              width: { xs: 34, sm: 38 },
+              height: { xs: 34, sm: 38 },
               borderRadius: 1.25,
               color: 'error.main',
-              bgcolor: alpha(theme.palette.error.main, 0.07),
-              transition: theme.transitions.create(['background-color'], { duration: 150 }),
+              bgcolor: alpha(theme.palette.error.main, 0.08),
+              border: `1px solid ${alpha(theme.palette.error.main, 0.18)}`,
+              flexShrink: 0,
+              transition: 'all 0.18s ease',
               '&:hover': {
-                bgcolor: alpha(theme.palette.error.main, 0.14),
+                bgcolor: alpha(theme.palette.error.main, 0.18),
+                borderColor: theme.palette.error.main,
+                transform: 'scale(1.05)',
               },
             }}
           >
-            <PhoneOffIcon size={15} />
+            <PhoneOffIcon size={16} />
           </IconButton>
         </Tooltip>
       </Box>
+
+      {/* Mobile-Only Dedicated Bottom Row for Participant Avatar Stack */}
+      {isMobile && participantCount > 0 && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 1.5,
+            py: 0.6,
+            borderTop: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
+            bgcolor: isDark
+              ? alpha('#fff', 0.02)
+              : alpha(theme.palette.primary.main, 0.02),
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: '0.675rem',
+              fontWeight: 700,
+              color: 'text.secondary',
+              letterSpacing: 0.2,
+            }}
+          >
+            On stage ({participantCount})
+          </Typography>
+
+          <ParticipantAvatarStack participants={participants} />
+        </Box>
+      )}
     </Paper>
   );
 };
+
+export default VoiceRoomActiveBar;

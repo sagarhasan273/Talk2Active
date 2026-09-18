@@ -2,13 +2,14 @@
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RadioRoundedIcon from '@mui/icons-material/RadioRounded';
-import { alpha, Box, Button, Paper, Stack, Typography, useTheme } from '@mui/material';
+import { alpha, Box, Button, Paper, Stack, SxProps, Typography, useTheme } from '@mui/material';
 
 type RoomCardCreationProps = {
   onCreateRoom: () => void;
+  sx?: SxProps
 };
 
-export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
+export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -17,10 +18,6 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
       onClick={onCreateRoom}
       elevation={0}
       sx={{
-        height: 270,
-        minHeight: 270,
-        maxHeight: 270,
-        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -42,6 +39,7 @@ export const RoomCardCreation = ({ onCreateRoom }: RoomCardCreationProps) => {
             color: '#fff',
           },
         },
+        ...sx
       }}
     >
       {/* Top Banner */}
