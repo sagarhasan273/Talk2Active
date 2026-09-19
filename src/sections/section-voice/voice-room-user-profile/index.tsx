@@ -2,7 +2,7 @@
 
 import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   Block as BlockIcon,
@@ -48,13 +48,16 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
+import { useRoomTools } from '@/core/slices';
+import { RoomParticipantType } from '@/types/type-chat';
+import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
-import { StageParticipant } from '../voice-room-workspace/types';
+import { ParticipantStageType } from '../voice-room-workspace/types';
 
 interface VoiceRoomUserProfileProps {
   open: boolean;
   onClose: () => void;
-  user?: StageParticipant | null;
+  user: ParticipantStageType | null;
   onFollow?: (userId: string) => void;
   onUnfollow?: (userId: string) => void;
   onBlock?: (userId: string) => void;
@@ -110,24 +113,23 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const room = useRoomContext();
+  const { room: joinedRoom } = useRoomTools();
 
-  const safeUser = user ?? ({} as Partial<StageParticipant>);
+  const safeUser = user ?? ({} as Partial<ParticipantStageType>);
 
+  const getParticipantData = useCallback((identity: string) => {
+    return joinedRoom?.participants.find((participant: RoomParticipantType) => participant.userId === identity)
+  }, [joinedRoom]);
+
+  const participant = getParticipantData(user?.id as string);
   const {
     id: userId = '',
-    name = 'Unknown User',
-    avatarUrl: profilePhoto = '',
     role = 'listener',
-    verified = false,
+
     audioState = 'muted',
     isSpeaking = audioState === 'speaking',
-    isDeafened = false,
+    isDeafened = user?.isDeafened,
     isSelf = false,
-    bio = 'Practicing languages together!',
-    location = 'Online',
-    joinDate = 'Joined recently',
-    followers = 0,
-    following = 0,
     level,
   } = safeUser;
 
@@ -157,8 +159,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
   const [volume, setVolume] = useState<number>(100);
   const [micGain, setMicGain] = useState<number>(100);
-  const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(safeUser.isFollowing));
-  const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(safeUser.isBlocked));
+  const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(participant?.isFollowing));
+  const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(participant?.isBlocked));
 
   // Rating Modal State
   const [ratingOpen, setRatingOpen] = useState(false);
@@ -173,10 +175,10 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
       } else {
         setVolume(typeof safeUser.volume === 'number' ? safeUser.volume : 100);
       }
-      setIsFollowing(Boolean(safeUser.isFollowing));
-      setIsBlocked(Boolean(safeUser.isBlocked));
+      setIsFollowing(Boolean(participant?.isFollowing));
+      setIsBlocked(Boolean(participant?.isBlocked));
     }
-  }, [safeUser.volume, safeUser.isFollowing, safeUser.isBlocked, userId, room, isSelf, open]);
+  }, [safeUser.volume, participant?.isFollowing, participant?.isBlocked, userId, room, isSelf, open]);
 
   const handleFollowToggle = () => {
     if (!userId) return;
@@ -365,7 +367,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
   const initials = (() => {
     try {
-      return fUsername(name || 'User');
+      return fUsername(participant?.name || 'User');
     } catch {
       return 'U';
     }
@@ -516,8 +518,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 }
               >
                 <Avatar
-                  src={profilePhoto || undefined}
-                  alt={name}
+                  src={participant?.profilePhoto || undefined}
+                  alt={participant?.name}
                   sx={{
                     width: { xs: 120, sm: 160 },
                     height: { xs: 120, sm: 160 },
@@ -539,9 +541,9 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               {/* Name & Verified */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                 <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
-                  {name || 'Unknown User'} {isSelf && '(You)'}
+                  {participant?.name || 'Unknown User'} {isSelf && '(You)'}
                 </Typography>
-                {verified && (
+                {participant?.verified && (
                   <VerifiedIcon sx={{ color: '#5865F2', fontSize: 18, flexShrink: 0 }} />
                 )}
               </Box>
@@ -565,7 +567,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               >
                 <Box>
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {followers}
+                    {participant?.follower_count}
                   </Typography>
                   <Typography
                     component="span"
@@ -579,7 +581,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 </Box>
                 <Box>
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {following}
+                    {participant?.following_count}
                   </Typography>
                   <Typography
                     component="span"
@@ -645,7 +647,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
           </Box>
 
           {/* Bio Card */}
-          {(bio || location || joinDate) && (
+          {(participant?.bio || participant?.joinedAt) && (
             <Paper
               elevation={0}
               sx={{
@@ -656,18 +658,18 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                 border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
               }}
             >
-              {bio && (
+              {participant?.bio && (
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ lineHeight: 1.6, mb: 1.5, fontSize: 13 }}
                 >
-                  {bio}
+                  {participant?.bio}
                 </Typography>
               )}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {location && (
+                {/* {location && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Typography variant="caption" sx={{ fontSize: 13 }}>
                       📍
@@ -676,15 +678,15 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                       {location}
                     </Typography>
                   </Box>
-                )}
+                )} */}
 
-                {joinDate && (
+                {participant?.joinedAt && (
                   <>
                     <Typography variant="caption" color="text.disabled">
                       •
                     </Typography>
                     <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                      {joinDate}
+                      {fDateTime(participant?.joinedAt)}
                     </Typography>
                   </>
                 )}
@@ -968,9 +970,9 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
               <ButtonRelationshipToggle
                 targetUser={{
                   id: userId,
-                  name,
+                  name: participant?.name as string,
                 }}
-                isFollow={user?.isFollowing}
+                isFollow={participant?.isFollowing}
                 size="small"
                 variant="soft"
                 fullWidth
@@ -1037,7 +1039,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
         <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Rate Speaking Level</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-            How well is <strong>{name}</strong> communicating and expressing ideas?
+            How well is <strong>{participant?.name}</strong> communicating and expressing ideas?
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>

@@ -1,6 +1,6 @@
 // src/sections/section-voice/view/voice-main-view.tsx
 
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 import { useCallback, useMemo, useState } from 'react';
@@ -36,7 +36,7 @@ export function VoiceMainView() {
   const isAuthOpen = useBoolean();
 
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomResponse | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('room-list');
@@ -64,7 +64,7 @@ export function VoiceMainView() {
   );
 
   const handleSelectRoom = useCallback(
-    (roomSelected: RoomResponse) => {
+    (roomSelected: RoomType) => {
       if (!isAuthenticated) {
         isAuthOpen.onTrue();
         return;

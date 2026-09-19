@@ -1,22 +1,22 @@
 import type { LucideIcon } from 'lucide-react';
 import type {
-  JoinRoomSchema,
-  LeaveRoomSchema,
-  RoomBaseSchema,
   RoomCreateSchema,
+  RoomJoinSchema,
+  RoomLeaveSchema,
+  RoomParticipantSchema,
   RoomSchema,
-  RoomUpdateSchema,
+  RoomUpdateSchema
 } from 'src/schemas/schema-chat';
 import type { z } from 'zod';
 
 import type { UserType } from './type-user';
 
-export type RoomBase = z.infer<typeof RoomBaseSchema>;
+export type RoomType = z.infer<typeof RoomSchema>;
+export type RoomParticipantType = z.infer<typeof RoomParticipantSchema>;
 export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
 export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
-export type RoomResponse = z.infer<typeof RoomSchema>;
-export type JoinRoomInput = z.infer<typeof JoinRoomSchema>;
-export type LeaveRoomInput = z.infer<typeof LeaveRoomSchema>;
+export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
+export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
 
 export interface ChatUserStatus {
   name: string;

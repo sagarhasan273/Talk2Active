@@ -1,4 +1,4 @@
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 import type { FilterState } from '../voice-filter-rooms';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -12,10 +12,9 @@ import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
 import { VoiceRoomCard } from '../voice-room-card';
 import { RoomCardCreation } from '../voice-room-card/room-card-creation';
-
 interface RoomListProps {
   query: FilterState;
-  onSelectRoom: (room: RoomResponse) => void;
+  onSelectRoom: (room: RoomType) => void;
   onCreateRoom: () => void;
 }
 
@@ -26,7 +25,7 @@ export default function VoiceRoomlist({
 }: RoomListProps) {
   const { user } = useCredentials();
 
-  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+  const [rooms, setRooms] = useState<RoomType[]>([]);
 
   const { data: getRooms } = useGetRoomsQuery(null);
 

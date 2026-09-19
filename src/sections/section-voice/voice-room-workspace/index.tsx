@@ -11,10 +11,10 @@ import { RoomAudioStage } from './room-audio-stage';
 import { RoomChatDrawer } from './room-chat-drawer';
 import { RoomChatPanel } from './room-chat-panel';
 
-import type { ChatMessage, StageParticipant } from './types';
+import type { ChatMessage, ParticipantStageType } from './types';
 
 type RoomWorkspaceProps = {
-  participants: StageParticipant[];
+  participants: ParticipantStageType[];
   maxParticipants: number;
   topicPrompt: string;
   currentUserId: string;
@@ -77,7 +77,7 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<StageParticipant | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ParticipantStageType | null>(null);
 
   // Detect active screen shares
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
@@ -130,7 +130,7 @@ export const VoiceRoomWorkspace: React.FC<RoomWorkspaceProps> = ({
             }}
             onLeave={onLeave}
             onProfileClick={(p) => {
-              setSelectedUser(p);
+              setSelectedUser({ ...p });
               setProfileDrawerOpen(true);
             }}
             onSettingsClick={onSettingsClick}

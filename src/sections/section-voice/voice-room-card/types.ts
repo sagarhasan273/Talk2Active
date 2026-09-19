@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/types.ts
 
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 
 export interface ParticipantUser {
   id?: string;
@@ -13,6 +13,6 @@ export interface ParticipantUser {
 }
 
 export type VoiceRoomCardProps = {
-  roomData: RoomResponse;
-  onJoinRoom: (room: RoomResponse) => void;
+  roomData: RoomType;
+  onJoinRoom: (room: RoomType) => void;
 };

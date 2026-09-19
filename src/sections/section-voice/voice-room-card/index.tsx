@@ -71,7 +71,7 @@ export const VoiceRoomCard = ({
   const participants = room?.participants || [];
   const allUsers = participants.map((p) => ({
     ...p,
-    isHost: Boolean(hostId && (p?.user?.userId === hostId || (p as any)?.userId === hostId)),
+    isHost: Boolean(hostId && (p?.userId === hostId || (p as any)?.userId === hostId)),
   }));
 
   const max = room?.max_participants ?? 0;
@@ -304,7 +304,7 @@ export const VoiceRoomCard = ({
               }}
             >
               {allUsers.map((p, i) => {
-                const targetUser = p?.user || p;
+                const targetUser = p;
                 return (
                   <Tooltip
                     key={targetUser?.userId || targetUser?.userId || i}

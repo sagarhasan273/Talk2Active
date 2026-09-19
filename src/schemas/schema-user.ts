@@ -103,9 +103,9 @@ export const UserAccountUpdateSchema = UserBaseSchema.pick({
   userId: zod.string(),
   password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
   newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
-})
+});
 
-export const VoiceParticipantSchema = UserBaseSchema.pick({
+export const HostSchema = UserBaseSchema.pick({
   userId: true,
   genUserId: true,
   name: true,
@@ -117,4 +117,24 @@ export const VoiceParticipantSchema = UserBaseSchema.pick({
   follower_count: true,
   following_count: true,
   friend_count: true,
-})
+}).extend({
+  isFollowing: zod.boolean().default(false),
+  isBlocked: zod.boolean().default(false),
+});
+
+export const ParticipantSchema = UserBaseSchema.pick({
+  userId: true,
+  genUserId: true,
+  name: true,
+  username: true,
+  profilePhoto: true,
+  bio: true,
+  verified: true,
+  accountType: true,
+  follower_count: true,
+  following_count: true,
+  friend_count: true,
+}).extend({
+  isFollowing: zod.boolean().default(false),
+  isBlocked: zod.boolean().default(false),
+});

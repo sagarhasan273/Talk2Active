@@ -10,13 +10,13 @@ import { Box, CircularProgress } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { RoomResponse } from '@/types/type-chat';
+import { RoomType } from '@/types/type-chat';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 import { VoiceRoomWorkspace } from '../voice-room-workspace';
-import type { ChatMessage, StageParticipant } from '../voice-room-workspace/types';
+import type { ChatMessage, ParticipantStageType } from '../voice-room-workspace/types';
 
 interface VoiceRoomBodyProps {
-  selectedRoom: RoomResponse | null;
+  selectedRoom: RoomType | null;
   token?: string | null;
   onLeaveRoom?: () => void;
   onSettingsClick?: () => void;
@@ -52,7 +52,7 @@ function LiveKitRoomContent({
   onSettingsClick,
   onBack
 }: {
-  selectedRoom: RoomResponse;
+  selectedRoom: RoomType;
   onLeaveRoom?: () => void;
   onSettingsClick?: () => void;
   onBack?: () => void;
@@ -167,7 +167,7 @@ function LiveKitRoomContent({
     }
   }, [localParticipant]);
 
-  const participants: StageParticipant[] = useMemo(() => {
+  const participants: ParticipantStageType[] = useMemo(() => {
     return remoteParticipants.map((p) => {
       const isSelf = p.identity === localParticipant?.identity;
       const isSpeaking = p.isSpeaking;

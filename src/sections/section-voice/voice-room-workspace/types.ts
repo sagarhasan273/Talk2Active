@@ -1,27 +1,13 @@
 export type AudioState = 'speaking' | 'unmuted' | 'muted' | 'listening';
 
-export type StageParticipant = {
+export type ParticipantStageType = {
   id: string;
-  name: string;
-  avatarUrl: string;
-  /** Shown as the small subtitle line, e.g. "Fluent (C1)", "Learner (B1)". */
   level?: string;
   audioState: AudioState;
-  isHost?: boolean;
   isSelf?: boolean;
   handRaised?: boolean;
   isSpeaking?: boolean;
-
-  // Additional fields for user profile drawer & user cards
   role?: 'host' | 'speaker' | 'moderator' | 'listener';
-  verified?: boolean;
-  bio?: string;
-  location?: string;
-  joinDate?: string;
-  followers?: number;
-  following?: number;
-  isFollowing?: boolean;
-  isBlocked?: boolean;
   isDeafened?: boolean;
   volume?: number;
   activeReactionEmoji?: string | null;
@@ -63,7 +49,7 @@ export type ChatMessage = {
 export type RoomAudioStageProps = {
   topicPrompt: string;
   onChangePrompt?: () => void;
-  participants: StageParticipant[];
+  participants: ParticipantStageType[];
   maxParticipants: number;
   onInviteSlot?: () => void;
   onLeave?: () => void;
@@ -75,5 +61,5 @@ export type RoomAudioStageProps = {
   onToggleDeafen?: (deafened: boolean) => void;
   /** Called with the *next* raised state after the button is pressed. */
   onToggleRaiseHand?: (raised: boolean) => void;
-  onProfileClick?: (participant: StageParticipant) => void;
+  onProfileClick?: (participant: ParticipantStageType) => void;
 };

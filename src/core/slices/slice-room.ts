@@ -1,5 +1,5 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 import type { Message, Reaction, VoiceParticipant } from 'src/types/type-room';
 import type { UserType } from 'src/types/type-user';
 
@@ -11,7 +11,7 @@ import type { RootState, UserVoiceStateProps } from '../types';
 
 // Define auth state interface
 interface RoomState {
-  room: null | RoomResponse;
+  room: null | RoomType;
   loading: boolean;
   participants: { [userId: string]: VoiceParticipant };
   userVoiceState: UserVoiceStateProps;
@@ -265,7 +265,7 @@ export const useRoomTools = () => {
       userVoiceState,
       userActionsInVoice,
       privateMessageFor,
-      setRoom: (roomData: RoomResponse | null) => dispatch(setRoom(roomData)),
+      setRoom: (roomData: RoomType | null) => dispatch(setRoom(roomData)),
 
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       addParticipant: (participant: VoiceParticipant) => dispatch(addParticipant(participant)),
