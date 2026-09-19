@@ -104,19 +104,19 @@ function UserProfileInfo() {
                 ...(isFollowing
                   ? { borderColor: 'error.dark', color: 'error.main' }
                   : {
-                      borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
-                      color: 'grey.500',
-                    }),
+                    borderColor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.28),
+                    color: 'grey.500',
+                  }),
                 backgroundColor: 'background.paper',
                 '&:hover': {
                   ...(isFollowing
                     ? {
-                        borderColor: 'error.dark',
-                        color: 'error.main',
-                      }
+                      borderColor: 'error.dark',
+                      color: 'error.main',
+                    }
                     : {
-                        color: 'grey.500',
-                      }),
+                      color: 'grey.500',
+                    }),
                   backgroundColor: 'background.neutral',
                 },
               }}
@@ -149,7 +149,7 @@ function UserProfileInfo() {
         <Stack direction="row" sx={{ gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
           <Box>
             <Typography component="span" fontWeight="bold" color="text.primary">
-              {user?.followerCount}
+              {user?.follower_count}
             </Typography>
             <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
               Followers
@@ -157,7 +157,7 @@ function UserProfileInfo() {
           </Box>
           <Box>
             <Typography component="span" fontWeight="bold" color="text.primary">
-              {user?.friendCount}
+              {user?.friend_count}
             </Typography>
             <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
               Friends
@@ -165,7 +165,7 @@ function UserProfileInfo() {
           </Box>
           <Box>
             <Typography component="span" fontWeight="bold" color="text.primary">
-              {user?.followingCount}
+              {user?.following_count}
             </Typography>
             <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>
               Following

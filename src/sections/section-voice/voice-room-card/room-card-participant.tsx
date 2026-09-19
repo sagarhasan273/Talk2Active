@@ -10,15 +10,14 @@ import type { ParticipantUser } from './types';
 type RoomCardParticipantProps = {
   user: ParticipantUser;
   isHost?: boolean;
-  onImageClick: (src: string, name: string) => void;
+  onParticipantClick: (user: ParticipantUser) => void;
 };
 
-export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardParticipantProps) => {
+export const RoomCardParticipant = ({ user, isHost, onParticipantClick }: RoomCardParticipantProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const isSupporter = user.accountType === 'supporter';
-  const hasPhoto = Boolean(user.profilePhoto);
   const displayName = isSupporter ? user.name : user.name?.split(' ')[0];
 
   const getInitials = (fullName: string) => {
@@ -30,14 +29,14 @@ export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardPart
 
   return (
     <Box
-      onClick={() => hasPhoto && onImageClick(user.profilePhoto!, user.name)}
+      onClick={() => onParticipantClick(user)}
       sx={{
         position: 'relative',
         width: '100%',
         aspectRatio: '1 / 1',
         borderRadius: 2,
         overflow: 'hidden',
-        cursor: hasPhoto ? 'pointer' : 'default',
+        cursor: 'pointer',
         bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
         border: '1.5px solid',
         borderColor: isHost
@@ -48,7 +47,7 @@ export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardPart
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           borderColor: isHost ? theme.palette.warning.main : theme.palette.primary.main,
-          transform: 'translateY(-2px)',
+          transform: 'scale(0.2px)',
           boxShadow: isDark
             ? '0 6px 18px rgba(0, 0, 0, 0.45)'
             : '0 6px 18px rgba(145, 158, 171, 0.25)',
@@ -58,7 +57,7 @@ export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardPart
         },
       }}
     >
-      {/* Square Avatar Graphic */}
+      {/* Square Avatar */}
       <Avatar
         src={user.profilePhoto || undefined}
         alt={user.name}
@@ -78,7 +77,7 @@ export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardPart
         {getInitials(user.name)}
       </Avatar>
 
-      {/* Host Indicator Badge */}
+      {/* Host Indicator */}
       {isHost && (
         <Box
           sx={{
@@ -123,7 +122,7 @@ export const RoomCardParticipant = ({ user, isHost, onImageClick }: RoomCardPart
         </Box>
       )}
 
-      {/* Bottom Name Bar with Backdrop Blur */}
+      {/* Bottom Name Overlay */}
       <Box
         sx={{
           position: 'absolute',

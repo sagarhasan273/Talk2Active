@@ -15,7 +15,7 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
     onClick={onClose}
     TransitionComponent={Fade}
     sx={{
-      zIndex: 2500,
+      zIndex: (theme) => Math.max(theme.zIndex.tooltip, theme.zIndex.modal) + 1000, // or 9999
       bgcolor: 'rgba(0, 0, 0, 0.88)',
       backdropFilter: 'blur(10px)',
       display: 'flex',
@@ -69,3 +69,5 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
     </Box>
   </Backdrop>
 );
+
+export default ImageLightbox;

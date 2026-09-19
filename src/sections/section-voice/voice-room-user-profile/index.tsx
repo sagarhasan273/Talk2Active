@@ -17,7 +17,7 @@ import {
   Share as ShareIcon,
   StarRounded as StarIcon,
   CheckCircle as VerifiedIcon,
-  VolumeUp as VolumeUpIcon
+  VolumeUp as VolumeUpIcon,
 } from '@mui/icons-material';
 import {
   alpha,
@@ -404,7 +404,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   return (
     <>
       <Drawer
-        anchor={isMobile ? "bottom" : undefined}
+        anchor={isMobile ? 'bottom' : undefined}
         open={open}
         onClose={onClose}
         PaperProps={{ elevation: 0 }}
@@ -494,10 +494,8 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
         {/* Profile Body */}
         <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
-
           {/* COMBINED PROFILE & STATS SECTION */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 3 }}>
-
             {/* LEFT: Avatar with Speaking Badge */}
             <Box sx={{ position: 'relative', flexShrink: 0 }}>
               <Badge
@@ -529,7 +527,7 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     color: roleColor,
                     border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
                   }}
-                  variant='rounded'
+                  variant="rounded"
                 >
                   {initials}
                 </Avatar>
@@ -538,17 +536,23 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
             {/* RIGHT: Name, Username, Stats, Chips */}
             <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
-
               {/* Name & Verified */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                 <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
                   {name || 'Unknown User'} {isSelf && '(You)'}
                 </Typography>
-                {verified && <VerifiedIcon sx={{ color: '#5865F2', fontSize: 18, flexShrink: 0 }} />}
+                {verified && (
+                  <VerifiedIcon sx={{ color: '#5865F2', fontSize: 18, flexShrink: 0 }} />
+                )}
               </Box>
 
               {/* Username */}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }} noWrap>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1.5, fontSize: 13 }}
+                noWrap
+              >
                 @{userId || 'username'}
               </Typography>
 
@@ -563,7 +567,13 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
                     {followers}
                   </Typography>
-                  <Typography component="span" variant="caption" color="text.secondary" fontWeight={600} sx={{ ml: 0.5 }}>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ ml: 0.5 }}
+                  >
                     Followers
                   </Typography>
                 </Box>
@@ -571,7 +581,13 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
                     {following}
                   </Typography>
-                  <Typography component="span" variant="caption" color="text.secondary" fontWeight={600} sx={{ ml: 0.5 }}>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ ml: 0.5 }}
+                  >
                     Following
                   </Typography>
                 </Box>
@@ -797,7 +813,12 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     valueLabelDisplay="auto"
                     sx={{ flex: 1 }}
                   />
-                  <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32 }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="text.secondary"
+                    sx={{ minWidth: 32 }}
+                  >
                     {micGain}%
                   </Typography>
                 </Box>
@@ -836,7 +857,12 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                       valueLabelDisplay="auto"
                       sx={{ flex: 1 }}
                     />
-                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ minWidth: 32, ml: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.secondary"
+                      sx={{ minWidth: 32, ml: 0.5 }}
+                    >
                       {Math.round(volume)}%
                     </Typography>
                   </Box>
@@ -939,10 +965,16 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
           {/* Social Follow & Block Actions */}
           {!isSelf && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
-              <ButtonRelationshipToggle targetUser={{
-                id: userId,
-                name
-              }} />
+              <ButtonRelationshipToggle
+                targetUser={{
+                  id: userId,
+                  name,
+                }}
+                isFollow={user?.isFollowing}
+                size="small"
+                variant="soft"
+                fullWidth
+              />
               <Button
                 fullWidth
                 variant="outlined"

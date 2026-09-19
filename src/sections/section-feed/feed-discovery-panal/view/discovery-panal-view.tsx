@@ -21,7 +21,6 @@ import {
 import { useGetNewUsersQuery } from 'src/core/apis';
 import { useCredentials } from 'src/core/slices';
 
-import { ButtonRelationshipToggle } from 'src/components/buttons';
 import { Iconify } from 'src/components/iconify';
 
 export const DiscoveryPanel: React.FC = () => {
@@ -88,16 +87,9 @@ export const DiscoveryPanel: React.FC = () => {
                       @{userDetails.username}
                     </Typography>
                     <Typography variant="caption" display="block" color="text.secondary">
-                      {userDetails.followerCount} followers
+                      {userDetails.follower_count} followers
                     </Typography>
                   </Box>
-
-                  <ButtonRelationshipToggle
-                    targetUser={{
-                      name: userDetails.name as string,
-                      id: userDetails.userId,
-                    }}
-                  />
                 </ListItemButton>
               </ListItem>
             ))}

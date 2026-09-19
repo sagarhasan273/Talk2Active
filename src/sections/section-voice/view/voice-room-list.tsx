@@ -1,4 +1,3 @@
-
 import type { RoomResponse } from 'src/types/type-chat';
 import type { FilterState } from '../voice-filter-rooms';
 
@@ -23,7 +22,7 @@ interface RoomListProps {
 export default function VoiceRoomlist({
   query,
   onSelectRoom,
-  onCreateRoom
+  onCreateRoom,
 }: RoomListProps) {
   const { user } = useCredentials();
 
@@ -73,12 +72,12 @@ export default function VoiceRoomlist({
     height: 260,
     minHeight: 250,
     maxHeight: 270,
-    maxWidth: 520,
     width: '100%',
+    maxWidth: { xs: '100%', sm: 1, md: 520 }, // Full width on mobile, capped on larger screens
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-  }
+  };
 
   return (
     <Box
@@ -96,11 +95,15 @@ export default function VoiceRoomlist({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            // xs: 1 column taking 100% width; sm+: auto-filling left-aligned columns
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(auto-fill, minmax(340px, 1fr))',
+            },
             alignItems: 'stretch',
-            justifyContent: 'center',
+            justifyContent: 'flex-start', // Keeps cards left-aligned
             position: 'relative',
-            gap: 1,
+            gap: 1.5,
             mb: 10,
           }}
         >
@@ -113,7 +116,7 @@ export default function VoiceRoomlist({
             <VoiceRoomCard
               key={room.roomId}
               roomData={room}
-              currentUserId={user.userId}
+              currentUserId={user?.userId}
               onJoinRoom={onSelectRoom}
               sx={sxCard}
             />
@@ -123,4 +126,3 @@ export default function VoiceRoomlist({
     </Box>
   );
 }
-

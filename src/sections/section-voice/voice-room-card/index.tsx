@@ -13,24 +13,22 @@ import {
   Button,
   Paper,
   Stack,
-  SxProps,
+  type SxProps,
   Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 
 import { Label, ParticipantLevel } from '@/components/label';
+import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
-import UserDisplayer, { UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
-import { ImageLightbox } from './image-lightbox';
 import { RoomParticipantsDialog } from './room-card-dialog';
 import { getLevelColor, livePulse } from './styles';
 import type { VoiceRoomCardProps } from './types';
-
 
 type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   currentUserId?: string;
@@ -39,7 +37,8 @@ type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   onRoomUpdated?: (roomData: any) => void;
   onToggleFollow?: (userId: string, isFollowing: boolean) => void;
   onBlockUser?: (userId: string) => void;
-  sx?: SxProps
+  onReportUser?: (userId: string, reason: string) => void;
+  sx?: SxProps;
 };
 
 export const VoiceRoomCard = ({
@@ -51,7 +50,8 @@ export const VoiceRoomCard = ({
   onRoomUpdated,
   onToggleFollow,
   onBlockUser,
-  sx
+  onReportUser,
+  sx,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -61,7 +61,6 @@ export const VoiceRoomCard = ({
   const editRoomOpen = useBoolean();
   const openUserDisplayer = useBoolean();
 
-  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
 
   useEffect(() => {
@@ -80,24 +79,28 @@ export const VoiceRoomCard = ({
   const levelColor = getLevelColor(room?.level);
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
-  const handleAvatarClick = (e: React.MouseEvent, rawParticipant: any) => {
-    e.stopPropagation();
-    const targetUser = rawParticipant?.user || rawParticipant;
+  const openUserProfile = (rawUser: any) => {
+    const targetUser = rawUser?.user || rawUser;
     setSelectedUser({
-      userId: targetUser?.userId,
+      userId: targetUser?.userId || targetUser?.id,
       name: targetUser?.name || 'User',
       username: targetUser?.username,
       profilePhoto: targetUser?.profilePhoto,
       verified: targetUser?.verified,
       accountType: targetUser?.accountType,
       bio: targetUser?.bio,
-      followersCount: targetUser?.followersCount,
-      followingCount: targetUser?.followingCount,
-      friendsCount: targetUser?.friendsCount,
+      follower_count: targetUser?.follower_count,
+      following_count: targetUser?.following_count,
+      friend_count: targetUser?.friend_count,
       isFollowing: targetUser?.isFollowing,
       isBlocked: targetUser?.isBlocked,
     });
     openUserDisplayer.onTrue();
+  };
+
+  const handleAvatarClick = (e: React.MouseEvent, rawParticipant: any) => {
+    e.stopPropagation();
+    openUserProfile(rawParticipant);
   };
 
   return (
@@ -122,7 +125,7 @@ export const VoiceRoomCard = ({
             borderColor: alpha(levelColor, 0.45),
             boxShadow: `0 12px 32px -4px ${alpha(levelColor, 0.16)}`,
           },
-          ...sx
+          ...sx,
         }}
       >
         {/* Top Tag & Status Row */}
@@ -185,7 +188,9 @@ export const VoiceRoomCard = ({
                     animation: `${livePulse} 1.8s infinite`,
                   }}
                 />
-                <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>Live</Typography>
+                <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>
+                  Live
+                </Typography>
               </Box>
             )}
           </Stack>
@@ -355,6 +360,7 @@ export const VoiceRoomCard = ({
           onClose={openUserDisplayer.onFalse}
           onToggleFollow={onToggleFollow}
           onBlockUser={onBlockUser}
+          onReportUser={onReportUser}
         />
       )}
 
@@ -367,9 +373,9 @@ export const VoiceRoomCard = ({
         isFull={isFull}
         isHost={isHost}
         onJoinRoom={onJoinRoom}
-        onImageClick={(src, name) => {
+        onParticipantClick={(participant) => {
           participantsOpen.onFalse();
-          setLightbox({ src, name });
+          openUserProfile(participant);
         }}
         onRemoveParticipant={isHost ? onRemoveParticipant : undefined}
         onTransferHost={isHost ? onTransferHost : undefined}
@@ -389,17 +395,6 @@ export const VoiceRoomCard = ({
             onRoomUpdated?.(updated);
           }}
           currentRoom={room as any}
-        />
-      )}
-
-      {lightbox && (
-        <ImageLightbox
-          src={lightbox.src}
-          name={lightbox.name}
-          onClose={() => {
-            setLightbox(null);
-            participantsOpen.onTrue();
-          }}
         />
       )}
     </>

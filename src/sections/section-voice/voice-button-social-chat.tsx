@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { Badge, Box, CircularProgress, IconButton, SxProps, useMediaQuery, useTheme } from '@mui/material';
-import { Socket } from 'socket.io-client';
+import { alpha, Badge, Box, CircularProgress, IconButton, type SxProps, useMediaQuery, useTheme } from '@mui/material';
+import type { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
 import { useCredentials } from '@/core/slices';
@@ -24,6 +24,7 @@ const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */
 const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { user } = useCredentials();
 
   const currentUserId = user?.userId || '';
@@ -166,8 +167,8 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   return (
     <Box
       sx={{
-        position: 'fixed', // Escapes parent overflow: hidden and stacking bounds
-        zIndex: (muiTheme) => muiTheme.zIndex.modal + 10, // Places it cleanly above --layout-nav-zIndex (1101)
+        position: 'fixed',
+        zIndex: (muiTheme) => (open ? muiTheme.zIndex.modal : muiTheme.zIndex.speedDial),
         right: { xs: 0, sm: 20 },
         bottom: { xs: 0, sm: 0 },
         top: { xs: 0, sm: 'auto' },
@@ -193,6 +194,10 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             flexDirection: 'column',
             minWidth: 0,
             minHeight: 0,
+            // Ambient elevation glow on outer frame
+            filter: isDark
+              ? 'drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75))'
+              : `drop-shadow(0 20px 40px ${alpha(theme.palette.common.black, 0.18)})`,
           }}
         >
           {/* Top Resize Handle */}
@@ -247,7 +252,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             }}
           />
 
-          {/* Inner Chat Box */}
+          {/* Inner Chat Box with Rich Elevated Box-Shadow */}
           <Box
             sx={{
               width: '100%',
@@ -256,9 +261,14 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               minHeight: 0,
               overflow: 'hidden',
               bgcolor: 'background.paper',
-              boxShadow: theme.shadows[20],
-              borderRadius: 1,
-              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: { xs: 0, sm: 1 },
+              border: '1px solid',
+              borderColor: isDark
+                ? alpha(theme.palette.common.white, 0.12)
+                : alpha(theme.palette.common.black, 0.1),
+              boxShadow: isDark
+                ? '0 28px 64px -8px rgba(0, 0, 0, 0.85), 0 12px 24px -4px rgba(0, 0, 0, 0.55)'
+                : `0 24px 56px -8px ${alpha(theme.palette.common.black, 0.48)}, 0 10px 20px -4px ${alpha(theme.palette.common.black, 0.28)}`,
               ...(isResizing && { transition: 'none !important' }),
             }}
           >
@@ -305,8 +315,15 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               borderRadius: 1,
               px: 3,
               py: 1,
-              boxShadow: theme.shadows[8],
-              '&:hover': { bgcolor: 'primary.dark' },
+              boxShadow: isDark
+                ? '0 8px 24px rgba(0, 0, 0, 0.55)'
+                : `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
+              '&:hover': {
+                bgcolor: 'primary.dark',
+                boxShadow: isDark
+                  ? '0 12px 28px rgba(0, 0, 0, 0.7)'
+                  : `0 12px 28px ${alpha(theme.palette.primary.main, 0.45)}`,
+              },
               ...sx,
             }}
           >

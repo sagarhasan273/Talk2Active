@@ -45,7 +45,7 @@ export interface RoomParticipantsDialogProps {
   isHost: boolean;
   size?: RoomDialogSize;
   onJoinRoom?: (room: any) => void;
-  onImageClick: (src: string, name: string) => void;
+  onParticipantClick: (user: any) => void;
   onRemoveParticipant?: (roomId: string, userId: string) => void;
   onTransferHost?: (roomId: string, userId: string) => void;
   onEditRoom?: (room: any) => void;
@@ -63,7 +63,7 @@ export const RoomParticipantsDialog = ({
   isHost,
   size = 'xs',
   onJoinRoom,
-  onImageClick,
+  onParticipantClick,
   onRemoveParticipant,
   onTransferHost,
   onEditRoom,
@@ -93,12 +93,12 @@ export const RoomParticipantsDialog = ({
   const getMaxHeight = () => {
     switch (size) {
       case 'md':
-        return 420;
+        return 520;
       case 'sm':
-        return 340;
+        return 500;
       case 'xs':
       default:
-        return 280;
+        return 420;
     }
   };
 
@@ -111,7 +111,7 @@ export const RoomParticipantsDialog = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 2.5,
+          borderRadius: 1,
           bgcolor: isDark ? alpha(theme.palette.background.paper, 0.95) : '#ffffff',
           backgroundImage: 'none',
           backdropFilter: 'blur(16px)',
@@ -226,7 +226,7 @@ export const RoomParticipantsDialog = ({
                   <RoomCardParticipant
                     user={{ ...entry.user, verified: entry.user?.verified ?? false }}
                     isHost={entry.isHost}
-                    onImageClick={onImageClick}
+                    onParticipantClick={onParticipantClick}
                   />
 
                   {canManage && (
@@ -255,7 +255,6 @@ export const RoomParticipantsDialog = ({
           </Box>
         )}
 
-        {/* Join Stage / Action Button */}
         {onJoinRoom && (
           <Button
             variant="contained"

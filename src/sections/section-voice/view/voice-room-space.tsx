@@ -38,10 +38,10 @@ export function VoiceRoomBody({ selectedRoom, token, onLeaveRoom, onSettingsClic
     <>
       <RoomAudioRenderer />
       <LiveKitRoomContent
-      selectedRoom={selectedRoom}
-      onLeaveRoom={onLeaveRoom}
-      onBack={onBack}
-      onSettingsClick={onSettingsClick} />
+        selectedRoom={selectedRoom}
+        onLeaveRoom={onLeaveRoom}
+        onBack={onBack}
+        onSettingsClick={onSettingsClick} />
     </>
   );
 }

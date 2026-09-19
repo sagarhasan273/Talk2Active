@@ -25,7 +25,7 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
         borderRadius: 1,
         cursor: 'pointer',
         userSelect: 'none',
-        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.04) : alpha(theme.palette.primary.main, 0.02),
+        bgcolor: 'background.paper',
         border: '1.5px dashed',
         borderColor: alpha(theme.palette.primary.main, isDark ? 0.35 : 0.28),
         transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',

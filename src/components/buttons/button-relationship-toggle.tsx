@@ -2,7 +2,7 @@
 
 import type { SxProps, Theme } from '@mui/material';
 
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import {
@@ -44,7 +44,7 @@ export type ButtonRelationshipToggleProps = {
 export function ButtonRelationshipToggle({
   targetUser,
   isFollow = false,
-  variant = 'icon',
+  variant = 'soft',
   size = 'small',
   fullWidth = false,
   showConfirmPopover = true,
@@ -56,68 +56,88 @@ export function ButtonRelationshipToggle({
   const user = useSelector(selectAccount);
   const popover = usePopover();
 
-  // Local state for optimistic UI updates
+  // Local state for optimistic UI updates + sync with parent props
   const [following, setFollowing] = useState<boolean>(isFollow);
   const [isHoveringFollowing, setIsHoveringFollowing] = useState(false);
+
+  useEffect(() => {
+    setFollowing(isFollow);
+  }, [isFollow]);
 
   const [followMutate, { isLoading: isFollowLoading }] = useFollowMutation();
   const [unfollowMutate, { isLoading: isUnfollowLoading }] = useUnfollowMutation();
   const isLoading = isFollowLoading || isUnfollowLoading;
 
   const handleFollow = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     setFollowing(true);
-    await followMutate({
-      requester: user.userId,
-      recipient: targetUser.id,
-      type: RelationshipTypeEnum.FOLLOW,
-    });
+    try {
+      await followMutate({
+        requester: user.userId,
+        recipient: targetUser.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      }).unwrap();
+    } catch {
+      setFollowing(false);
+    }
   };
 
   const handleConfirmUnfollow = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     popover.onClose();
     setFollowing(false);
-    await unfollowMutate({
-      requester: user.userId,
-      recipient: targetUser.id,
-      type: RelationshipTypeEnum.FOLLOW,
-    });
+    try {
+      await unfollowMutate({
+        requester: user.userId,
+        recipient: targetUser.id,
+        type: RelationshipTypeEnum.FOLLOW,
+      }).unwrap();
+    } catch {
+      setFollowing(true);
+    }
   };
 
   const handleUnfollowClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
     e.stopPropagation();
     if (showConfirmPopover) {
       popover.onOpen(e);
     } else {
-      handleConfirmUnfollow(e as any);
+      handleConfirmUnfollow(e);
     }
   };
 
-  // ── 1. Popover Component (Shared for Unfollow Confirmation) ────────
+  // ── 1. Popover Component with Safe Z-Index ────────────────────────
   const renderConfirmPopover = () => (
     <Popover
       disableRestoreFocus
-      open={popover.open}
+      open={Boolean(popover.open)}
       anchorEl={popover.anchorEl}
       onClose={popover.onClose}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      sx={{
+        zIndex: 3200, // Explicitly higher than UserDisplayer (3000) and SocialChat drawers
+      }}
       slotProps={{
         paper: {
+          onClick: (e) => e.stopPropagation(),
           sx: {
             p: 1.5,
             width: 220,
             borderRadius: 1.5,
             border: `1px solid ${theme.palette.divider}`,
-            boxShadow: theme.shadows[8],
+            boxShadow: theme.shadows[12],
+            bgcolor: 'background.paper',
           },
         },
       }}
     >
       <Stack direction="row" gap={1} alignItems="center" mb={1}>
         <Iconify icon="mingcute:question-fill" sx={{ width: 16, height: 16, color: 'warning.main' }} />
-        <Typography variant="caption" fontWeight={600}>
+        <Typography variant="caption" fontWeight={600} noWrap>
           Unfollow {targetUser.name}?
         </Typography>
       </Stack>

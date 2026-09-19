@@ -241,11 +241,11 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
         alignItems: 'center',
       }}
     >
-      <StatItem label="FOLLOWERS" value={user?.followerCount ?? 0} />
+      <StatItem label="FOLLOWERS" value={user?.follower_count ?? 0} />
       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-      <StatItem label="FRIENDS" value={user?.friendCount ?? 0} />
+      <StatItem label="FRIENDS" value={user?.friend_count ?? 0} />
       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-      <StatItem label="FOLLOWING" value={user?.followingCount ?? 0} />
+      <StatItem label="FOLLOWING" value={user?.following_count ?? 0} />
     </Box>
   );
 
