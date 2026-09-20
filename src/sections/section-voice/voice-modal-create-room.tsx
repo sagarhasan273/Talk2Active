@@ -1,4 +1,4 @@
-import type { RoomResponse } from '@/types/type-chat';
+import type { RoomType } from '@/types/type-chat';
 
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -70,7 +70,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreateRoom: (data: FormData) => void;
-  currentRoom: RoomResponse | null;
+  currentRoom: RoomType | null;
 }
 
 // ----------------------------------------------------------------------

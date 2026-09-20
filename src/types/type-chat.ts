@@ -53,8 +53,6 @@ export type JoinRoomUserInput = {
 
 export type LeaveRoomUserInput = {
   roomId: string;
-  socketId: string;
   userId: string;
-  name: string;
   kicked?: boolean;
 };

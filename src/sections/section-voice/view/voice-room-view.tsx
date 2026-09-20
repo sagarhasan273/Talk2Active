@@ -7,7 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 
-import { useJoinRoomMutation } from '@/core/apis';
+import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
 import { toastErrorResponse } from '@/utils/response';
 import { useCredentials } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -49,6 +49,7 @@ export function VoiceMainView() {
   });
 
   const [joinRoomMutation] = useJoinRoomMutation();
+  const [leaveRoomMutation] = useLeaveRoomMutation();
 
   const participants = useMemo(() => (room?.participants || []) as VoiceParticipant[], [room]);
 
@@ -106,6 +107,7 @@ export function VoiceMainView() {
     setLivekitToken(null);
     setIsJoinGateOpen(false);
     setRoom(null);
+    await leaveRoomMutation({ roomId: room?.roomId as string, userId: user.userId });
   }, [setRoom, disconnectRoom]);
 
   const handleCreateRoom = useCallback(() => {

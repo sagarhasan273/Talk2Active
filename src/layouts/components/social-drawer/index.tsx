@@ -4,15 +4,14 @@ import Diversity2Icon from '@mui/icons-material/Diversity2';
 import { Badge, Box, CircularProgress } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from 'src/core/apis';
 import { useCredentials, useMessagesTools } from 'src/core/slices';
-import { connectSocket } from 'src/core/socket';
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import SocialChat from '../../../sections/section-common/social-chat';
+import SocialChat from '@/sections/section-common/social-chat';
 
 // ----------------------------------------------------------------------
 
@@ -44,26 +43,6 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
 
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
-
-  /* ------------------------------------------------------------------ */
-  /* Socket Setup                                                       */
-  /* ------------------------------------------------------------------ */
-  useEffect(() => {
-    if (!currentUserId) return;
-
-    const s = connectSocket(currentUserId);
-    setSocketInstance(s);
-
-    const onReconnect = () => {
-      s.emit('join_global_chat', currentUserId);
-    };
-
-    s.on('connect', onReconnect);
-
-    return () => {
-      s.off('connect', onReconnect);
-    };
-  }, [currentUserId]);
 
   return (
     <>
@@ -114,7 +93,6 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
           </Box>
         ) : (
           <SocialChat
-            socket={socketInstance}
             friends={friends}
             followers={followers}
             following={following}

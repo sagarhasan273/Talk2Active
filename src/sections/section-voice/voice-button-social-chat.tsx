@@ -6,7 +6,6 @@ import type { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
 import { useCredentials } from '@/core/slices';
-import { connectSocket } from '@/core/socket';
 import SocialChat from '@/sections/section-common/social-chat';
 
 /* ------------------------------------------------------------------ */
@@ -60,26 +59,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const following = (followingData as any)?.data || [];
 
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
-
-  /* ------------------------------------------------------------------ */
-  /* Socket Setup                                                       */
-  /* ------------------------------------------------------------------ */
-  useEffect(() => {
-    if (!currentUserId) return;
-
-    const s = connectSocket(currentUserId);
-    setSocketInstance(s);
-
-    const onReconnect = () => {
-      s.emit('join_global_chat', currentUserId);
-    };
-
-    s.on('connect', onReconnect);
-
-    return () => {
-      s.off('connect', onReconnect);
-    };
-  }, [currentUserId]);
 
   /* ------------------------------------------------------------------ */
   /* Resize Handlers                                                    */
@@ -278,7 +257,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               </Box>
             ) : (
               <SocialChat
-                socket={socketInstance}
                 friends={friends}
                 followers={followers}
                 following={following}

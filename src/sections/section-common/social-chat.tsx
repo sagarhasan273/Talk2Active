@@ -16,7 +16,6 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { Socket } from 'socket.io-client';
 
 import {
   useGetHistoryQuery,
@@ -25,6 +24,7 @@ import {
   useToggleReactionMutation,
   useUpdateMessageMutation,
 } from '@/core/apis';
+import { useSocket } from '@/core/contexts/socket-context';
 import type { AllRelationsType } from '@/types/type-social';
 import {
   alpha,
@@ -68,7 +68,6 @@ export interface ChatMessage {
 }
 
 export interface SocialChatProps {
-  socket?: Socket | null;
   friends?: AllRelationsType[];
   followers?: AllRelationsType[];
   following?: AllRelationsType[];
@@ -478,7 +477,6 @@ const MessageBubble = ({
 /* ------------------------------------------------------------------ */
 
 export const SocialChat = ({
-  socket,
   friends = [],
   followers = [],
   following = [],
@@ -489,6 +487,8 @@ export const SocialChat = ({
 }: SocialChatProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  const { socket } = useSocket();
 
   const [tab, setTab] = useState<TabKey>('friends');
   const [activeFriend, setActiveFriend] = useState<AllRelationsType | null>(null);
