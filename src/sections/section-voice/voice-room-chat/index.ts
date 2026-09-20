@@ -1,2 +1,2 @@
-export * from './voice-room-chat';
+export * from './room-chat-main';
 

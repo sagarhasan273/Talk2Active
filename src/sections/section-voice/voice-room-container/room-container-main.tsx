@@ -20,9 +20,9 @@ import { useBoolean } from '@/hooks/use-boolean';
 import { RoomType } from '@/types/type-chat';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 import RoomAudioStage from '../voice-room-audio-stage/room-audio-stage';
-import RoomChatDrawer from '../voice-room-audio-stage/room-chat-drawer';
 import { ChatMessage, ParticipantStageType } from '../voice-room-audio-stage/types';
-import { VoiceRoomChat } from '../voice-room-chat/voice-room-chat';
+import RoomChatDrawer from '../voice-room-chat/room-chat-drawer';
+import { RoomChatMain } from '../voice-room-chat/room-chat-main';
 
 interface RoomContainerMainProps {
   selectedRoom: RoomType | null;
@@ -434,7 +434,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           />
 
           {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
-          <VoiceRoomChat
+          <RoomChatMain
             messages={messages}
             currentUserId={user.userId}
             topicContext={''}

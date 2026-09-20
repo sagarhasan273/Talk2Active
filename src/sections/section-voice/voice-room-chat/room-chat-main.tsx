@@ -6,15 +6,15 @@ import { alpha, Box, Tooltip, useTheme } from "@mui/material";
 import { Track } from "livekit-client";
 import { ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import RoomChatPanel from "../voice-room-audio-stage/room-chat-panel";
 import { ChatMessage, ParticipantStageType } from "../voice-room-audio-stage/types";
+import RoomChatPanel from "./room-chat-panel";
 
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
 const MIN_SIDEBAR_WIDTH = 300;
 const MAX_SIDEBAR_WIDTH = 580;
 
-type VoiceRoomChatProps = {
+type RoomChatMainProps = {
   messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
@@ -31,7 +31,8 @@ type VoiceRoomChatProps = {
   title?: string;
   collapsedBoolean: UseBooleanReturn
 }
-export function VoiceRoomChat({
+
+export function RoomChatMain({
   messages,
   currentUserId,
   topicContext = '',
@@ -40,7 +41,7 @@ export function VoiceRoomChat({
   onSendMessage,
   onEditMessage,
   onReactMessage,
-}: VoiceRoomChatProps) {
+}: RoomChatMainProps) {
   const theme = useTheme();
 
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
