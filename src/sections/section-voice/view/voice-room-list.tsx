@@ -10,7 +10,7 @@ import { useCredentials } from '@/core/slices';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
-import { VoiceRoomCard } from '../voice-room-card';
+import { VoiceRoomCard } from '../voice-room-card/room-card-main';
 import { RoomCardCreation } from '../voice-room-card/room-card-creation';
 interface RoomListProps {
   query: FilterState;
