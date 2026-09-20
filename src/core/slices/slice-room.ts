@@ -1,45 +1,26 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { RoomType } from 'src/types/type-chat';
-import type { Message, Reaction, VoiceParticipant } from 'src/types/type-room';
-import type { UserType } from 'src/types/type-user';
+import type { RoomParticipantType, RoomType } from 'src/types/type-chat';
 
 import { createSlice } from '@reduxjs/toolkit';
 import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState, UserVoiceStateProps } from '../types';
+import type { RootState } from '../types';
 
 // Define auth state interface
 interface RoomState {
   room: null | RoomType;
   loading: boolean;
-  participants: { [userId: string]: VoiceParticipant };
-  userVoiceState: UserVoiceStateProps;
-  chatRoomMessages: Message[];
+  participants: { [userId: string]: RoomParticipantType };
   isUnreadRoomMessage: boolean;
-  userActionsInVoice: any;
-  privateMessageFor: UserType['userId'];
 }
 
 // Initial state
 const initialState: RoomState = {
   room: null,
   loading: false,
-  participants: {} as { [socketId: string]: VoiceParticipant },
-  userVoiceState: {
-    roomId: null,
-    hasJoined: false,
-    isMicMuted: false,
-    isDeafened: false,
-    micGain: 50,
-    volume: 100,
-    isScreenSharing: false,
-    statue: 'online',
-  },
-  chatRoomMessages: [],
+  participants: {} as { [userId: string]: RoomParticipantType },
   isUnreadRoomMessage: false,
-  userActionsInVoice: {},
-  privateMessageFor: 'no-private-message',
 };
 
 export const roomSlice = createSlice({
@@ -48,17 +29,23 @@ export const roomSlice = createSlice({
   reducers: {
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
       state.room = action.payload;
+
+      if (action.payload?.participants) {
+        action.payload.participants.forEach(participant => {
+          state.participants[participant.userId] = participant;
+        });
+      }
     },
 
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
 
-    addParticipant: (state, action: PayloadAction<VoiceParticipant>) => {
+    addParticipant: (state, action: PayloadAction<RoomParticipantType>) => {
       state.participants[action.payload.userId] = action.payload;
     },
 
-    updateParticipant: (state, action: PayloadAction<Partial<VoiceParticipant>>) => {
+    updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
       if (!action.payload?.userId) {
         return;
       }
@@ -69,27 +56,13 @@ export const roomSlice = createSlice({
       };
     },
 
-    transferParticipantUserType: (
-      state,
-      action: PayloadAction<{
-        prevUserId?: string;
-        newUserId: string;
-      }>
-    ) => {
-      Object.values(state.participants).forEach((participant) => {
-        if (participant.userId === action.payload.newUserId) {
-          participant.userType = 'host';
-        } else {
-          participant.userType = 'guest';
-        }
-      });
-    },
+
 
     removeParticipant: (state, action: PayloadAction<string>) => {
       if (!state.participants[action.payload]) {
         let removeUserId = null;
         Object.values(state.participants).forEach((participant) => {
-          if (participant.socketId === action.payload) {
+          if (participant.userId === action.payload) {
             removeUserId = participant.userId;
           }
         });
@@ -98,115 +71,8 @@ export const roomSlice = createSlice({
       if (action.payload) delete state.participants[action.payload];
     },
 
-    updateParticipantAudio: (
-      state,
-      action: PayloadAction<{ userId: string; isMuted: boolean }>
-    ) => {
-      const participant = state.participants[action.payload.userId];
-      if (participant) {
-        participant.isMuted = action.payload.isMuted;
-      }
-    },
-
     resetParticipants: (state) => {
       state.participants = {};
-    },
-
-    updateUserVoiceState: (state, action: PayloadAction<Partial<UserVoiceStateProps>>) => {
-      state.userVoiceState = { ...state.userVoiceState, ...action.payload };
-    },
-
-    addChatRoomMessage: (state, action: PayloadAction<Message>) => {
-      state.chatRoomMessages.push({
-        ...action.payload,
-        startOfUnread: !state.isUnreadRoomMessage === action.payload.isUnread,
-      });
-      state.isUnreadRoomMessage = action.payload.isUnread;
-      state.privateMessageFor = action.payload.isPrivate
-        ? (action.payload?.senderInfo?.userId ?? 'no-private-message')
-        : 'no-private-message';
-    },
-
-    editChatRoomMessage: (
-      state,
-      action: PayloadAction<{
-        messageId: Message['id'];
-        text: Message['text'];
-        time?: Message['time'];
-      }>
-    ) => {
-      state.chatRoomMessages.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.isEdited = true;
-          msg.text = action.payload.text || msg.text;
-          msg.time = action.payload.time || msg.time;
-        }
-        if (msg.isPrivate && msg.id === action.payload.messageId) {
-          state.privateMessageFor = msg.senderInfo?.userId ?? 'no-private-message';
-          state.isUnreadRoomMessage = true;
-        }
-      });
-    },
-
-    deleteChatRoomMessage: (
-      state,
-      action: PayloadAction<{
-        messageId: Message['id'];
-        text?: Message['text'];
-        time?: Message['time'];
-      }>
-    ) => {
-      state.chatRoomMessages.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.isDeleted = true;
-          msg.isEdited = false;
-          msg.text = action.payload.text || '[This message was deleted]';
-          msg.time = action.payload.time || msg.time;
-        }
-      });
-    },
-
-    reactionChatRoomMessage: (
-      state,
-      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
-    ) => {
-      state.chatRoomMessages.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.reactions = [...(msg.reactions || []), action.payload.reaction];
-        }
-      });
-    },
-
-    reactionPopChatRoomMessage: (
-      state,
-      action: PayloadAction<{ messageId: Message['id']; reaction: Reaction }>
-    ) => {
-      state.chatRoomMessages.forEach((msg) => {
-        if (msg.id === action.payload.messageId) {
-          msg.reactions = (msg.reactions || []).filter(
-            (reaction) => reaction.userId !== action.payload.reaction.userId
-          );
-        }
-      });
-    },
-
-    clearUnreadChatRoomMessages: (state) => {
-      state.isUnreadRoomMessage = false;
-      state.privateMessageFor = 'no-private-message';
-      state.chatRoomMessages.forEach((msg) => {
-        msg.isUnread = false;
-        msg.startOfUnread = false;
-      });
-    },
-
-    clearChatRoomMessages: (state) => {
-      state.isUnreadRoomMessage = false;
-      state.privateMessageFor = 'no-private-message';
-      state.chatRoomMessages = [];
-    },
-
-    updateUserActionsInVoice: (state, action: PayloadAction<any>) => {
-      state.userActionsInVoice = action.payload;
     },
   },
 });
@@ -216,30 +82,15 @@ const {
   setRoomLoading,
   addParticipant,
   updateParticipant,
-  transferParticipantUserType,
   removeParticipant,
-  updateParticipantAudio,
   resetParticipants,
-  updateUserVoiceState,
-  addChatRoomMessage,
-  editChatRoomMessage,
-  deleteChatRoomMessage,
-  reactionChatRoomMessage,
-  reactionPopChatRoomMessage,
-  clearUnreadChatRoomMessages,
-  clearChatRoomMessages,
-  updateUserActionsInVoice,
 } = roomSlice.actions;
 
 // Selectors with proper typing
 const selectRoom = (state: RootState) => state.room.room;
 const selectRoomLoading = (state: RootState) => state.room.loading;
 const selectParticipants = (state: RootState) => state.room.participants;
-const selectChatRoomMessages = (state: RootState) => state.room.chatRoomMessages;
 const selectisUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
-const selectUserVoiceState = (state: RootState) => state.room.userVoiceState;
-const selectUserActionInVoiceState = (state: RootState) => state.room.userActionsInVoice;
-const selectprivateMessageFor = (state: RootState) => state.room.privateMessageFor;
 
 export const useRoomTools = () => {
   const dispatch = useDispatch();
@@ -247,11 +98,7 @@ export const useRoomTools = () => {
   const room = useSelector(selectRoom);
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
-  const chatRoomMessages = useSelector(selectChatRoomMessages);
   const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
-  const userVoiceState = useSelector(selectUserVoiceState);
-  const userActionsInVoice = useSelector(selectUserActionInVoiceState);
-  const privateMessageFor = useSelector(selectprivateMessageFor);
 
   const setTimeOutRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -260,70 +107,21 @@ export const useRoomTools = () => {
       room,
       loading,
       participants,
-      chatRoomMessages,
       isUnreadRoomMessage,
-      userVoiceState,
-      userActionsInVoice,
-      privateMessageFor,
       setRoom: (roomData: RoomType | null) => dispatch(setRoom(roomData)),
-
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
-      addParticipant: (participant: VoiceParticipant) => dispatch(addParticipant(participant)),
-      updateParticipant: (participant: Partial<VoiceParticipant>) =>
+      addParticipant: (participant: RoomParticipantType) => dispatch(addParticipant(participant)),
+      updateParticipant: (participant: Partial<RoomParticipantType>) =>
         dispatch(updateParticipant(participant)),
-      transferParticipantUserType: (payload: { newUserId: string; prevUserId?: string }) =>
-        dispatch(transferParticipantUserType(payload)),
       removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
-      updateParticipantAudio: (payload: { userId: string; isMuted: boolean }) =>
-        dispatch(updateParticipantAudio(payload)),
       resetParticipants: () => dispatch(resetParticipants()),
-      updateUserVoiceState: (payload: Partial<UserVoiceStateProps>) =>
-        dispatch(updateUserVoiceState(payload)),
-      addChatRoomMessage: (message: Message) => dispatch(addChatRoomMessage(message)),
-      editChatRoomMessage: (payload: {
-        messageId: Message['id'];
-        text: Message['text'];
-        time?: Message['time'];
-      }) => dispatch(editChatRoomMessage(payload)),
-      deleteChatRoomMessage: (payload: {
-        messageId: Message['id'];
-        text?: Message['text'];
-        time?: Message['time'];
-      }) => dispatch(deleteChatRoomMessage(payload)),
-      reactionChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
-        dispatch(reactionChatRoomMessage(payload)),
-      reactionPopChatRoomMessage: (payload: { messageId: Message['id']; reaction: Reaction }) =>
-        dispatch(reactionPopChatRoomMessage(payload)),
-      clearUnreadChatRoomMessages: () => dispatch(clearUnreadChatRoomMessages()),
-      clearChatRoomMessages: () => dispatch(clearChatRoomMessages()),
-      updateUserActionsInVoice: (payload: any) => {
-        // Clear any previous timer before setting a new one
-        if (setTimeOutRef.current) clearTimeout(setTimeOutRef.current);
-
-        if (payload.type === 'raise-hand-off') {
-          dispatch(updateUserActionsInVoice({}));
-          // No timer needed — already cleared
-          return;
-        }
-
-        dispatch(updateUserActionsInVoice(payload));
-
-        const delay = payload.type === 'raise-hand' ? 10_000 : 3_000;
-        setTimeOutRef.current = setTimeout(() => {
-          dispatch(updateUserActionsInVoice({}));
-        }, delay);
-      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       room,
       loading,
       participants,
-      chatRoomMessages,
       isUnreadRoomMessage,
-      userVoiceState,
-      userActionsInVoice,
-      privateMessageFor,
     ]
   );
 

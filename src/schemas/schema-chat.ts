@@ -75,7 +75,6 @@ export const RoomSchema = RoomBaseSchema.extend({
 export const RoomJoinSchema = z.object({
   roomId: z.string(),
   userId: z.string(),
-  isHost: z.boolean().optional().default(false),
 });
 
 export const RoomLeaveSchema = z.object({

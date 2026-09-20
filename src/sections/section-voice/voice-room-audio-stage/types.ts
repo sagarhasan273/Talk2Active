@@ -1,5 +1,7 @@
 export type AudioState = 'speaking' | 'unmuted' | 'muted' | 'listening';
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
+
 export type ParticipantStageType = {
   id: string;
   level?: string;
@@ -7,11 +9,10 @@ export type ParticipantStageType = {
   isSelf?: boolean;
   handRaised?: boolean;
   isSpeaking?: boolean;
-  role?: 'host' | 'speaker' | 'moderator' | 'listener';
   isDeafened?: boolean;
   volume?: number;
   activeReactionEmoji?: string | null;
-  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
+  connectionStatus?: ConnectionStatus
 };
 
 export type MessageReaction = {
@@ -25,22 +26,13 @@ export type ChatMessage = {
   authorId: string;
   authorName: string;
   avatarUrl?: string;
-  /** URL of the uploaded image attachment, if any. */
   imageUrl?: string;
   text: string;
   timestamp?: string;
   isSelf?: boolean;
-  /** Set when the message has been edited after sending. */
   editedAt?: string;
-  /** id of the message this one is replying to, if any. */
   replyToId?: string;
   reactions?: MessageReaction[];
-  /**
-   * When set, this is a private (whisper) message meant only for the sender
-   * and this one recipient — even inside a group chat. Consumers should
-   * only render a private message if the viewer is the sender or the
-   * recipient (see filterVisibleMessages in messages-data.ts).
-   */
   privateTo?: { id: string; name: string } | null;
   isSystem?: boolean; // Added system message flag
   systemType?: 'info' | 'warning' | 'success' | 'error'; // Added system message type

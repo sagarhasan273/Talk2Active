@@ -1,4 +1,4 @@
-import type { ChatMessage, StageParticipant } from '../voice-room-workspace/types';
+import type { ChatMessage, StageParticipant } from '../voice-room-audio-stage/types';
 
 export const CURRENT_USER = {
   id: 'u1',

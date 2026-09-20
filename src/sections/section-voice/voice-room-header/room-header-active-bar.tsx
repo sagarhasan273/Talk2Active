@@ -1,4 +1,4 @@
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 
 import {
   ArrowRightIcon,
@@ -47,7 +47,7 @@ export const VoiceRoomActiveBar = ({
   onEnterRoom,
   onLeaveRoom,
 }: {
-  room: RoomResponse;
+  room: RoomType;
   participants: VoiceParticipant[];
   currentSpeaker?: VoiceParticipant | null;
   onEnterRoom: () => void;

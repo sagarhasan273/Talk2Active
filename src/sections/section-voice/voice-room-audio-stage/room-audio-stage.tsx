@@ -14,7 +14,8 @@ import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-control-dock';
 import { EmptySlotTile } from './room-empty-slot-tile';
 import { ParticipantTile } from './room-participant-tile';
-import type { StageParticipant } from './types';
+import { ParticipantStageType } from './types';
+
 
 export type RoomAudioStageProps = {
   onBack?: () => void;
@@ -22,7 +23,7 @@ export type RoomAudioStageProps = {
   onShareClick?: () => void;
   topicPrompt: string;
   onChangePrompt?: () => void;
-  participants: StageParticipant[];
+  participants: ParticipantStageType[];
   maxParticipants: number;
   micMuted?: boolean;
   deafened?: boolean;
@@ -34,7 +35,7 @@ export type RoomAudioStageProps = {
   onSendReaction?: (emoji: string) => void;
   onToggleChat?: () => void;
   onLeave?: () => void;
-  onProfileClick?: (participant: StageParticipant) => void;
+  onProfileClick?: (participant: ParticipantStageType) => void;
 };
 
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({

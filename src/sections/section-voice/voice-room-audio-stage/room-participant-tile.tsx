@@ -23,11 +23,12 @@ import {
   Pause,
   UserX,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ChatUserStatus } from 'src/types/type-chat';
+import { useRoomTools } from '@/core/slices';
+import type { ChatUserStatus, RoomParticipantType } from 'src/types/type-chat';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
-import type { StageParticipant } from './types';
+import { ParticipantStageType } from './types';
 
 // --- ANIMATIONS ---
 const speakingGlow = keyframes`
@@ -164,7 +165,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
 });
 
 type ParticipantTileProps = {
-  participant: StageParticipant & {
+  participant: ParticipantStageType & {
     status?: string;
     connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
     hasJoin?: boolean;
@@ -175,16 +176,21 @@ type ParticipantTileProps = {
 
 export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) => {
   const theme = useTheme();
+
   const isDark = theme.palette.mode === 'dark';
 
+  const { room } = useRoomTools();
+
+
+  const getParticipantData = useCallback((identity: string) => {
+    return room?.participants.find((participant: RoomParticipantType) => participant.userId === identity)
+  }, [room]);
+
+  const currentParticipant = getParticipantData(participant.id)
   const {
-    name,
-    avatarUrl,
     audioState,
-    isHost,
     isSelf,
     handRaised,
-    verified,
     activeReactionEmoji,
     status,
     connectionStatus = 'connected',
@@ -193,6 +199,9 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
   } = participant;
 
   const isMuted = audioState === 'muted';
+
+
+
 
   // --- LIVEKIT NATIVE VOLUME TRACKING ---
   const audioTracks = useTracks([Track.Source.Microphone]);
@@ -217,7 +226,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
     return undefined;
   }, [activeReactionEmoji]);
 
-  const initials = name
+  const initials = currentParticipant?.name
     ?.split(' ')
     .filter(Boolean)
     .map((p) => p[0])
@@ -362,8 +371,8 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
         }}
       >
         <Avatar
-          src={avatarUrl}
-          alt={name}
+          src={currentParticipant?.profilePhoto}
+          alt={currentParticipant?.name}
           sx={{
             width: '100%',
             maxWidth: 88,
@@ -390,7 +399,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
         {connectionOverlayElement}
 
         {/* 5. Floating Host Ribbon/Icon */}
-        {isHost && !connectionOverlayElement && (
+        {currentParticipant?.isHost && !connectionOverlayElement && (
           <Tooltip title="Host" arrow placement="top">
             <Box
               sx={{
@@ -484,7 +493,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
             opacity: connectionOverlayElement ? 0.6 : 1,
           }}
         >
-          {name}
+          {currentParticipant?.name}
         </Typography>
 
         {isSelf && (
@@ -508,7 +517,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
           </Box>
         )}
 
-        {verified && (
+        {currentParticipant?.verified && (
           <Box
             component="span"
             sx={{

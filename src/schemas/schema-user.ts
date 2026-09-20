@@ -1,7 +1,5 @@
 import { z as zod } from 'zod';
 
-
-
 // Main User Schema
 export const UserBaseSchema = zod.object({
   userId: zod.string(),
@@ -44,7 +42,6 @@ export const UserBaseSchema = zod.object({
   follower_count: zod.number().int().nonnegative(),
   following_count: zod.number().int().nonnegative(),
   friend_count: zod.number().int().nonnegative(),
-  pendingRequests: zod.number().int().nonnegative(),
 
   createdAt: zod.date().optional(),
   updatedAt: zod.date().optional(),
@@ -64,7 +61,6 @@ export const UserSchema = UserBaseSchema.pick({
   follower_count: true,
   following_count: true,
   friend_count: true,
-  pendingRequests: true,
   createdAt: true,
   updatedAt: true,
 })
@@ -135,6 +131,7 @@ export const ParticipantSchema = UserBaseSchema.pick({
   following_count: true,
   friend_count: true,
 }).extend({
+  isHost: zod.boolean().default(false),
   isFollowing: zod.boolean().default(false),
   isBlocked: zod.boolean().default(false),
 });

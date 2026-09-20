@@ -6,7 +6,6 @@ import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/typ
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Box } from '@mui/material';
 
 import { useJoinRoomMutation } from '@/core/apis';
 import { toastErrorResponse } from '@/utils/response';
@@ -19,13 +18,13 @@ import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { FilterState, VoiceRoomsFilter } from '../voice-filter-rooms';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
+import { VoiceRoomJoinGate } from '../voice-room-join-gate';
 import { VoiceTabPanel } from '../voice-tab-panel';
-import { VoiceRoomJoinGate } from './voice-room-join-gate';
 import VoiceRoomlist from './voice-room-list';
-import { VoiceRoomBody } from './voice-room-space';
 
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
@@ -50,11 +49,6 @@ export function VoiceMainView() {
   });
 
   const [joinRoomMutation] = useJoinRoomMutation();
-
-  const isHost = useMemo(() => {
-    if (!room || !user) return false;
-    return room.host.userId === user.userId;
-  }, [room, user]);
 
   const participants = useMemo(() => (room?.participants || []) as VoiceParticipant[], [room]);
 
@@ -87,20 +81,14 @@ export function VoiceMainView() {
       const response = await joinRoomMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
-        userName: (user as any).name || (user as any).username || String(user.userId),
       }).unwrap();
 
-      if (response.status) {
-        const token = (response as any)?.data?.token;
-
-        setRoom(selectedRoom);
-        setLivekitToken(token);
+      if (response.status && response.data.token) {
+        setRoom(response.data.room);
+        setLivekitToken(response.data.token);
         setIsJoinGateOpen(false);
         setSelectedTab('room-space');
-
-        if (token) {
-          await connectToRoom(token);
-        }
+        await connectToRoom(response.data.token);
       }
     } catch (error) {
       toastErrorResponse(error);
@@ -179,7 +167,7 @@ export function VoiceMainView() {
       </VoiceTabPanel>
 
       <VoiceTabPanel value={selectedTab !== 'room-list' ? 1 : 0} index={1}>
-        <VoiceRoomBody
+        <RoomContainerMain
           selectedRoom={selectedRoom}
           token={livekitToken}
           onLeaveRoom={handleLeaveRoom}
@@ -204,27 +192,13 @@ export function VoiceMainView() {
       />
 
       {isJoinGateOpen && selectedRoom && (
-        <Box
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: (theme) => theme.zIndex.modal,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2,
-            bgcolor: 'rgba(0, 0, 0, 0.45)',
-            backdropFilter: 'blur(6px)',
-          }}
-        >
-          <VoiceRoomJoinGate
-            roomTopic={selectedRoom.topic}
-            participantCount={selectedRoom.participants.length}
-            maxParticipants={selectedRoom.max_participants}
-            onJoin={handleJoinRoom}
-            onCancel={handleCancelJoin}
-          />
-        </Box>
+        <VoiceRoomJoinGate
+          roomTopic={selectedRoom.topic}
+          participantCount={selectedRoom.participants.length}
+          maxParticipants={selectedRoom.max_participants}
+          onJoin={handleJoinRoom}
+          onCancel={handleCancelJoin}
+        />
       )}
 
       <VoiceModalCreateRoom

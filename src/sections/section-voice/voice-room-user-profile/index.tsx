@@ -52,7 +52,7 @@ import { useRoomTools } from '@/core/slices';
 import { RoomParticipantType } from '@/types/type-chat';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
-import { ParticipantStageType } from '../voice-room-workspace/types';
+import { ParticipantStageType } from '../voice-room-audio-stage/types';
 
 interface VoiceRoomUserProfileProps {
   open: boolean;
@@ -122,10 +122,9 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   }, [joinedRoom]);
 
   const participant = getParticipantData(user?.id as string);
+
   const {
     id: userId = '',
-    role = 'listener',
-
     audioState = 'muted',
     isSpeaking = audioState === 'speaking',
     isDeafened = user?.isDeafened,
@@ -373,23 +372,6 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
     }
   })();
 
-  const roleColor =
-    role === 'host'
-      ? theme.palette.primary.main
-      : role === 'moderator'
-        ? theme.palette.secondary.main
-        : role === 'speaker'
-          ? theme.palette.success.main
-          : theme.palette.grey[500];
-
-  const roleLabel =
-    role === 'host'
-      ? 'HOST'
-      : role === 'moderator'
-        ? 'MODERATOR'
-        : role === 'speaker'
-          ? 'SPEAKER'
-          : 'LISTENER';
 
   const elevatedSelectMenuProps = {
     PaperProps: {
@@ -525,8 +507,6 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
                     height: { xs: 120, sm: 160 },
                     fontSize: 28,
                     fontWeight: 800,
-                    backgroundColor: alpha(roleColor, 0.15),
-                    color: roleColor,
                     border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
                   }}
                   variant="rounded"
@@ -597,17 +577,6 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
 
               {/* Tags / Chips */}
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Chip
-                  label={roleLabel}
-                  size="small"
-                  sx={{
-                    height: 24,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: roleColor,
-                    backgroundColor: alpha(roleColor, 0.12),
-                  }}
-                />
                 {level && (
                   <Chip
                     label={level}
