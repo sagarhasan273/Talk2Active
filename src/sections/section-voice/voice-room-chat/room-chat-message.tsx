@@ -24,7 +24,7 @@ import {
 import { QUICK_REACTIONS } from '../@mock_/messages-data';
 import type { ChatMessage } from '../voice-room-header/types';
 
-type RoomMessageBubbleProps = {
+type RoomChatMessageProps = {
   message: ChatMessage;
   replyTo?: ChatMessage;
   onReply?: (message: ChatMessage) => void;
@@ -32,13 +32,13 @@ type RoomMessageBubbleProps = {
   onReact?: (id: string, emoji: string) => void;
 };
 
-export const RoomMessageBubble = ({
+export const RoomChatMessage = ({
   message,
   replyTo,
   onReply,
   onEdit,
   onReact,
-}: RoomMessageBubbleProps) => {
+}: RoomChatMessageProps) => {
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);

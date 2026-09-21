@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Box } from '@mui/material';
 
-import { Scrollbar } from '@/components/scrollbar';
 import { useCredentials } from '@/core/slices';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
@@ -184,38 +183,37 @@ export function RoomlistMain({
         overflow: 'hidden',
       }}
     >
-      <Scrollbar sx={{ height: 1 }}>
-        <Box
-          sx={{
-            display: 'grid',
-            // xs: 1 column taking 100% width; sm+: auto-filling left-aligned columns
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(auto-fill, minmax(340px, 1fr))',
-            },
-            alignItems: 'stretch',
-            justifyContent: 'flex-start', // Keeps cards left-aligned
-            position: 'relative',
-            gap: 1.5,
-            mb: 10,
-          }}
-        >
-          <RoomCardCreation
-            onCreateRoom={onCreateRoom}
+
+      <Box
+        sx={{
+          display: 'grid',
+          // xs: 1 column taking 100% width; sm+: auto-filling left-aligned columns
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(auto-fill, minmax(340px, 1fr))',
+          },
+          alignItems: 'stretch',
+          justifyContent: 'flex-start', // Keeps cards left-aligned
+          position: 'relative',
+          gap: 1.5,
+          mb: 10,
+        }}
+      >
+        <RoomCardCreation
+          onCreateRoom={onCreateRoom}
+          sx={sxCard}
+        />
+
+        {filteredRooms.map((room) => (
+          <VoiceRoomCard
+            key={room.roomId}
+            roomData={room}
+            currentUserId={user?.userId}
+            onJoinRoom={onSelectRoom}
             sx={sxCard}
           />
-
-          {filteredRooms.map((room) => (
-            <VoiceRoomCard
-              key={room.roomId}
-              roomData={room}
-              currentUserId={user?.userId}
-              onJoinRoom={onSelectRoom}
-              sx={sxCard}
-            />
-          ))}
-        </Box>
-      </Scrollbar>
+        ))}
+      </Box>
     </Box>
   );
 }

@@ -16,7 +16,7 @@ import {
 
 import axios from 'axios';
 import { filterVisibleMessages } from '../@mock_/messages-data';
-import { RoomMessageBubble } from './room-message-bubble';
+import { RoomChatMessage } from './room-chat-message';
 
 import { uploadImage } from '@/utils/helper';
 import type { VoiceParticipant } from '../voice-room-header/types';
@@ -249,7 +249,7 @@ export const RoomChatPanel = ({
           </Typography>
         ) : (
           visibleMessages.map((m) => (
-            <RoomMessageBubble
+            <RoomChatMessage
               key={m.id}
               message={{ ...m, privateTo: m.privateTo ?? undefined }}
               replyTo={

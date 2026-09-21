@@ -2,6 +2,7 @@
 
 import type { SxProps, Theme } from '@mui/material/styles';
 
+import { Scrollbar } from '@/components/scrollbar';
 import { Box, Container } from '@mui/material';
 
 // ----------------------------------------------------------------------
@@ -13,7 +14,7 @@ export type DashboardLayoutProps = {
   mainContent?: React.ReactNode;
   footer?: React.ReactNode;
   fixedHeader?: boolean;
-  maxWidth?: 'lg' | 'xl' | 'md';
+  maxWidth?: 'lg' | 'xl' | 'md' | false;
 };
 
 export function VoiceRoomLayout({
@@ -30,66 +31,65 @@ export function VoiceRoomLayout({
       maxWidth={maxWidth}
       disableGutters
       sx={{
-        p: { xs: 1 },
+        px: { xs: 1 },
         pb: { xs: 0, sm: 1 },
-        height: '100%',
+        height: '100vh', // Ensure it takes the full viewport height
         maxHeight: '100%',
-        flex: 1,
-        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 1 },
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'hidden', // Prevents outer scrolling
         ...sx,
       }}
     >
       {/* 1. FIXED HEADER: Stays locked at the top */}
-      {fixedHeader && header && <Box sx={{ flexShrink: 0 }}>{header}</Box>}
+      {fixedHeader && header && <Box sx={{ pt: 1, flexShrink: 0 }}>{header}</Box>}
 
       {/* Scrollable Content Container */}
-      <Box
+      <Scrollbar
         sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          pt: 1,
           display: 'flex',
           flexDirection: 'column',
-          '&::-webkit-scrollbar': {
-            width: 6,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            bgcolor: 'divider',
-            borderRadius: 3,
-          },
+          flexGrow: 1,
+          minHeight: 0,
+          width: '100%',
         }}
       >
-        {/* 2. SCROLLABLE HEADER: Scrolls away with the page content */}
-        {!fixedHeader && header && (
-          <Box sx={{ flexShrink: 0, mb: { xs: 1 } }}>
-            {header}
-          </Box>
-        )}
-
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 1,
-            flex: 1,
-            minHeight: 0,
+            minHeight: '100%', // Ensures content stretches to at least the height of the Scrollbar
+            width: '100%'
           }}
         >
+          {/* 2. SCROLLABLE HEADER: Scrolls away with the page content */}
+          {!fixedHeader && header && (
+            <Box sx={{ flexShrink: 0, mb: { xs: 1 } }}>
+              {header}
+            </Box>
+          )}
+
           {/* Filter */}
           {filter && (
-            <Box sx={{ flexShrink: 0 }}>
+            <Box sx={{ flexShrink: 0, mb: 1 }}>
               {filter}
             </Box>
           )}
 
-          {/* Main Content */}
-          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* Main Content (Fills available space) */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              minHeight: 0,
+              mb: 1
+            }}
+          >
             {mainContent}
           </Box>
 
@@ -99,14 +99,15 @@ export function VoiceRoomLayout({
               sx={{
                 flexShrink: 0,
                 display: { xs: 'none', sm: 'block' },
-                mt: 'auto',
+                mt: 'auto', // Pushes footer to the bottom if content is short
+                height: 40
               }}
             >
               {footer}
             </Box>
           )}
         </Box>
-      </Box>
+      </Scrollbar>
     </Container>
   );
 }

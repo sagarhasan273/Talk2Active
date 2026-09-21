@@ -19,7 +19,7 @@ import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
-import { VoiceRoomJoinGate } from '../voice-room-join-gate';
+import { VoiceRoomJoinGate } from './voice-room-join-gate';
 import { RoomlistMain } from '../voice-room-list';
 import { VoiceTabPanel } from '../voice-tab-panel';
 

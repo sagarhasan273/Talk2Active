@@ -403,8 +403,9 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
             flexDirection: { xs: 'column', md: 'row' },
             gap: 1,
             alignItems: 'stretch',
+            // flexGrow: 1,
             width: 1,
-            height: { xs: 1, md: '75vh' },
+            height: { xs: 1 },
             minHeight: { md: '65vh' },
           }}
         >

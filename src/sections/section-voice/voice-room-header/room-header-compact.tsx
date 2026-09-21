@@ -1,7 +1,7 @@
 // src/sections/section-voice-room/voice-room-header/room-header-compact.tsx
 
 import { Volume2Icon } from 'lucide-react';
-import type { RoomResponse } from 'src/types/type-chat';
+import type { RoomType } from 'src/types/type-chat';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
@@ -19,7 +19,7 @@ export const CompactRoomHeader = ({
   onBack,
   onSettingsClick,
 }: {
-  room: RoomResponse;
+  room: RoomType;
   onBack?: () => void;
   onSettingsClick?: () => void;
   onShareClick?: () => void;

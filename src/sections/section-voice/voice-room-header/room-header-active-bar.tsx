@@ -76,15 +76,13 @@ export const VoiceRoomActiveBar = ({
         borderColor: isDark
           ? alpha(theme.palette.primary.main, 0.28)
           : alpha(theme.palette.primary.main, 0.2),
-        boxShadow: isDark
-          ? `0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px ${alpha(theme.palette.primary.main, 0.08)}`
-          : `0 12px 30px -4px ${alpha(theme.palette.primary.main, 0.12)}, 0 4px 12px rgba(0,0,0,0.03)`,
+
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           borderColor: alpha(theme.palette.primary.main, 0.45),
           boxShadow: isDark
-            ? `0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 18px ${alpha(theme.palette.primary.main, 0.15)}`
-            : `0 16px 36px -4px ${alpha(theme.palette.primary.main, 0.18)}, 0 6px 16px rgba(0,0,0,0.05)`,
+            ? `0 12px 20px -4px rgba(0, 0, 0, 0.65), 0 0 18px ${alpha(theme.palette.primary.main, 0.15)}`
+            : `0 12px 20px -4px ${alpha(theme.palette.primary.main, 0.18)}, 0 6px 16px rgba(0,0,0,0.05)`,
         },
       }}
     >
