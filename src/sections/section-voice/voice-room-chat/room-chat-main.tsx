@@ -64,6 +64,10 @@ export function RoomChatMain({
         flexShrink: 0,
         height: '100%',
         alignItems: 'stretch',
+        bgcolor: 'background.paper',
+        borderRadius: 1,
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        position: 'relative',
       }}
     >
       {collapsedBoolean.value ? (

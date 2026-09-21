@@ -392,82 +392,73 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
     <>
       <Box
         sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 1,
           width: 1,
           height: 1,
-          position: 'relative',
+          pt: 1,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            gap: 1,
-            alignItems: 'stretch',
-            // flexGrow: 1,
-            width: 1,
-            height: { xs: 1 },
-            minHeight: { md: '65vh' },
+        {/* Main Voice, Presentation & Video Stage */}
+        <RoomAudioStage
+          participants={participants}
+          maxParticipants={selectedRoom?.max_participants || 0}
+          topicPrompt={''}
+          micMuted={micMuted}
+          deafened={deafened}
+          handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
+          onChangePrompt={() => { }}
+          onToggleMic={handleToggleMic}
+          onToggleDeafen={handleToggleDeafen}
+          onToggleRaiseHand={handleToggleRaiseHand}
+          onToggleScreenShare={handleToggleScreenShare}
+          onSendReaction={handleSendReaction}
+          onToggleChat={() => {
+            chatCollapsedBoolean.onToggle();
+            setChatOpen(true);
           }}
-        >
-          {/* Main Voice, Presentation & Video Stage */}
-          <RoomAudioStage
-            participants={participants}
-            maxParticipants={selectedRoom?.max_participants || 0}
-            topicPrompt={''}
-            micMuted={micMuted}
-            deafened={deafened}
-            handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
-            onChangePrompt={() => { }}
-            onToggleMic={handleToggleMic}
-            onToggleDeafen={handleToggleDeafen}
-            onToggleRaiseHand={handleToggleRaiseHand}
-            onToggleScreenShare={handleToggleScreenShare}
-            onSendReaction={handleSendReaction}
-            onToggleChat={() => {
-              chatCollapsedBoolean.onToggle();
-              setChatOpen(true);
-            }}
-            onLeave={onLeaveRoom}
-            onProfileClick={(p) => {
-              setSelectedUser({ ...p });
-              setProfileDrawerOpen(true);
-            }}
-            onSettingsClick={onSettingsClick}
-            onBack={onBack}
-          />
+          onLeave={onLeaveRoom}
+          onProfileClick={(p) => {
+            setSelectedUser({ ...p });
+            setProfileDrawerOpen(true);
+          }}
+          onSettingsClick={onSettingsClick}
+          onBack={onBack}
+        />
 
-          {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
-          <RoomChatMain
-            messages={messages}
-            currentUserId={user.userId}
-            topicContext={''}
-            participants={participants}
-            onSendMessage={handleSendMessage}
-            onEditMessage={handleEditMessage}
-            onReactMessage={handleReactMessage}
-            collapsedBoolean={chatCollapsedBoolean}
-          />
-        </Box>
 
-        {/* Mobile Bottom Chat Sheet */}
-        <RoomChatDrawer
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
+        {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
+        <RoomChatMain
           messages={messages}
           currentUserId={user.userId}
+          topicContext={''}
           participants={participants}
           onSendMessage={handleSendMessage}
           onEditMessage={handleEditMessage}
           onReactMessage={handleReactMessage}
+          collapsedBoolean={chatCollapsedBoolean}
         />
+
       </Box>
+
+      {/* Mobile Bottom Chat Sheet */}
+      <RoomChatDrawer
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={messages}
+        currentUserId={user.userId}
+        participants={participants}
+        onSendMessage={handleSendMessage}
+        onEditMessage={handleEditMessage}
+        onReactMessage={handleReactMessage}
+      />
 
       {/* User Profile Modal Drawer */}
       <VoiceRoomUserProfile
         open={profileDrawerOpen}
         onClose={() => {
           setProfileDrawerOpen(false);
-          // setSelectedUser(null);
         }}
         user={selectedUser}
       />

@@ -13,15 +13,13 @@ import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
 import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
-import { FilterState, VoiceRoomsFilter } from '../voice-filter-rooms';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
-import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
-import { VoiceRoomJoinGate } from './voice-room-join-gate';
 import { RoomlistMain } from '../voice-room-list';
 import { VoiceTabPanel } from '../voice-tab-panel';
+import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
@@ -37,13 +35,7 @@ export function VoiceMainView() {
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('room-list');
 
-  const [filterRooms, setFilterRooms] = useState<FilterState>({
-    searchQuery: '',
-    selectedLanguage: 'all',
-    selectedLevel: 'all',
-    hideFullRooms: false,
-    showActiveOnly: false,
-  });
+
 
   const [joinRoomMutation] = useJoinRoomMutation();
   const [leaveRoomMutation] = useLeaveRoomMutation();
@@ -123,10 +115,6 @@ export function VoiceMainView() {
   }, [room]);
 
   const header = useMemo(() => {
-    if (room && selectedTab === 'room-space') {
-      return null;
-    }
-
     if (isInRoom && room && selectedTab === 'room-list') {
       return (
         <VoiceRoomActiveBar
@@ -139,7 +127,7 @@ export function VoiceMainView() {
       );
     }
 
-    return <DefaultHeader onQuickJoin={() => { }} onCreateRoom={handleCreateRoom} />;
+    return null;
   }, [
     room,
     selectedTab,
@@ -150,16 +138,10 @@ export function VoiceMainView() {
     handleCreateRoom,
   ]);
 
-  const filter = useMemo(
-    () => <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />,
-    [filterRooms]
-  );
-
   const mainContent = (
     <>
       <VoiceTabPanel value={selectedTab === 'room-list' ? 0 : 1} index={0}>
         <RoomlistMain
-          query={filterRooms}
           onSelectRoom={handleSelectRoom}
           onCreateRoom={handleCreateRoom}
         />
@@ -184,7 +166,6 @@ export function VoiceMainView() {
       <VoiceRoomLayout
         header={header}
         fixedHeader={Boolean(isInRoom && selectedTab === 'room-list')}
-        filter={selectedTab === 'room-list' ? filter : undefined}
         mainContent={mainContent}
         footer={footer}
         maxWidth={selectedTab === 'room-space' ? 'xl' : 'lg'}

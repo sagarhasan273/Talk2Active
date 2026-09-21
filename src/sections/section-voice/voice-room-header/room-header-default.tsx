@@ -1,9 +1,8 @@
-import React from 'react';
 import { VerifiedIcon } from 'lucide-react';
 
-import AddIcon from '@mui/icons-material/Add';
 import { AutoAwesomeMosaicOutlined } from '@mui/icons-material';
-import { Box, Stack, alpha, Paper, Button, Tooltip, useTheme, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { alpha, Box, Button, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
 // ----------------------------------------------------------------------
 // Default Hero Header
@@ -22,6 +21,7 @@ export const DefaultHeader = ({
     <Paper
       elevation={0}
       sx={{
+        gridColumn: '1 / -1',
         position: 'relative',
         p: { xs: 1.5, sm: 2 },
         borderRadius: { xs: 1 },

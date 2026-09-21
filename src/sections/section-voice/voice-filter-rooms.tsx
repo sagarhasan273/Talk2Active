@@ -157,6 +157,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     <Paper
       elevation={0}
       sx={{
+        gridColumn: '1 / -1',
         p: { xs: 1, sm: 2 },
         bgcolor: 'background.paper',
         borderRadius: 1,

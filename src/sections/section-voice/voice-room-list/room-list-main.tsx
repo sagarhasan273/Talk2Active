@@ -1,5 +1,5 @@
 import type { RoomParticipantType, RoomType } from 'src/types/type-chat';
-import type { FilterState } from '../voice-filter-rooms';
+import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
 import { useEffect, useMemo, useState } from 'react';
 
@@ -9,8 +9,11 @@ import { useCredentials } from '@/core/slices';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
+import { Scrollbar } from '@/components/scrollbar';
+import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import { useSocket } from '@/core/contexts/socket-context';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
+import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
 import { VoiceRoomCard } from './room-list-card-main';
 
@@ -26,26 +29,33 @@ const sxCard = {
 };
 
 interface RoomlistMainProps {
-  query: FilterState;
+
   onSelectRoom: (room: RoomType) => void;
   onCreateRoom: () => void;
 }
 
 export function RoomlistMain({
-  query,
   onSelectRoom,
   onCreateRoom,
 }: RoomlistMainProps) {
   const { user } = useCredentials();
 
   const { socket } = useSocket();
+  const { isInRoom } = useLiveKitSession()
 
   const [rooms, setRooms] = useState<RoomType[]>([]);
+  const [filterRooms, setFilterRooms] = useState<FilterState>({
+    searchQuery: '',
+    selectedLanguage: 'all',
+    selectedLevel: 'all',
+    hideFullRooms: false,
+    showActiveOnly: false,
+  });
 
   const { data: getRooms } = useGetRoomsQuery(null);
 
   const filteredRooms = useMemo(() => {
-    const search = query.searchQuery.trim().toLowerCase();
+    const search = filterRooms.searchQuery.trim().toLowerCase();
 
     return rooms.filter((room) => {
       const matchesSearch =
@@ -53,19 +63,19 @@ export function RoomlistMain({
         room.topic.toLowerCase().includes(search);
 
       const matchesLanguage =
-        query.selectedLanguage === 'all' ||
-        room.languages.includes(query.selectedLanguage);
+        filterRooms.selectedLanguage === 'all' ||
+        room.languages.includes(filterRooms.selectedLanguage);
 
       const matchesLevel =
-        query.selectedLevel === 'all' ||
-        room.level === query.selectedLevel;
+        filterRooms.selectedLevel === 'all' ||
+        room.level === filterRooms.selectedLevel;
 
       const matchesCapacity =
-        !query.hideFullRooms ||
+        !filterRooms.hideFullRooms ||
         room.participants.length < room.max_participants;
 
       const matchesActive =
-        !query.showActiveOnly ||
+        !filterRooms.showActiveOnly ||
         room.isActive;
 
       return (
@@ -76,7 +86,7 @@ export function RoomlistMain({
         matchesActive
       );
     });
-  }, [rooms, query]);
+  }, [rooms, filterRooms]);
 
   useEffect(() => {
     if (!socket) return;
@@ -172,16 +182,7 @@ export function RoomlistMain({
   }, [getRooms]);
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        overflow: 'hidden',
-      }}
+    <Scrollbar
     >
 
       <Box
@@ -199,6 +200,10 @@ export function RoomlistMain({
           mb: 10,
         }}
       >
+        {!isInRoom && <DefaultHeader onQuickJoin={() => { }} onCreateRoom={onCreateRoom} />}
+
+        <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
+
         <RoomCardCreation
           onCreateRoom={onCreateRoom}
           sx={sxCard}
@@ -214,6 +219,6 @@ export function RoomlistMain({
           />
         ))}
       </Box>
-    </Box>
+    </Scrollbar>
   );
 }
