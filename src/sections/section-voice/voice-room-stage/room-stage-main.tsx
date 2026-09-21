@@ -2,7 +2,14 @@ import { useTracks, VideoTrack } from '@livekit/components-react';
 import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Track } from 'livekit-client';
-import { ChevronLeft, ChevronRight, LayoutGrid, Maximize, Minimize, Tv } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  Maximize,
+  Minimize,
+  Tv,
+} from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { useLiveKitSession } from '@/core/contexts/livekit-context';
@@ -13,12 +20,11 @@ import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import { ParticipantTile } from './room-stage-participant-tile';
 import { ParticipantStageType } from './types';
 
-
 export type RoomAudioStageProps = {
   onBack?: () => void;
   onSettingsClick?: () => void;
   onShareClick?: () => void;
-  topicPrompt: string;
+  topicPrompt?: string;
   onChangePrompt?: () => void;
   participants: ParticipantStageType[];
   maxParticipants: number;
@@ -38,7 +44,7 @@ export type RoomAudioStageProps = {
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onBack,
   onShareClick,
-  topicPrompt,
+  topicPrompt = '',
   onChangePrompt,
   participants,
   maxParticipants,
@@ -60,11 +66,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const { isInRoom } = useLiveKitSession();
   const { room } = useRoomTools();
 
-  // Refs
+  // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // States
+  // Layout States
   const [presentationOnly, setPresentationOnly] = useState(false);
   const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
@@ -73,20 +79,23 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const activeScreenShare = screenShareTracks[0];
   const hasScreenShare = Boolean(activeScreenShare?.publication);
 
-  // Auto-reset presentation-only if screen share ends
+  // Auto-reset presentation mode when screen sharing stops
   useEffect(() => {
     if (!hasScreenShare) {
       setPresentationOnly(false);
     }
   }, [hasScreenShare]);
 
-  // Sync fullscreen state
+  // Track native fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsElementFullscreen(Boolean(document.fullscreenElement));
     };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   const handleToggleElementFullscreen = async () => {
@@ -101,7 +110,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     }
   };
 
-  // Horizontal Scroll Logic for Desktop
   const handleScroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const scrollAmount = direction === 'left' ? -300 : 300;
@@ -116,8 +124,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        flex: 1,
         width: '100%',
         height: '100%',
+        minHeight: 0,
+        minWidth: 0,
         bgcolor: 'background.paper',
         borderRadius: 1,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
@@ -125,7 +136,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* ----------------- Top Header Placement ----------------- */}
+      {/* Top Header Placement */}
       {isInRoom && room && (
         <CompactRoomHeader
           room={room}
@@ -135,16 +146,24 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         />
       )}
 
-      {/* ----------------- Main Content Canvas ----------------- */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        {/* Screen Share Viewer */}
+      {/* Main Stage Canvas */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Screen Share Screen Display */}
         {hasScreenShare && (
           <Box
             ref={screenShareContainerRef}
             sx={{
               flex: presentationOnly ? 1 : 'none',
-              height: presentationOnly ? '100%' : { xs: 260, sm: 380, md: '60%' },
+              height: presentationOnly ? '100%' : { xs: 240, sm: 340, md: '55%' },
               width: '100%',
+              minHeight: 0,
               position: 'relative',
               bgcolor: '#050505',
               overflow: 'hidden',
@@ -174,12 +193,13 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 fontSize: 12,
                 fontWeight: 700,
                 zIndex: 3,
+                pointerEvents: 'none',
               }}
             >
               {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
             </Box>
 
-            {/* Screen Presentation Action Controls (Top Right) */}
+            {/* Presentation Controls */}
             <Stack
               direction="row"
               spacing={1}
@@ -233,20 +253,22 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           </Box>
         )}
 
-        {/* ----------------- Participant Renders ----------------- */}
+        {/* Participant Renders */}
         {!presentationOnly && (
           <>
-            {/* View A: Horizontal Scroll (Active when Screen Sharing) */}
             {hasScreenShare ? (
+              /* Strip Row layout during presentation */
               <Box
                 sx={{
                   position: 'relative',
                   width: '100%',
-                  flexShrink: 0,
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  alignItems: 'center',
                   bgcolor: alpha(theme.palette.background.default, 0.4),
                 }}
               >
-                {/* Desktop Left Scroll Button */}
                 <IconButton
                   onClick={() => handleScroll('left')}
                   sx={{
@@ -258,13 +280,12 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     zIndex: 5,
                     bgcolor: theme.palette.background.paper,
                     boxShadow: theme.shadows[4],
-                    '&:hover': { bgcolor: theme.palette.background.neutral },
+                    '&:hover': { bgcolor: theme.palette.background.default },
                   }}
                 >
                   <ChevronLeft size={20} />
                 </IconButton>
 
-                {/* Horizontal Scroll Container */}
                 <Box
                   ref={scrollContainerRef}
                   sx={{
@@ -272,7 +293,10 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     alignItems: 'center',
                     gap: 2,
                     p: 2,
+                    width: '100%',
+                    height: '100%',
                     overflowX: 'auto',
+                    overflowY: 'hidden',
                     scrollbarWidth: 'none',
                     '&::-webkit-scrollbar': { display: 'none' },
                   }}
@@ -293,7 +317,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   )}
                 </Box>
 
-                {/* Desktop Right Scroll Button */}
                 <IconButton
                   onClick={() => handleScroll('right')}
                   sx={{
@@ -305,20 +328,21 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     zIndex: 5,
                     bgcolor: theme.palette.background.paper,
                     boxShadow: theme.shadows[4],
-                    '&:hover': { bgcolor: theme.palette.background.neutral },
+                    '&:hover': { bgcolor: theme.palette.background.default },
                   }}
                 >
                   <ChevronRight size={20} />
                 </IconButton>
               </Box>
             ) : (
-              /* View B: Centered Grid (Active when NO Screen Share) */
+              /* Centered Stage Grid layout */
               <Box
                 sx={{
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  minHeight: 0,
                   overflowY: 'auto',
                   overflowX: 'hidden',
                   p: { xs: 2, sm: 3 },
@@ -368,7 +392,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         )}
       </Box>
 
-      {/* ----------------- Bottom Dock ----------------- */}
+      {/* Stage Bottom Dock */}
       <RoomControlDock
         micMuted={micMuted}
         deafened={deafened}
@@ -383,7 +407,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         onLeave={onLeave}
       />
     </Box>
-
   );
 };
 

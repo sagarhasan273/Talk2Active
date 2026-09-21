@@ -396,7 +396,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           flexDirection: { xs: 'column', md: 'row' },
           gap: 1,
           width: 1,
-          height: 1,
+          height: '100%',
           pt: 1,
         }}
       >
@@ -427,8 +427,9 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           onBack={onBack}
         />
 
-
         {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
+
+
         <RoomChatMain
           messages={messages}
           currentUserId={user.userId}
@@ -439,6 +440,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           onReactMessage={handleReactMessage}
           collapsedBoolean={chatCollapsedBoolean}
         />
+
 
       </Box>
 
