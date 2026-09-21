@@ -196,9 +196,6 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
 
   const isMuted = audioState === 'muted';
 
-
-
-
   // --- LIVEKIT NATIVE VOLUME TRACKING ---
   const audioTracks = useTracks([Track.Source.Microphone]);
   const userTrackRef = useMemo(

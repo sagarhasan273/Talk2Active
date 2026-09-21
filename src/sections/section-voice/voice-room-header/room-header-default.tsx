@@ -23,6 +23,7 @@ export const DefaultHeader = ({
       sx={{
         gridColumn: '1 / -1',
         position: 'relative',
+        mt: 1,
         p: { xs: 1.5, sm: 2 },
         borderRadius: { xs: 1 },
         bgcolor: 'background.paper',

@@ -78,14 +78,22 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
 
       return {
         id: p.identity,
-        name: p.name || p.identity,
-        avatarUrl: parsedMeta.avatarUrl || '',
-        level: parsedMeta.level || 'Member',
+        name: parsedMeta.name,
+        username: parsedMeta.username,
+        verified: parsedMeta.verified,
+        profilePhoto: parsedMeta.profilePhoto || '',
+        genUserId: parsedMeta.genUserId || "",
+        accountType: parsedMeta.accountType,
+        follower_count: parsedMeta.follower_count,
+        following_count: parsedMeta.following_count,
+        friend_count: parsedMeta.friend_count,
+        isHost: parsedMeta.isHost,
+        joinedAt: parsedMeta.joinedAt,
+
         audioState,
         isSpeaking,
         handRaised,
         activeReactionEmoji: participantReactions[p.identity] || null,
-        isHost: String(selectedRoom?.host?.userId) === p.identity,
         isSelf,
         role: String(selectedRoom?.host?.userId) === p.identity ? 'host' : 'listener',
       };
@@ -469,7 +477,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         onClose={() => {
           setProfileDrawerOpen(false);
         }}
-        user={selectedUser}
+        user={selectedUser as any}
       />
     </>
   );
