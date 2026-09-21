@@ -1,16 +1,15 @@
 // src/sections/section-voice/voice-room-card/room-card-participant.tsx
 
+import { RoomParticipantType } from '@/types/type-chat';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import CrownRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { alpha, Avatar, Box, Typography, useTheme } from '@mui/material';
 
-import { supporterSheen } from './styles';
-import type { ParticipantUser } from './types';
 
 type RoomCardParticipantProps = {
-  user: ParticipantUser;
+  user: RoomParticipantType;
   isHost?: boolean;
-  onParticipantClick: (user: ParticipantUser) => void;
+  onParticipantClick: (user: RoomParticipantType) => void;
 };
 
 export const RoomCardParticipant = ({ user, isHost, onParticipantClick }: RoomCardParticipantProps) => {
@@ -20,7 +19,7 @@ export const RoomCardParticipant = ({ user, isHost, onParticipantClick }: RoomCa
   const isSupporter = user.accountType === 'supporter';
   const displayName = isSupporter ? user.name : user.name?.split(' ')[0];
 
-  const getInitials = (fullName: string) => {
+  const getInitials = (fullName?: string) => {
     if (!fullName) return '';
     const parts = fullName.trim().split(/\s+/);
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -74,7 +73,7 @@ export const RoomCardParticipant = ({ user, isHost, onParticipantClick }: RoomCa
           transition: 'transform 0.25s ease',
         }}
       >
-        {getInitials(user.name)}
+        {getInitials(user?.name)}
       </Avatar>
 
       {/* Host Indicator */}
@@ -155,7 +154,6 @@ export const RoomCardParticipant = ({ user, isHost, onParticipantClick }: RoomCa
               backgroundSize: '200% 100%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              animation: `${supporterSheen} 3.5s ease-in-out infinite`,
             }),
           }}
         >

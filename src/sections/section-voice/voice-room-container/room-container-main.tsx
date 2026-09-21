@@ -4,7 +4,7 @@
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-import { VoiceRoomUserProfile } from '../voice-room-user-profile';
+import { VoiceRoomUserProfile } from '../voice-room-user-controller';
 
 
 import {
@@ -19,10 +19,12 @@ import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { RoomType } from '@/types/type-chat';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
-import RoomAudioStage from '../voice-room-audio-stage/room-audio-stage';
-import { ChatMessage, ParticipantStageType } from '../voice-room-audio-stage/types';
-import RoomChatDrawer from '../voice-room-chat/room-chat-drawer';
+
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
+
+import { RoomChatDrawer } from '../voice-room-chat';
+import { RoomAudioStage } from '../voice-room-stage';
+import { ChatMessage, ParticipantStageType } from '../voice-room-stage/types';
 
 interface RoomContainerMainProps {
   selectedRoom: RoomType | null;

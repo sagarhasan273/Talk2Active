@@ -31,10 +31,6 @@ import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 import { ParticipantStageType } from './types';
 
 // --- ANIMATIONS ---
-const speakingGlow = keyframes`
-  0%, 100% { box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.6), 0 0 16px rgba(88, 101, 242, 0.25); }
-  50% { box-shadow: 0 0 0 3px rgba(88, 101, 242, 1), 0 0 24px rgba(88, 101, 242, 0.5); }
-`;
 
 const handWiggle = keyframes`
   0%, 100% { transform: scale(1) rotate(0deg); }

@@ -19,8 +19,8 @@ import { filterVisibleMessages } from '../@mock_/messages-data';
 import { RoomMessageBubble } from './room-message-bubble';
 
 import { uploadImage } from '@/utils/helper';
-import type { ChatMessage } from '../voice-room-audio-stage/types';
 import type { VoiceParticipant } from '../voice-room-header/types';
+import type { ChatMessage } from '../voice-room-stage/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 

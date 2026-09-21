@@ -2,8 +2,8 @@ import { Drawer } from '@mui/material';
 
 import { RoomChatPanel } from './room-chat-panel';
 
-import type { ChatMessage } from '../voice-room-audio-stage/types';
 import type { VoiceParticipant } from '../voice-room-header/types';
+import type { ChatMessage } from '../voice-room-stage/types';
 
 type ChatDrawerProps = {
   open: boolean;

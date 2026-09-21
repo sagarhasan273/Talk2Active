@@ -12,8 +12,8 @@ import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
 import { useSocket } from '@/core/contexts/socket-context';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
-import { RoomCardCreation } from '../voice-room-card/room-card-creation';
-import { VoiceRoomCard } from '../voice-room-card/room-card-main';
+import { RoomCardCreation } from './room-list-card-creation';
+import { VoiceRoomCard } from './room-list-card-main';
 
 const sxCard = {
   height: 260,
@@ -26,17 +26,17 @@ const sxCard = {
   justifyContent: 'space-between',
 };
 
-interface RoomListProps {
+interface RoomlistMainProps {
   query: FilterState;
   onSelectRoom: (room: RoomType) => void;
   onCreateRoom: () => void;
 }
 
-export default function VoiceRoomlist({
+export function RoomlistMain({
   query,
   onSelectRoom,
   onCreateRoom,
-}: RoomListProps) {
+}: RoomlistMainProps) {
   const { user } = useCredentials();
 
   const { socket } = useSocket();

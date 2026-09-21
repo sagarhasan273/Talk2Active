@@ -1,6 +1,3 @@
-// src/sections/section-voice-room/voice-room-workspace/room-audio-stage.tsx
-
-
 import { useTracks, VideoTrack } from '@livekit/components-react';
 import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
@@ -11,9 +8,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import { useRoomTools } from '@/core/slices';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
-import { RoomControlDock } from './room-control-dock';
-import { EmptySlotTile } from './room-empty-slot-tile';
-import { ParticipantTile } from './room-participant-tile';
+import { RoomControlDock } from './room-stage-control-dock';
+import { EmptySlotTile } from './room-stage-empty-slot-tile';
+import { ParticipantTile } from './room-stage-participant-tile';
 import { ParticipantStageType } from './types';
 
 

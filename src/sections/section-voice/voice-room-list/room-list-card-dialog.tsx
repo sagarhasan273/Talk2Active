@@ -26,7 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-import { RoomCardParticipant } from './room-card-participant';
+import { RoomCardParticipant } from './room-list-card-participant';
 
 export interface RoomParticipantEntry {
   user: any;

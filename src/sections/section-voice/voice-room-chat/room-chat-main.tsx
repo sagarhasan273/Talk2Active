@@ -6,7 +6,7 @@ import { alpha, Box, Tooltip, useTheme } from "@mui/material";
 import { Track } from "livekit-client";
 import { ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ChatMessage, ParticipantStageType } from "../voice-room-audio-stage/types";
+import { ChatMessage, ParticipantStageType } from "../voice-room-stage/types";
 import RoomChatPanel from "./room-chat-panel";
 
 

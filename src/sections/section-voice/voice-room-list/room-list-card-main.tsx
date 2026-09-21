@@ -25,10 +25,14 @@ import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
+import { RoomType } from '@/types/type-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
-import { RoomParticipantsDialog } from './room-card-dialog';
-import { getLevelColor, livePulse } from './styles';
-import type { VoiceRoomCardProps } from './types';
+import { RoomParticipantsDialog } from './room-list-card-dialog';
+
+type VoiceRoomCardProps = {
+  roomData: RoomType;
+  onJoinRoom: (room: RoomType) => void;
+};
 
 type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   currentUserId?: string;
@@ -76,7 +80,6 @@ export const VoiceRoomCard = ({
 
   const max = room?.max_participants ?? 0;
   const isFull = allUsers.length >= max && max > 0;
-  const levelColor = getLevelColor(room?.level);
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
   const openUserProfile = (rawUser: any) => {
@@ -122,8 +125,8 @@ export const VoiceRoomCard = ({
             ? '0 4px 20px -2px rgba(0, 0, 0, 0.45)'
             : '0 4px 20px -2px rgba(145, 158, 171, 0.12)',
           '&:hover': {
-            borderColor: alpha(levelColor, 0.45),
-            boxShadow: `0 12px 32px -4px ${alpha(levelColor, 0.16)}`,
+            borderColor: alpha(theme.palette.background.paper, 0.45),
+            boxShadow: `0 12px 32px -4px ${alpha(theme.palette.background.paper, 0.16)}`,
           },
           ...sx,
         }}
@@ -185,7 +188,6 @@ export const VoiceRoomCard = ({
                     height: 6,
                     borderRadius: '50%',
                     bgcolor: 'success.main',
-                    animation: `${livePulse} 1.8s infinite`,
                   }}
                 />
                 <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>

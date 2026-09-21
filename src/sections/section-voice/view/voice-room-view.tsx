@@ -1,11 +1,8 @@
-// src/sections/section-voice/view/voice-main-view.tsx
-
 import type { RoomType } from 'src/types/type-chat';
 import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
 
 import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
 import { toastErrorResponse } from '@/utils/response';
@@ -23,8 +20,8 @@ import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar'
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { VoiceRoomJoinGate } from '../voice-room-join-gate';
+import { RoomlistMain } from '../voice-room-list';
 import { VoiceTabPanel } from '../voice-tab-panel';
-import VoiceRoomlist from './voice-room-list';
 
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
@@ -161,7 +158,7 @@ export function VoiceMainView() {
   const mainContent = (
     <>
       <VoiceTabPanel value={selectedTab === 'room-list' ? 0 : 1} index={0}>
-        <VoiceRoomlist
+        <RoomlistMain
           query={filterRooms}
           onSelectRoom={handleSelectRoom}
           onCreateRoom={handleCreateRoom}
