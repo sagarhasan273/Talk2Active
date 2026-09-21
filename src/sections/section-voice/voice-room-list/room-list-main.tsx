@@ -182,9 +182,7 @@ export function RoomlistMain({
   }, [getRooms]);
 
   return (
-    <Scrollbar
-    >
-
+    <Scrollbar>
       <Box
         sx={{
           display: 'grid',

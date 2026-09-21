@@ -16,6 +16,7 @@ const SocketContext = createContext<SocketContextValue>({
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useCredentials();
+
   const currentUserId = user?.userId;
 
   const [socket, setSocket] = useState<Socket | null>(null);
