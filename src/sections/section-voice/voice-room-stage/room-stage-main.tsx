@@ -392,7 +392,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         )}
       </Box>
 
-      {/* Stage Bottom Dock */}
       <RoomControlDock
         micMuted={micMuted}
         deafened={deafened}

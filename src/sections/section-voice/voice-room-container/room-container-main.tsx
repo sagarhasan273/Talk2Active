@@ -8,6 +8,8 @@ import { VoiceRoomUserProfile } from '../voice-room-user-controller';
 
 
 import {
+  RoomAudioRenderer,
+  StartAudio,
   useLocalParticipant,
   useParticipants,
   useRoomContext
@@ -383,13 +385,24 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
   }, [room, localParticipant, onLeaveRoom]);
 
   useEffect(() => {
-    if (localParticipant) {
-      setMicMuted(!localParticipant.isMicrophoneEnabled);
-    }
+    if (!localParticipant) return;
+
+    const enableMicOnJoin = async () => {
+      try {
+        await localParticipant.setMicrophoneEnabled(true);
+        setMicMuted(false);
+      } catch (err) {
+        setMicMuted(true);
+      }
+    };
+
+    enableMicOnJoin();
   }, [localParticipant]);
 
   return (
     <>
+      <RoomAudioRenderer />
+      <StartAudio label="Click to allow audio playback" />
       <Box
         sx={{
           display: 'flex',
@@ -400,7 +413,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           pt: 1,
         }}
       >
-        {/* Main Voice, Presentation & Video Stage */}
         <RoomAudioStage
           participants={participants}
           maxParticipants={selectedRoom?.max_participants || 0}
@@ -427,9 +439,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           onBack={onBack}
         />
 
-        {/* Desktop Chat: Expanded vs 20px Collapsed Rail */}
-
-
         <RoomChatMain
           messages={messages}
           currentUserId={user.userId}
@@ -440,8 +449,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
           onReactMessage={handleReactMessage}
           collapsedBoolean={chatCollapsedBoolean}
         />
-
-
       </Box>
 
       {/* Mobile Bottom Chat Sheet */}

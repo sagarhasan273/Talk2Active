@@ -159,15 +159,12 @@ export function VoiceMainView() {
     </>
   );
 
-  const footer = useMemo(() => <VoiceButtonSocialChat />, []);
-
   return (
     <>
       <VoiceRoomLayout
         header={header}
         fixedHeader={Boolean(isInRoom && selectedTab === 'room-list')}
         mainContent={mainContent}
-        footer={footer}
         maxWidth={selectedTab === 'room-space' ? 'xl' : 'lg'}
       />
 

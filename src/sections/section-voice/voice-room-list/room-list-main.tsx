@@ -13,6 +13,7 @@ import { Scrollbar } from '@/components/scrollbar';
 import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import { useSocket } from '@/core/contexts/socket-context';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
+import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
 import { VoiceRoomCard } from './room-list-card-main';
@@ -182,41 +183,44 @@ export function RoomlistMain({
   }, [getRooms]);
 
   return (
-    <Scrollbar>
-      <Box
-        sx={{
-          display: 'grid',
-          // xs: 1 column taking 100% width; sm+: auto-filling left-aligned columns
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(auto-fill, minmax(340px, 1fr))',
-          },
-          alignItems: 'stretch',
-          justifyContent: 'flex-start', // Keeps cards left-aligned
-          position: 'relative',
-          gap: 1.5,
-          mb: 10,
-        }}
-      >
-        {!isInRoom && <DefaultHeader onQuickJoin={() => { }} onCreateRoom={onCreateRoom} />}
+    <>
+      <Scrollbar>
+        <Box
+          sx={{
+            display: 'grid',
+            // xs: 1 column taking 100% width; sm+: auto-filling left-aligned columns
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(auto-fill, minmax(340px, 1fr))',
+            },
+            alignItems: 'stretch',
+            justifyContent: 'flex-start', // Keeps cards left-aligned
+            position: 'relative',
+            gap: 1.5,
+            mb: 10,
+          }}
+        >
+          {!isInRoom && <DefaultHeader onQuickJoin={() => { }} onCreateRoom={onCreateRoom} />}
 
-        <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
+          <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        <RoomCardCreation
-          onCreateRoom={onCreateRoom}
-          sx={sxCard}
-        />
-
-        {filteredRooms.map((room) => (
-          <VoiceRoomCard
-            key={room.roomId}
-            roomData={room}
-            currentUserId={user?.userId}
-            onJoinRoom={onSelectRoom}
+          <RoomCardCreation
+            onCreateRoom={onCreateRoom}
             sx={sxCard}
           />
-        ))}
-      </Box>
-    </Scrollbar>
+
+          {filteredRooms.map((room) => (
+            <VoiceRoomCard
+              key={room.roomId}
+              roomData={room}
+              currentUserId={user?.userId}
+              onJoinRoom={onSelectRoom}
+              sx={sxCard}
+            />
+          ))}
+        </Box>
+      </Scrollbar>
+      <VoiceButtonSocialChat />
+    </>
   );
 }
