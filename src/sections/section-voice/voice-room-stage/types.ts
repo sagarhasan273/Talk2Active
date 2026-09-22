@@ -1,9 +1,20 @@
+import { UserType } from "@/types/type-user";
+
 export type AudioState = 'speaking' | 'unmuted' | 'muted' | 'listening';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
 
 export type ParticipantStageType = {
   id: string;
+
+  userId?: string;
+  name?: string;
+  username?: string;
+  profilePhoto?: string;
+  accountType?: UserType['accountType'];
+  verified?: string;
+  isHost?: boolean;
+
   level?: string;
   audioState: AudioState;
   isSelf?: boolean;

@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
 import { alpha, Badge, Box, CircularProgress, IconButton, type SxProps, useMediaQuery, useTheme } from '@mui/material';
-import type { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from '@/core/apis';
 import { useCredentials } from '@/core/slices';
@@ -24,7 +23,7 @@ const DEFAULT_HEIGHT = 550;
 const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { user } = useCredentials();
+  const { user, friends, follower, following, setFriends, setFollower, setFollowing } = useCredentials();
 
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
@@ -34,7 +33,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const [chatWidth, setChatWidth] = useState(DEFAULT_WIDTH);
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
-  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -54,11 +52,25 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
     skip: !currentUserId,
   });
 
-  const friends = (friendsData as any)?.data || [];
-  const followers = (followersData as any)?.data || [];
-  const following = (followingData as any)?.data || [];
-
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
+
+  useEffect(() => {
+    if ((friendsData as any)?.data) {
+      setFriends(friendsData?.data || [])
+    }
+  }, [friends, friendsData])
+
+  useEffect(() => {
+    if ((followersData as any)?.data) {
+      setFollower(followersData?.data || [])
+    }
+  }, [follower, followersData])
+
+  useEffect(() => {
+    if ((followingData as any)?.data) {
+      setFollowing(followingData?.data || [])
+    }
+  }, [following, followingData])
 
   /* ------------------------------------------------------------------ */
   /* Resize Handlers                                                    */
@@ -251,14 +263,14 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               ...(isResizing && { transition: 'none !important' }),
             }}
           >
-            {isAnyLoading && !friends.length && !followers.length && !following.length ? (
+            {isAnyLoading && !friends.length && !follower.length && !following.length ? (
               <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
                 <CircularProgress size={26} />
               </Box>
             ) : (
               <SocialChat
                 friends={friends}
-                followers={followers}
+                followers={follower}
                 following={following}
                 currentUserId={currentUserId}
                 currentUserName={currentUserName}

@@ -335,7 +335,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 </IconButton>
               </Box>
             ) : (
-              /* Centered Stage Grid layout */
               <Box
                 sx={{
                   flex: 1,

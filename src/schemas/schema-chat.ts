@@ -22,6 +22,7 @@ export const RoomParticipantBaseSchema = z.object({
 export const RoomParticipantSchema = ParticipantSchema.extend({
   joinedAt: DatePreprocessor,
   isHost: z.boolean().default(false),
+  isSelf: z.boolean().optional().default(false)
 });
 
 export const RoomBaseSchema = z.object({

@@ -4,14 +4,13 @@ import Diversity2Icon from '@mui/icons-material/Diversity2';
 import { Badge, Box, CircularProgress } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { useState } from 'react';
-import { Socket } from 'socket.io-client';
 
 import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from 'src/core/apis';
 import { useCredentials, useMessagesTools } from 'src/core/slices';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import SocialChat from '@/sections/section-common/social-chat';
+import { useEffect } from 'react';
 
 // ----------------------------------------------------------------------
 
@@ -21,11 +20,9 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
   const { isUnreadIndividualMessage } = useMessagesTools();
 
-  const { user } = useCredentials();
+  const { user, friends, setFriends } = useCredentials();
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
-
-  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
 
   // Queries
   const { data: friendsData, isLoading: loadingFriends } = useGetFriendsQuery(currentUserId, {
@@ -38,11 +35,18 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     skip: !currentUserId,
   });
 
-  const friends = (friendsData as any)?.relationships || (friendsData as any)?.data || [];
-  const followers = (followersData as any)?.relationships || (followersData as any)?.data || [];
-  const following = (followingData as any)?.relationships || (followingData as any)?.data || [];
+
+  const followers = (followersData as any)?.data || [];
+  const following = (followingData as any)?.data || [];
 
   const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
+
+  useEffect(() => {
+    if (!friends && (friendsData as any)?.data) {
+      setFriends(friendsData?.data || [])
+    }
+  }, [friends, friendsData])
+
 
   return (
     <>

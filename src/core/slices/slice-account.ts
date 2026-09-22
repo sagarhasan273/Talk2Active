@@ -14,6 +14,7 @@ interface UserState {
   friends: AllRelationsType[];
   following: AllRelationsType[];
   follower: AllRelationsType[];
+  blockedUserIds: string[];
 
   isAuthenticated: boolean;
   loading: boolean;
@@ -26,6 +27,7 @@ const initialState: UserState = {
   friends: [],
   following: [],
   follower: [],
+  blockedUserIds: [],
   isAuthenticated: false,
   loading: false,
 };
@@ -73,6 +75,7 @@ export const selectAccount = (state: RootState) => state.account.user;
 export const selectFollower = (state: RootState) => state.account.follower;
 export const selectFollowing = (state: RootState) => state.account.following;
 export const selectFriends = (state: RootState) => state.account.friends;
+export const selectBlockedUserIds = (state: RootState) => state.account.blockedUserIds;
 export const selectIsAuthenticated = (state: RootState) => state.account.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.account.loading;
 

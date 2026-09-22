@@ -25,6 +25,7 @@ import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
+import { useSocialRelations } from '@/hooks/use-social-relations';
 import { RoomType } from '@/types/type-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
@@ -60,11 +61,13 @@ export const VoiceRoomCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const [room, setRoom] = useState(roomData);
+  const { isFollowing, isBlocked } = useSocialRelations()
+
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
   const openUserDisplayer = useBoolean();
 
+  const [room, setRoom] = useState(roomData);
   const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
 
   useEffect(() => {
@@ -84,6 +87,7 @@ export const VoiceRoomCard = ({
 
   const openUserProfile = (rawUser: any) => {
     const targetUser = rawUser?.user || rawUser;
+
     setSelectedUser({
       userId: targetUser?.userId || targetUser?.id,
       name: targetUser?.name || 'User',
@@ -95,8 +99,8 @@ export const VoiceRoomCard = ({
       follower_count: targetUser?.follower_count,
       following_count: targetUser?.following_count,
       friend_count: targetUser?.friend_count,
-      isFollowing: targetUser?.isFollowing,
-      isBlocked: targetUser?.isBlocked,
+      isFollowing: isFollowing(targetUser?.userId),
+      isBlocked: isBlocked(targetUser?.userId),
     });
     openUserDisplayer.onTrue();
   };

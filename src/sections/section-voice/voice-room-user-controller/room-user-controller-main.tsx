@@ -48,15 +48,14 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
-import { RoomParticipantType } from '@/types/type-chat';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
 import { ParticipantStageType } from '../voice-room-stage/types';
 
-interface VoiceRoomUserProfileProps {
+interface RoomUserControllerMainProps {
   open: boolean;
   onClose: () => void;
-  user: (RoomParticipantType & ParticipantStageType);
+  user: any;
   onFollow?: (userId: string) => void;
   onUnfollow?: (userId: string) => void;
   onBlock?: (userId: string) => void;
@@ -94,7 +93,7 @@ const getLiveKitTrackVolume = (room: any, targetUserId: string): number => {
   return 1;
 };
 
-export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
+export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   open,
   onClose,
   user,
@@ -113,24 +112,24 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const room = useRoomContext();
 
-
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
 
   const participant = {
-    name: user.name,
-    username: user.username,
-    verified: user.verified,
-    profilePhoto: user.profilePhoto || '',
-    genUserId: user.genUserId || "",
-    accountType: user.accountType,
-    follower_count: user.follower_count,
-    following_count: user.following_count,
-    friend_count: user.friend_count,
-    isBlocked: user.isBlocked,
-    isFollowing: user.isFollowing,
-    isHost: user.isHost,
-    joinedAt: user.joinedAt,
-    bio: user.bio
+    name: user?.name,
+    username: user?.username,
+    verified: user?.verified,
+    profilePhoto: user?.profilePhoto || '',
+    genUserId: user?.genUserId || "",
+    accountType: user?.accountType,
+    follower_count: user?.follower_count,
+    following_count: user?.following_count,
+    friend_count: user?.friend_count,
+    isHost: user?.isHost,
+    joinedAt: user?.joinedAt,
+    bio: user?.bio,
+
+    isFollowing: false,
+    isBlocked: false,
   }
 
   const {
@@ -1077,4 +1076,4 @@ export const VoiceRoomUserProfile: React.FC<VoiceRoomUserProfileProps> = ({
   );
 };
 
-export default VoiceRoomUserProfile;
+export default RoomUserControllerMain;

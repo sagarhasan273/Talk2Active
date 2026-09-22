@@ -4,7 +4,6 @@
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-import { VoiceRoomUserProfile } from '../voice-room-user-controller';
 
 
 import {
@@ -25,6 +24,7 @@ import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
 
 import { RoomChatDrawer } from '../voice-room-chat';
+import { VoiceRoomListenerUnload } from '../voice-room-listener-unload';
 import { RoomAudioStage } from '../voice-room-stage';
 import { ChatMessage, ParticipantStageType } from '../voice-room-stage/types';
 
@@ -84,12 +84,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         profilePhoto: parsedMeta.profilePhoto || '',
         genUserId: parsedMeta.genUserId || "",
         accountType: parsedMeta.accountType,
-        follower_count: parsedMeta.follower_count,
-        following_count: parsedMeta.following_count,
-        friend_count: parsedMeta.friend_count,
         isHost: parsedMeta.isHost,
-        joinedAt: parsedMeta.joinedAt,
-
         audioState,
         isSpeaking,
         handRaised,
@@ -411,6 +406,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
     <>
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
+      <VoiceRoomListenerUnload />
       <Box
         sx={{
           display: 'flex',
@@ -469,15 +465,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         onSendMessage={handleSendMessage}
         onEditMessage={handleEditMessage}
         onReactMessage={handleReactMessage}
-      />
-
-      {/* User Profile Modal Drawer */}
-      <VoiceRoomUserProfile
-        open={profileDrawerOpen}
-        onClose={() => {
-          setProfileDrawerOpen(false);
-        }}
-        user={selectedUser as any}
       />
     </>
   );

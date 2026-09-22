@@ -23,10 +23,13 @@ import {
   Pause,
   UserX,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useRoomTools } from '@/core/slices';
-import type { ChatUserStatus, RoomParticipantType } from 'src/types/type-chat';
+import { useBoolean } from '@/hooks/use-boolean';
+import type { ChatUserStatus } from 'src/types/type-chat';
+
+import { RoomUserControllerMain } from '../voice-room-user-controller';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 import { ParticipantStageType } from './types';
 
@@ -173,16 +176,12 @@ type ParticipantTileProps = {
 export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) => {
   const theme = useTheme();
 
+  const openDrawer = useBoolean();
+
   const isDark = theme.palette.mode === 'dark';
 
-  const { room } = useRoomTools();
+  const { participants } = useRoomTools();
 
-
-  const getParticipantData = useCallback((identity: string) => {
-    return room?.participants.find((participant: RoomParticipantType) => participant.userId === identity)
-  }, [room]);
-
-  const currentParticipant = getParticipantData(participant.id)
   const {
     audioState,
     isSelf,
@@ -219,7 +218,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
     return undefined;
   }, [activeReactionEmoji]);
 
-  const initials = currentParticipant?.name
+  const initials = participant?.name
     ?.split(' ')
     .filter(Boolean)
     .map((p) => p[0])
@@ -276,256 +275,264 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
   const connectionOverlayElement = renderConnectionStatus();
 
   return (
-    <Box
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.()}
-      sx={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        minHeight: 140,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        p: 1.25,
-        borderRadius: 1,
-        cursor: 'pointer',
-        userSelect: 'none',
-        outline: 'none',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        bgcolor: isDark
-          ? alpha(theme.palette.background.paper, 0.85)
-          : alpha(theme.palette.common.white, 0.95),
-        border: '1.5px solid',
-        borderColor: handRaised
-          ? theme.palette.warning.main
-          : isDark
-            ? alpha(theme.palette.common.white, 0.08)
-            : alpha(theme.palette.common.black, 0.08),
-        transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease',
-        '&:hover': {
-          transform: 'translateY(-0.5px)',
-          bgcolor: isDark
-            ? alpha(theme.palette.background.paper, 0.98)
-            : theme.palette.common.white,
-          borderColor: isSpeaking
-            ? theme.palette.primary.main
-            : alpha(theme.palette.primary.main, 0.4),
-        },
-        '&:focus-visible': {
-          boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
-        },
-      }}
-    >
-      {/* 1. AFK / Busy Status Dot */}
-      {status && status !== 'online' && (
-        <Tooltip title={STATUS_MAP[status]?.label} arrow placement="top">
-          <StatusDot status={status}>
-            {(() => {
-              const IconComponent = STATUS_MAP[status]?.icon;
-              return IconComponent ? <IconComponent /> : null;
-            })()}
-          </StatusDot>
-        </Tooltip>
-      )}
-
-      {/* 2. Dynamic Reaction Pop */}
-      {showReaction && activeReactionEmoji && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 6,
-            right: 8,
-            fontSize: 22,
-            lineHeight: 1,
-            zIndex: 5,
-            pointerEvents: 'none',
-            animation: `${popReaction} 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards`,
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-          }}
-        >
-          {activeReactionEmoji}
-        </Box>
-      )}
-
-      {/* 3. Full-Fill Avatar Block */}
+    <>
       <Box
+        role="button"
+        tabIndex={0}
+        onClick={() => { openDrawer.onTrue() }}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.()}
         sx={{
           position: 'relative',
           width: '100%',
-          flex: 1,
+          height: '100%',
+          minHeight: 140,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
+          p: 1.25,
+          borderRadius: 1,
+          cursor: 'pointer',
+          userSelect: 'none',
+          outline: 'none',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          bgcolor: isDark
+            ? alpha(theme.palette.background.paper, 0.85)
+            : alpha(theme.palette.common.white, 0.95),
+          border: '1.5px solid',
+          borderColor: handRaised
+            ? theme.palette.warning.main
+            : isDark
+              ? alpha(theme.palette.common.white, 0.08)
+              : alpha(theme.palette.common.black, 0.08),
+          transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-0.5px)',
+            bgcolor: isDark
+              ? alpha(theme.palette.background.paper, 0.98)
+              : theme.palette.common.white,
+            borderColor: isSpeaking
+              ? theme.palette.primary.main
+              : alpha(theme.palette.primary.main, 0.4),
+          },
+          '&:focus-visible': {
+            boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+          },
         }}
       >
-        <Avatar
-          src={currentParticipant?.profilePhoto}
-          alt={currentParticipant?.name}
-          sx={{
-            width: '100%',
-            maxWidth: 88,
-            aspectRatio: '1/1',
-            height: 'auto',
-            fontSize: 22,
-            fontWeight: 700,
-            bgcolor: alpha(theme.palette.primary.main, 0.18),
-            color: theme.palette.primary.main,
-            borderRadius: '50%',
-            border: '2px solid',
-            opacity: connectionOverlayElement ? 0.4 : 1, // Dim avatar if disconnected
-            filter: connectionOverlayElement ? 'blur(2px) grayscale(50%)' : 'none',
-            borderColor: isDark
-              ? alpha(theme.palette.common.white, 0.15)
-              : alpha(theme.palette.common.black, 0.08),
-            transition: 'all 0.3s ease',
-          }}
-        >
-          {initials}
-        </Avatar>
-
-        {/* 4. Connection Status Overlay (Connecting/Dropped) */}
-        {connectionOverlayElement}
-
-        {/* 5. Floating Host Ribbon/Icon */}
-        {currentParticipant?.isHost && !connectionOverlayElement && (
-          <Tooltip title="Host" arrow placement="top">
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 4,
-                left: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                bgcolor: '#F59E0B',
-                color: '#FFF',
-                boxShadow: '0 2px 6px rgba(245, 158, 11, 0.45)',
-                zIndex: 2,
-              }}
-            >
-              <Crown size={12} strokeWidth={2.5} />
-            </Box>
+        {/* 1. AFK / Busy Status Dot */}
+        {status && status !== 'online' && (
+          <Tooltip title={STATUS_MAP[status]?.label} arrow placement="top">
+            <StatusDot status={status}>
+              {(() => {
+                const IconComponent = STATUS_MAP[status]?.icon;
+                return IconComponent ? <IconComponent /> : null;
+              })()}
+            </StatusDot>
           </Tooltip>
         )}
 
-        {/* 6. Hand Raised Floating Badge */}
-        {handRaised && !connectionOverlayElement && (
-          <Tooltip title="Hand Raised" arrow placement="top">
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 4,
-                right: 6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                bgcolor: theme.palette.warning.main,
-                color: '#FFF',
-                boxShadow: `0 2px 6px ${alpha(theme.palette.warning.main, 0.45)}`,
-                zIndex: 2,
-                animation: `${handWiggle} 1.2s infinite ease-in-out`,
-              }}
-            >
-              <Hand size={12} strokeWidth={2.5} />
-            </Box>
-          </Tooltip>
-        )}
-
-        {/* 7. Minimal Audio / Mute Overlap */}
-        {!connectionOverlayElement && (
+        {/* 2. Dynamic Reaction Pop */}
+        {showReaction && activeReactionEmoji && (
           <Box
             sx={{
               position: 'absolute',
-              bottom: 10,
-              left: '70%',
-              transform: 'translateX(-50%)',
-              zIndex: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              top: 6,
+              right: 8,
+              fontSize: 22,
+              lineHeight: 1,
+              zIndex: 5,
+              pointerEvents: 'none',
+              animation: `${popReaction} 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards`,
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
             }}
           >
-            <VoiceSpeakingIndicator volume={livekitVolume} size="small" isMuted={isMuted} />
+            {activeReactionEmoji}
           </Box>
         )}
-      </Box>
 
-      {/* 8. Dense Bottom Meta Row */}
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 0.5,
-          pt: 0.75,
-          px: 0.5,
-        }}
-      >
-        <Typography
-          variant="body2"
-          fontWeight={700}
-          noWrap
+        {/* 3. Full-Fill Avatar Block */}
+        <Box
           sx={{
-            fontSize: '0.8125rem',
-            lineHeight: 1.2,
-            color: 'text.primary',
-            maxWidth: '100%',
-            textAlign: 'center',
-            opacity: connectionOverlayElement ? 0.6 : 1,
+            position: 'relative',
+            width: '100%',
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {currentParticipant?.name}
-        </Typography>
-
-        {isSelf && (
-          <Box
-            component="span"
+          <Avatar
+            src={participant?.profilePhoto}
+            alt={participant?.name}
             sx={{
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              lineHeight: 1,
-              px: 0.5,
-              py: 0.25,
-              borderRadius: 0.5,
-              bgcolor: alpha(theme.palette.primary.main, 0.12),
+              width: '100%',
+              maxWidth: 88,
+              aspectRatio: '1/1',
+              height: 'auto',
+              fontSize: 22,
+              fontWeight: 700,
+              bgcolor: alpha(theme.palette.primary.main, 0.18),
               color: theme.palette.primary.main,
-              textTransform: 'uppercase',
-              flexShrink: 0,
-              opacity: connectionOverlayElement ? 0.6 : 1,
+              borderRadius: '50%',
+              border: '2px solid',
+              opacity: connectionOverlayElement ? 0.4 : 1, // Dim avatar if disconnected
+              filter: connectionOverlayElement ? 'blur(2px) grayscale(50%)' : 'none',
+              borderColor: isDark
+                ? alpha(theme.palette.common.white, 0.15)
+                : alpha(theme.palette.common.black, 0.08),
+              transition: 'all 0.3s ease',
             }}
           >
-            You
-          </Box>
-        )}
+            {initials}
+          </Avatar>
 
-        {currentParticipant?.verified && (
-          <Box
-            component="span"
+          {/* 4. Connection Status Overlay (Connecting/Dropped) */}
+          {connectionOverlayElement}
+
+          {/* 5. Floating Host Ribbon/Icon */}
+          {participant?.isHost && !connectionOverlayElement && (
+            <Tooltip title="Host" arrow placement="top">
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 4,
+                  left: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  bgcolor: '#F59E0B',
+                  color: '#FFF',
+                  boxShadow: '0 2px 6px rgba(245, 158, 11, 0.45)',
+                  zIndex: 2,
+                }}
+              >
+                <Crown size={12} strokeWidth={2.5} />
+              </Box>
+            </Tooltip>
+          )}
+
+          {/* 6. Hand Raised Floating Badge */}
+          {handRaised && !connectionOverlayElement && (
+            <Tooltip title="Hand Raised" arrow placement="top">
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  bgcolor: theme.palette.warning.main,
+                  color: '#FFF',
+                  boxShadow: `0 2px 6px ${alpha(theme.palette.warning.main, 0.45)}`,
+                  zIndex: 2,
+                  animation: `${handWiggle} 1.2s infinite ease-in-out`,
+                }}
+              >
+                <Hand size={12} strokeWidth={2.5} />
+              </Box>
+            </Tooltip>
+          )}
+
+          {/* 7. Minimal Audio / Mute Overlap */}
+          {!connectionOverlayElement && (
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 10,
+                left: '70%',
+                transform: 'translateX(-50%)',
+                zIndex: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <VoiceSpeakingIndicator volume={livekitVolume} size="small" isMuted={isMuted} />
+            </Box>
+          )}
+        </Box>
+
+        {/* 8. Dense Bottom Meta Row */}
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.5,
+            pt: 0.75,
+            px: 0.5,
+          }}
+        >
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            noWrap
             sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              color: 'info.main',
-              flexShrink: 0,
+              fontSize: '0.8125rem',
+              lineHeight: 1.2,
+              color: 'text.primary',
+              maxWidth: '100%',
+              textAlign: 'center',
               opacity: connectionOverlayElement ? 0.6 : 1,
             }}
           >
-            <BadgeCheck size={14} fill={theme.palette.info.main} color="#fff" />
-          </Box>
-        )}
+            {participant?.name}
+          </Typography>
+
+          {isSelf && (
+            <Box
+              component="span"
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                lineHeight: 1,
+                px: 0.5,
+                py: 0.25,
+                borderRadius: 0.5,
+                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                color: theme.palette.primary.main,
+                textTransform: 'uppercase',
+                flexShrink: 0,
+                opacity: connectionOverlayElement ? 0.6 : 1,
+              }}
+            >
+              You
+            </Box>
+          )}
+
+          {participant?.verified && (
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'info.main',
+                flexShrink: 0,
+                opacity: connectionOverlayElement ? 0.6 : 1,
+              }}
+            >
+              <BadgeCheck size={14} fill={theme.palette.info.main} color="#fff" />
+            </Box>
+          )}
+        </Box>
       </Box>
-    </Box>
+      {/* User Profile Modal Drawer */}
+      <RoomUserControllerMain
+        open={openDrawer.value}
+        onClose={openDrawer.onFalse}
+        user={participants[participant.id]}
+      />
+    </>
   );
 };
 

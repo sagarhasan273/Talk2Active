@@ -2,13 +2,13 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RoomParticipantType, RoomType } from 'src/types/type-chat';
 
 import { createSlice } from '@reduxjs/toolkit';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { RootState } from '../types';
 
-// Define auth state interface
 interface RoomState {
+  roomId: null | string;
   room: null | RoomType;
   loading: boolean;
   participants: { [userId: string]: RoomParticipantType };
@@ -17,6 +17,7 @@ interface RoomState {
 
 // Initial state
 const initialState: RoomState = {
+  roomId: null,
   room: null,
   loading: false,
   participants: {} as { [userId: string]: RoomParticipantType },
@@ -28,7 +29,10 @@ export const roomSlice = createSlice({
   initialState,
   reducers: {
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
-      state.room = action.payload;
+      if (action.payload?.roomId) {
+        state.roomId = action.payload.roomId
+        state.room = action.payload;
+      }
 
       if (action.payload?.participants) {
         action.payload.participants.forEach(participant => {
@@ -56,8 +60,6 @@ export const roomSlice = createSlice({
       };
     },
 
-
-
     removeParticipant: (state, action: PayloadAction<string>) => {
       if (!state.participants[action.payload]) {
         let removeUserId = null;
@@ -74,6 +76,11 @@ export const roomSlice = createSlice({
     resetParticipants: (state) => {
       state.participants = {};
     },
+
+    resetRoom: (state) => {
+      state.roomId = null;
+      state.room = null;
+    },
   },
 });
 
@@ -84,26 +91,27 @@ const {
   updateParticipant,
   removeParticipant,
   resetParticipants,
+  resetRoom,
 } = roomSlice.actions;
 
-// Selectors with proper typing
-const selectRoom = (state: RootState) => state.room.room;
-const selectRoomLoading = (state: RootState) => state.room.loading;
-const selectParticipants = (state: RootState) => state.room.participants;
-const selectisUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
+export const selectRoom = (state: RootState) => state.room.room;
+export const selectRoomLoading = (state: RootState) => state.room.loading;
+export const selectParticipants = (state: RootState) => state.room.participants;
+export const selectisUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 
 export const useRoomTools = () => {
   const dispatch = useDispatch();
 
+  const roomId = useSelector((state: RootState) => state.room.roomId);
   const room = useSelector(selectRoom);
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
 
-  const setTimeOutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const memoizedRoom = useMemo(
     () => ({
+      roomId,
       room,
       loading,
       participants,
@@ -115,23 +123,15 @@ export const useRoomTools = () => {
         dispatch(updateParticipant(participant)),
       removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
       resetParticipants: () => dispatch(resetParticipants()),
+      resetRoom: () => dispatch(resetRoom()),
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      roomId,
       room,
       loading,
       participants,
       isUnreadRoomMessage,
     ]
-  );
-
-  useEffect(
-    () => () => {
-      if (setTimeOutRef.current) {
-        clearTimeout(setTimeOutRef.current);
-      }
-    },
-    []
   );
 
   return memoizedRoom;
