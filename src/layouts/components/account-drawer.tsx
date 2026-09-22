@@ -8,19 +8,16 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import { alpha, useColorScheme, useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
 import { usePathname, useRouter } from 'src/routes/route-hooks';
-import { paths } from 'src/routes/route-paths';
 
 import { selectAccount } from 'src/core/slices';
 
 import { AvatarUser } from 'src/components/avatar-user';
 import { Iconify } from 'src/components/iconify';
-import { Label } from 'src/components/label';
 import { Scrollbar } from 'src/components/scrollbar';
 import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
@@ -276,51 +273,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     </Box>
   );
 
-  // ── Navigation items ──────────────────────────────────────────────────
-  const renderNav = (
-    <Stack
-      sx={{
-        py: 1,
-        mx: 1,
-        borderTop: `1px dashed ${theme.vars.palette.divider}`,
-        borderBottom: `1px dashed ${theme.vars.palette.divider}`,
-      }}
-    >
-      {data.map((option) => {
-        const rootLabel = pathname.includes('/dashboard') ? 'Home' : 'Dashboard';
-        const rootHref = pathname.includes('/dashboard') ? '/' : paths.dashboard.root;
-
-        return (
-          <MenuItem
-            key={option.label}
-            onClick={() => handleClickItem(option.label === 'Home' ? rootHref : option.href)}
-            sx={{
-              py: 1,
-              px: 1.5,
-              borderRadius: 1.5,
-              color: 'text.secondary',
-              '& svg': { width: 22, height: 22 },
-              '&:hover': {
-                color: 'text.primary',
-                bgcolor: alpha(theme.palette.primary.main, 0.07),
-              },
-              transition: 'all 0.15s',
-            }}
-          >
-            {option.icon}
-            <Box component="span" sx={{ ml: 1.5, fontWeight: 500, fontSize: 14 }}>
-              {option.label === 'Home' ? rootLabel : option.label}
-            </Box>
-            {option.info && (
-              <Label color="error" sx={{ ml: 'auto' }}>
-                {option.info}
-              </Label>
-            )}
-          </MenuItem>
-        );
-      })}
-    </Stack>
-  );
 
   // ── Theme controls ────────────────────────────────────────────────────
   const renderTheme = (
@@ -373,7 +325,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           {renderIdentity}
           {renderStats}
           {renderUserId}
-          {renderNav}
           <Stack sx={{ py: 2, px: 2.5, borderTop: `1px dashed ${theme.vars.palette.divider}` }}>
             {renderTheme}
           </Stack>

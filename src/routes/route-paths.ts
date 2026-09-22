@@ -11,11 +11,6 @@ export const paths = {
   faqs: '/faqs',
   upgradeToPro: '/#',
 
-  // DASHBOARD
-  dashboard: {
-    root: ROOTS.DASHBOARD,
-  },
-
   // User
   user: {
     root: ROOTS.USER,

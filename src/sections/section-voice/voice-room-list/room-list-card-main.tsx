@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/index.tsx
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
@@ -25,7 +25,7 @@ import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
-import { useSocialRelations } from '@/hooks/use-social-relations';
+import { useCredentials } from '@/core/slices';
 import { RoomType } from '@/types/type-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
@@ -61,27 +61,22 @@ export const VoiceRoomCard = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { isFollowing, isBlocked } = useSocialRelations()
+  const { checkIfFollowing, checkIfBlocked } = useCredentials()
+
+  const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
 
   const participantsOpen = useBoolean();
   const editRoomOpen = useBoolean();
   const openUserDisplayer = useBoolean();
 
-  const [room, setRoom] = useState(roomData);
-  const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
-
-  useEffect(() => {
-    setRoom(roomData);
-  }, [roomData]);
-
-  const hostId = room?.host?.userId;
-  const participants = room?.participants || [];
+  const hostId = roomData?.host?.userId;
+  const participants = roomData?.participants || [];
   const allUsers = participants.map((p) => ({
     ...p,
     isHost: Boolean(hostId && (p?.userId === hostId || (p as any)?.userId === hostId)),
   }));
 
-  const max = room?.max_participants ?? 0;
+  const max = roomData?.max_participants ?? 0;
   const isFull = allUsers.length >= max && max > 0;
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
@@ -99,8 +94,8 @@ export const VoiceRoomCard = ({
       follower_count: targetUser?.follower_count,
       following_count: targetUser?.following_count,
       friend_count: targetUser?.friend_count,
-      isFollowing: isFollowing(targetUser?.userId),
-      isBlocked: isBlocked(targetUser?.userId),
+      isFollowing: checkIfFollowing(targetUser?.userId),
+      isBlocked: checkIfBlocked(targetUser?.userId),
     });
     openUserDisplayer.onTrue();
   };
@@ -139,7 +134,7 @@ export const VoiceRoomCard = ({
         <Box>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1.25}>
             <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden' }}>
-              {(room.languages?.length ? room.languages : ['en'])
+              {(roomData.languages?.length ? roomData.languages : ['en'])
                 .slice(0, 2)
                 .map((lang, index) => (
                   <Label
@@ -154,10 +149,10 @@ export const VoiceRoomCard = ({
                   />
                 ))}
 
-              {room?.level && (
+              {roomData?.level && (
                 <ParticipantLevel
-                  value={room.level}
-                  label={room.level}
+                  value={roomData.level}
+                  label={roomData.level}
                   showEmoji
                   size="small"
                   sx={{
@@ -172,7 +167,7 @@ export const VoiceRoomCard = ({
               )}
             </Stack>
 
-            {room?.isActive && (
+            {roomData?.isActive && (
               <Box
                 sx={{
                   display: 'flex',
@@ -202,7 +197,7 @@ export const VoiceRoomCard = ({
           </Stack>
 
           {/* Room Topic Heading */}
-          <Tooltip title={room?.topic || 'Untitled room'} placement="top-start" arrow>
+          <Tooltip title={roomData?.topic || 'Untitled room'} placement="top-start" arrow>
             <Typography
               variant="subtitle1"
               fontWeight={800}
@@ -214,7 +209,7 @@ export const VoiceRoomCard = ({
                 letterSpacing: '-0.01em',
               }}
             >
-              {room?.topic || 'Untitled room'}
+              {roomData?.topic || 'Untitled room'}
             </Typography>
           </Tooltip>
         </Box>
@@ -233,21 +228,21 @@ export const VoiceRoomCard = ({
           }}
         >
           <Box
-            onClick={(e) => handleAvatarClick(e, room?.host)}
+            onClick={(e) => handleAvatarClick(e, roomData?.host)}
             sx={{ cursor: 'pointer', transition: 'transform 0.15s ease', '&:hover': { transform: 'scale(1.05)' } }}
           >
             <AvatarUser
-              avatarUrl={room?.host?.profilePhoto}
-              name={room?.host?.name || 'Unknown'}
-              verified={room?.host?.verified}
-              accountType={room?.host?.accountType}
+              avatarUrl={roomData?.host?.profilePhoto}
+              name={roomData?.host?.name || 'Unknown'}
+              verified={roomData?.host?.verified}
+              accountType={roomData?.host?.accountType}
               sx={{ width: 40, height: 40 }}
             />
           </Box>
 
           <Stack sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary', lineHeight: 1.2 }}>
-              {room?.host?.name || 'Unknown Host'}
+              {roomData?.host?.name || 'Unknown Host'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11 }}>
               Host
@@ -341,7 +336,7 @@ export const VoiceRoomCard = ({
           color={isFull ? 'inherit' : 'primary'}
           onClick={(e) => {
             e.stopPropagation();
-            onJoinRoom(room);
+            onJoinRoom(roomData);
           }}
           endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
           sx={{
@@ -374,7 +369,7 @@ export const VoiceRoomCard = ({
       <RoomParticipantsDialog
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
-        room={room}
+        room={roomData}
         allUsers={allUsers as any}
         isFull={isFull}
         isHost={isHost}
@@ -392,15 +387,8 @@ export const VoiceRoomCard = ({
         <VoiceModalCreateRoom
           open={editRoomOpen.value}
           onClose={editRoomOpen.onFalse}
-          onCreateRoom={(updated) => {
-            setRoom((prev) => ({
-              ...prev,
-              ...updated,
-              level: updated.level as typeof prev.level,
-            }));
-            onRoomUpdated?.(updated);
-          }}
-          currentRoom={room as any}
+          onCreateRoom={() => { }}
+          currentRoom={roomData}
         />
       )}
     </>

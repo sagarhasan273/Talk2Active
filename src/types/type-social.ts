@@ -1,15 +1,16 @@
-import type { z } from 'zod';
-import type { RelationshipTypeEnum, RelationshipStatusEnum } from 'src/enums/enum-social';
+import type { RelationshipStatusEnum, RelationshipTypeEnum } from 'src/enums/enum-social';
 import type {
-  UserStatsSchema,
-  RelationshipSchema,
-  RelationshipListSchema,
-  CreateRelationshipSchema,
-  UpdateRelationshipSchema,
-  RelationshipResponseSchema,
   BatchRelationshipStatusSchema,
+  CreateRelationshipSchema,
+  RelationshipListSchema,
+  RelationshipResponseSchema,
+  RelationshipSchema,
+  UpdateRelationshipSchema,
+  UserStatsSchema,
 } from 'src/schemas/schema-social';
+import type { z } from 'zod';
 
+import { Dispatch, SetStateAction } from 'react';
 import type { UserType } from './type-user';
 
 // Types for TypeScript
@@ -45,4 +46,9 @@ export type AllRelationsType = {
   relation: 'friend' | 'following' | 'follower';
   status: RelationshipStatusEnumProps;
   type: RelationshipTypeEnumProps;
+};
+
+export type SocialContextTypes = {
+  isSocialLoading: boolean;
+  setSocialLoading: Dispatch<SetStateAction<boolean>>;
 };

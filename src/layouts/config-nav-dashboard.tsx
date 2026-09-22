@@ -1,4 +1,3 @@
-import { paths } from 'src/routes/route-paths';
 
 import { CONFIG } from 'src/config-global';
 
@@ -38,15 +37,3 @@ const ICONS = {
   dashboard: icon('ic-dashboard'),
   parameter: icon('ic-parameter'),
 };
-
-// ----------------------------------------------------------------------
-
-export const navData = [
-  /**
-   * Overview
-   */
-  {
-    subheader: 'Overview 6.0.0',
-    items: [{ title: 'One', path: paths.dashboard.root, icon: ICONS.dashboard }],
-  },
-];

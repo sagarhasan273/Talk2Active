@@ -22,7 +22,6 @@ import { LiveKitProvider } from './core/contexts/livekit-context';
 import { SocketProvider } from './core/contexts/socket-context';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
-import { UserProvider } from './routes/route-components';
 
 // ----------------------------------------------------------------------
 
@@ -34,22 +33,20 @@ export default function App() {
       <LocalizationProvider>
         <Provider store={store}>
           <SocketProvider>
-            <UserProvider>
-              <AuthProvider>
-                <LiveKitProvider>
-                  <SettingsProvider settings={defaultSettings}>
-                    <ThemeProvider>
-                      <MotionLazy>
-                        <Snackbar />
-                        <ProgressBar />
-                        <SettingsDrawer />
-                        <Router />
-                      </MotionLazy>
-                    </ThemeProvider>
-                  </SettingsProvider>
-                </LiveKitProvider>
-              </AuthProvider>
-            </UserProvider>
+            <AuthProvider>
+              <LiveKitProvider>
+                <SettingsProvider settings={defaultSettings}>
+                  <ThemeProvider>
+                    <MotionLazy>
+                      <Snackbar />
+                      <ProgressBar />
+                      <SettingsDrawer />
+                      <Router />
+                    </MotionLazy>
+                  </ThemeProvider>
+                </SettingsProvider>
+              </LiveKitProvider>
+            </AuthProvider>
           </SocketProvider>
         </Provider>
       </LocalizationProvider>

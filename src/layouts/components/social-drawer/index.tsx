@@ -5,12 +5,10 @@ import { Badge, Box, CircularProgress } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 
-import { useGetFollowersQuery, useGetFollowingQuery, useGetFriendsQuery } from 'src/core/apis';
 import { useCredentials, useMessagesTools } from 'src/core/slices';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import SocialChat from '@/sections/section-common/social-chat';
-import { useEffect } from 'react';
 
 // ----------------------------------------------------------------------
 
@@ -20,32 +18,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
   const { isUnreadIndividualMessage } = useMessagesTools();
 
-  const { user, friends, setFriends } = useCredentials();
+  const { user, friends, followers, following } = useCredentials();
   const currentUserId = user?.userId || '';
-  const currentUserName = user?.name || user?.username || 'You';
-
-  // Queries
-  const { data: friendsData, isLoading: loadingFriends } = useGetFriendsQuery(currentUserId, {
-    skip: !currentUserId,
-  });
-  const { data: followersData, isLoading: loadingFollowers } = useGetFollowersQuery(currentUserId, {
-    skip: !currentUserId,
-  });
-  const { data: followingData, isLoading: loadingFollowing } = useGetFollowingQuery(currentUserId, {
-    skip: !currentUserId,
-  });
-
-
-  const followers = (followersData as any)?.data || [];
-  const following = (followingData as any)?.data || [];
-
-  const isAnyLoading = loadingFriends || loadingFollowers || loadingFollowing;
-
-  useEffect(() => {
-    if (!friends && (friendsData as any)?.data) {
-      setFriends(friendsData?.data || [])
-    }
-  }, [friends, friendsData])
 
 
   return (
@@ -91,7 +65,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
         slotProps={{ backdrop: { invisible: true } }}
         PaperProps={{ sx: { width: 1, maxWidth: 420 } }}
       >
-        {isAnyLoading && !friends.length && !followers.length && !following.length ? (
+        {!friends.length && !followers.length && !following.length ? (
           <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
             <CircularProgress size={26} />
           </Box>
@@ -101,8 +75,8 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             followers={followers}
             following={following}
             currentUserId={currentUserId}
-            currentUserName={currentUserName}
-            isLoading={isAnyLoading}
+            currentUserName={user.name}
+            isLoading={false}
             onClose={drawer.onFalse}
           />
         )}
