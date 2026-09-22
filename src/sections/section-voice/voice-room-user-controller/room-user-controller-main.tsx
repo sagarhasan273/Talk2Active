@@ -48,6 +48,7 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
+import { useCredentials } from '@/core/slices';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
 import { ParticipantStageType } from '../voice-room-stage/types';
@@ -112,6 +113,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const room = useRoomContext();
 
+  const { checkIfFollowing, checkIfBlocked } = useCredentials();
+
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
 
   const participant = {
@@ -128,8 +131,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     joinedAt: user?.joinedAt,
     bio: user?.bio,
 
-    isFollowing: user?.isFollowing,
-    isBlocked: false,
+    isFollowing: checkIfFollowing(user.id),
+    isBlocked: checkIfBlocked(user.id),
   }
 
   const {
