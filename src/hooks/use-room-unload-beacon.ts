@@ -14,8 +14,8 @@ export function useRoomUnloadBeacon({
 }: UseRoomUnloadBeaconProps) {
     const roomRef = useRef(roomId);
     const userRef = useRef(userId);
+    const isFiredRef = useRef(false);
 
-    // Keep references synced without causing re-binding of window listeners
     useEffect(() => {
         roomRef.current = roomId;
         userRef.current = userId;
@@ -25,6 +25,9 @@ export function useRoomUnloadBeacon({
         if (!enabled) return;
 
         const handleUnload = () => {
+            if (isFiredRef.current) return;
+            isFiredRef.current = true;
+
             const activeRoomId = roomRef.current;
             const activeUserId = userRef.current;
 
@@ -38,14 +41,12 @@ export function useRoomUnloadBeacon({
 
             const targetUrl = `${CONFIG.serverUrl}/room/on-reload`;
 
-            // 1. Primary: sendBeacon with text/plain to bypass CORS preflight during unload
-            if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+            if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
                 const blob = new Blob([payload], { type: 'text/plain' });
                 const sent = navigator.sendBeacon(targetUrl, blob);
                 if (sent) return;
             }
 
-            // 2. Fallback: Modern fetch with keepalive: true
             try {
                 fetch(targetUrl, {
                     method: 'POST',
@@ -53,20 +54,27 @@ export function useRoomUnloadBeacon({
                     body: payload,
                     keepalive: true,
                 }).catch(() => {
-                    // Suppress errors during window destruction
+                    console.error('Suppress errors during window destruction');
                 });
             } catch {
-                // Suppress synchronous network dispatch failures during teardown
+                console.error('Suppress synchronous network dispatch failures during teardown');
             }
         };
 
-        // 'pagehide' handles mobile/safari unload reliably; 'beforeunload' handles desktop fallback
+        const handlePageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                isFiredRef.current = false;
+            }
+        };
+
         window.addEventListener('pagehide', handleUnload);
         window.addEventListener('beforeunload', handleUnload);
+        window.addEventListener('pageshow', handlePageShow);
 
         return () => {
             window.removeEventListener('pagehide', handleUnload);
             window.removeEventListener('beforeunload', handleUnload);
+            window.removeEventListener('pageshow', handlePageShow);
         };
     }, [enabled]);
 }
