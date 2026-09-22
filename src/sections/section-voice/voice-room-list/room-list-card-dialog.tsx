@@ -26,13 +26,8 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { RoomParticipantType } from '@/types/type-chat';
 import { RoomCardParticipant } from './room-list-card-participant';
-
-export interface RoomParticipantEntry {
-  user: any;
-  isHost: boolean;
-  joinedAt?: string;
-}
 
 export type RoomDialogSize = 'xs' | 'sm' | 'md';
 
@@ -40,7 +35,7 @@ export interface RoomParticipantsDialogProps {
   open: boolean;
   onClose: () => void;
   room: any;
-  allUsers: RoomParticipantEntry[];
+  allUsers: RoomParticipantType[];
   isFull?: boolean;
   isHost: boolean;
   size?: RoomDialogSize;
@@ -51,8 +46,8 @@ export interface RoomParticipantsDialogProps {
   onEditRoom?: (room: any) => void;
 }
 
-const participantId = (entry: RoomParticipantEntry): string | undefined =>
-  entry.user?.id || entry.user?.userId;
+const participantId = (entry: RoomParticipantType): string | undefined =>
+  entry?.userId;
 
 export const RoomParticipantsDialog = ({
   open,
@@ -73,9 +68,8 @@ export const RoomParticipantsDialog = ({
 
   const [anchor, setAnchor] = useState<{ el: HTMLElement; id: string } | null>(null);
 
-  const dedupedUsers = allUsers.filter(
-    (entry, index, self) =>
-      index === self.findIndex((e) => participantId(e) === participantId(entry))
+  const dedupedUsers = Array.from(
+    new Map(allUsers.map((user) => [participantId(user), user])).values()
   );
 
   const getGridColumns = () => {
@@ -224,7 +218,7 @@ export const RoomParticipantsDialog = ({
               return (
                 <Box key={id || i} sx={{ position: 'relative' }}>
                   <RoomCardParticipant
-                    user={{ ...entry.user, verified: entry.user?.verified ?? false }}
+                    user={{ ...entry, verified: entry?.verified ?? false }}
                     isHost={entry.isHost}
                     onParticipantClick={onParticipantClick}
                   />

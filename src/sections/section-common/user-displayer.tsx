@@ -3,6 +3,7 @@
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
+import { useCredentials } from '@/core/slices';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import {
@@ -58,11 +59,13 @@ export const UserDisplayer = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const { checkIfFollowing, checkIfBlocked } = useCredentials();
+
   const [reportOpen, setReportOpen] = useState(false);
 
   const resolvedUserId = user.userId || user.id || '';
   const isSelf = Boolean(currentUserId && resolvedUserId === currentUserId);
-  const isBlocked = Boolean(user.isBlocked);
+  const isBlocked = checkIfBlocked(resolvedUserId);
 
   const getInitials = (fullName: string) => {
     if (!fullName) return '';
@@ -281,7 +284,7 @@ export const UserDisplayer = ({
                     {resolvedUserId && (
                       <ButtonRelationshipToggle
                         targetUser={{ id: resolvedUserId, name: user.name }}
-                        isFollow={user.isFollowing}
+                        isFollow={checkIfFollowing(resolvedUserId)}
                         size="small"
                         variant="soft"
                         fullWidth

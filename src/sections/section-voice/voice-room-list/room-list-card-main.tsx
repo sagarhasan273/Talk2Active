@@ -21,7 +21,6 @@ import {
 
 import { Label, ParticipantLevel } from '@/components/label';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
-import { AvatarUser } from 'src/components/avatar-user';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
@@ -231,13 +230,12 @@ export const VoiceRoomCard = ({
             onClick={(e) => handleAvatarClick(e, roomData?.host)}
             sx={{ cursor: 'pointer', transition: 'transform 0.15s ease', '&:hover': { transform: 'scale(1.05)' } }}
           >
-            <AvatarUser
-              avatarUrl={roomData?.host?.profilePhoto}
-              name={roomData?.host?.name || 'Unknown'}
-              verified={roomData?.host?.verified}
-              accountType={roomData?.host?.accountType}
-              sx={{ width: 40, height: 40 }}
-            />
+            <Avatar
+              src={roomData?.host?.profilePhoto || undefined}
+              alt={roomData?.host?.name || 'Unknown'}
+            >
+              {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
+            </Avatar>
           </Box>
 
           <Stack sx={{ minWidth: 0, flex: 1 }}>
@@ -290,15 +288,15 @@ export const VoiceRoomCard = ({
               max={5}
               sx={{
                 '& .MuiAvatar-root': {
-                  width: 30,
-                  height: 30,
+                  width: 40,
+                  height: 40,
                   fontSize: 12,
                   fontWeight: 700,
                   cursor: 'pointer',
                   border: `2px solid ${isDark ? theme.palette.background.paper : '#fff'}`,
                   transition: 'transform 0.18s ease, z-index 0.18s ease',
                   '&:hover': {
-                    transform: 'scale(1.18)',
+                    transform: 'scale(1.2)',
                     zIndex: 10,
                   },
                 },

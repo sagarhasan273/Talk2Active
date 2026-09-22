@@ -58,6 +58,20 @@ export const socialApi = createApi({
       query: (userId) => `social/all-relations/${userId}`,
       providesTags: ['social-recall'],
     }),
+
+    // Mutation to toggle block status
+    toggleBlockUser: builder.mutation<
+      { status: boolean; isBlocked: boolean; message: string },
+      { targetUserId: string }
+    >({
+      query: ({ targetUserId }) => ({
+        url: '/social/block-toggle',
+        method: 'POST',
+        body: { targetUserId },
+      }),
+      // Automatically invalidate related cache queries
+      invalidatesTags: ['social-recall'],
+    }),
   }),
 });
 
@@ -68,4 +82,5 @@ export const {
   useGetFollowersQuery,
   useGetFollowingQuery,
   useGetAllRelationsQuery,
+  useToggleBlockUserMutation
 } = socialApi;
