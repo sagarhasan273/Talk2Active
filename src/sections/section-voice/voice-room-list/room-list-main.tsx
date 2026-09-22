@@ -196,7 +196,7 @@ export function RoomlistMain({
             alignItems: 'stretch',
             justifyContent: 'flex-start', // Keeps cards left-aligned
             position: 'relative',
-            gap: 1.5,
+            gap: 2,
             mb: 10,
           }}
         >

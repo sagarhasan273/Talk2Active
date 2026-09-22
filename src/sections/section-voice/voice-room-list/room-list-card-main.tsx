@@ -346,7 +346,7 @@ export const VoiceRoomCard = ({
             boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
           }}
         >
-          {isFull ? 'Room Full' : 'Join Stage'}
+          {isFull ? 'Room Full' : 'Join Room'}
         </Button>
       </Paper>
 

@@ -63,8 +63,6 @@ export function ResultItem({ title, path, groupLabel, onClickItem }: Props) {
           </Box>
         ))}
       />
-
-      {groupLabel && <Label color="info">{groupLabel}</Label>}
     </ListItemButton>
   );
 }

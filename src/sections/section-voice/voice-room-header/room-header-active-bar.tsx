@@ -20,10 +20,11 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { Label } from '@/components/label';
+import { fgetLanguageName } from '@/utils/helper';
 import { ActiveSpeaker } from './room-header-active-speaker';
 import { ParticipantAvatarStack } from './room-header-participant-avatar-stack';
 import type { VoiceParticipant } from './types';
-import { formatLanguages } from './utils';
 
 // ----------------------------------------------------------------------
 
@@ -67,7 +68,7 @@ export const VoiceRoomActiveBar = ({
         width: '100%',
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 2,
+        borderRadius: 1,
         backdropFilter: 'blur(20px)',
         bgcolor: isDark
           ? alpha(theme.palette.background.paper, 0.82)
@@ -86,17 +87,6 @@ export const VoiceRoomActiveBar = ({
         },
       }}
     >
-      {/* Top ambient color bar indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 2.5,
-          background: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.info.main} 100%)`,
-        }}
-      />
 
       {/* Main Bar Content */}
       <Box
@@ -210,20 +200,18 @@ export const VoiceRoomActiveBar = ({
 
           {/* Sub-meta: Languages & Listener counts */}
           <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-            {room?.languages?.length ? (
-              <Typography
-                variant="caption"
-                noWrap
+            {room?.languages?.length ? room?.languages?.map((lang, index) => (
+              <Label
+                key={`${lang}-${index}`}
+                label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
+                size="small"
+                color="primary"
                 sx={{
-                  fontSize: '0.725rem',
-                  fontWeight: 600,
-                  color: 'text.secondary',
-                  maxWidth: { xs: 110, sm: 180 },
+                  borderRadius: 1,
+                  bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
                 }}
-              >
-                {formatLanguages(room.languages)}
-              </Typography>
-            ) : null}
+              />
+            )) : null}
 
             <Box
               sx={{
@@ -308,7 +296,7 @@ export const VoiceRoomActiveBar = ({
               },
             }}
           >
-            {!isTablet ? 'Open Stage' : ''}
+            {!isTablet ? 'Open Room' : 'Room'}
           </Button>
         </Tooltip>
 

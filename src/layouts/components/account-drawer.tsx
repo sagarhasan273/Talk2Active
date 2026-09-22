@@ -24,7 +24,6 @@ import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
 import { AccountButton } from './account-button';
-import { UpgradeBlock } from './nav-upgrade';
 import { SignOutButton } from './sign-out-button';
 
 // ─────────────────────────────────────────────
@@ -328,9 +327,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           <Stack sx={{ py: 2, px: 2.5, borderTop: `1px dashed ${theme.vars.palette.divider}` }}>
             {renderTheme}
           </Stack>
-          <Box sx={{ px: 2.5, pb: 3 }}>
-            <UpgradeBlock />
-          </Box>
         </Scrollbar>
 
         <Box

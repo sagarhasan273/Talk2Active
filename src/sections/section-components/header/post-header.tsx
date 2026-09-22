@@ -38,12 +38,6 @@ export function PostHeader({ item }: PostHeaderProps) {
           >
             <Typography variant="subtitle2">{item.userName}</Typography>
           </Button>
-          <Label
-            sx={{ background: 'transparent', alignItems: 'end', height: 20 }}
-            startIcon={<Iconify width={10} icon="solar:clock-circle-outline" />}
-          >
-            {item.time}
-          </Label>
         </Stack>
       </Stack>
 
