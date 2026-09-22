@@ -50,8 +50,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
   const [micMuted, setMicMuted] = useState(true);
   const [deafened, setDeafened] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<ParticipantStageType | null>(null);
 
   // Collapse state for presentation screen
   const chatCollapsedBoolean = useBoolean();
@@ -435,10 +433,6 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
             setChatOpen(true);
           }}
           onLeave={onLeaveRoom}
-          onProfileClick={(p) => {
-            setSelectedUser({ ...p });
-            setProfileDrawerOpen(true);
-          }}
           onSettingsClick={onSettingsClick}
           onBack={onBack}
         />

@@ -35,19 +35,19 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const [isResizing, setIsResizing] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const buttonContainerRef = useRef<HTMLDivElement>(null);
 
-  const resizeDirection = useRef<'left' | 'right' | 'top' | null>(null);
+  const resizeDirection = useRef<'left' | 'top' | null>(null);
   const startX = useRef(0);
   const startY = useRef(0);
   const startWidth = useRef(DEFAULT_WIDTH);
   const startHeight = useRef(DEFAULT_HEIGHT);
 
-
   /* ------------------------------------------------------------------ */
-  /* Resize Handlers                                                    */
+  /* Resize Handlers (Expanding to the Left and Top)                    */
   /* ------------------------------------------------------------------ */
   const startResize = (
-    direction: 'left' | 'right' | 'top',
+    direction: 'left' | 'top',
     event: React.MouseEvent<HTMLDivElement>
   ) => {
     if (isMobile) return;
@@ -68,19 +68,21 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
       const direction = resizeDirection.current;
       if (!direction) return;
 
-      if (direction === 'left' || direction === 'right') {
-        const deltaX = event.clientX - startX.current;
-        let newWidth = startWidth.current;
-        newWidth = direction === 'left' ? startWidth.current - deltaX : startWidth.current + deltaX;
+      if (direction === 'left') {
+        // Dragging left increases width because the panel is anchored on the right
+        const deltaX = startX.current - event.clientX;
+        const newWidth = startWidth.current + deltaX;
+        const maxAvailableWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
 
-        const maxAllowedWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
-        setChatWidth(Math.min(Math.max(MIN_WIDTH, newWidth), maxAllowedWidth));
+        setChatWidth(Math.min(Math.max(MIN_WIDTH, newWidth), maxAvailableWidth));
       }
 
       if (direction === 'top') {
         const deltaY = startY.current - event.clientY;
         const newHeight = startHeight.current + deltaY;
-        setChatHeight(Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, newHeight)));
+        const maxAvailableHeight = Math.min(MAX_HEIGHT, window.innerHeight - 32);
+
+        setChatHeight(Math.min(maxAvailableHeight, Math.max(MIN_HEIGHT, newHeight)));
       }
     };
 
@@ -110,6 +112,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
       const target = event.target as Element;
 
       if (chatContainerRef.current?.contains(target)) return;
+      if (buttonContainerRef.current?.contains(target)) return;
       if (target.closest('.MuiPopover-root') || target.closest('.MuiPopper-root')) return;
 
       setOpen(false);
@@ -131,32 +134,33 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
       sx={{
         position: 'fixed',
         zIndex: (muiTheme) => (open ? muiTheme.zIndex.modal : muiTheme.zIndex.speedDial),
-        right: { xs: 0, sm: 20 },
-        bottom: { xs: 0, sm: 0 },
-        top: { xs: 0, sm: 'auto' },
-        left: { xs: 0, sm: 'auto' },
+        // Anchored strictly to the bottom-right corner
+        bottom: { xs: 16, sm: 20 },
+        right: { xs: 16, sm: 20 },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
         gap: 1.5,
-        width: { xs: '100%', sm: `${chatWidth}px` },
-        height: open ? { xs: '100%', sm: `${chatHeight}px` } : 'auto',
         pointerEvents: 'none',
       }}
     >
+      {/* ── Chat Window (Renders above the Button, anchored on the right) ── */}
       {open && (
         <Box
           ref={chatContainerRef}
           sx={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
+            position: { xs: 'fixed', sm: 'relative' },
+            top: { xs: 0, sm: 'auto' },
+            left: { xs: 0, sm: 'auto' },
+            right: { xs: 0, sm: 110 },
+            bottom: { xs: 0, sm: -45 },
+            width: { xs: '100vw', sm: `${chatWidth}px` },
+            height: { xs: '100dvh', sm: `${chatHeight}px` },
             pointerEvents: 'auto',
             display: 'flex',
             flexDirection: 'column',
             minWidth: 0,
             minHeight: 0,
-            // Ambient elevation glow on outer frame
             filter: isDark
               ? 'drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75))'
               : `drop-shadow(0 20px 40px ${alpha(theme.palette.common.black, 0.18)})`,
@@ -180,7 +184,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
                 content: '""',
                 width: 48,
                 height: 3,
-                borderRadius: 3,
+                borderRadius: 1,
                 backgroundColor: 'transparent',
                 transition: 'background-color 0.15s ease',
               },
@@ -188,7 +192,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             }}
           />
 
-          {/* Left Resize Handle */}
+          {/* Left Resize Handle (Expands width toward the left) */}
           <Box
             onMouseDown={(e) => startResize('left', e)}
             sx={{
@@ -206,7 +210,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
                 content: '""',
                 width: 3,
                 height: 48,
-                borderRadius: 3,
+                borderRadius: 1,
                 backgroundColor: 'transparent',
                 transition: 'background-color 0.15s ease',
               },
@@ -214,7 +218,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             }}
           />
 
-          {/* Inner Chat Box with Rich Elevated Box-Shadow */}
+          {/* Inner Chat Box */}
           <Box
             sx={{
               width: '100%',
@@ -247,29 +251,27 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
         </Box>
       )}
 
-      {/* Floating Action Badge */}
-      {!open && (
-        <Badge
-          color="error"
-          badgeContent={0}
-          overlap="circular"
-          sx={{
-            pointerEvents: 'auto',
-            position: 'absolute',
-            right: { xs: 0, sm: 0 },
-            bottom: { xs: 0, sm: 10 },
-            display: { xs: 'none', sm: 'flex' },
-          }}
-        >
+      {/* ── Fixed Bottom-Right Trigger Button ── */}
+      <Box
+        ref={buttonContainerRef}
+        sx={{
+          display: { xs: 'none', sm: 'inline-flex' },
+          pointerEvents: 'auto',
+          position: 'relative',
+        }}
+      >
+        <Badge color="error" badgeContent={0} overlap="circular">
           <IconButton
-            onClick={() => setOpen(true)}
+            onClick={() => setOpen((prev) => !prev)}
             size="small"
             sx={{
               bgcolor: 'primary.main',
               color: '#fff',
-              borderRadius: 1,
-              px: 3,
+              borderRadius: 1.5,
+              px: 2.25,
               py: 1,
+              fontWeight: 700,
+              fontSize: '0.85rem',
               boxShadow: isDark
                 ? '0 8px 24px rgba(0, 0, 0, 0.55)'
                 : `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
@@ -282,10 +284,10 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               ...sx,
             }}
           >
-            <Diversity2Icon style={{ fontSize: 16, marginRight: 8 }} /> Social
+            <Diversity2Icon style={{ fontSize: 18, marginRight: 8 }} /> Social
           </IconButton>
         </Badge>
-      )}
+      </Box>
     </Box>
   );
 };

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { useLiveKitSession } from '@/core/contexts/livekit-context';
 import { useRoomTools } from '@/core/slices';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
@@ -58,12 +57,10 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onSendReaction,
   onToggleChat,
   onLeave,
-  onProfileClick,
   onSettingsClick,
 }) => {
   const theme = useTheme();
 
-  const { isInRoom } = useLiveKitSession();
   const { room } = useRoomTools();
 
   // Element Refs
@@ -137,7 +134,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
       }}
     >
       {/* Top Header Placement */}
-      {isInRoom && room && (
+      {room && (
         <CompactRoomHeader
           room={room}
           onBack={onBack}
@@ -305,7 +302,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     <Box key={p.id} sx={{ width: 140, minWidth: 140, height: 140 }}>
                       <ParticipantTile
                         participant={p}
-                        onClick={() => onProfileClick?.(p)}
                       />
                     </Box>
                   ))}
@@ -369,7 +365,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     >
                       <ParticipantTile
                         participant={p}
-                        onClick={() => onProfileClick?.(p)}
                       />
                     </Box>
                   ))}

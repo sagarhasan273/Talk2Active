@@ -128,7 +128,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     joinedAt: user?.joinedAt,
     bio: user?.bio,
 
-    isFollowing: false,
+    isFollowing: user?.isFollowing,
     isBlocked: false,
   }
 

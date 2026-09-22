@@ -170,10 +170,9 @@ type ParticipantTileProps = {
     hasJoin?: boolean;
     isSpeaking?: boolean;
   };
-  onClick?: () => void;
 };
 
-export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) => {
+export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
   const theme = useTheme();
 
   const openDrawer = useBoolean();
@@ -280,7 +279,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
         role="button"
         tabIndex={0}
         onClick={() => { openDrawer.onTrue() }}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openDrawer.onFalse()}
         sx={{
           position: 'relative',
           width: '100%',
@@ -530,7 +529,7 @@ export const ParticipantTile = ({ participant, onClick }: ParticipantTileProps) 
       <RoomUserControllerMain
         open={openDrawer.value}
         onClose={openDrawer.onFalse}
-        user={participants[participant.id]}
+        user={{ ...participants[participant.id], ...participant }}
       />
     </>
   );

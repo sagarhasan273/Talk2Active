@@ -32,12 +32,6 @@ import { getLanguageDetails } from './utils';
 
 // ----------------------------------------------------------------------
 
-const livePulse = keyframes`
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.8; }
-`;
-
 const miniWave = keyframes`
   0%, 100% { height: 3px; }
   50% { height: 11px; }
