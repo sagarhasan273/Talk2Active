@@ -64,8 +64,8 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
 
   return {
     position: 'absolute',
-    top: -4,
-    left: -4,
+    bottom: '30%',
+    left: 2,
     height: 20,
     borderRadius: 10,
     padding: '0px 6px',
@@ -322,6 +322,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
                 const IconComponent = STATUS_MAP[status]?.icon;
                 return IconComponent ? <IconComponent /> : null;
               })()}
+              <Typography variant='caption' sx={{ ml: 0.5 }}>{STATUS_MAP[status]?.label}</Typography>
             </StatusDot>
           </Tooltip>
         )}

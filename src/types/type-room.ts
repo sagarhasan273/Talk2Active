@@ -20,26 +20,47 @@ export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
 export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
 
-export interface ChatUserStatus {
-  name: string;
-  label: string;
-  icon: LucideIcon;
-  color:
+export type ChatUserStatusName =
+  | 'online'
+  | 'busy'
+  | 'brb'
+  | 'afk'
+  | 'zzz'
+  | 'offline';
+
+export type ChatUserStatusColor =
   | 'success.main'
   | 'error.light'
+  | 'warning.main'
   | 'yellow.main'
   | 'orange.main'
   | 'stone.main'
   | 'stone.dark';
-  bgColor: 'success' | 'error' | 'yellow' | 'orange' | 'stone' | 'stone';
-  bgColorChannel:
+
+export type ChatUserStatusBgColor =
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'yellow'
+  | 'orange'
+  | 'stone'
+  | 'grey';
+
+export type ChatUserStatusBgChannel =
   | 'mainChannel'
   | 'lightChannel'
   | 'lighterChannel'
   | 'darkChannel'
   | 'darkerChannel';
-}
 
+export interface ChatUserStatus {
+  name: ChatUserStatusName;
+  label: string;
+  icon: LucideIcon;
+  color: ChatUserStatusColor;
+  bgColor: ChatUserStatusBgColor;
+  bgColorChannel: ChatUserStatusBgChannel;
+}
 export type JoinRoomUserInput = {
   roomId: string;
   socketId: string;
