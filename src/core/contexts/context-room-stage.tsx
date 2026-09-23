@@ -29,153 +29,106 @@ export function RoomStageProvider({
     raisedHandsSet,
     participantReactions,
 }: RoomStageProviderProps) {
-    // 1. LiveKit Subscriptions
     const remoteParticipants = useParticipants();
     const { localParticipant } = useLocalParticipant();
 
-    // 2. Redux Subscriptions
     const activeRoom = useSelector(selectRoom);
     const reduxParticipants = useSelector(selectParticipants) || {};
 
-    // 3. Credentials & Relations
-    const {
-        currentUserId,
-        checkIfFollowing,
-        checkIfFriend,
-        checkIfBlocked,
-    } = useCredentials();
+    const { currentUserId, checkIfFollowing, checkIfBlocked } = useCredentials();
 
-    // 4. Resolve Host ID
     const hostId = useMemo(() => {
-        if (!activeRoom?.host) return '';
-        const h = activeRoom.host as any;
-        return String(h?.userId);
+        const h = activeRoom?.host as any;
+        return String(h?.userId || h?._id || h?.id || '');
     }, [activeRoom?.host]);
 
-    const localIdentity = localParticipant?.identity;
-
-    // 5. Merge Redux + LiveKit Participant Data
     const { participants, participantsMap, hostParticipant } = useMemo(() => {
-        const list: ParticipantStageType[] = [];
-        const map: Record<string, ParticipantStageType> = {};
-        let host: ParticipantStageType | undefined;
-
-        // If there is no active room in Redux, abort and provide empty list
         if (!activeRoom) {
             return { participants: [], participantsMap: {}, hostParticipant: undefined };
         }
 
-        // Index all active LiveKit participants
+        // 1. Index all connected LiveKit peers by identity
         const livekitMap = new Map<string, Participant>();
-
-        if (localParticipant?.identity) {
-            livekitMap.set(String(localParticipant.identity), localParticipant);
-        }
+        if (localParticipant?.identity) livekitMap.set(String(localParticipant.identity), localParticipant);
         remoteParticipants.forEach((p) => {
-            if (p?.identity) {
-                livekitMap.set(String(p.identity), p);
-            }
+            if (p?.identity) livekitMap.set(String(p.identity), p);
         });
 
-        // Extract valid Redux participants that belong strictly to the current active room
-        const currentReduxParticipants: Record<string, any> = {};
+        // 2. Filter Redux participants for current room only
+        const validRedux: Record<string, any> = {};
         Object.entries(reduxParticipants).forEach(([key, val]: [string, any]) => {
-            // If your participant object stores a roomId, verify it matches
-            if (!val?.roomId || val.roomId === activeRoom?.roomId) {
-                currentReduxParticipants[key] = val;
-            }
+            if (!val?.roomId || val.roomId === activeRoom.roomId) validRedux[key] = val;
         });
 
-        // Collect distinct keys
-        const allIdentities = new Set<string>([
-            ...Object.keys(currentReduxParticipants),
-            ...livekitMap.keys(),
-        ]);
+        const allKeys = new Set([...Object.keys(validRedux), ...livekitMap.keys()]);
+        const list: ParticipantStageType[] = [];
+        const map: Record<string, ParticipantStageType> = {};
+        let host: ParticipantStageType | undefined;
 
-        allIdentities.forEach((participantIdentity) => {
-            if (!participantIdentity) return;
+        allKeys.forEach((key) => {
+            const roomData = validRedux[key] || {};
+            const dataUserId = roomData.userId ? String(roomData.userId) : undefined;
 
-            const livekitP = livekitMap.get(participantIdentity);
-            const roomData = (currentReduxParticipants[participantIdentity] || {}) as any;
+            // Find in LiveKit by key or userId
+            const livekitP = livekitMap.get(key) || (dataUserId ? livekitMap.get(dataUserId) : undefined);
 
-            const isSelf =
-                participantIdentity === localIdentity ||
-                participantIdentity === String(currentUserId);
-
-            const handRaised = raisedHandsSet.has(participantIdentity);
-
-            let parsedMeta: Record<string, any> = {};
+            let meta: Record<string, any> = {};
             try {
-                if (livekitP?.metadata) {
-                    parsedMeta = JSON.parse(livekitP.metadata);
-                }
+                if (livekitP?.metadata) meta = JSON.parse(livekitP.metadata);
             } catch {
-                // Fallback for non-JSON strings
+                // Fallback
             }
 
-            const isHostParticipant = Boolean(
-                (hostId && participantIdentity === hostId) ||
-                parsedMeta.isHost ||
-                roomData.isHost
-            );
+            const id = String(livekitP?.identity || dataUserId || key);
+            const isSelf = id === String(localParticipant?.identity) || id === String(currentUserId);
+            const isHost = Boolean((hostId && id === hostId) || meta.isHost || roomData.isHost);
 
             const enriched: ParticipantStageType = {
                 ...roomData,
-                id: participantIdentity,
-                userId: roomData.userId || parsedMeta.userId || participantIdentity,
-                name:
-                    livekitP?.name ||
-                    parsedMeta.name ||
-                    roomData.name ||
-                    (isSelf ? 'You' : 'Anonymous'),
-                username: parsedMeta.username || roomData.username || '',
-                verified: Boolean(parsedMeta.verified ?? roomData.verified),
-                profilePhoto: parsedMeta.profilePhoto || roomData.profilePhoto || '',
-                genUserId: parsedMeta.genUserId || roomData.genUserId || '',
-                accountType: parsedMeta.accountType || roomData.accountType,
-                status: parsedMeta.status || roomData.status || 'online',
-                isHost: isHostParticipant,
-                handRaised,
-                activeReactionEmoji: participantReactions[participantIdentity] || null,
+                id,
+                userId: dataUserId || meta.userId || id,
+                name: livekitP?.name || meta.name || roomData.name || (isSelf ? 'You' : 'Anonymous'),
+                username: meta.username || roomData.username || '',
+                verified: Boolean(meta.verified ?? roomData.verified),
+                profilePhoto: meta.profilePhoto || roomData.profilePhoto || '',
+                genUserId: meta.genUserId || roomData.genUserId || '',
+                accountType: meta.accountType || roomData.accountType,
+                status: meta.status || roomData.status || 'online',
+                isHost,
+                handRaised: raisedHandsSet.has(id),
+                activeReactionEmoji: participantReactions[id] || null,
                 isSelf,
-                role: isHostParticipant ? 'host' : (roomData.role || 'listener'),
+                role: isHost ? 'host' : (roomData.role || 'listener'),
                 rawParticipant: livekitP,
 
-                // Only mark Connecting if we are genuinely joined to a room
-                connectionStatus: livekitP
-                    ? (roomData.connectionStatus || ConnectionState.Connected)
-                    : ConnectionState.Connecting,
+                // If found in LiveKit -> Connected, otherwise still Connecting
+                connectionStatus: livekitP ? ConnectionState.Connected : ConnectionState.Connecting,
 
-                isFollowing: !isSelf && checkIfFollowing?.(participantIdentity),
-                isFriend: !isSelf && checkIfFriend?.(participantIdentity),
-                isBlocked: !isSelf && checkIfBlocked?.(participantIdentity),
+                joinedAt: roomData.joinedAt || meta.joinedAt || new Date().toISOString(),
+                follower_count: roomData.follower_count ?? meta.follower_count ?? 0,
+                following_count: roomData.following_count ?? meta.following_count ?? 0,
+                friend_count: roomData.friend_count ?? meta.friend_count ?? 0,
+
+                isFollowing: !isSelf && checkIfFollowing?.(id),
+                isBlocked: !isSelf && checkIfBlocked?.(id),
             };
 
             list.push(enriched);
-            map[participantIdentity] = enriched;
-
-            if (isHostParticipant && !host) {
-                host = enriched;
-            }
+            map[id] = enriched;
+            if (isHost && !host) host = enriched;
         });
 
-        return {
-            participants: list,
-            participantsMap: map,
-            hostParticipant: host,
-        };
+        return { participants: list, participantsMap: map, hostParticipant: host };
     }, [
         activeRoom,
         remoteParticipants,
         localParticipant,
         reduxParticipants,
-        localIdentity,
         currentUserId,
         hostId,
         raisedHandsSet,
         participantReactions,
         checkIfFollowing,
-        checkIfFriend,
         checkIfBlocked,
     ]);
 
@@ -190,11 +143,7 @@ export function RoomStageProvider({
         [participants, participantsMap, hostParticipant, hostId]
     );
 
-    return (
-        <RoomStageContext.Provider value={value}>
-            {children}
-        </RoomStageContext.Provider>
-    );
+    return <RoomStageContext.Provider value={value}>{children}</RoomStageContext.Provider>;
 }
 
 export function useRoomStage(): RoomStageContextValue {

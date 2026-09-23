@@ -30,7 +30,6 @@ const sxCard = {
 };
 
 interface RoomlistMainProps {
-
   onSelectRoom: (room: RoomType) => void;
   onCreateRoom: () => void;
 }

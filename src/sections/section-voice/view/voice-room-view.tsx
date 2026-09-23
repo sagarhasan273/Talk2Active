@@ -2,7 +2,6 @@ import type { RoomType } from '@/types/type-room';
 import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 import { useCallback, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
 import { toastErrorResponse } from '@/utils/response';
@@ -12,7 +11,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { useSocket } from '@/core/contexts/context-socket';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
@@ -25,7 +23,6 @@ export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
   const { room, setRoom } = useRoomTools();
-  const { socket } = useSocket();
 
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
@@ -123,13 +120,6 @@ export function VoiceMainView() {
     }
     editRoomBoolean.onTrue();
   }, [isAuthenticated, isAuthOpen, editRoomBoolean]);
-
-  const handleShareLink = useCallback(() => {
-    if (!room) return;
-    const url = `${window.location.origin}/room/${room.roomId}`;
-    navigator.clipboard?.writeText(url);
-    toast.success('Room link copied to clipboard!');
-  }, [room]);
 
   const header = useMemo(() => {
     if (isInRoom && room && selectedTab === 'room-list') {

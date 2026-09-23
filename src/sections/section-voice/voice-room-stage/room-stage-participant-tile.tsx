@@ -27,7 +27,6 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useBoolean } from '@/hooks/use-boolean';
-import { useParticipantConnectionState } from '@/hooks/use-participant-connection-state';
 import type { ChatUserStatus, ParticipantStageType } from '@/types/type-room';
 
 import { RoomUserControllerMain } from '../voice-room-user-controller';
@@ -181,14 +180,8 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     status,
     hasJoin = true,
     rawParticipant,
+    connectionStatus
   } = participant;
-
-  // 1. Connection status resolution via hook
-  const connectionStatus = useParticipantConnectionState({
-    participantId: String(id),
-    isSelf: Boolean(isSelf),
-    hasJoin,
-  });
 
   // 2. Safe speaking state (never calls useIsSpeaking at top level)
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -221,14 +214,14 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   // 5. Connection Overlay
   const connectionOverlayElement = useMemo(() => {
     switch (connectionStatus) {
-      case 'closed':
-        return (
-          <ConnectionOverlay status="closed">
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-              Voice Closed
-            </Typography>
-          </ConnectionOverlay>
-        );
+      // case 'closed':
+      //   return (
+      //     <ConnectionOverlay status="closed">
+      //       <Typography variant="caption" sx={{ fontWeight: 700 }}>
+      //         Voice Closed
+      //       </Typography>
+      //     </ConnectionOverlay>
+      //   );
 
       case 'connecting':
         return (

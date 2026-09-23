@@ -1,13 +1,7 @@
 // src/sections/section-voice-room/hooks/use-participant-connection-state.ts
 
 import { useRoomContext } from '@livekit/components-react';
-import {
-    ConnectionQuality,
-    ConnectionState,
-    Participant,
-    RemoteParticipant,
-    RoomEvent,
-} from 'livekit-client';
+import { ConnectionQuality, ConnectionState, Participant, RemoteParticipant, RoomEvent } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 
 export type ParticipantConnectionStatus =
@@ -17,7 +11,7 @@ export type ParticipantConnectionStatus =
     | 'disconnected'
     | 'closed';
 
-interface UseParticipantConnectionStateProps {
+interface Props {
     participantId: string;
     isSelf?: boolean;
     hasJoin?: boolean;
@@ -27,124 +21,59 @@ export function useParticipantConnectionState({
     participantId,
     isSelf = false,
     hasJoin = true,
-}: UseParticipantConnectionStateProps): ParticipantConnectionStatus {
+}: Props): ParticipantConnectionStatus {
     const room = useRoomContext();
 
-    // 1. Check if LiveKit has established the WebRTC session for this participant
-    const remoteParticipant = useMemo(() => {
-        if (isSelf || !room) return undefined;
-        return room.remoteParticipants.get(participantId);
-    }, [room, participantId, isSelf]);
+    // 1. Helper: Find peer by identity (LiveKit map keys use internal SID, not identity)
+    const isPeerConnected = () => {
+        if (!room) return false;
+        for (const p of room.remoteParticipants.values()) {
+            if (p.identity === participantId) return true;
+        }
+        return false;
+    };
 
-    // 2. Initial state: If in stage list but not yet in WebRTC room, they are CONNECTING
-    const [remoteStatus, setRemoteStatus] = useState<
-        'connecting' | 'connected' | 'reconnecting' | 'disconnected'
-    >(() => {
+    // 2. Track connection state
+    const [status, setStatus] = useState<ParticipantConnectionStatus>(() => {
         if (isSelf) return 'connected';
-        return remoteParticipant ? 'connected' : 'connecting';
+        return isPeerConnected() ? 'connected' : 'connecting';
     });
 
-    // --------------------------------------------------------------------------
-    // A. LOCAL PARTICIPANT: Broadcast when connection is back / established
-    // --------------------------------------------------------------------------
-    useEffect(() => {
-        if (!isSelf || !room || !room.localParticipant) return;
-
-        const broadcastStatus = async (status: 'connected' | 'reconnecting' | 'disconnected') => {
-            try {
-                const payload = JSON.stringify({
-                    type: 'PARTICIPANT_CONNECTION_STATUS',
-                    identity: room.localParticipant.identity,
-                    status,
-                });
-
-                await room.localParticipant.publishData(new TextEncoder().encode(payload), {
-                    reliable: status === 'connected',
-                    topic: 'room_interactions',
-                });
-            } catch {
-                // Socket may be offline during reconnect
-            }
-        };
-
-        const handleStateChange = (state: ConnectionState) => {
-            if (state === ConnectionState.Connected) {
-                broadcastStatus('connected');
-            } else if (state === ConnectionState.Reconnecting) {
-                broadcastStatus('reconnecting');
-            }
-        };
-
-        room.on(RoomEvent.ConnectionStateChanged, handleStateChange);
-        return () => {
-            room.off(RoomEvent.ConnectionStateChanged, handleStateChange);
-        };
-    }, [isSelf, room]);
-
-    // --------------------------------------------------------------------------
-    // B. REMOTE PARTICIPANT: Listen to SFU Engine & Data Channel
-    // --------------------------------------------------------------------------
     useEffect(() => {
         if (isSelf || !room) return;
 
-        // 1. If remote peer just joined the room session
-        const handleParticipantConnected = (peer: RemoteParticipant) => {
-            if (peer.identity === participantId) {
-                setRemoteStatus('connected');
-            }
+        // Sync on mount or when participantId updates
+        if (isPeerConnected()) setStatus('connected');
+
+        const onConnected = (p: RemoteParticipant) => {
+            if (p.identity === participantId) setStatus('connected');
         };
 
-        // 2. If remote peer left or connection timed out
-        const handleParticipantDisconnected = (peer: RemoteParticipant) => {
-            if (peer.identity === participantId) {
-                setRemoteStatus('disconnected');
-            }
+        const onDisconnected = (p: RemoteParticipant) => {
+            if (p.identity === participantId) setStatus('disconnected');
         };
 
-        // 3. SFU RTCP Watchdog: Triggers "reconnecting" within 1.5s of Wi-Fi loss
-        const handleQualityChange = (quality: ConnectionQuality, p: Participant) => {
+        const onQuality = (quality: ConnectionQuality, p: Participant) => {
             if (p.identity !== participantId) return;
-
             if (quality === ConnectionQuality.Lost || quality === ConnectionQuality.Poor) {
-                setRemoteStatus('reconnecting');
-            } else if (
-                quality === ConnectionQuality.Good ||
-                quality === ConnectionQuality.Excellent
-            ) {
-                setRemoteStatus('connected');
+                setStatus('reconnecting');
+            } else {
+                setStatus('connected');
             }
         };
 
-        // 4. Manual recovery message from the peer
-        const handleDataReceived = (payload: Uint8Array) => {
-            try {
-                const text = new TextDecoder().decode(payload);
-                const data = JSON.parse(text);
-
-                if (data.type === 'PARTICIPANT_CONNECTION_STATUS' && data.identity === participantId) {
-                    setRemoteStatus(data.status);
-                }
-            } catch {
-                // Ignore other payloads
-            }
-        };
-
-        room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
-        room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
-        room.on(RoomEvent.ConnectionQualityChanged, handleQualityChange);
-        room.on(RoomEvent.DataReceived, handleDataReceived);
+        room.on(RoomEvent.ParticipantConnected, onConnected);
+        room.on(RoomEvent.ParticipantDisconnected, onDisconnected);
+        room.on(RoomEvent.ConnectionQualityChanged, onQuality);
 
         return () => {
-            room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
-            room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
-            room.off(RoomEvent.ConnectionQualityChanged, handleQualityChange);
-            room.off(RoomEvent.DataReceived, handleDataReceived);
+            room.off(RoomEvent.ParticipantConnected, onConnected);
+            room.off(RoomEvent.ParticipantDisconnected, onDisconnected);
+            room.off(RoomEvent.ConnectionQualityChanged, onQuality);
         };
-    }, [isSelf, room, participantId]);
+    }, [room, participantId, isSelf]);
 
-    // --------------------------------------------------------------------------
-    // C. Derive final status
-    // --------------------------------------------------------------------------
+    // 3. Fallbacks for self and closed stage
     return useMemo(() => {
         if (!hasJoin) return 'closed';
 
@@ -155,6 +84,6 @@ export function useParticipantConnectionState({
             return 'connected';
         }
 
-        return remoteStatus;
-    }, [hasJoin, isSelf, room?.state, remoteStatus]);
+        return status;
+    }, [hasJoin, isSelf, room?.state, status]);
 }
