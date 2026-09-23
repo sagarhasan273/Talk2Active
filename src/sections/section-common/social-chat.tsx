@@ -24,7 +24,7 @@ import {
   useToggleReactionMutation,
   useUpdateMessageMutation,
 } from '@/core/apis';
-import { useSocket } from '@/core/contexts/socket-context';
+import { useSocket } from '@/core/contexts/context-socket';
 import type { AllRelationsType } from '@/types/type-social';
 import {
   alpha,

@@ -1,4 +1,4 @@
-import { useTracks, VideoTrack } from '@livekit/components-react';
+import { ParticipantContext, useTracks, VideoTrack } from '@livekit/components-react';
 import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Track } from 'livekit-client';
@@ -10,14 +10,17 @@ import {
   Minimize,
   Tv,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRoomTools } from '@/core/slices';
+
+import { useVoiceRoomStage } from '@/core/contexts/context-room-stage';
+import { ParticipantStageType } from '@/types/type-room';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import { ParticipantTile } from './room-stage-participant-tile';
-import { ParticipantStageType } from './types';
+
 
 export type RoomAudioStageProps = {
   onBack?: () => void;
@@ -25,8 +28,7 @@ export type RoomAudioStageProps = {
   onShareClick?: () => void;
   topicPrompt?: string;
   onChangePrompt?: () => void;
-  participants: ParticipantStageType[];
-  maxParticipants: number;
+  participants?: ParticipantStageType[];
   micMuted?: boolean;
   deafened?: boolean;
   handRaised?: boolean;
@@ -45,8 +47,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onShareClick,
   topicPrompt = '',
   onChangePrompt,
-  participants,
-  maxParticipants,
+  participants: externalParticipants,
   micMuted = false,
   deafened = false,
   handRaised = false,
@@ -60,8 +61,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onSettingsClick,
 }) => {
   const theme = useTheme();
-
   const { room } = useRoomTools();
+
+  // 1. Consume Stage Context (Fallback to external prop if passed)
+  const stageContext = useVoiceRoomStage();
+  const participants = externalParticipants ?? stageContext.participants;
 
   // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
@@ -71,12 +75,19 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const [presentationOnly, setPresentationOnly] = useState(false);
   const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
-  // LiveKit Screen Share
+  // 2. LiveKit Screen Share Subscription
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const activeScreenShare = screenShareTracks[0];
-  const hasScreenShare = Boolean(activeScreenShare?.publication);
 
-  // Auto-reset presentation mode when screen sharing stops
+  const hasScreenShare = Boolean(activeScreenShare?.publication && activeScreenShare?.publication?.isSubscribed);
+  const maxParticipants = Number(room?.max_participants);
+
+  const isLocalScreenSharing = useMemo(
+    () => screenShareTracks.some((t) => t.participant.isLocal),
+    [screenShareTracks]
+  );
+
+  // Auto-reset presentation-only mode when screen sharing stops
   useEffect(() => {
     if (!hasScreenShare) {
       setPresentationOnly(false);
@@ -114,7 +125,10 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     }
   };
 
-  const openSlots = Math.max(0, maxParticipants - participants.length);
+  const openSlots = useMemo(
+    () => Math.max(0, maxParticipants - participants.length),
+    [maxParticipants, participants.length]
+  );
 
   return (
     <Box
@@ -152,8 +166,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           overflow: 'hidden',
         }}
       >
-        {/* Screen Share Screen Display */}
-        {hasScreenShare && (
+        {/* Screen Share Canvas */}
+        {hasScreenShare && activeScreenShare && (
           <Box
             ref={screenShareContainerRef}
             sx={{
@@ -254,7 +268,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         {!presentationOnly && (
           <>
             {hasScreenShare ? (
-              /* Strip Row layout during presentation */
+              /* Strip Row Layout during Presentation */
               <Box
                 sx={{
                   position: 'relative',
@@ -298,11 +312,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     '&::-webkit-scrollbar': { display: 'none' },
                   }}
                 >
-                  {participants.map((p) => (
+                  {participants.map((p: any) => (
                     <Box key={p.id} sx={{ width: 140, minWidth: 140, height: 140 }}>
-                      <ParticipantTile
-                        participant={p}
-                      />
+                      <ParticipantContext.Provider value={p.rawParticipant}>
+                        <ParticipantTile participant={p} />
+                      </ParticipantContext.Provider>
                     </Box>
                   ))}
 
@@ -331,6 +345,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 </IconButton>
               </Box>
             ) : (
+              /* Standard Stage Grid Layout */
               <Box
                 sx={{
                   flex: 1,
@@ -355,7 +370,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     m: 'auto',
                   }}
                 >
-                  {participants.map((p) => (
+                  {participants.map((p: any) => (
                     <Box
                       key={p.id}
                       sx={{
@@ -363,9 +378,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                         minHeight: 160,
                       }}
                     >
-                      <ParticipantTile
-                        participant={p}
-                      />
+                      <ParticipantContext.Provider value={p.rawParticipant}>
+                        <ParticipantTile participant={p} />
+                      </ParticipantContext.Provider>
                     </Box>
                   ))}
 
@@ -386,11 +401,12 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         )}
       </Box>
 
+      {/* Persistent Bottom Controls */}
       <RoomControlDock
         micMuted={micMuted}
         deafened={deafened}
         handRaised={handRaised}
-        isScreenSharing={Boolean(screenShareTracks.some((t) => t.participant.isLocal))}
+        isScreenSharing={isLocalScreenSharing}
         onToggleMic={onToggleMic || (() => { })}
         onToggleDeafen={onToggleDeafen || (() => { })}
         onToggleRaiseHand={onToggleRaiseHand || (() => { })}

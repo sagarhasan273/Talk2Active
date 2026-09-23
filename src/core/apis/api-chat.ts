@@ -1,4 +1,4 @@
-import type { LeaveRoomUserInput, RoomJoinInput, RoomType } from 'src/types/type-chat';
+import type { LeaveRoomUserInput, RoomJoinInput, RoomType } from '@/types/type-room';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 

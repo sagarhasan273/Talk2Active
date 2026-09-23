@@ -1,4 +1,4 @@
-import type { RoomType } from 'src/types/type-chat';
+import type { RoomType } from '@/types/type-room';
 
 import {
   ArrowRightIcon,

@@ -25,7 +25,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { fgetLanguageName } from 'src/utils/helper';
 
 import { useCredentials } from '@/core/slices';
-import { RoomType } from '@/types/type-chat';
+import { RoomType } from '@/types/type-room';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
 

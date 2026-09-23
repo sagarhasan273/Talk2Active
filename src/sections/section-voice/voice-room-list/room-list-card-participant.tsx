@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-card-participant.tsx
 
-import { RoomParticipantType } from '@/types/type-chat';
+import { RoomParticipantType } from '@/types/type-room';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import CrownRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { alpha, Avatar, Box, Typography, useTheme } from '@mui/material';

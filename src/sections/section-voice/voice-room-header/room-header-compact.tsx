@@ -1,6 +1,6 @@
 // src/sections/section-voice-room/voice-room-header/room-header-compact.tsx
 
-import type { RoomType } from 'src/types/type-chat';
+import type { RoomType } from '@/types/type-room';
 
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';

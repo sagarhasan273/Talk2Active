@@ -1,5 +1,5 @@
+import type { RoomParticipantType, RoomType } from '@/types/type-room';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { RoomParticipantType, RoomType } from 'src/types/type-chat';
 
 import { createSlice } from '@reduxjs/toolkit';
 import { useMemo } from 'react';

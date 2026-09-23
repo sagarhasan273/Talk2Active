@@ -1,4 +1,4 @@
-import type { RoomType } from 'src/types/type-chat';
+import type { RoomType } from '@/types/type-room';
 import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
 
 import { useCallback, useMemo, useState } from 'react';
@@ -11,8 +11,8 @@ import { useRoomTools } from 'src/core/slices/slice-room';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
-import { useLiveKitSession } from '@/core/contexts/livekit-context';
-import { useSocket } from '@/core/contexts/socket-context';
+import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useSocket } from '@/core/contexts/context-socket';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
@@ -153,7 +153,6 @@ export function VoiceMainView() {
 
       <VoiceTabPanel value={selectedTab !== 'room-list' ? 1 : 0} index={1}>
         <RoomContainerMain
-          selectedRoom={selectedRoom}
           token={livekitToken}
           onLeaveRoom={handleLeaveRoom}
           onSettingsClick={editRoomBoolean.onTrue}

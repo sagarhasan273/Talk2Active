@@ -1,6 +1,5 @@
 // src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
 
-import { useTracks, useTrackVolume } from '@livekit/components-react';
 import {
   alpha,
   Avatar,
@@ -11,7 +10,6 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Track } from 'livekit-client';
 import {
   BadgeCheck,
   CheckCircle,
@@ -23,18 +21,19 @@ import {
   Pause,
   UserX,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+
+import { useBoolean } from '@/hooks/use-boolean';
+import type { ChatUserStatus, ParticipantStageType } from '@/types/type-room';
 
 import { useRoomTools } from '@/core/slices';
-import { useBoolean } from '@/hooks/use-boolean';
-import type { ChatUserStatus } from 'src/types/type-chat';
-
+import { useIsSpeaking } from '@livekit/components-react';
+import { Track } from 'livekit-client';
 import { RoomUserControllerMain } from '../voice-room-user-controller';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
-import { ParticipantStageType } from './types';
 
 // --- ANIMATIONS ---
-
 const handWiggle = keyframes`
   0%, 100% { transform: scale(1) rotate(0deg); }
   25% { transform: scale(1.1) rotate(12deg); }
@@ -50,54 +49,12 @@ const popReaction = keyframes`
 
 // --- STATUS DOT CONFIGURATION ---
 const STATUS_OPTIONS: ChatUserStatus[] = [
-  {
-    name: 'online',
-    label: 'Online',
-    icon: CheckCircle,
-    color: 'success.main',
-    bgColor: 'success',
-    bgColorChannel: 'mainChannel',
-  },
-  {
-    name: 'busy',
-    label: 'Busy',
-    icon: Clock,
-    color: 'error.light',
-    bgColor: 'error',
-    bgColorChannel: 'lightChannel',
-  },
-  {
-    name: 'brb',
-    label: 'BRB',
-    icon: Pause,
-    color: 'yellow.main',
-    bgColor: 'yellow',
-    bgColorChannel: 'mainChannel',
-  },
-  {
-    name: 'afk',
-    label: 'AFK',
-    icon: UserX,
-    color: 'orange.main',
-    bgColor: 'orange',
-    bgColorChannel: 'mainChannel',
-  },
-  {
-    name: 'zzz',
-    label: 'Zzz',
-    icon: Moon,
-    color: 'stone.main',
-    bgColor: 'stone',
-    bgColorChannel: 'mainChannel',
-  },
-  {
-    name: 'offline',
-    label: 'Offline',
-    icon: CircleOff,
-    color: 'stone.dark',
-    bgColor: 'stone',
-    bgColorChannel: 'darkChannel',
-  },
+  { name: 'online', label: 'Online', icon: CheckCircle, color: 'success.main', bgColor: 'success', bgColorChannel: 'mainChannel' },
+  { name: 'busy', label: 'Busy', icon: Clock, color: 'error.light', bgColor: 'error', bgColorChannel: 'lightChannel' },
+  { name: 'brb', label: 'BRB', icon: Pause, color: 'yellow.main', bgColor: 'yellow', bgColorChannel: 'mainChannel' },
+  { name: 'afk', label: 'AFK', icon: UserX, color: 'orange.main', bgColor: 'orange', bgColorChannel: 'mainChannel' },
+  { name: 'zzz', label: 'Zzz', icon: Moon, color: 'stone.main', bgColor: 'stone', bgColorChannel: 'mainChannel' },
+  { name: 'offline', label: 'Offline', icon: CircleOff, color: 'stone.dark', bgColor: 'stone', bgColorChannel: 'darkChannel' },
 ];
 
 const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.name, s]));
@@ -130,7 +87,6 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   };
 });
 
-// --- CONNECTION OVERLAY ---
 const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) => {
   const colors = {
     connecting: theme.palette.warning.main,
@@ -164,48 +120,32 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
 });
 
 type ParticipantTileProps = {
-  participant: ParticipantStageType & {
-    status?: string;
-    connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
-    hasJoin?: boolean;
-    isSpeaking?: boolean;
-  };
+  participant: ParticipantStageType;
 };
 
-export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
+export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps) => {
   const theme = useTheme();
-
   const openDrawer = useBoolean();
-
   const isDark = theme.palette.mode === 'dark';
 
   const { participants } = useRoomTools();
 
   const {
-    audioState,
     isSelf,
     handRaised,
     activeReactionEmoji,
     status,
     connectionStatus = 'connected',
     hasJoin = true,
-    isSpeaking: participantIsSpeaking = false,
+    rawParticipant
   } = participant;
 
-  const isMuted = audioState === 'muted';
+  const isSpeaking = useIsSpeaking(rawParticipant);
 
-  // --- LIVEKIT NATIVE VOLUME TRACKING ---
-  const audioTracks = useTracks([Track.Source.Microphone]);
-  const userTrackRef = useMemo(
-    () => audioTracks.find((t) => t.participant.identity === participant.id),
-    [audioTracks, participant.id]
-  );
-
-  const livekitVolume = useTrackVolume(userTrackRef);
-
-  // Safe null-check for livekitVolume using fallback (?? 0)
-  const isSpeaking = (livekitVolume ?? 0) > 0.05 || audioState === 'speaking' || participantIsSpeaking;
-
+  // 2. Check microphone mute state directly on the participant instance
+  const micPub = rawParticipant?.getTrackPublication(Track.Source.Microphone);
+  const isMuted = !rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
+  
   const [showReaction, setShowReaction] = useState(false);
 
   useEffect(() => {
@@ -217,16 +157,19 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
     return undefined;
   }, [activeReactionEmoji]);
 
-  const initials = participant?.name
-    ?.split(' ')
-    .filter(Boolean)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials = useMemo(
+    () =>
+      participant?.name
+        ?.split(' ')
+        .filter(Boolean)
+        .map((p: any) => p[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || '?',
+    [participant?.name]
+  );
 
-  // --- CONNECTION STATUS RENDERER ---
-  const renderConnectionStatus = () => {
+  const connectionOverlayElement = useMemo(() => {
     if (!hasJoin) {
       return (
         <ConnectionOverlay status="closed">
@@ -269,17 +212,15 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
       );
     }
     return null;
-  };
-
-  const connectionOverlayElement = renderConnectionStatus();
+  }, [hasJoin, connectionStatus]);
 
   return (
     <>
       <Box
         role="button"
         tabIndex={0}
-        onClick={() => { openDrawer.onTrue() }}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openDrawer.onFalse()}
+        onClick={openDrawer.onTrue}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openDrawer.onTrue()}
         sx={{
           position: 'relative',
           width: '100%',
@@ -376,21 +317,22 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
               color: theme.palette.primary.main,
               borderRadius: '50%',
               border: '2px solid',
-              opacity: connectionOverlayElement ? 0.4 : 1, // Dim avatar if disconnected
+              opacity: connectionOverlayElement ? 0.4 : 1,
               filter: connectionOverlayElement ? 'blur(2px) grayscale(50%)' : 'none',
-              borderColor: isDark
-                ? alpha(theme.palette.common.white, 0.15)
-                : alpha(theme.palette.common.black, 0.08),
+              borderColor: isSpeaking
+                ? theme.palette.primary.main
+                : isDark
+                  ? alpha(theme.palette.common.white, 0.15)
+                  : alpha(theme.palette.common.black, 0.08),
               transition: 'all 0.3s ease',
             }}
           >
             {initials}
           </Avatar>
 
-          {/* 4. Connection Status Overlay (Connecting/Dropped) */}
           {connectionOverlayElement}
 
-          {/* 5. Floating Host Ribbon/Icon */}
+          {/* 5. Floating Host Crown */}
           {participant?.isHost && !connectionOverlayElement && (
             <Tooltip title="Host" arrow placement="top">
               <Box
@@ -415,7 +357,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
             </Tooltip>
           )}
 
-          {/* 6. Hand Raised Floating Badge */}
+          {/* 6. Hand Raised Badge */}
           {handRaised && !connectionOverlayElement && (
             <Tooltip title="Hand Raised" arrow placement="top">
               <Box
@@ -441,7 +383,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
             </Tooltip>
           )}
 
-          {/* 7. Minimal Audio / Mute Overlap */}
+          {/* 7. Isolated Audio Indicator (Pass participantId to track volume locally) */}
           {!connectionOverlayElement && (
             <Box
               sx={{
@@ -455,7 +397,11 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
                 justifyContent: 'center',
               }}
             >
-              <VoiceSpeakingIndicator volume={livekitVolume} size="small" isMuted={isMuted} />
+              <VoiceSpeakingIndicator
+                participantId={String(participant.id)}
+                isMuted={isMuted}
+                size="small"
+              />
             </Box>
           )}
         </Box>
@@ -525,6 +471,7 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
           )}
         </Box>
       </Box>
+
       {/* User Profile Modal Drawer */}
       <RoomUserControllerMain
         open={openDrawer.value}
@@ -533,6 +480,4 @@ export const ParticipantTile = ({ participant }: ParticipantTileProps) => {
       />
     </>
   );
-};
-
-export default ParticipantTile;
+});

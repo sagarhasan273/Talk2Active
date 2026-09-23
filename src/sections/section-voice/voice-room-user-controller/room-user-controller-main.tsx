@@ -49,9 +49,9 @@ import {
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import { useCredentials } from '@/core/slices';
+import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
-import { ParticipantStageType } from '../voice-room-stage/types';
 
 interface RoomUserControllerMainProps {
   open: boolean;

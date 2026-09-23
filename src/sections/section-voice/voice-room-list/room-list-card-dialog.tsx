@@ -26,7 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-import { RoomParticipantType } from '@/types/type-chat';
+import { RoomParticipantType } from '@/types/type-room';
 import { RoomCardParticipant } from './room-list-card-participant';
 
 export type RoomDialogSize = 'xs' | 'sm' | 'md';

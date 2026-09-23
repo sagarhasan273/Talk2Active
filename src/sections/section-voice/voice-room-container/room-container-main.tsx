@@ -1,44 +1,40 @@
 // src/sections/section-voice/view/voice-room-body.tsx
 
-
-import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
-
-
-
 import {
   RoomAudioRenderer,
   StartAudio,
   useLocalParticipant,
   useParticipants,
-  useRoomContext
+  useRoomContext,
 } from '@livekit/components-react';
+import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
-import { RoomType } from '@/types/type-chat';
+import { ChatMessage } from '@/types/type-room';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 
-import { RoomChatMain } from '../voice-room-chat/room-chat-main';
-
+import { RoomStageProvider } from '@/core/contexts/context-room-stage';
 import { RoomChatDrawer } from '../voice-room-chat';
+import { RoomChatMain } from '../voice-room-chat/room-chat-main';
 import { VoiceRoomListenerUnload } from '../voice-room-listener-unload';
 import { RoomAudioStage } from '../voice-room-stage';
-import { ChatMessage, ParticipantStageType } from '../voice-room-stage/types';
 
 interface RoomContainerMainProps {
-  selectedRoom: RoomType | null;
   token?: string | null;
   onLeaveRoom?: () => void;
   onSettingsClick?: () => void;
   onBack?: () => void;
 }
 
-export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, onBack }: RoomContainerMainProps) {
+export function RoomContainerMain({
+  onLeaveRoom,
+  onSettingsClick,
+  onBack,
+}: RoomContainerMainProps) {
   const { user } = useCredentials();
-
   const room = useRoomContext();
   const remoteParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
@@ -51,48 +47,9 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
   const [deafened, setDeafened] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Collapse state for presentation screen
   const chatCollapsedBoolean = useBoolean();
 
-  const participants: ParticipantStageType[] = useMemo(() => {
-    return remoteParticipants.map((p) => {
-      const isSelf = p.identity === localParticipant?.identity;
-      const isSpeaking = p.isSpeaking;
-      const handRaised = raisedHandsSet.has(p.identity);
-
-      let audioState: 'speaking' | 'unmuted' | 'muted' | 'listening' = 'muted';
-      if (isSpeaking) {
-        audioState = 'speaking';
-      } else if (p.isMicrophoneEnabled) {
-        audioState = 'unmuted';
-      }
-
-      let parsedMeta: Record<string, any> = {};
-      try {
-        if (p.metadata) parsedMeta = JSON.parse(p.metadata);
-      } catch {
-        // Fallback default
-      }
-
-      return {
-        id: p.identity,
-        name: parsedMeta.name,
-        username: parsedMeta.username,
-        verified: parsedMeta.verified,
-        profilePhoto: parsedMeta.profilePhoto || '',
-        genUserId: parsedMeta.genUserId || "",
-        accountType: parsedMeta.accountType,
-        isHost: parsedMeta.isHost,
-        audioState,
-        isSpeaking,
-        handRaised,
-        activeReactionEmoji: participantReactions[p.identity] || null,
-        isSelf,
-        role: String(selectedRoom?.host?.userId) === p.identity ? 'host' : 'listener',
-      };
-    });
-  }, [remoteParticipants, localParticipant, raisedHandsSet, participantReactions, selectedRoom]);
-
+  // --- Handlers ---
   const handleSendMessage = useCallback(
     async (
       text: string,
@@ -292,6 +249,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
     }
   };
 
+  // --- Data Channel Listener ---
   useEffect(() => {
     if (!room) return;
 
@@ -301,17 +259,12 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         const data = JSON.parse(text);
 
         if (data.type === 'CHAT_MESSAGE') {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === data.message.id)) return prev;
-            return [...prev, data.message];
-          });
+          setMessages((prev) => (prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]));
         }
 
         if (data.type === 'CHAT_EDIT') {
           setMessages((prev) =>
-            prev.map((m) =>
-              m.id === data.messageId ? { ...m, text: data.text, editedAt: data.editedAt } : m
-            )
+            prev.map((m) => (m.id === data.messageId ? { ...m, text: data.text, editedAt: data.editedAt } : m))
           );
         }
 
@@ -350,11 +303,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         }
 
         if (data.type === 'FLOATING_EMOJI') {
-          setParticipantReactions((prev) => ({
-            ...prev,
-            [data.identity]: data.emoji,
-          }));
-
+          setParticipantReactions((prev) => ({ ...prev, [data.identity]: data.emoji }));
           setTimeout(() => {
             setParticipantReactions((prev) => {
               const updated = { ...prev };
@@ -387,21 +336,14 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
 
   useEffect(() => {
     if (!localParticipant) return;
-
-    const enableMicOnJoin = async () => {
-      try {
-        await localParticipant.setMicrophoneEnabled(true);
-        setMicMuted(false);
-      } catch (err) {
-        setMicMuted(true);
-      }
-    };
-
-    enableMicOnJoin();
+    localParticipant.setMicrophoneEnabled(true).then(() => setMicMuted(false)).catch(() => setMicMuted(true));
   }, [localParticipant]);
 
   return (
-    <>
+    <RoomStageProvider
+      raisedHandsSet={raisedHandsSet}
+      participantReactions={participantReactions}
+    >
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
       <VoiceRoomListenerUnload />
@@ -416,9 +358,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         }}
       >
         <RoomAudioStage
-          participants={participants}
-          maxParticipants={selectedRoom?.max_participants || 0}
-          topicPrompt={''}
+          topicPrompt=""
           micMuted={micMuted}
           deafened={deafened}
           handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
@@ -440,8 +380,7 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         <RoomChatMain
           messages={messages}
           currentUserId={user.userId}
-          topicContext={''}
-          participants={participants}
+          topicContext=""
           onSendMessage={handleSendMessage}
           onEditMessage={handleEditMessage}
           onReactMessage={handleReactMessage}
@@ -449,18 +388,16 @@ export function RoomContainerMain({ selectedRoom, onLeaveRoom, onSettingsClick, 
         />
       </Box>
 
-      {/* Mobile Bottom Chat Sheet */}
       <RoomChatDrawer
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         messages={messages}
         currentUserId={user.userId}
-        participants={participants}
         onSendMessage={handleSendMessage}
         onEditMessage={handleEditMessage}
         onReactMessage={handleReactMessage}
       />
-    </>
+    </RoomStageProvider>
   );
 }
 

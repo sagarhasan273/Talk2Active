@@ -18,8 +18,8 @@ import { Snackbar } from 'src/components/snackbar';
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { CONFIG } from './config-global';
-import { LiveKitProvider } from './core/contexts/livekit-context';
-import { SocketProvider } from './core/contexts/socket-context';
+import { LiveKitProvider } from './core/contexts/context-livekit';
+import { SocketProvider } from './core/contexts/context-socket';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 

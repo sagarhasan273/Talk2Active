@@ -1,4 +1,4 @@
-import type { RoomParticipantType, RoomType } from 'src/types/type-chat';
+import type { RoomParticipantType, RoomType } from '@/types/type-room';
 import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -10,8 +10,8 @@ import { useCredentials } from '@/core/slices';
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
 import { Scrollbar } from '@/components/scrollbar';
-import { useLiveKitSession } from '@/core/contexts/livekit-context';
-import { useSocket } from '@/core/contexts/socket-context';
+import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useSocket } from '@/core/contexts/context-socket';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
