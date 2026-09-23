@@ -18,9 +18,9 @@ import axios from 'axios';
 import { filterVisibleMessages } from '../@mock_/messages-data';
 import { RoomChatMessage } from './room-chat-message';
 
+import { ChatMessage, RoomParticipantType } from '@/types/type-room';
 import { uploadImage } from '@/utils/helper';
-import type { VoiceParticipant } from '../voice-room-header/types';
-import type { ChatMessage } from '../voice-room-stage/types';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -28,7 +28,7 @@ type RoomChatPanelProps = {
   messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
-  participants?: VoiceParticipant[];
+  participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
     replyToId?: string,
@@ -82,7 +82,7 @@ export const RoomChatPanel = ({
 
   const whisperableUsers = useMemo(() => {
     return participants.filter((p) => {
-      const id = p.id || p.userId || p.user?.userId;
+      const id = p.userId;
       return id && id !== currentUserId;
     });
   }, [participants, currentUserId]);
@@ -472,8 +472,8 @@ export const RoomChatPanel = ({
             </MenuItem>
 
             {whisperableUsers.map((p) => {
-              const id = p.id || p.userId || p.user?.userId || '';
-              const name = p.name || p.username || p.user?.name || 'User';
+              const id = p.userId || '';
+              const name = p.name || p.username || 'User';
               return (
                 <MenuItem
                   key={id}

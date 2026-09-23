@@ -1,24 +1,25 @@
 import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
-import type { VoiceParticipant } from './types';
+import { RoomParticipantType } from '@/types/type-room';
 
-export function getParticipantId(p?: VoiceParticipant | null): string {
+
+export function getParticipantId(p?: RoomParticipantType | null): string {
   if (!p) return '';
-  return p.id || p.userId || p.user?.userId || p.user?.id || '';
+  return p.userId
 }
 
-export function getParticipantName(p?: VoiceParticipant | null): string {
+export function getParticipantName(p?: RoomParticipantType | null): string {
   if (!p) return 'Unknown User';
-  return p.name || p.username || p.user?.name || 'User';
+  return p.name || p.username || '';
 }
 
-export function getParticipantAvatar(p?: VoiceParticipant | null): string {
+export function getParticipantAvatar(p?: RoomParticipantType | null): string {
   if (!p) return '';
-  return p.avatarUrl || p.profilePhoto || p.user?.profilePhoto || '';
+  return p.profilePhoto || '';
 }
 
-export function isParticipantSpeaking(p?: VoiceParticipant | null): boolean {
+export function isParticipantSpeaking(p?: RoomParticipantType | null): boolean {
   if (!p) return false;
-  return Boolean(p.isSpeaking || p.audioState === 'speaking');
+  return Boolean(false);
 }
 
 export function formatLanguages(languages?: string[] | string): string {
@@ -63,7 +64,7 @@ export function getLevelLabel(value: string | undefined | null, includeEmoji: bo
     return includeEmoji ? `${option.emoji} ${option.label}` : option.label;
   }
 
-  // Fallback: return the provided value if no match is found, 
+  // Fallback: return the provided value if no match is found,
   // capitalizing the first letter to make it look decent.
   return value.charAt(0).toUpperCase() + value.slice(1);
 }

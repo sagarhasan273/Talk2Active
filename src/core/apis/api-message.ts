@@ -1,4 +1,4 @@
-import type { Message } from 'src/types/type-room';
+import type { ChatMessage } from 'src/types/type-room';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -60,13 +60,13 @@ export const messageApi = createApi({
   tagTypes: ['chat-recall'],
   endpoints: (builder) => ({
     // Matches: GET /message/history/:targetUserId
-    getHistory: builder.query<MessageResponse<Message[]>, string>({
+    getHistory: builder.query<MessageResponse<ChatMessage[]>, string>({
       query: (targetUserId) => `message/history/${targetUserId}`,
       providesTags: ['chat-recall'],
     }),
 
     // Matches: POST /message/save
-    saveMessage: builder.mutation<MessageResponse<Message>, SendMessagePayload>({
+    saveMessage: builder.mutation<MessageResponse<ChatMessage>, SendMessagePayload>({
       query: (body) => ({
         url: 'message/save',
         method: 'POST',
@@ -78,7 +78,7 @@ export const messageApi = createApi({
     }),
 
     // Matches: PATCH /message/:messageId
-    updateMessage: builder.mutation<MessageResponse<Message>, UpdateMessagePayload>({
+    updateMessage: builder.mutation<MessageResponse<ChatMessage>, UpdateMessagePayload>({
       query: ({ messageId, text }) => ({
         url: `message/${messageId}`,
         method: 'PATCH',
@@ -88,7 +88,7 @@ export const messageApi = createApi({
     }),
 
     // Matches: POST /message/:messageId/reactions
-    toggleReaction: builder.mutation<MessageResponse<Message>, ToggleReactionPayload>({
+    toggleReaction: builder.mutation<MessageResponse<ChatMessage>, ToggleReactionPayload>({
       query: ({ messageId, emoji }) => ({
         url: `message/${messageId}/reactions`,
         method: 'POST',

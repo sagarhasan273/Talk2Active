@@ -1,12 +1,10 @@
-import React from 'react';
 import { MicIcon } from 'lucide-react';
 
-import { Box, Stack, alpha, useTheme, Typography } from '@mui/material';
+import { Box, Stack, Typography, alpha, useTheme } from '@mui/material';
 
-import { getParticipantName } from './utils';
+import { RoomParticipantType } from '@/types/type-room';
 import { ParticipantAvatar } from './room-header-participant-avatar';
-
-import type { VoiceParticipant } from './types';
+import { getParticipantName } from './utils';
 
 // ----------------------------------------------------------------------
 // Active Speaker
@@ -16,7 +14,7 @@ export function ActiveSpeaker({
   speaker,
   mobile = false,
 }: {
-  speaker?: VoiceParticipant | null;
+  speaker?: RoomParticipantType | null;
   mobile?: boolean;
 }) {
   const theme = useTheme();

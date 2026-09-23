@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../voice-room-stage/types';
+import { ChatMessage } from "@/types/type-room";
 
 export const CURRENT_USER = {
   id: 'u1',

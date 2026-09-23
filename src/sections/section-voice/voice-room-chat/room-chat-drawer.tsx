@@ -1,16 +1,14 @@
 import { Drawer } from '@mui/material';
 
+import { ChatMessage, RoomParticipantType } from '@/types/type-room';
 import { RoomChatPanel } from './room-chat-panel';
-
-import type { VoiceParticipant } from '../voice-room-header/types';
-import type { ChatMessage } from '../voice-room-stage/types';
 
 type ChatDrawerProps = {
   open: boolean;
   onClose: () => void;
   messages: ChatMessage[];
   currentUserId: string;
-  participants?: VoiceParticipant[];
+  participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
     replyToId?: string,

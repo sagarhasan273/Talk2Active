@@ -10,7 +10,7 @@ export type LanguagePopoverProps = IconButtonProps & {
 
 };
 
-export function LanguageViewer({ language = 'English'}: LanguagePopoverProps) {
+export function LanguageViewer({ language = 'English' }: LanguagePopoverProps) {
 
   return (
     <Button

@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 import { UseBooleanReturn } from '@/hooks/use-boolean';
 
-import { ChatMessage, ParticipantStageType } from '@/types/type-room';
+import { ChatMessage, RoomParticipantType } from '@/types/type-room';
 import RoomChatPanel from './room-chat-panel';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
@@ -19,7 +19,7 @@ export type RoomChatMainProps = {
   messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
-  participants?: ParticipantStageType[];
+  participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
     replyToId?: string,

@@ -1,4 +1,4 @@
-import type { RoomType } from '@/types/type-room';
+import type { RoomParticipantType, RoomType } from '@/types/type-room';
 
 import {
   ArrowRightIcon,
@@ -24,7 +24,6 @@ import { Label } from '@/components/label';
 import { fgetLanguageName } from '@/utils/helper';
 import { ActiveSpeaker } from './room-header-active-speaker';
 import { ParticipantAvatarStack } from './room-header-participant-avatar-stack';
-import type { VoiceParticipant } from './types';
 
 // ----------------------------------------------------------------------
 
@@ -49,8 +48,8 @@ export const VoiceRoomActiveBar = ({
   onLeaveRoom,
 }: {
   room: RoomType;
-  participants: VoiceParticipant[];
-  currentSpeaker?: VoiceParticipant | null;
+  participants: RoomParticipantType[];
+  currentSpeaker?: RoomParticipantType | null;
   onEnterRoom: () => void;
   onLeaveRoom: () => void;
 }) => {

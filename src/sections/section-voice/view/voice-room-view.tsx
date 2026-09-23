@@ -1,5 +1,4 @@
-import type { RoomType } from '@/types/type-room';
-import type { SelectedTabType, VoiceParticipant } from '../voice-room-header/types';
+import type { RoomType, SelectedTabType } from '@/types/type-room';
 
 import { useCallback, useMemo, useState } from 'react';
 
@@ -35,7 +34,7 @@ export function VoiceMainView() {
   const [joinRoomMutation] = useJoinRoomMutation();
   const [leaveRoomMutation] = useLeaveRoomMutation();
 
-  const participants = useMemo(() => (room?.participants || []) as VoiceParticipant[], [room]);
+  const participants = useMemo(() => (room?.participants || []), [room]);
 
   const currentSpeaker = useMemo(
     () => participants.find((participant) => isParticipantSpeaking(participant)) || null,

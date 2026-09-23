@@ -5,7 +5,7 @@ import { Badge, Box, CircularProgress } from '@mui/material';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 
-import { useCredentials, useMessagesTools } from 'src/core/slices';
+import { useCredentials } from 'src/core/slices';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import SocialChat from '@/sections/section-common/social-chat';
@@ -16,7 +16,6 @@ export type SocialDrawerProps = IconButtonProps;
 
 export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
   const drawer = useBoolean();
-  const { isUnreadIndividualMessage } = useMessagesTools();
 
   const { user, friends, followers, following } = useCredentials();
   const currentUserId = user?.userId || '';
@@ -26,7 +25,6 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
     <>
       <Badge
         color="error"
-        badgeContent={isUnreadIndividualMessage}
         overlap="circular"
         sx={{
           pointerEvents: 'auto',

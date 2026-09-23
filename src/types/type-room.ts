@@ -20,6 +20,8 @@ export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
 export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
 
+export type SelectedTabType = 'room-list' | 'room-space';
+
 export type ChatUserStatusName =
   | 'online'
   | 'busy'
@@ -152,4 +154,6 @@ export interface ChatMessage {
   isSelf?: boolean;
   privateTo?: { id: string; name: string };
   reactions?: ChatReaction[];
+  isSystem?: boolean;
+  systemType?: string;
 }

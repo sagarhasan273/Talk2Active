@@ -21,8 +21,8 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { ChatMessage } from '@/types/type-room';
 import { QUICK_REACTIONS } from '../@mock_/messages-data';
-import type { ChatMessage } from '../voice-room-header/types';
 
 type RoomChatMessageProps = {
   message: ChatMessage;
