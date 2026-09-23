@@ -128,6 +128,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     [maxParticipants, participants.length]
   );
 
+  console.log('render room-stage-main')
+
   return (
     <Box
       sx={{

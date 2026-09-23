@@ -145,7 +145,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   // 2. Check microphone mute state directly on the participant instance
   const micPub = rawParticipant?.getTrackPublication(Track.Source.Microphone);
   const isMuted = !rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
-  
+
   const [showReaction, setShowReaction] = useState(false);
 
   useEffect(() => {
@@ -213,6 +213,8 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     }
     return null;
   }, [hasJoin, connectionStatus]);
+
+  console.log('render room-stage-participant-tile')
 
   return (
     <>
@@ -308,7 +310,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             alt={participant?.name}
             sx={{
               width: '100%',
-              maxWidth: 88,
+              maxWidth: { xs: 72, sm: 92, md: 100 },
               aspectRatio: '1/1',
               height: 'auto',
               fontSize: 22,

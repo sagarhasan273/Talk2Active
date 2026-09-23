@@ -339,6 +339,8 @@ export function RoomContainerMain({
     localParticipant.setMicrophoneEnabled(true).then(() => setMicMuted(false)).catch(() => setMicMuted(true));
   }, [localParticipant]);
 
+  console.log('render room-container-main')
+
   return (
     <RoomStageProvider
       raisedHandsSet={raisedHandsSet}

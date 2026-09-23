@@ -162,6 +162,8 @@ export function VoiceMainView() {
     </>
   );
 
+  console.log('render voice-room-view')
+
   return (
     <>
       <VoiceRoomLayout
