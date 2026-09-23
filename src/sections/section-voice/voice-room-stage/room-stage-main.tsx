@@ -1,4 +1,4 @@
-import { ParticipantContext, useTracks, VideoTrack } from '@livekit/components-react';
+import { useTracks, VideoTrack } from '@livekit/components-react';
 import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Track } from 'livekit-client';
@@ -19,7 +19,7 @@ import { ParticipantStageType } from '@/types/type-room';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
-import { ParticipantTile } from './room-stage-participant-tile';
+import RoomStageParticipants from './room-stage-participants';
 
 
 export type RoomAudioStageProps = {
@@ -312,13 +312,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     '&::-webkit-scrollbar': { display: 'none' },
                   }}
                 >
-                  {participants.map((p: any) => (
-                    <Box key={p.id} sx={{ width: 140, minWidth: 140, height: 140 }}>
-                      <ParticipantContext.Provider value={p.rawParticipant}>
-                        <ParticipantTile participant={p} />
-                      </ParticipantContext.Provider>
-                    </Box>
-                  ))}
+                  <RoomStageParticipants participants={participants} />
 
                   {openSlots > 0 && (
                     <Box sx={{ width: 140, minWidth: 140, height: 140 }}>
@@ -370,19 +364,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     m: 'auto',
                   }}
                 >
-                  {participants.map((p: any) => (
-                    <Box
-                      key={p.id}
-                      sx={{
-                        width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
-                        minHeight: 160,
-                      }}
-                    >
-                      <ParticipantContext.Provider value={p.rawParticipant}>
-                        <ParticipantTile participant={p} />
-                      </ParticipantContext.Provider>
-                    </Box>
-                  ))}
+                  <RoomStageParticipants participants={participants} />
 
                   {openSlots > 0 && (
                     <Box

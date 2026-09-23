@@ -1,5 +1,6 @@
 // src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
 
+import { useIsSpeaking } from '@livekit/components-react';
 import {
   alpha,
   Avatar,
@@ -10,6 +11,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { Track } from 'livekit-client';
 import {
   BadgeCheck,
   CheckCircle,
@@ -23,13 +25,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-
 import { useBoolean } from '@/hooks/use-boolean';
 import type { ChatUserStatus, ParticipantStageType } from '@/types/type-room';
 
-import { useRoomTools } from '@/core/slices';
-import { useIsSpeaking } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { useParticipantConnectionState } from '@/hooks/use-participant-connection-state';
 import { RoomUserControllerMain } from '../voice-room-user-controller';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
@@ -91,7 +90,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
   const colors = {
     connecting: theme.palette.warning.main,
     disconnected: theme.palette.error.main,
-    failed: theme.palette.error.dark,
+    reconnecting: theme.palette.error.light,
     closed: theme.palette.grey[600],
   };
 
@@ -128,24 +127,29 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   const openDrawer = useBoolean();
   const isDark = theme.palette.mode === 'dark';
 
-  const { participants } = useRoomTools();
-
   const {
+    id,
     isSelf,
     handRaised,
     activeReactionEmoji,
     status,
-    connectionStatus = 'connected',
     hasJoin = true,
-    rawParticipant
+    rawParticipant,
   } = participant;
 
-  const isSpeaking = useIsSpeaking(rawParticipant);
+  // 1. Connection status resolution via dedicated hook
+  const connectionStatus = useParticipantConnectionState({
+    participantId: String(id),
+    isSelf: Boolean(isSelf),
+    hasJoin,
+  });
 
-  // 2. Check microphone mute state directly on the participant instance
+  // 2. Real-time audio activity and mute state
+  const isSpeaking = useIsSpeaking(rawParticipant);
   const micPub = rawParticipant?.getTrackPublication(Track.Source.Microphone);
   const isMuted = !rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
 
+  // 3. Transient reaction animation
   const [showReaction, setShowReaction] = useState(false);
 
   useEffect(() => {
@@ -157,64 +161,76 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     return undefined;
   }, [activeReactionEmoji]);
 
+  // 4. Initials fallback
   const initials = useMemo(
     () =>
       participant?.name
         ?.split(' ')
         .filter(Boolean)
-        .map((p: any) => p[0])
+        .map((p: string) => p[0])
         .slice(0, 2)
         .join('')
         .toUpperCase() || '?',
     [participant?.name]
   );
 
+  // 5. Connection Overlay
   const connectionOverlayElement = useMemo(() => {
-    if (!hasJoin) {
-      return (
-        <ConnectionOverlay status="closed">
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-            Voice Closed
-          </Typography>
-        </ConnectionOverlay>
-      );
-    }
-    if (connectionStatus === 'connecting') {
-      return (
-        <ConnectionOverlay status="connecting">
-          <Box
-            sx={{
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              border: '2px solid rgba(255,255,255,0.3)',
-              borderTopColor: 'white',
-              animation: 'spin 0.8s linear infinite',
-              '@keyframes spin': {
-                '0%': { transform: 'rotate(0deg)' },
-                '100%': { transform: 'rotate(360deg)' },
-              },
-            }}
-          />
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-            Connecting...
-          </Typography>
-        </ConnectionOverlay>
-      );
-    }
-    if (connectionStatus === 'disconnected' || connectionStatus === 'failed') {
-      return (
-        <ConnectionOverlay status="disconnected">
-          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-            Disconnected
-          </Typography>
-        </ConnectionOverlay>
-      );
-    }
-    return null;
-  }, [hasJoin, connectionStatus]);
+    switch (connectionStatus) {
+      case 'closed':
+        return (
+          <ConnectionOverlay status="closed">
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              Voice Closed
+            </Typography>
+          </ConnectionOverlay>
+        );
 
-  console.log('render room-stage-participant-tile')
+      case 'connecting':
+        return (
+          <ConnectionOverlay status="connecting">
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderTopColor: 'white',
+                animation: 'spin 0.8s linear infinite',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' },
+                },
+              }}
+            />
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              Connecting...
+            </Typography>
+          </ConnectionOverlay>
+        );
+
+      case 'reconnecting':
+        return (
+          <ConnectionOverlay status="reconnecting">
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              Re-connecting
+            </Typography>
+          </ConnectionOverlay>
+        );
+
+      case 'disconnected':
+        return (
+          <ConnectionOverlay status="disconnected">
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
+              Disconnected
+            </Typography>
+          </ConnectionOverlay>
+        );
+
+      default:
+        return null;
+    }
+  }, [connectionStatus]);
 
   return (
     <>
@@ -334,7 +350,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
 
           {connectionOverlayElement}
 
-          {/* 5. Floating Host Crown */}
+          {/* 4. Floating Host Crown */}
           {participant?.isHost && !connectionOverlayElement && (
             <Tooltip title="Host" arrow placement="top">
               <Box
@@ -359,7 +375,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Tooltip>
           )}
 
-          {/* 6. Hand Raised Badge */}
+          {/* 5. Hand Raised Badge */}
           {handRaised && !connectionOverlayElement && (
             <Tooltip title="Hand Raised" arrow placement="top">
               <Box
@@ -385,7 +401,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Tooltip>
           )}
 
-          {/* 7. Isolated Audio Indicator (Pass participantId to track volume locally) */}
+          {/* 6. Isolated Audio Indicator */}
           {!connectionOverlayElement && (
             <Box
               sx={{
@@ -408,7 +424,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           )}
         </Box>
 
-        {/* 8. Dense Bottom Meta Row */}
+        {/* 7. Bottom Meta Row */}
         <Box
           sx={{
             width: '100%',
@@ -478,8 +494,10 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
       <RoomUserControllerMain
         open={openDrawer.value}
         onClose={openDrawer.onFalse}
-        user={{ ...participants[participant.id], ...participant }}
+        user={participant}
       />
     </>
   );
 });
+
+export default ParticipantTile;

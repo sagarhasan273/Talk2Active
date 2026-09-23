@@ -1,4 +1,4 @@
-import type { LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
+import type { ConnectionState, LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
 import type { LucideIcon } from 'lucide-react';
 import type {
   RoomCreateSchema,
@@ -98,9 +98,9 @@ export type ParticipantStageType = {
   handRaised: boolean;
   activeReactionEmoji: string | null;
 
-  audioState?: ParticipantAudioState;        // 'speaking' | 'unmuted' | 'muted' | 'listening'
+  audioState?: ParticipantAudioState;
   isSpeaking?: boolean;
-  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
+  connectionStatus?: ConnectionState;
   hasJoin?: boolean;
 
   isFollowing: boolean;
