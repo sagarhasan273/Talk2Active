@@ -250,7 +250,7 @@ export const RoomStageParticipants = ({
             }}
             {...other}
           >
-            <ParticipantContext.Provider value={participant.rawParticipant}>
+            <ParticipantContext.Provider value={participant?.rawParticipant}>
               <ParticipantTile
                 participant={{
                   ...participant,

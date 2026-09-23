@@ -4,19 +4,18 @@ import {
   RoomAudioRenderer,
   StartAudio,
   useLocalParticipant,
-  useParticipants,
   useRoomContext,
 } from '@livekit/components-react';
 import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { RoomStageProvider } from '@/core/contexts/context-room-stage';
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 
-import { RoomStageProvider } from '@/core/contexts/context-room-stage';
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
 import { VoiceRoomListenerUnload } from '../voice-room-listener-unload';
@@ -36,18 +35,29 @@ export function RoomContainerMain({
 }: RoomContainerMainProps) {
   const { user } = useCredentials();
   const room = useRoomContext();
-  const remoteParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
 
   const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES);
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
-
-  const [micMuted, setMicMuted] = useState(true);
-  const [deafened, setDeafened] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
   const chatCollapsedBoolean = useBoolean();
+  const micInitializedRef = useRef(false);
+
+  // --- Auto-enable mic once connected if requested ---
+  useEffect(() => {
+    if (!localParticipant || micInitializedRef.current) return;
+
+    localParticipant
+      .setMicrophoneEnabled(true)
+      .then(() => {
+        micInitializedRef.current = true;
+      })
+      .catch((err) => {
+        console.warn('[RoomContainer] Microphone permission denied or initialization error:', err);
+      });
+  }, [localParticipant]);
 
   // --- Handlers ---
   const handleSendMessage = useCallback(
@@ -80,7 +90,11 @@ export function RoomContainerMain({
         message: { ...newMsg, isSelf: false },
       });
 
-      const publishOptions: { reliable: boolean; topic: string; destinationIdentities?: string[] } = {
+      const publishOptions: {
+        reliable: boolean;
+        topic: string;
+        destinationIdentities?: string[];
+      } = {
         reliable: true,
         topic: 'room_chat',
       };
@@ -99,7 +113,9 @@ export function RoomContainerMain({
       if (!localParticipant) return;
 
       const editedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m)));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m))
+      );
 
       const payload = JSON.stringify({
         type: 'CHAT_EDIT',
@@ -160,34 +176,7 @@ export function RoomContainerMain({
     [localParticipant]
   );
 
-  const handleToggleMic = async () => {
-    if (!localParticipant) return;
-    const nextMuted = !micMuted;
-    await localParticipant.setMicrophoneEnabled(!nextMuted);
-    setMicMuted(nextMuted);
-  };
-
-  const handleToggleDeafen = () => {
-    const nextDeafened = !deafened;
-    setDeafened(nextDeafened);
-
-    if (nextDeafened && localParticipant) {
-      localParticipant.setMicrophoneEnabled(false);
-      setMicMuted(true);
-    }
-
-    remoteParticipants.forEach((p) => {
-      if (!p.isLocal) {
-        p.audioTrackPublications.forEach((pub) => {
-          if (pub.track && 'setVolume' in pub.track) {
-            (pub.track as any).setVolume(nextDeafened ? 0 : 1);
-          }
-        });
-      }
-    });
-  };
-
-  const handleToggleRaiseHand = async () => {
+  const handleToggleRaiseHand = useCallback(async () => {
     if (!localParticipant) return;
     const isCurrentlyRaised = raisedHandsSet.has(localParticipant.identity);
     const nextRaised = !isCurrentlyRaised;
@@ -209,37 +198,40 @@ export function RoomContainerMain({
       reliable: true,
       topic: 'room_interactions',
     });
-  };
+  }, [localParticipant, raisedHandsSet]);
 
-  const handleSendReaction = async (emoji: string) => {
-    if (!localParticipant) return;
+  const handleSendReaction = useCallback(
+    async (emoji: string) => {
+      if (!localParticipant) return;
 
-    setParticipantReactions((prev) => ({
-      ...prev,
-      [localParticipant.identity]: emoji,
-    }));
+      setParticipantReactions((prev) => ({
+        ...prev,
+        [localParticipant.identity]: emoji,
+      }));
 
-    setTimeout(() => {
-      setParticipantReactions((prev) => {
-        const updated = { ...prev };
-        delete updated[localParticipant.identity];
-        return updated;
+      setTimeout(() => {
+        setParticipantReactions((prev) => {
+          const updated = { ...prev };
+          delete updated[localParticipant.identity];
+          return updated;
+        });
+      }, 3000);
+
+      const payload = JSON.stringify({
+        type: 'FLOATING_EMOJI',
+        identity: localParticipant.identity,
+        emoji,
       });
-    }, 3000);
 
-    const payload = JSON.stringify({
-      type: 'FLOATING_EMOJI',
-      identity: localParticipant.identity,
-      emoji,
-    });
+      await localParticipant.publishData(new TextEncoder().encode(payload), {
+        reliable: false,
+        topic: 'room_interactions',
+      });
+    },
+    [localParticipant]
+  );
 
-    await localParticipant.publishData(new TextEncoder().encode(payload), {
-      reliable: false,
-      topic: 'room_interactions',
-    });
-  };
-
-  const handleToggleScreenShare = async () => {
+  const handleToggleScreenShare = useCallback(async () => {
     if (!localParticipant) return;
     try {
       const isScreenSharing = localParticipant.isScreenShareEnabled;
@@ -247,7 +239,7 @@ export function RoomContainerMain({
     } catch (err) {
       console.error('Error toggling screen share:', err);
     }
-  };
+  }, [localParticipant]);
 
   // --- Data Channel Listener ---
   useEffect(() => {
@@ -259,12 +251,16 @@ export function RoomContainerMain({
         const data = JSON.parse(text);
 
         if (data.type === 'CHAT_MESSAGE') {
-          setMessages((prev) => (prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]));
+          setMessages((prev) =>
+            prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]
+          );
         }
 
         if (data.type === 'CHAT_EDIT') {
           setMessages((prev) =>
-            prev.map((m) => (m.id === data.messageId ? { ...m, text: data.text, editedAt: data.editedAt } : m))
+            prev.map((m) =>
+              m.id === data.messageId ? { ...m, text: data.text, editedAt: data.editedAt } : m
+            )
           );
         }
 
@@ -286,7 +282,9 @@ export function RoomContainerMain({
               const nextReactions =
                 nextCount <= 0
                   ? existing.filter((r) => r.emoji !== data.emoji)
-                  : existing.map((r) => (r.emoji === data.emoji ? { ...r, count: nextCount } : r));
+                  : existing.map((r) =>
+                    r.emoji === data.emoji ? { ...r, count: nextCount } : r
+                  );
 
               return { ...m, reactions: nextReactions };
             })
@@ -319,7 +317,6 @@ export function RoomContainerMain({
               onLeaveRoom?.();
             } else {
               localParticipant?.setMicrophoneEnabled(!data.mute);
-              setMicMuted(Boolean(data.mute));
             }
           }
         }
@@ -334,12 +331,7 @@ export function RoomContainerMain({
     };
   }, [room, localParticipant, onLeaveRoom]);
 
-  useEffect(() => {
-    if (!localParticipant) return;
-    localParticipant.setMicrophoneEnabled(true).then(() => setMicMuted(false)).catch(() => setMicMuted(true));
-  }, [localParticipant]);
-
-  console.log('render room-container-main')
+  const currentUserId = user?.userId ?? '';
 
   return (
     <RoomStageProvider
@@ -349,6 +341,7 @@ export function RoomContainerMain({
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
       <VoiceRoomListenerUnload />
+
       <Box
         sx={{
           display: 'flex',
@@ -377,7 +370,7 @@ export function RoomContainerMain({
 
         <RoomChatMain
           messages={messages}
-          currentUserId={user.userId}
+          currentUserId={currentUserId}
           topicContext=""
           onSendMessage={handleSendMessage}
           onEditMessage={handleEditMessage}
@@ -390,7 +383,7 @@ export function RoomContainerMain({
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         messages={messages}
-        currentUserId={user.userId}
+        currentUserId={currentUserId}
         onSendMessage={handleSendMessage}
         onEditMessage={handleEditMessage}
         onReactMessage={handleReactMessage}

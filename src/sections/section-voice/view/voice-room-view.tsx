@@ -30,13 +30,10 @@ export function VoiceMainView() {
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
 
-
   const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<SelectedTabType>('room-list');
-
-
 
   const [joinRoomMutation] = useJoinRoomMutation();
   const [leaveRoomMutation] = useLeaveRoomMutation();
@@ -91,14 +88,33 @@ export function VoiceMainView() {
   }, []);
 
   const handleLeaveRoom = useCallback(async () => {
-    await disconnectRoom();
+    // 1. Cache IDs before wiping state
+    const currentRoomId = room?.roomId;
+    const currentUserId = user?.userId;
+
+    // 2. Disconnect WebRTC first
+    try {
+      await disconnectRoom();
+    } catch (err) {
+      console.warn('LiveKit disconnect warning:', err);
+    }
+
+    // 3. Reset local view state
     setSelectedTab('room-list');
     setSelectedRoom(null);
     setLivekitToken(null);
     setIsJoinGateOpen(false);
-    setRoom(null);
-    await leaveRoomMutation({ roomId: room?.roomId as string, userId: user.userId });
-  }, [setRoom, disconnectRoom]);
+    setRoom(null); // Clears active room
+
+    // 4. Send leave request to backend API
+    if (currentRoomId && currentUserId) {
+      try {
+        await leaveRoomMutation({ roomId: currentRoomId, userId: currentUserId }).unwrap();
+      } catch (err) {
+        console.warn('Failed to leave room on backend:', err);
+      }
+    }
+  }, [room?.roomId, user?.userId, disconnectRoom, setRoom, leaveRoomMutation]);
 
   const handleCreateRoom = useCallback(() => {
     if (!isAuthenticated) {
@@ -129,15 +145,7 @@ export function VoiceMainView() {
     }
 
     return null;
-  }, [
-    room,
-    selectedTab,
-    participants,
-    handleBackToRooms,
-    handleLeaveRoom,
-    handleShareLink,
-    handleCreateRoom,
-  ]);
+  }, [isInRoom, room, selectedTab, participants, currentSpeaker, handleLeaveRoom]);
 
   const mainContent = (
     <>
@@ -149,17 +157,19 @@ export function VoiceMainView() {
       </VoiceTabPanel>
 
       <VoiceTabPanel value={selectedTab !== 'room-list' ? 1 : 0} index={1}>
-        <RoomContainerMain
-          token={livekitToken}
-          onLeaveRoom={handleLeaveRoom}
-          onSettingsClick={editRoomBoolean.onTrue}
-          onBack={handleBackToRooms}
-        />
+        {/* Only mount when active token and room exist. The key forces complete destruction on switch */}
+        {livekitToken && room?.roomId ? (
+          <RoomContainerMain
+            key={room.roomId}
+            token={livekitToken}
+            onLeaveRoom={handleLeaveRoom}
+            onSettingsClick={editRoomBoolean.onTrue}
+            onBack={handleBackToRooms}
+          />
+        ) : null}
       </VoiceTabPanel>
     </>
   );
-
-  console.log('render voice-room-view')
 
   return (
     <>

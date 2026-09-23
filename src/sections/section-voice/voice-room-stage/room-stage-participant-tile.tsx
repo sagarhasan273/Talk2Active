@@ -1,6 +1,7 @@
-// src/sections/section-voice-room/voice-room-workspace/room-audio-participant-tile.tsx
-
-import { useIsSpeaking } from '@livekit/components-react';
+import {
+  ParticipantContext,
+  useIsSpeaking,
+} from '@livekit/components-react';
 import {
   alpha,
   Avatar,
@@ -11,7 +12,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Track } from 'livekit-client';
+import { Participant, Track } from 'livekit-client';
 import {
   BadgeCheck,
   CheckCircle,
@@ -26,9 +27,9 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useBoolean } from '@/hooks/use-boolean';
+import { useParticipantConnectionState } from '@/hooks/use-participant-connection-state';
 import type { ChatUserStatus, ParticipantStageType } from '@/types/type-room';
 
-import { useParticipantConnectionState } from '@/hooks/use-participant-connection-state';
 import { RoomUserControllerMain } from '../voice-room-user-controller';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
@@ -122,6 +123,51 @@ type ParticipantTileProps = {
   participant: ParticipantStageType;
 };
 
+// --------------------------------------------------------------------------
+// Subcomponent: LiveKit Audio Monitor (Only mounts when rawParticipant is valid)
+// --------------------------------------------------------------------------
+interface LiveParticipantAudioProps {
+  rawParticipant: Participant;
+  participantId: string;
+  onSpeakingChange: (speaking: boolean) => void;
+}
+
+const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
+  rawParticipant,
+  participantId,
+  onSpeakingChange,
+}) => {
+  const isSpeaking = useIsSpeaking(rawParticipant);
+
+  useEffect(() => {
+    onSpeakingChange(isSpeaking);
+  }, [isSpeaking, onSpeakingChange]);
+
+  const micPub = rawParticipant.getTrackPublication(Track.Source.Microphone);
+  const isMuted = !rawParticipant.isMicrophoneEnabled || !micPub || micPub.isMuted;
+
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        bottom: 10,
+        left: '70%',
+        transform: 'translateX(-50%)',
+        zIndex: 3,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <VoiceSpeakingIndicator
+        participantId={participantId}
+        isMuted={isMuted}
+        size="small"
+      />
+    </Box>
+  );
+};
+
 export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps) => {
   const theme = useTheme();
   const openDrawer = useBoolean();
@@ -137,17 +183,15 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     rawParticipant,
   } = participant;
 
-  // 1. Connection status resolution via dedicated hook
+  // 1. Connection status resolution via hook
   const connectionStatus = useParticipantConnectionState({
     participantId: String(id),
     isSelf: Boolean(isSelf),
     hasJoin,
   });
 
-  // 2. Real-time audio activity and mute state
-  const isSpeaking = useIsSpeaking(rawParticipant);
-  const micPub = rawParticipant?.getTrackPublication(Track.Source.Microphone);
-  const isMuted = !rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
+  // 2. Safe speaking state (never calls useIsSpeaking at top level)
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   // 3. Transient reaction animation
   const [showReaction, setShowReaction] = useState(false);
@@ -401,26 +445,15 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Tooltip>
           )}
 
-          {/* 6. Isolated Audio Indicator */}
-          {!connectionOverlayElement && (
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 10,
-                left: '70%',
-                transform: 'translateX(-50%)',
-                zIndex: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <VoiceSpeakingIndicator
+          {/* 6. Isolated Audio Indicator - strictly guarded */}
+          {!connectionOverlayElement && rawParticipant && (
+            <ParticipantContext.Provider value={rawParticipant}>
+              <LiveParticipantAudio
+                rawParticipant={rawParticipant}
                 participantId={String(participant.id)}
-                isMuted={isMuted}
-                size="small"
+                onSpeakingChange={setIsSpeaking}
               />
-            </Box>
+            </ParticipantContext.Provider>
           )}
         </Box>
 
@@ -490,12 +523,14 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
         </Box>
       </Box>
 
-      {/* User Profile Modal Drawer */}
-      <RoomUserControllerMain
-        open={openDrawer.value}
-        onClose={openDrawer.onFalse}
-        user={participant}
-      />
+      {/* Profile Modal Drawer: Lazy-mount only on click */}
+      {openDrawer.value && (
+        <RoomUserControllerMain
+          open={openDrawer.value}
+          onClose={openDrawer.onFalse}
+          user={participant}
+        />
+      )}
     </>
   );
 });

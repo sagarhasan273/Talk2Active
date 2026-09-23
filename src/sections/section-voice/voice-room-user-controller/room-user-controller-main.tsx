@@ -1,7 +1,5 @@
-// src/sections/section-voice-room/voice-room-workspace/voice-room-user-profile.tsx
-
 import { useIsSpeaking, useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { Participant, Track } from 'livekit-client';
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
@@ -68,6 +66,27 @@ interface RoomUserControllerMainProps {
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
 }
 
+// --------------------------------------------------------------------------
+// Subcomponent: LiveKit Speaking Monitor (Only mounted when rawParticipant exists)
+// --------------------------------------------------------------------------
+interface LiveParticipantSpeakingWatcherProps {
+  participant: Participant;
+  onSpeakingChange: (speaking: boolean) => void;
+}
+
+const LiveParticipantSpeakingWatcher: React.FC<LiveParticipantSpeakingWatcherProps> = ({
+  participant,
+  onSpeakingChange,
+}) => {
+  const isSpeaking = useIsSpeaking(participant);
+
+  useEffect(() => {
+    onSpeakingChange(isSpeaking);
+  }, [isSpeaking, onSpeakingChange]);
+
+  return null;
+};
+
 // Helper to directly manipulate the HTML5 Audio element LiveKit creates
 const setLiveKitTrackVolume = (room: any, targetUserId: string, volumeLevel: number) => {
   if (!room || !targetUserId) return;
@@ -119,7 +138,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     username: user?.username,
     verified: user?.verified,
     profilePhoto: user?.profilePhoto || '',
-    genUserId: user?.genUserId || "",
+    genUserId: user?.genUserId || '',
     accountType: user?.accountType,
     follower_count: user?.follower_count,
     following_count: user?.following_count,
@@ -127,25 +146,26 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     isHost: user?.isHost,
     joinedAt: user?.joinedAt,
     bio: user?.bio,
-
     isFollowing: user?.isFollowing,
-    isBlocked: user?.isBlocked
-  }
+    isBlocked: user?.isBlocked,
+  };
 
-  const {
-    id: userId = '',
+  const { id: userId = '', isSelf = false, rawParticipant } = safeUser;
 
-    isSelf = false,
-  } = safeUser;
+  // Track speaking activity safely without crashing when rawParticipant is undefined
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const isSpeaking = useIsSpeaking(user.rawParticipant);
-  const micPub = user?.rawParticipant?.getTrackPublication(Track.Source.Microphone);
-  const isMuted = !user?.rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
-
+  // Derive mute status safely
+  const micPub = rawParticipant?.getTrackPublication?.(Track.Source.Microphone);
+  const isMuted = rawParticipant
+    ? !rawParticipant.isMicrophoneEnabled || !micPub || micPub.isMuted
+    : true;
 
   // Check if current logged-in user is host
   const isViewerHost = Boolean(
-    room?.localParticipant && (room.localParticipant.permissions?.canPublish ?? true) && !isSelf
+    room?.localParticipant &&
+    (room.localParticipant.permissions?.canPublish ?? true) &&
+    !isSelf
   );
 
   // LiveKit Device Selectors
@@ -208,21 +228,19 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     }
   };
 
-  // 2. TRUE WEB AUDIO API GAIN CONTROL (Local Microphone)
+  // 2. WEB AUDIO API GAIN CONTROL (Local Microphone)
   const handleMicGainChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
     setMicGain(value);
 
     if (!room?.localParticipant) return;
 
-    // Grab the local audio track publication
     const pub = Array.from(room.localParticipant.audioTrackPublications.values())[0];
     const localTrack = pub?.track as any;
 
     if (!localTrack || !localTrack.sender) return;
 
     try {
-      // 1. Initialize AudioContext once
       if (!audioCtxRef.current) {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         audioCtxRef.current = new AudioContextClass();
@@ -230,12 +248,10 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
       const ctx = audioCtxRef.current;
 
-      // Ensure context is running
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
 
-      // 2. Wrap track with GainNode if not already wrapped
       if (!localTrack.__isGainWrapped && localTrack.mediaStreamTrack) {
         const originalStream = new MediaStream([localTrack.mediaStreamTrack]);
         const source = ctx.createMediaStreamSource(originalStream);
@@ -250,16 +266,11 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
         const processedTrack = destination.stream.getAudioTracks()[0];
 
-        // Hijack the LiveKit WebRTC sender and replace it with our processed track
         localTrack.sender.replaceTrack(processedTrack).catch(console.warn);
-
-        // Mark to prevent infinite wrapping loops
         localTrack.__isGainWrapped = true;
       }
 
-      // 3. Apply smooth volume transition (100% = 1.0 multiplier)
       if (gainNodeRef.current) {
-        // use setTargetAtTime to prevent audio clipping/popping when sliding
         gainNodeRef.current.gain.setTargetAtTime(value / 100, ctx.currentTime, 0.1);
       }
     } catch (err) {
@@ -371,7 +382,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     }
   })();
 
-
   const elevatedSelectMenuProps = {
     PaperProps: {
       sx: {
@@ -386,6 +396,14 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
   return (
     <>
+      {/* Safely observe speaking status only when LiveKit participant exists */}
+      {rawParticipant && (
+        <LiveParticipantSpeakingWatcher
+          participant={rawParticipant}
+          onSpeakingChange={setIsSpeaking}
+        />
+      )}
+
       <Drawer
         anchor={isMobile ? 'bottom' : undefined}
         open={open}
@@ -477,7 +495,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
         {/* Profile Body */}
         <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
-          {/* COMBINED PROFILE & STATS SECTION */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 3 }}>
             {/* LEFT: Avatar with Speaking Badge */}
             <Box sx={{ position: 'relative', flexShrink: 0 }}>
@@ -517,7 +534,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
             {/* RIGHT: Name, Username, Stats, Chips */}
             <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
-              {/* Name & Verified */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                 <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
                   {participant?.name || 'Unknown User'} {isSelf && '(You)'}
@@ -527,7 +543,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 )}
               </Box>
 
-              {/* Username */}
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -537,7 +552,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 @{userId || 'username'}
               </Typography>
 
-              {/* Stats: Followers / Following */}
               <Stack
                 direction="row"
                 spacing={2.5}
@@ -546,7 +560,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               >
                 <Box>
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {participant?.follower_count}
+                    {participant?.follower_count ?? 0}
                   </Typography>
                   <Typography
                     component="span"
@@ -560,7 +574,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 </Box>
                 <Box>
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {participant?.following_count}
+                    {participant?.following_count ?? 0}
                   </Typography>
                   <Typography
                     component="span"
@@ -628,17 +642,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               )}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {/* {location && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography variant="caption" sx={{ fontSize: 13 }}>
-                      📍
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                      {location}
-                    </Typography>
-                  </Box>
-                )} */}
-
                 {participant?.joinedAt && (
                   <>
                     <Typography variant="caption" color="text.disabled">
@@ -680,7 +683,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               </Typography>
 
               <Stack spacing={1.5}>
-                {/* Input Mic Selector */}
                 <FormControl fullWidth size="small">
                   <InputLabel id="user-mic-select-label">Input Microphone</InputLabel>
                   <Select
@@ -698,7 +700,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                   </Select>
                 </FormControl>
 
-                {/* Output Speaker Selector */}
                 <FormControl fullWidth size="small" disabled={speakers.length === 0}>
                   <InputLabel id="user-speaker-select-label">Output Speaker</InputLabel>
                   <Select

@@ -8,8 +8,8 @@ interface LiveKitSessionContextType {
   room: Room;
   token: string | null;
   serverUrl: string | null;
-  isInRoom: boolean; // <-- Add this
-  connectionState: ConnectionState; // <-- Add this
+  isInRoom: boolean;
+  connectionState: ConnectionState;
   connectToRoom: (token: string, serverUrl?: string) => Promise<void>;
   disconnectRoom: () => Promise<void>;
 }
@@ -37,6 +37,7 @@ export function LiveKitProvider({
     };
 
     room.on(RoomEvent.ConnectionStateChanged, handleStateChange);
+
     return () => {
       room.off(RoomEvent.ConnectionStateChanged, handleStateChange);
       room.disconnect();
@@ -47,15 +48,33 @@ export function LiveKitProvider({
     const targetUrl = customServerUrl || serverUrl;
     if (!targetUrl) throw new Error('LiveKit Server URL is required');
 
+    // Ensure clean state before connecting
+    if (room.state !== ConnectionState.Disconnected) {
+      await room.disconnect();
+    }
+
     setToken(newToken);
     if (customServerUrl) setServerUrl(customServerUrl);
+
     await room.connect(targetUrl, newToken);
-    await room.localParticipant.setMicrophoneEnabled(true);
+
+    try {
+      await room.localParticipant.setMicrophoneEnabled(true);
+    } catch (err) {
+      console.warn('Could not auto-enable microphone on join:', err);
+    }
   };
 
   const disconnectRoom = async () => {
-    await room.disconnect();
-    setToken(null);
+    try {
+      if (room.localParticipant) {
+        await room.localParticipant.setMicrophoneEnabled(false);
+      }
+      await room.disconnect();
+    } finally {
+      setToken(null);
+      setConnectionState(ConnectionState.Disconnected);
+    }
   };
 
   const isInRoom = connectionState === ConnectionState.Connected;
