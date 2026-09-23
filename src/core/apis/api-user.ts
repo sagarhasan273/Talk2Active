@@ -1,7 +1,6 @@
 // services/userApi.ts
 import type { ResponseType } from 'src/types/type-common';
 import type {
-  UserAccountUpdateType,
   UserType,
 } from 'src/types/type-user';
 
@@ -45,18 +44,6 @@ export const userApi = createApi({
       }),
     }),
 
-    updateUserAccount: builder.mutation<
-      ResponseType,
-      Omit<UserAccountUpdateType, 'confirmNewPassword'>
-    >({
-      query: (body) => ({
-        url: `user/account/update`,
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['user-recall'],
-    }),
-
     updateUserRecentRooms: builder.mutation<ResponseType, { id: string; roomId: string }>({
       query: (body) => ({
         url: `user/recent-room/update`,
@@ -80,7 +67,6 @@ export const userApi = createApi({
 export const {
   useGetUserQuery,
   useGetUserByIdQuery,
-  useUpdateUserAccountMutation,
   useUpdateUserRecentRoomsMutation,
   useCreateUserMutation,
   useDeleteUserMutation,

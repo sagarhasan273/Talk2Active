@@ -1,4 +1,4 @@
-import type { ChatUserStatus } from 'src/types/type-chat';
+import type { ChatUserStatus } from '@/types/type-room';
 
 import { CheckCircle, CircleOff, Clock, Moon, Pause, UserX } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -144,9 +144,9 @@ function StatusGrid({
               transition: 'all 0.14s',
               '&:hover': channel
                 ? {
-                    bgcolor: varAlpha(channel, 0.2),
-                    borderColor: varAlpha(channel, 0.38),
-                  }
+                  bgcolor: varAlpha(channel, 0.2),
+                  borderColor: varAlpha(channel, 0.38),
+                }
                 : {},
             }}
           >
@@ -334,9 +334,9 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
           transition: 'all 0.18s',
           '&:hover': currentChannel
             ? {
-                bgcolor: varAlpha(currentChannel, 0.18),
-                borderColor: varAlpha(currentChannel, 0.35),
-              }
+              bgcolor: varAlpha(currentChannel, 0.18),
+              borderColor: varAlpha(currentChannel, 0.35),
+            }
             : {},
         }}
       >

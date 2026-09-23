@@ -1,4 +1,4 @@
-import type { ChatMessage, StageParticipant } from '../voice-room-workspace/types';
+import { ChatMessage } from "@/types/type-room";
 
 export const CURRENT_USER = {
   id: 'u1',
@@ -113,50 +113,6 @@ export function filterVisibleMessages(messages: ChatMessage[], currentUserId: st
   });
 }
 
-
-export const INITIAL_PARTICIPANTS: StageParticipant[] = [
-  {
-    id: 'u1',
-    name: 'Sagar Hasan',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-    audioState: 'speaking',
-    isHost: true,
-  },
-  {
-    id: 'u2',
-    name: 'Anna K.',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
-    level: 'Fluent (C1)',
-    audioState: 'unmuted',
-  },
-  {
-    id: 'u3',
-    name: 'Marcus V.',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
-    level: 'Learner (B1)',
-    audioState: 'muted',
-  },
-  {
-    id: 'u4',
-    name: 'Sarah M.',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-    audioState: 'muted',
-    isSelf: true,
-    handRaised: true,
-  },
-  {
-    id: 'u5',
-    name: 'Kenji T.',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80',
-    level: 'Learner (B2)',
-    audioState: 'listening',
-  },
-];
 
 export const ROOM = {
   maxParticipants: 8,

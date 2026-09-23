@@ -10,7 +10,7 @@ import {
   userApi,
 } from './apis';
 import { accountSlice, postsSlice, roomSlice } from './slices';
-import { socialSlice } from './slices/slice-social';
+
 
 const apis = [userApi, postApi, socialApi, suggestionApi, chatApi, messageApi, inventoryApi];
 
@@ -19,7 +19,7 @@ const rootReducer = {
   account: accountSlice.reducer,
   posts: postsSlice.reducer,
   room: roomSlice.reducer,
-  social: socialSlice.reducer,
+
   [userApi.reducerPath]: userApi.reducer,
   [postApi.reducerPath]: postApi.reducer,
   [socialApi.reducerPath]: socialApi.reducer,

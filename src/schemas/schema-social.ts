@@ -1,7 +1,7 @@
 // schemas/relationship.schema.ts
 import { z } from 'zod';
 
-import { RelationshipTypeEnum, RelationshipStatusEnum } from 'src/enums/enum-social';
+import { RelationshipStatusEnum, RelationshipTypeEnum } from 'src/enums/enum-social';
 
 // Base Relationship Schema
 export const RelationshipSchema = z.object({
@@ -69,9 +69,9 @@ export const RelationshipResponseSchema = RelationshipSchema.extend({
 // User Statistics Schema
 export const UserStatsSchema = z.object({
   userId: z.string(),
-  followerCount: z.number().int().nonnegative().default(0),
-  followingCount: z.number().int().nonnegative().default(0),
-  friendCount: z.number().int().nonnegative().default(0),
+  follower_count: z.number().int().nonnegative().default(0),
+  following_count: z.number().int().nonnegative().default(0),
+  friend_count: z.number().int().nonnegative().default(0),
   pendingRequests: z.number().int().nonnegative().default(0),
 });
 

@@ -1,4 +1,13 @@
-import type { Language } from 'src/types/type-room';
+export interface Language {
+  /** ISO 639-1 (2-letter) or ISO 639-3 (3-letter, e.g., sign languages) code */
+  code: string;
+  /** Display name of the language in English */
+  name: string;
+  /** Emoji flag representing the primary country/region */
+  flag: string;
+  /** Estimated count of native speakers */
+  nativeSpeakers: number;
+}
 
 export const languages: Language[] = [
   // Most Spoken Languages (1B+ speakers)

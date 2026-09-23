@@ -27,6 +27,7 @@ export function VoiceRoomJoinGate({
   const isFull = maxParticipants !== undefined && participantCount >= maxParticipants;
 
   return (
+
     <Box
       role="dialog"
       aria-modal="true"

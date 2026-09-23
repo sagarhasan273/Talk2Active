@@ -1,0 +1,396 @@
+// src/sections/section-voice/voice-room-card/index.tsx
+
+import { useState } from 'react';
+
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import {
+  alpha,
+  Avatar,
+  AvatarGroup,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  type SxProps,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material';
+
+import { Label, ParticipantLevel } from '@/components/label';
+import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
+import { useBoolean } from 'src/hooks/use-boolean';
+import { fgetLanguageName } from 'src/utils/helper';
+
+import { useCredentials } from '@/core/slices';
+import { RoomType } from '@/types/type-room';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+import { RoomParticipantsDialog } from './room-list-card-dialog';
+
+type VoiceRoomCardProps = {
+  roomData: RoomType;
+  onJoinRoom: (room: RoomType) => void;
+};
+
+type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
+  currentUserId?: string;
+  onRemoveParticipant?: (roomId: string, userId: string) => void;
+  onTransferHost?: (roomId: string, userId: string) => void;
+  onRoomUpdated?: (roomData: any) => void;
+  onToggleFollow?: (userId: string, isFollowing: boolean) => void;
+  onBlockUser?: (userId: string) => void;
+  onReportUser?: (userId: string, reason: string) => void;
+  sx?: SxProps;
+};
+
+export const VoiceRoomCard = ({
+  roomData,
+  onJoinRoom,
+  currentUserId,
+  onRemoveParticipant,
+  onTransferHost,
+  onRoomUpdated,
+  onToggleFollow,
+  onBlockUser,
+  onReportUser,
+  sx,
+}: VoiceRoomCardExtendedProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const { checkIfFollowing, checkIfBlocked } = useCredentials()
+
+  const [selectedUser, setSelectedUser] = useState<UserDisplayerProfile | null>(null);
+
+  const participantsOpen = useBoolean();
+  const editRoomOpen = useBoolean();
+  const openUserDisplayer = useBoolean();
+
+  const hostId = roomData?.host?.userId;
+  const participants = roomData?.participants || [];
+  const allUsers = participants.map((p) => ({
+    ...p,
+    isHost: Boolean(hostId && (p?.userId === hostId || (p as any)?.userId === hostId)),
+  }));
+
+  const max = roomData?.max_participants ?? 0;
+  const isFull = allUsers.length >= max && max > 0;
+  const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
+
+  const openUserProfile = (rawUser: any) => {
+    const targetUser = rawUser?.user || rawUser;
+
+    setSelectedUser({
+      userId: targetUser?.userId || targetUser?.id,
+      name: targetUser?.name || 'User',
+      username: targetUser?.username,
+      profilePhoto: targetUser?.profilePhoto,
+      verified: targetUser?.verified,
+      accountType: targetUser?.accountType,
+      bio: targetUser?.bio,
+      follower_count: targetUser?.follower_count,
+      following_count: targetUser?.following_count,
+      friend_count: targetUser?.friend_count,
+      isFollowing: checkIfFollowing(targetUser?.userId),
+      isBlocked: checkIfBlocked(targetUser?.userId),
+    });
+    openUserDisplayer.onTrue();
+  };
+
+  const handleAvatarClick = (e: React.MouseEvent, rawParticipant: any) => {
+    e.stopPropagation();
+    openUserProfile(rawParticipant);
+  };
+
+  return (
+    <>
+      <Paper
+        onClick={participantsOpen.onTrue}
+        elevation={0}
+        sx={{
+          p: 2,
+          borderRadius: 1,
+          position: 'relative',
+          cursor: 'pointer',
+          userSelect: 'none',
+          bgcolor: isDark ? alpha(theme.palette.background.paper, 0.85) : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.07),
+          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: isDark
+            ? '0 4px 20px -2px rgba(0, 0, 0, 0.45)'
+            : '0 4px 20px -2px rgba(145, 158, 171, 0.12)',
+          '&:hover': {
+            borderColor: alpha(theme.palette.background.paper, 0.45),
+            boxShadow: `0 12px 32px -4px ${alpha(theme.palette.background.paper, 0.16)}`,
+          },
+          ...sx,
+        }}
+      >
+        {/* Top Tag & Status Row */}
+        <Box>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1.25}>
+            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden' }}>
+              {(roomData.languages?.length ? roomData.languages : ['en'])
+                .slice(0, 2)
+                .map((lang, index) => (
+                  <Label
+                    key={`${lang}-${index}`}
+                    label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
+                    size="small"
+                    color="primary"
+                    sx={{
+                      borderRadius: 1,
+                      bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+                    }}
+                  />
+                ))}
+
+              {roomData?.level && (
+                <ParticipantLevel
+                  value={roomData.level}
+                  label={roomData.level}
+                  showEmoji
+                  size="small"
+                  sx={{
+                    transform: 'none !important',
+                    border: '1px solid',
+                    borderColor: theme.palette.divider,
+                    bgcolor: 'transparent',
+                    color: theme.palette.text.secondary,
+                    transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                  }}
+                />
+              )}
+            </Stack>
+
+            {roomData?.isActive && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 0.85,
+                  py: 0.2,
+                  borderRadius: 1,
+                  bgcolor: alpha(theme.palette.success.main, 0.12),
+                  color: 'success.main',
+                  flexShrink: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>
+                  Live
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+
+          {/* Room Topic Heading */}
+          <Tooltip title={roomData?.topic || 'Untitled room'} placement="top-start" arrow>
+            <Typography
+              variant="subtitle1"
+              fontWeight={800}
+              noWrap
+              sx={{
+                color: 'text.primary',
+                fontSize: '0.975rem',
+                lineHeight: 1.3,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {roomData?.topic || 'Untitled room'}
+            </Typography>
+          </Tooltip>
+        </Box>
+
+        {/* Host Identity Card */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.25,
+            p: 1,
+            borderRadius: 1.5,
+            bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.025),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
+          }}
+        >
+          <Box
+            onClick={(e) => handleAvatarClick(e, roomData?.host)}
+            sx={{ cursor: 'pointer', transition: 'transform 0.15s ease', '&:hover': { transform: 'scale(1.05)' } }}
+          >
+            <Avatar
+              src={roomData?.host?.profilePhoto || undefined}
+              alt={roomData?.host?.name || 'Unknown'}
+            >
+              {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
+            </Avatar>
+          </Box>
+
+          <Stack sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" fontWeight={700} noWrap sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+              {roomData?.host?.name || 'Unknown Host'}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11 }}>
+              Host
+            </Typography>
+          </Stack>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
+              color: 'text.secondary',
+            }}
+          >
+            <GroupsRoundedIcon sx={{ fontSize: 14 }} />
+            <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>
+              {allUsers.length}/{max}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Participants Presence Preview */}
+        <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 32 }}>
+          {allUsers.length === 0 ? (
+            <Typography
+              variant="caption"
+              sx={{
+                py: 0.6,
+                px: 1,
+                borderRadius: 1,
+                color: 'text.disabled',
+                bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+                width: '100%',
+                textAlign: 'center',
+              }}
+            >
+              Empty stage • Be the first to speak
+            </Typography>
+          ) : (
+            <AvatarGroup
+              max={5}
+              sx={{
+                '& .MuiAvatar-root': {
+                  width: 40,
+                  height: 40,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: `2px solid ${isDark ? theme.palette.background.paper : '#fff'}`,
+                  transition: 'transform 0.18s ease, z-index 0.18s ease',
+                  '&:hover': {
+                    transform: 'scale(1.2)',
+                    zIndex: 10,
+                  },
+                },
+              }}
+            >
+              {allUsers.map((p, i) => {
+                const targetUser = p;
+                return (
+                  <Tooltip
+                    key={targetUser?.userId || targetUser?.userId || i}
+                    title={targetUser?.name || 'User'}
+                    arrow
+                    placement="top"
+                  >
+                    <Avatar
+                      src={targetUser?.profilePhoto || undefined}
+                      alt={targetUser?.name}
+                      onClick={(e) => handleAvatarClick(e, p)}
+                    >
+                      {(targetUser?.name || 'U').charAt(0).toUpperCase()}
+                    </Avatar>
+                  </Tooltip>
+                );
+              })}
+            </AvatarGroup>
+          )}
+        </Box>
+
+        {/* Footer Action Button */}
+        <Button
+          fullWidth
+          size="small"
+          variant={isFull ? 'outlined' : 'contained'}
+          disabled={isFull}
+          color={isFull ? 'inherit' : 'primary'}
+          onClick={(e) => {
+            e.stopPropagation();
+            onJoinRoom(roomData);
+          }}
+          endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+          sx={{
+            height: 38,
+            borderRadius: 1.25,
+            textTransform: 'none',
+            fontWeight: 700,
+            fontSize: 13,
+            boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+          }}
+        >
+          {isFull ? '🔒 Room Full' : '🎙️ Want to talk? Join the room!'}
+        </Button>
+      </Paper>
+
+      {/* User Displayer Profile Modal */}
+      {selectedUser && (
+        <UserDisplayer
+          open={openUserDisplayer.value}
+          user={selectedUser}
+          currentUserId={currentUserId}
+          onClose={openUserDisplayer.onFalse}
+          onToggleFollow={onToggleFollow}
+          onBlockUser={onBlockUser}
+          onReportUser={onReportUser}
+        />
+      )}
+
+      {/* Participants Dialog */}
+      <RoomParticipantsDialog
+        open={participantsOpen.value}
+        onClose={participantsOpen.onFalse}
+        room={roomData}
+        allUsers={allUsers as any}
+        isFull={isFull}
+        isHost={isHost}
+        onJoinRoom={onJoinRoom}
+        onParticipantClick={(participant) => {
+          participantsOpen.onFalse();
+          openUserProfile(participant);
+        }}
+        onRemoveParticipant={isHost ? onRemoveParticipant : undefined}
+        onTransferHost={isHost ? onTransferHost : undefined}
+        onEditRoom={isHost ? () => { participantsOpen.onFalse(); editRoomOpen.onTrue(); } : undefined}
+      />
+
+      {isHost && editRoomOpen.value && (
+        <VoiceModalCreateRoom
+          open={editRoomOpen.value}
+          onClose={editRoomOpen.onFalse}
+          onCreateRoom={() => { }}
+          currentRoom={roomData}
+        />
+      )}
+    </>
+  );
+};
+
+export default VoiceRoomCard;

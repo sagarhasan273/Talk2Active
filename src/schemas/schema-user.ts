@@ -1,7 +1,5 @@
 import { z as zod } from 'zod';
 
-
-
 // Main User Schema
 export const UserBaseSchema = zod.object({
   userId: zod.string(),
@@ -41,10 +39,9 @@ export const UserBaseSchema = zod.object({
   verified: zod.boolean(),
   accountType: zod
     .enum(['admin', 'supporter', 'member']),
-  followerCount: zod.number().int().nonnegative(),
-  followingCount: zod.number().int().nonnegative(),
-  friendCount: zod.number().int().nonnegative(),
-  pendingRequests: zod.number().int().nonnegative(),
+  follower_count: zod.number().int().nonnegative(),
+  following_count: zod.number().int().nonnegative(),
+  friend_count: zod.number().int().nonnegative(),
 
   createdAt: zod.date().optional(),
   updatedAt: zod.date().optional(),
@@ -61,10 +58,9 @@ export const UserSchema = UserBaseSchema.pick({
   lastActive: true,
   verified: true,
   accountType: true,
-  followerCount: true,
-  followingCount: true,
-  friendCount: true,
-  pendingRequests: true,
+  follower_count: true,
+  following_count: true,
+  friend_count: true,
   createdAt: true,
   updatedAt: true,
 })
@@ -103,9 +99,9 @@ export const UserAccountUpdateSchema = UserBaseSchema.pick({
   userId: zod.string(),
   password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
   newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
-})
+});
 
-export const VoiceParticipantSchema = UserBaseSchema.pick({
+export const HostSchema = UserBaseSchema.pick({
   userId: true,
   genUserId: true,
   name: true,
@@ -114,7 +110,28 @@ export const VoiceParticipantSchema = UserBaseSchema.pick({
   bio: true,
   verified: true,
   accountType: true,
-  followerCount: true,
-  followingCount: true,
-  friendCount: true,
-})
+  follower_count: true,
+  following_count: true,
+  friend_count: true,
+}).extend({
+  isFollowing: zod.boolean().default(false),
+  isBlocked: zod.boolean().default(false),
+});
+
+export const ParticipantSchema = UserBaseSchema.pick({
+  userId: true,
+  genUserId: true,
+  name: true,
+  username: true,
+  profilePhoto: true,
+  bio: true,
+  verified: true,
+  accountType: true,
+  follower_count: true,
+  following_count: true,
+  friend_count: true,
+}).extend({
+  isHost: zod.boolean().default(false),
+  isFollowing: zod.boolean().default(false),
+  isBlocked: zod.boolean().default(false),
+});

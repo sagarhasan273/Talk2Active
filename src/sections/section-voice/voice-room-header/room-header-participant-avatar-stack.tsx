@@ -1,17 +1,16 @@
-import React from 'react';
 
 import { Box, Stack, Typography } from '@mui/material';
 
-import { getParticipantId, isParticipantSpeaking } from './utils';
 import { ParticipantAvatar } from './room-header-participant-avatar';
+import { getParticipantId, isParticipantSpeaking } from './utils';
 
-import type { VoiceParticipant } from './types';
+import { RoomParticipantType } from '@/types/type-room';
 
 // ----------------------------------------------------------------------
 // Participant Avatar Stack
 // ----------------------------------------------------------------------
 
-export function ParticipantAvatarStack({ participants }: { participants: VoiceParticipant[] }) {
+export function ParticipantAvatarStack({ participants }: { participants: RoomParticipantType[] }) {
   const visibleParticipants = participants.slice(0, 4);
 
   return (

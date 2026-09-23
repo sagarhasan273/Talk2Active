@@ -1,6 +1,6 @@
-import type { Theme, SxProps } from '@mui/material/styles';
+// src/layouts/voice-room/voice-room-layout.tsx
 
-import { useRef, useEffect } from 'react';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 import { Box, Container } from '@mui/material';
 
@@ -12,83 +12,56 @@ export type DashboardLayoutProps = {
   filter?: React.ReactNode;
   mainContent?: React.ReactNode;
   footer?: React.ReactNode;
+  fixedHeader?: boolean;
+  maxWidth?: 'lg' | 'xl' | 'md' | false;
 };
 
-export function VoiceRoomLayout({ sx, header, filter, mainContent, footer }: DashboardLayoutProps) {
-  const dragConstraints = useRef({ min: 10, max: window.innerHeight - 100 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      dragConstraints.current.max = window.innerHeight - 100;
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
+export function VoiceRoomLayout({
+  sx,
+  header,
+  filter,
+  mainContent,
+  footer,
+  fixedHeader = false,
+  maxWidth = 'lg',
+}: DashboardLayoutProps) {
   return (
     <Container
-      maxWidth="lg"
+      maxWidth={maxWidth}
       disableGutters
       sx={{
-        p: { xs: 1 },
-        height: { xs: 'calc(100vh - 54px)', sm: 'calc(100vh - 64px)' },
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr auto',
-        gap: { xs: 1, sm: 2 },
+        px: { xs: 1 },
+        pb: { xs: 0, sm: 1 },
+        height: 1,
+        maxHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: { xs: 1 },
         position: 'relative',
+        overflow: 'hidden',
         ...sx,
       }}
     >
-      {header}
+      {fixedHeader && header && <Box sx={{ pt: 1, flexShrink: 0 }}>{header}</Box>}
 
-      {/* Scrollable Content */}
-      <Box
-        sx={{
-          flex: 1,
-          overflow: 'auto',
-          '&::-webkit-scrollbar': {
-            width: 6,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            bgcolor: 'divider',
-            borderRadius: 3,
-          },
-        }}
-      >
+
+
+      {mainContent}
+
+
+      {footer && (
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
+            flexShrink: 0,
+            display: { xs: 'none', sm: 'block' },
+            mt: 'auto',
+            height: 30
           }}
         >
-          {/* Filter */}
-          {filter && (
-            <Box
-              sx={{
-                flexShrink: 0,
-              }}
-            >
-              {filter}
-            </Box>
-          )}
-
-          {mainContent}
-
-          {/* Footer */}
-          {footer && (
-            <Box
-              sx={{
-                flexShrink: 0,
-                display: { xs: 'none', sm: 'block' },
-                mt: 1,
-              }}
-            >
-              {footer}
-            </Box>
-          )}
+          {footer}
         </Box>
-      </Box>
+      )}
+
     </Container>
   );
 }

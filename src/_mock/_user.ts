@@ -159,7 +159,7 @@ export const _user = {
   status: '',
   verified: true,
   followersCount: 0,
-  followingCount: 0,
+  following_count: 0,
   postCount: 0,
   location: '',
   website: '',

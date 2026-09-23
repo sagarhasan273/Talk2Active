@@ -1,24 +1,27 @@
+// src/layouts/user/user-layout.tsx
+
 import type { NavSectionProps } from 'src/components/nav-section';
 
 import { useResponsive } from '@/hooks/use-responsive';
 
 import { Box } from '@mui/material';
-import { useTheme, type Theme, type SxProps, type Breakpoint } from '@mui/material/styles';
+import { useTheme, type Breakpoint, type SxProps, type Theme } from '@mui/material/styles';
 
-import { useCredentials } from 'src/core/slices';
 import { getUserStatus } from 'src/assets/data/status';
+import { useCredentials } from 'src/core/slices';
 
 import { Logo } from 'src/components/logo';
 
 import { GoogleLogInView } from 'src/auth/view/google-log-in-view';
 
-import { UserMain } from './main';
 import { layoutClasses } from '../classes';
-import { _user_account } from '../config-nav-account';
-import { LayoutSection } from '../core/layout-section';
-import { HeaderSection } from '../core/header-section';
-import { SocialDrawer } from '../components/social-drawer';
 import { AccountDrawer } from '../components/account-drawer';
+import { SocialDrawer } from '../components/social-drawer';
+import { _user_account } from '../config-nav-account';
+import { HeaderSection } from '../core/header-section';
+import { LayoutSection } from '../core/layout-section';
+import { SocialBootstrapper } from '../social-bootstrapper';
+import { UserMain } from './main';
 
 export type UserLayoutProps = {
   sx?: SxProps<Theme>;
@@ -45,11 +48,17 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
       headerSection={
         <HeaderSection
           layoutQuery={layoutQuery}
-          sx={header?.sx}
+          sx={{
+            flexShrink: 0,
+            height: {
+              xs: 'var(--layout-header-mobile-height)',
+              sm: 'var(--layout-header-desktop-height)',
+            },
+            ...header?.sx,
+          }}
           slots={{
             leftArea: (
               <>
-                {/* -- Logo -- */}
                 <Logo
                   sx={{
                     display: 'none',
@@ -60,12 +69,8 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
-                {/* -- Social popover -- */}
                 {isMobile && isAuthenticated && <SocialDrawer sx={{ mt: 0.5 }} />}
-
-                {/* -- Account drawer -- */}
                 {isAuthenticated && <AccountDrawer data={_user_account} status={getUserStatus()} />}
-
                 {!isAuthenticated && <GoogleLogInView sx={{ ml: 1 }} />}
               </Box>
             ),
@@ -95,7 +100,9 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
         ...sx,
       }}
     >
-      <UserMain>{children}</UserMain>
+      <SocialBootstrapper>
+        <UserMain>{children}</UserMain>
+      </SocialBootstrapper>
     </LayoutSection>
   );
 }

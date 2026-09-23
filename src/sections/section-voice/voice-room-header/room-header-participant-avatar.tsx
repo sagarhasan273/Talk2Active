@@ -1,10 +1,9 @@
-import React from 'react';
 
-import { Box, Avatar, useTheme } from '@mui/material';
+import { Avatar, Box, useTheme } from '@mui/material';
 
-import { getParticipantName, getParticipantAvatar } from './utils';
+import { RoomParticipantType } from '@/types/type-room';
+import { getParticipantAvatar, getParticipantName } from './utils';
 
-import type { VoiceParticipant } from './types';
 
 // ----------------------------------------------------------------------
 // Participant Avatar
@@ -18,7 +17,7 @@ export function ParticipantAvatar({
   size = 30,
   speaking = false,
 }: {
-  participant: VoiceParticipant;
+  participant: RoomParticipantType;
   size?: number;
   speaking?: boolean;
 }) {

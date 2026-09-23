@@ -1,5 +1,5 @@
 import { varAlpha } from '@/theme/styles';
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { Box, useTheme } from '@mui/material';
 
@@ -72,7 +72,6 @@ export const ResizeWidthLeft = ({
           bottom: 0,
           width: '1px',
           cursor: 'col-resize',
-          zIndex: 10,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

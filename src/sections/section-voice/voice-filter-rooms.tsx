@@ -1,34 +1,35 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import { Label } from '@/components/label';
+import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
 import {
   Clear as ClearIcon,
-  Search as SearchIcon,
-  School as SchoolIcon,
-  People as PeopleIcon,
-  Language as LanguageIcon,
   FilterList as FilterListIcon,
+  Language as LanguageIcon,
+  People as PeopleIcon,
+  School as SchoolIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import {
-  Box,
-  Grid,
-  Chip,
-  Paper,
-  Stack,
   alpha,
-  Select,
-  Switch,
+  Box,
   Button,
+  Chip,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
-  useTheme,
+  Paper,
+  Select,
+  Stack,
+  Switch,
   TextField,
   Typography,
-  IconButton,
-  FormControl,
   useMediaQuery,
-  InputAdornment,
-  FormControlLabel,
+  useTheme,
 } from '@mui/material';
-import { languages, LEVEL_OPTIONS } from '@/lib/filter-data'
 export interface VoiceRoomsFilterProps {
   onFilterChange: (filters: FilterState) => void;
   initialFilters?: Partial<FilterState>;
@@ -156,6 +157,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     <Paper
       elevation={0}
       sx={{
+        gridColumn: '1 / -1',
         p: { xs: 1, sm: 2 },
         bgcolor: 'background.paper',
         borderRadius: 1,
@@ -500,7 +502,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 Active filters:
               </Typography>
               {selectedLanguage !== 'all' && (
-                <Chip
+                <Label
                   label={`Language: ${selectedLanguage}`}
                   size="small"
                   onDelete={() => handleFilterUpdate({ selectedLanguage: 'all' })}
@@ -510,7 +512,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 />
               )}
               {selectedLevel !== 'all' && (
-                <Chip
+                <Label
                   label={`Level: ${selectedLevel}`}
                   size="small"
                   onDelete={() => handleFilterUpdate({ selectedLevel: 'all' })}
@@ -520,7 +522,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 />
               )}
               {hideFullRooms && (
-                <Chip
+                <Label
                   label="Hide full rooms"
                   size="small"
                   onDelete={() => handleFilterUpdate({ hideFullRooms: false })}
@@ -530,7 +532,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 />
               )}
               {showActiveOnly && (
-                <Chip
+                <Label
                   label="Active only"
                   size="small"
                   onDelete={() => handleFilterUpdate({ showActiveOnly: false })}

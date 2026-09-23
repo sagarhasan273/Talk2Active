@@ -2,7 +2,28 @@ import { z } from 'zod';
 
 import { LanguageLevelEnum } from 'src/enums/enum-chat';
 
-import { UserSchema, VoiceParticipantSchema } from './schema-user';
+import { HostSchema, ParticipantSchema, UserSchema } from './schema-user';
+
+export const DatePreprocessor = z.preprocess(
+  (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
+  z.date()
+);
+
+
+// Base participant entry (user can be an unpopulated ObjectId or populated profile)
+export const RoomParticipantBaseSchema = z.object({
+  user: z.union([z.string(), ParticipantSchema]),
+  joinedAt: DatePreprocessor,
+  isHost: z.boolean().default(false),
+
+});
+
+// Populated participant entry (specifically returns ParticipantResponseSchema)
+export const RoomParticipantSchema = ParticipantSchema.extend({
+  joinedAt: DatePreprocessor,
+  isHost: z.boolean().default(false),
+  isSelf: z.boolean().optional().default(false)
+});
 
 export const RoomBaseSchema = z.object({
   roomId: z.string(),
@@ -15,15 +36,7 @@ export const RoomBaseSchema = z.object({
   level: z.nativeEnum(LanguageLevelEnum),
   max_participants: z.number().int().nonnegative().optional().default(10),
   host: z.union([z.string(), UserSchema]),
-  participants: z.array(
-    z.object({
-      user: z.union([z.string(), VoiceParticipantSchema]),
-      joinedAt: z.preprocess(
-        (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
-        z.date()
-      )
-    })
-  ).optional().default([]),
+  participants: z.array(RoomParticipantSchema).default([]),
   isActive: z.boolean().optional().default(true),
   kickedUserIds: z.array(z.string()).optional(),
 
@@ -53,33 +66,22 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
   roomId: z.string()
 });
 
-// Schema to validate objects returned from DB (includes mongoose timestamps)
+// Schema for populated API DB responses
 export const RoomSchema = RoomBaseSchema.extend({
-  host: UserSchema,
-  participants: z
-    .array(
-      z.object({
-        user: UserSchema,
-        joinedAt: z.preprocess(
-          (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
-          z.date()
-        ),
-      })
-    )
-    .optional()
-    .default([]),
+  host: HostSchema,
+  participants: z.array(RoomParticipantSchema).default([]),
 });
 
-export const JoinRoomSchema = z.object({
+// Stage actions
+export const RoomJoinSchema = z.object({
   roomId: z.string(),
   userId: z.string(),
-  userName: z.string().optional()
 });
 
-export const LeaveRoomSchema = z.object({
+export const RoomLeaveSchema = z.object({
   roomId: z.string(),
   userId: z.string(),
-  kicked: z.boolean().optional().default(false)
+  kicked: z.boolean().optional().default(false),
 });
 
 

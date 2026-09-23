@@ -1,17 +1,17 @@
 import type { BoxProps } from '@mui/material/Box';
 import type { NavSectionProps } from 'src/components/nav-section';
 
-import { useState, useCallback } from 'react';
-import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
+import parse from 'autosuggest-highlight/parse';
+import { useCallback, useState } from 'react';
 
 import Box from '@mui/material/Box';
-import SvgIcon from '@mui/material/SvgIcon';
-import InputBase from '@mui/material/InputBase';
-import { useTheme } from '@mui/material/styles';
+import Dialog, { dialogClasses } from '@mui/material/Dialog';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import Dialog, { dialogClasses } from '@mui/material/Dialog';
+import InputBase from '@mui/material/InputBase';
+import { useTheme } from '@mui/material/styles';
+import SvgIcon from '@mui/material/SvgIcon';
 
 import { useRouter } from 'src/routes/route-hooks';
 import { isExternalLink } from 'src/routes/route-utils';
@@ -21,13 +21,12 @@ import { useEventListener } from 'src/hooks/use-event-listener';
 
 import { varAlpha } from 'src/theme/styles';
 
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { SearchNotFound } from 'src/components/search-not-found';
 
 import { ResultItem } from './result-item';
-import { groupItems, applyFilter, getAllItems } from './utils';
+import { applyFilter, getAllItems, groupItems } from './utils';
 
 // ----------------------------------------------------------------------
 
@@ -133,18 +132,6 @@ export function Searchbar({ data: navItems = [], sx, ...other }: SearchbarProps)
           />
         </SvgIcon>
       </IconButton>
-
-      <Label
-        sx={{
-          fontSize: 12,
-          color: 'grey.800',
-          bgcolor: 'common.white',
-          boxShadow: theme.customShadows.z1,
-          display: { xs: 'none', sm: 'inline-flex' },
-        }}
-      >
-        ⌘K
-      </Label>
     </Box>
   );
 
@@ -174,7 +161,6 @@ export function Searchbar({ data: navItems = [], sx, ...other }: SearchbarProps)
                 <Iconify icon="eva:search-fill" width={24} sx={{ color: 'text.disabled' }} />
               </InputAdornment>
             }
-            endAdornment={<Label sx={{ letterSpacing: 1, color: 'text.secondary' }}>esc</Label>}
             inputProps={{ sx: { typography: 'h6' } }}
           />
         </Box>

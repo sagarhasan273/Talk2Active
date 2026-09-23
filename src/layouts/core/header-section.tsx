@@ -1,18 +1,18 @@
-import type { Breakpoint } from '@mui/material/styles';
-import type { AppBarProps } from '@mui/material/AppBar';
-import type { ToolbarProps } from '@mui/material/Toolbar';
-import type { ContainerProps } from '@mui/material/Container';
+// src/layouts/core/header-section.tsx
 
-import Box from '@mui/material/Box';
+import type { AppBarProps } from '@mui/material/AppBar';
+import type { ContainerProps } from '@mui/material/Container';
+import type { Breakpoint } from '@mui/material/styles';
+import type { ToolbarProps } from '@mui/material/Toolbar';
+
 import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
+import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { styled, useTheme } from '@mui/material/styles';
+import Toolbar from '@mui/material/Toolbar';
 
 import { useScrollOffSetTop } from 'src/hooks/use-scroll-offset-top';
-
 import { bgBlur, varAlpha } from 'src/theme/styles';
-
 import { layoutClasses } from '../classes';
 
 // ----------------------------------------------------------------------
@@ -34,7 +34,7 @@ const StyledElevation = styled('span')(({ theme }) => ({
 // ----------------------------------------------------------------------
 
 export type HeaderSectionProps = AppBarProps & {
-  layoutQuery: Breakpoint;
+  layoutQuery?: Breakpoint;
   disableOffset?: boolean;
   disableElevation?: boolean;
   slots?: {
@@ -56,25 +56,23 @@ export function HeaderSection({
   slotProps,
   disableOffset,
   disableElevation,
-  layoutQuery = 'md',
+  layoutQuery = 'sm', // Align breakpoint with main container
   ...other
 }: HeaderSectionProps) {
   const theme = useTheme();
-
   const { offsetTop } = useScrollOffSetTop();
 
   const toolbarStyles = {
     default: {
-      minHeight: 'auto',
+      p: 0,
+      minHeight: 'var(--layout-header-mobile-height) !important',
       height: 'var(--layout-header-mobile-height)',
       transition: theme.transitions.create(['height', 'background-color'], {
         easing: theme.transitions.easing.easeInOut,
         duration: theme.transitions.duration.shorter,
       }),
-      [theme.breakpoints.up('sm')]: {
-        minHeight: 'auto',
-      },
       [theme.breakpoints.up(layoutQuery)]: {
+        minHeight: 'var(--layout-header-desktop-height) !important',
         height: 'var(--layout-header-desktop-height)',
       },
     },
@@ -85,11 +83,14 @@ export function HeaderSection({
 
   return (
     <AppBar
-      position="sticky"
+      position="static" // Static prevents double offsets inside full-height flex column
+      elevation={0}
       className={layoutClasses.header}
       sx={{
+        flexShrink: 0,
         zIndex: 'var(--layout-header-zIndex)',
         backgroundColor: theme.palette.background.paper,
+        borderBottom: `1px solid ${theme.palette.divider}`,
         ...sx,
       }}
       {...other}
