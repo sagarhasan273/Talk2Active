@@ -80,9 +80,6 @@ export function VoiceMainView() {
         setIsJoinGateOpen(false);
         setSelectedTab('room-space');
         await connectToRoom(response.data.token);
-        if (socket && response.data.roomId) {
-          socket.emit('join_room', response.data.roomId)
-        }
       }
     } catch (error) {
       toastErrorResponse(error);

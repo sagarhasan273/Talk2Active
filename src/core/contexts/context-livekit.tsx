@@ -50,6 +50,7 @@ export function LiveKitProvider({
     setToken(newToken);
     if (customServerUrl) setServerUrl(customServerUrl);
     await room.connect(targetUrl, newToken);
+    await room.localParticipant.setMicrophoneEnabled(true);
   };
 
   const disconnectRoom = async () => {

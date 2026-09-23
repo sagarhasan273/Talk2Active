@@ -361,12 +361,8 @@ export function RoomContainerMain({
       >
         <RoomAudioStage
           topicPrompt=""
-          micMuted={micMuted}
-          deafened={deafened}
           handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
           onChangePrompt={() => { }}
-          onToggleMic={handleToggleMic}
-          onToggleDeafen={handleToggleDeafen}
           onToggleRaiseHand={handleToggleRaiseHand}
           onToggleScreenShare={handleToggleScreenShare}
           onSendReaction={handleSendReaction}

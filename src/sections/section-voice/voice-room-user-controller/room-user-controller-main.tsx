@@ -1,6 +1,6 @@
 // src/sections/section-voice-room/voice-room-workspace/voice-room-user-profile.tsx
 
-import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
+import { useIsSpeaking, useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -134,12 +134,14 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
   const {
     id: userId = '',
-    audioState = 'muted',
-    isSpeaking = audioState === 'speaking',
+
     isSelf = false,
   } = safeUser;
 
-  const isMuted = audioState === 'muted';
+  const isSpeaking = useIsSpeaking(user.rawParticipant);
+  const micPub = user?.rawParticipant?.getTrackPublication(Track.Source.Microphone);
+  const isMuted = !user?.rawParticipant?.isMicrophoneEnabled || !micPub || micPub.isMuted;
+
 
   // Check if current logged-in user is host
   const isViewerHost = Boolean(

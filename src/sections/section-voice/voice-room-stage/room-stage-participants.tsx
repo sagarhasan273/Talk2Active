@@ -1,6 +1,10 @@
 // src/sections/section-voice-room/voice-room-workspace/room-stage-participants.tsx
 
-import { ParticipantContext, useRoomContext } from '@livekit/components-react';
+import type { ParticipantStageType } from '@/types/type-room';
+import {
+  ParticipantContext,
+  useRoomContext,
+} from '@livekit/components-react';
 import { Box, BoxProps } from '@mui/material';
 import {
   ConnectionQuality,
@@ -9,10 +13,20 @@ import {
   RemoteParticipant,
   RoomEvent,
 } from 'livekit-client';
-import { useEffect, useMemo, useState } from 'react';
-
-import type { ParticipantStageType } from '@/types/type-room';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ParticipantTile from './room-stage-participant-tile';
+
+type RemoteStatus =
+  | 'connecting'
+  | 'connected'
+  | 'poor'
+  | 'reconnecting'
+  | 'disconnected';
+
+interface RemoteParticipantStatus {
+  status: RemoteStatus;
+  quality: ConnectionQuality;
+}
 
 export interface RoomStageParticipantsProps extends BoxProps {
   participants: ParticipantStageType[];
@@ -25,95 +39,178 @@ export const RoomStageParticipants = ({
 }: RoomStageParticipantsProps) => {
   const room = useRoomContext();
 
-  // Real-time connection status per participant: { [identity]: ConnectionState }
-  const [connectionStatusMap, setConnectionStatusMap] = useState<Record<string, ConnectionState>>({});
+  const [remoteStatusMap, setRemoteStatusMap] = useState<
+    Record<string, RemoteParticipantStatus>
+  >({});
 
-  // Hold onto disconnected participants temporarily so their tile does not vanish immediately
-  const [ghostParticipants, setGhostParticipants] = useState<Record<string, ParticipantStageType>>({});
+  const [ghostParticipants, setGhostParticipants] = useState<
+    Record<string, ParticipantStageType>
+  >({});
+
+  const participantsRef = useRef<ParticipantStageType[]>(participants);
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
+
+  const disconnectTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // --------------------------------------------------------------------------
-  // Room-level Connection Quality & Disconnection Watchdog
+  // 1. Synchronize 'connecting' state when `participants` prop changes
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!room) return;
 
-    // 1. RTCP Quality Monitor (Detects Wi-Fi drops / packet loss within 1-2 seconds)
-    const handleQualityChange = (quality: ConnectionQuality, p: Participant) => {
-      if (p.isLocal) return;
+    setRemoteStatusMap((prev) => {
+      const next = { ...prev };
+      let changed = false;
 
-      setConnectionStatusMap((prev) => {
-        if (quality === ConnectionQuality.Lost || quality === ConnectionQuality.Poor) {
-          return { ...prev, [p.identity]: ConnectionState.Reconnecting };
-        }
-        if (quality === ConnectionQuality.Good || quality === ConnectionQuality.Excellent) {
-          return { ...prev, [p.identity]: ConnectionState.Connected };
-        }
-        return prev;
+      participants.forEach((p) => {
+        const identity = p.rawParticipant?.identity || String(p.id);
+
+        // Skip local participant
+        if (room.localParticipant?.identity === identity) return;
+
+        // If the peer is already registered in our map and not disconnected, keep it
+        if (next[identity] && next[identity].status !== 'disconnected') return;
+
+        // Check if LiveKit already has them connected
+        const isAlreadyConnected = room.remoteParticipants.has(identity);
+
+        next[identity] = {
+          status: isAlreadyConnected ? 'connected' : 'connecting',
+          quality: ConnectionQuality.Unknown,
+        };
+        changed = true;
       });
+
+      return changed ? next : prev;
+    });
+  }, [participants, room]);
+
+  // --------------------------------------------------------------------------
+  // 2. Room Event Listeners (Connected, Disconnected, Quality)
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (!room) return;
+
+    const handleParticipantConnected = (participant: RemoteParticipant) => {
+      const identity = participant.identity;
+
+      // Cancel pending ghost timers
+      if (disconnectTimersRef.current[identity]) {
+        clearTimeout(disconnectTimersRef.current[identity]);
+        delete disconnectTimersRef.current[identity];
+      }
+
+      setGhostParticipants((prev) => {
+        if (!prev[identity]) return prev;
+        const next = { ...prev };
+        delete next[identity];
+        return next;
+      });
+
+      setRemoteStatusMap((prev) => ({
+        ...prev,
+        [identity]: {
+          status: 'connected',
+          quality: participant.connectionQuality ?? ConnectionQuality.Unknown,
+        },
+      }));
     };
 
-    // 2. Disconnect Handler: Hold participant visible for 3s to show "Disconnected" badge
-    const handleParticipantDisconnected = (peer: RemoteParticipant) => {
-      const peerIdentity = peer.identity;
+    const handleParticipantDisconnected = (participant: RemoteParticipant) => {
+      const identity = participant.identity;
 
-      setConnectionStatusMap((prev) => ({
+      setRemoteStatusMap((prev) => ({
         ...prev,
-        [peerIdentity]: ConnectionState.Disconnected,
+        [identity]: {
+          status: 'disconnected',
+          quality: participant.connectionQuality ?? ConnectionQuality.Unknown,
+        },
       }));
 
-      // Snapshot participant to keep rendered
-      const snapshot = participants.find((p) => String(p.id) === peerIdentity);
+      const snapshot = participantsRef.current.find(
+        (p) => (p.rawParticipant?.identity || String(p.id)) === identity
+      );
+
       if (snapshot) {
         setGhostParticipants((prev) => ({
           ...prev,
-          [peerIdentity]: snapshot,
+          [identity]: snapshot,
         }));
       }
 
-      // Clean up ghost state after 3 seconds
-      setTimeout(() => {
+      if (disconnectTimersRef.current[identity]) {
+        clearTimeout(disconnectTimersRef.current[identity]);
+      }
+
+      disconnectTimersRef.current[identity] = setTimeout(() => {
         setGhostParticipants((prev) => {
           const next = { ...prev };
-          delete next[peerIdentity];
+          delete next[identity];
           return next;
         });
-        setConnectionStatusMap((prev) => {
+
+        setRemoteStatusMap((prev) => {
           const next = { ...prev };
-          delete next[peerIdentity];
+          delete next[identity];
           return next;
         });
+
+        delete disconnectTimersRef.current[identity];
       }, 3000);
     };
 
-    // 3. New / Re-connected peer
-    const handleParticipantConnected = (peer: RemoteParticipant) => {
-      setConnectionStatusMap((prev) => ({
-        ...prev,
-        [peer.identity]: ConnectionState.Connected,
-      }));
+    const handleConnectionQualityChanged = (
+      quality: ConnectionQuality,
+      participant: Participant
+    ) => {
+      if (participant.isLocal) return;
+      const identity = participant.identity;
+
+      setRemoteStatusMap((prev) => {
+        const current = prev[identity];
+        if (!current || current.status === 'disconnected') return prev;
+
+        const isDegraded =
+          quality === ConnectionQuality.Poor || quality === ConnectionQuality.Lost;
+
+        return {
+          ...prev,
+          [identity]: {
+            status: isDegraded ? 'poor' : 'connected',
+            quality,
+          },
+        };
+      });
     };
 
-    room.on(RoomEvent.ConnectionQualityChanged, handleQualityChange);
-    room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
     room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+    room.on(RoomEvent.ConnectionQualityChanged, handleConnectionQualityChanged);
 
     return () => {
-      room.off(RoomEvent.ConnectionQualityChanged, handleQualityChange);
-      room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
       room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+      room.off(RoomEvent.ConnectionQualityChanged, handleConnectionQualityChanged);
+
+      Object.values(disconnectTimersRef.current).forEach(clearTimeout);
+      disconnectTimersRef.current = {};
     };
-  }, [room, participants]);
+  }, [room]);
 
   // --------------------------------------------------------------------------
-  // Merge live participants with temporary ghosts
+  // 3. Merge Live & Ghost Participants
   // --------------------------------------------------------------------------
   const displayParticipants = useMemo(() => {
     const list = [...participants];
-    const liveIds = new Set(participants.map((p) => String(p.id)));
+    const liveIds = new Set(
+      participants.map((p) => p.rawParticipant?.identity || String(p.id))
+    );
 
-    Object.values(ghostParticipants).forEach((ghost) => {
-      if (!liveIds.has(String(ghost.id))) {
-        list.push(ghost);
+    Object.entries(ghostParticipants).forEach(([ghostId, ghostParticipant]) => {
+      if (!liveIds.has(ghostId)) {
+        list.push(ghostParticipant);
       }
     });
 
@@ -123,8 +220,25 @@ export const RoomStageParticipants = ({
   return (
     <>
       {displayParticipants.map((participant) => {
-        const currentStatus =
-          connectionStatusMap[String(participant.id)] || participant.connectionStatus;
+        const identity =
+          participant.rawParticipant?.identity || String(participant.id);
+
+        const isLocal = room.localParticipant?.identity === identity;
+        const remoteInfo = remoteStatusMap[identity];
+
+        let currentStatus: ConnectionState;
+
+        if (isLocal) {
+          currentStatus = room.state;
+        } else if (remoteInfo?.status === 'disconnected') {
+          currentStatus = ConnectionState.Disconnected;
+        } else if (remoteInfo?.status === 'connecting' || !remoteInfo) {
+          currentStatus = ConnectionState.Connecting;
+        } else if (remoteInfo?.status === 'reconnecting' || remoteInfo?.status === 'poor') {
+          currentStatus = ConnectionState.Reconnecting;
+        } else {
+          currentStatus = ConnectionState.Connected;
+        }
 
         return (
           <Box
@@ -132,13 +246,15 @@ export const RoomStageParticipants = ({
             sx={{
               width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
               minHeight: 160,
+              ...sx,
             }}
+            {...other}
           >
             <ParticipantContext.Provider value={participant.rawParticipant}>
               <ParticipantTile
                 participant={{
                   ...participant,
-                  connectionStatus: currentStatus as any,
+                  connectionStatus: currentStatus,
                 }}
               />
             </ParticipantContext.Provider>

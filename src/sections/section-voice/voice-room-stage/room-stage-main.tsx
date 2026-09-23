@@ -28,12 +28,7 @@ export type RoomAudioStageProps = {
   onShareClick?: () => void;
   topicPrompt?: string;
   onChangePrompt?: () => void;
-
-  micMuted?: boolean;
-  deafened?: boolean;
   handRaised?: boolean;
-  onToggleMic?: () => void;
-  onToggleDeafen?: () => void;
   onToggleRaiseHand?: () => void;
   onToggleScreenShare?: () => void;
   onSendReaction?: (emoji: string) => void;
@@ -47,11 +42,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onShareClick,
   topicPrompt = '',
   onChangePrompt,
-  micMuted = false,
-  deafened = false,
   handRaised = false,
-  onToggleMic,
-  onToggleDeafen,
   onToggleRaiseHand,
   onToggleScreenShare,
   onSendReaction,
@@ -385,12 +376,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
 
       {/* Persistent Bottom Controls */}
       <RoomControlDock
-        micMuted={micMuted}
-        deafened={deafened}
         handRaised={handRaised}
         isScreenSharing={isLocalScreenSharing}
-        onToggleMic={onToggleMic || (() => { })}
-        onToggleDeafen={onToggleDeafen || (() => { })}
         onToggleRaiseHand={onToggleRaiseHand || (() => { })}
         onToggleScreenShare={onToggleScreenShare}
         onSendReaction={onSendReaction}

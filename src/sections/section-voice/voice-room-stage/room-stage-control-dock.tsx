@@ -8,18 +8,16 @@ import {
   ScreenShareOff,
   Smile,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
+import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Box, Button, IconButton, Popover, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import { Track } from 'livekit-client';
 
 type RoomControlDockProps = {
-  micMuted: boolean;
-  deafened: boolean;
   handRaised: boolean;
   isScreenSharing?: boolean;
-  onToggleMic: () => void;
-  onToggleDeafen: () => void;
   onToggleRaiseHand: () => void;
   onToggleScreenShare?: () => void;
   onSendReaction?: (emoji: string) => void;
@@ -30,12 +28,8 @@ type RoomControlDockProps = {
 const REACTION_EMOJIS = ['👍', '❤️', '👏', '🔥', '🎉', '😂'];
 
 export const RoomControlDock: React.FC<RoomControlDockProps> = ({
-  micMuted,
-  deafened,
   handRaised,
   isScreenSharing = false,
-  onToggleMic,
-  onToggleDeafen,
   onToggleRaiseHand,
   onToggleScreenShare,
   onSendReaction,
@@ -45,6 +39,50 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
+
+  // LiveKit hooks for local mic and deafen controls
+  const room = useRoomContext();
+  const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
+  const [deafened, setDeafened] = useState(false);
+
+  // isMicrophoneEnabled is true when speaking/active; micMuted is the inverted state
+  const micMuted = !isMicrophoneEnabled;
+
+  const handleToggleMic = useCallback(async () => {
+    if (!localParticipant) return;
+    try {
+      await localParticipant.setMicrophoneEnabled(micMuted);
+    } catch (err) {
+      console.error('Failed to toggle microphone:', err);
+    }
+  }, [localParticipant, micMuted]);
+
+  const handleToggleDeafen = useCallback(() => {
+    if (!room) return;
+
+    setDeafened((prevDeafened) => {
+      const nextDeafened = !prevDeafened;
+
+      // Mute or unmute incoming audio elements from remote participants
+      room.remoteParticipants.forEach((participant) => {
+        participant.trackPublications.forEach((publication) => {
+          if (publication.source === Track.Source.Microphone && publication.track) {
+            const mediaStreamTrack = publication.track.mediaStreamTrack;
+            if (mediaStreamTrack) {
+              mediaStreamTrack.enabled = !nextDeafened;
+            }
+          }
+        });
+      });
+
+      // Automatically mute local mic when deafened
+      if (nextDeafened && isMicrophoneEnabled) {
+        localParticipant?.setMicrophoneEnabled(false);
+      }
+
+      return nextDeafened;
+    });
+  }, [room, isMicrophoneEnabled, localParticipant]);
 
   const buttonSx = {
     p: { xs: 0.9, sm: 1.1 },
@@ -78,7 +116,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
           <Tooltip title={micMuted ? 'Unmute microphone' : 'Mute microphone'}>
             <IconButton
-              onClick={onToggleMic}
+              onClick={handleToggleMic}
               sx={{
                 ...buttonSx,
                 bgcolor: micMuted ? 'error.main' : 'background.paper',
@@ -94,7 +132,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 
           <Tooltip title={deafened ? 'Undeafen' : 'Deafen (Mute sound)'}>
             <IconButton
-              onClick={onToggleDeafen}
+              onClick={handleToggleDeafen}
               sx={{
                 ...buttonSx,
                 color: deafened ? 'error.main' : 'text.primary',
