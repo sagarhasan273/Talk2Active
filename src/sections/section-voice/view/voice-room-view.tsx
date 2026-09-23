@@ -22,7 +22,7 @@ import { VoiceRoomJoinGate } from './voice-room-join-gate';
 export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
-  const { room, setRoom } = useRoomTools();
+  const { room, setRoom, resetRoom } = useRoomTools();
 
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
@@ -61,6 +61,8 @@ export function VoiceMainView() {
 
   const handleJoinRoom = useCallback(async () => {
     if (!selectedRoom || !user) return;
+
+    if (isInRoom) { await handleLeaveRoom() }
 
     try {
       const response = await joinRoomMutation({
@@ -101,7 +103,7 @@ export function VoiceMainView() {
     setSelectedRoom(null);
     setLivekitToken(null);
     setIsJoinGateOpen(false);
-    setRoom(null); // Clears active room
+    resetRoom();
 
     // 4. Send leave request to backend API
     if (currentRoomId && currentUserId) {

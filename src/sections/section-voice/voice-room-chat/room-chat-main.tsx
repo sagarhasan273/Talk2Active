@@ -7,7 +7,8 @@ import { useEffect, useState } from 'react';
 
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 import { UseBooleanReturn } from '@/hooks/use-boolean';
-import { ChatMessage, ParticipantStageType } from '../voice-room-stage/types';
+
+import { ChatMessage, ParticipantStageType } from '@/types/type-room';
 import RoomChatPanel from './room-chat-panel';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;

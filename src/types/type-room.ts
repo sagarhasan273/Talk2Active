@@ -109,7 +109,7 @@ export type ParticipantStageType = {
   following_count: number,
   friend_count: number,
 
-  rawParticipant: Participant | RemoteParticipant | LocalParticipant;
+  rawParticipant?: Participant | RemoteParticipant | LocalParticipant;
 }
 
 export interface ChatReaction {
