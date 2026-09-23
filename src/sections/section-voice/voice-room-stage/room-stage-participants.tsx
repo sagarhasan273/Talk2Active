@@ -1,8 +1,10 @@
 // src/sections/section-voice-room/voice-room-workspace/room-stage-participants.tsx
 
-import type { ParticipantStageType } from '@/types/type-room';
+import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
 import {
   ParticipantContext,
+  useLocalParticipant,
+  useParticipants,
   useRoomContext,
 } from '@livekit/components-react';
 import { Box, BoxProps } from '@mui/material';
@@ -29,7 +31,7 @@ interface RemoteParticipantStatus {
 }
 
 export interface RoomStageParticipantsProps extends BoxProps {
-  participants: ParticipantStageType[];
+  participants: RoomParticipantType[];
 }
 
 export const RoomStageParticipants = ({
@@ -38,16 +40,20 @@ export const RoomStageParticipants = ({
   ...other
 }: RoomStageParticipantsProps) => {
   const room = useRoomContext();
+  const remoteLiveKitParticipants = useParticipants();
+  const { localParticipant } = useLocalParticipant();
 
+  // 1. Connection states per identity
   const [remoteStatusMap, setRemoteStatusMap] = useState<
-    Record<string, RemoteParticipantStatus>
+    Record<string, { status: ConnectionState; quality: ConnectionQuality }>
   >({});
 
+  // 2. Ghost participants during disconnect countdown
   const [ghostParticipants, setGhostParticipants] = useState<
     Record<string, ParticipantStageType>
   >({});
 
-  const participantsRef = useRef<ParticipantStageType[]>(participants);
+  const participantsRef = useRef<RoomParticipantType[]>(participants);
   useEffect(() => {
     participantsRef.current = participants;
   }, [participants]);
@@ -55,48 +61,15 @@ export const RoomStageParticipants = ({
   const disconnectTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // --------------------------------------------------------------------------
-  // 1. Synchronize 'connecting' state when `participants` prop changes
+  // LiveKit Connection & RTCP Watchdog
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!room) return;
 
-    setRemoteStatusMap((prev) => {
-      const next = { ...prev };
-      let changed = false;
+    const handleParticipantConnected = (peer: RemoteParticipant) => {
+      const identity = peer.identity;
 
-      participants.forEach((p) => {
-        const identity = p.rawParticipant?.identity || String(p.id);
-
-        // Skip local participant
-        if (room.localParticipant?.identity === identity) return;
-
-        // If the peer is already registered in our map and not disconnected, keep it
-        if (next[identity] && next[identity].status !== 'disconnected') return;
-
-        // Check if LiveKit already has them connected
-        const isAlreadyConnected = room.remoteParticipants.has(identity);
-
-        next[identity] = {
-          status: isAlreadyConnected ? 'connected' : 'connecting',
-          quality: ConnectionQuality.Unknown,
-        };
-        changed = true;
-      });
-
-      return changed ? next : prev;
-    });
-  }, [participants, room]);
-
-  // --------------------------------------------------------------------------
-  // 2. Room Event Listeners (Connected, Disconnected, Quality)
-  // --------------------------------------------------------------------------
-  useEffect(() => {
-    if (!room) return;
-
-    const handleParticipantConnected = (participant: RemoteParticipant) => {
-      const identity = participant.identity;
-
-      // Cancel pending ghost timers
+      // Clear any pending ghost removal timer
       if (disconnectTimersRef.current[identity]) {
         clearTimeout(disconnectTimersRef.current[identity]);
         delete disconnectTimersRef.current[identity];
@@ -112,31 +85,41 @@ export const RoomStageParticipants = ({
       setRemoteStatusMap((prev) => ({
         ...prev,
         [identity]: {
-          status: 'connected',
-          quality: participant.connectionQuality ?? ConnectionQuality.Unknown,
+          status: ConnectionState.Connected,
+          quality: peer.connectionQuality ?? ConnectionQuality.Unknown,
         },
       }));
     };
 
-    const handleParticipantDisconnected = (participant: RemoteParticipant) => {
-      const identity = participant.identity;
+    const handleParticipantDisconnected = (peer: RemoteParticipant) => {
+      const identity = peer.identity;
 
       setRemoteStatusMap((prev) => ({
         ...prev,
         [identity]: {
-          status: 'disconnected',
-          quality: participant.connectionQuality ?? ConnectionQuality.Unknown,
+          status: ConnectionState.Disconnected,
+          quality: peer.connectionQuality ?? ConnectionQuality.Unknown,
         },
       }));
 
-      const snapshot = participantsRef.current.find(
-        (p) => (p.rawParticipant?.identity || String(p.id)) === identity
+      // Snapshot the participant into ghost state for 3 seconds
+      const currentSnapshot = participantsRef.current.find(
+        (p) => String(p.userId) === identity
       );
 
-      if (snapshot) {
+      if (currentSnapshot) {
         setGhostParticipants((prev) => ({
           ...prev,
-          [identity]: snapshot,
+          [identity]: {
+            ...currentSnapshot,
+            id: currentSnapshot.userId,
+            joinedAt: new Date(currentSnapshot.joinedAt).toISOString(),
+            connectionStatus: ConnectionState.Disconnected,
+            rawParticipant: undefined,
+            role: 'participant',
+            handRaised: false,
+            activeReactionEmoji: null,
+          } as unknown as ParticipantStageType,
         }));
       }
 
@@ -161,24 +144,18 @@ export const RoomStageParticipants = ({
       }, 3000);
     };
 
-    const handleConnectionQualityChanged = (
-      quality: ConnectionQuality,
-      participant: Participant
-    ) => {
-      if (participant.isLocal) return;
-      const identity = participant.identity;
+    const handleConnectionQualityChanged = (quality: ConnectionQuality, p: Participant) => {
+      if (p.isLocal) return;
+      const identity = p.identity;
 
       setRemoteStatusMap((prev) => {
-        const current = prev[identity];
-        if (!current || current.status === 'disconnected') return prev;
-
         const isDegraded =
           quality === ConnectionQuality.Poor || quality === ConnectionQuality.Lost;
 
         return {
           ...prev,
           [identity]: {
-            status: isDegraded ? 'poor' : 'connected',
+            status: isDegraded ? ConnectionState.Reconnecting : ConnectionState.Connected,
             quality,
           },
         };
@@ -200,45 +177,72 @@ export const RoomStageParticipants = ({
   }, [room]);
 
   // --------------------------------------------------------------------------
-  // 3. Merge Live & Ghost Participants
+  // Merge Room Participants with LiveKit WebRTC Tracks & Ghosts
   // --------------------------------------------------------------------------
-  const displayParticipants = useMemo(() => {
-    const list = [...participants];
-    const liveIds = new Set(
-      participants.map((p) => p.rawParticipant?.identity || String(p.id))
-    );
+  const displayParticipants = useMemo<ParticipantStageType[]>(() => {
+    // 1. Build fast identity lookup map for active LiveKit peers
+    const livekitMap = new Map<string, Participant>();
+    if (localParticipant?.identity) {
+      livekitMap.set(String(localParticipant.identity), localParticipant);
+    }
+    remoteLiveKitParticipants.forEach((p) => {
+      if (p?.identity) {
+        livekitMap.set(String(p.identity), p);
+      }
+    });
 
-    Object.entries(ghostParticipants).forEach(([ghostId, ghostParticipant]) => {
-      if (!liveIds.has(ghostId)) {
-        list.push(ghostParticipant);
+    const list: ParticipantStageType[] = [];
+    const processedIds = new Set<string>();
+
+    // 2. Map and enrich incoming participants prop
+    participants.forEach((p) => {
+      const id = String(p.userId);
+      processedIds.add(id);
+
+      const livekitP = livekitMap.get(id);
+      const isSelf = Boolean(p.isSelf || (localParticipant && localParticipant.identity === id));
+
+      // Resolve connection status
+      let status: ConnectionState;
+      if (isSelf) {
+        status = room?.state || ConnectionState.Connected;
+      } else if (remoteStatusMap[id]) {
+        status = remoteStatusMap[id].status;
+      } else {
+        status = livekitP ? ConnectionState.Connected : ConnectionState.Connecting;
+      }
+
+      list.push({
+        ...p,
+        id,
+        joinedAt: new Date(p.joinedAt).toISOString(),
+        isSelf,
+        rawParticipant: livekitP,
+        connectionStatus: status,
+      } as ParticipantStageType);
+    });
+
+    // 3. Append remaining ghosts that are no longer in the active participants prop
+    Object.entries(ghostParticipants).forEach(([ghostId, ghost]) => {
+      if (!processedIds.has(ghostId)) {
+        list.push(ghost);
       }
     });
 
     return list;
-  }, [participants, ghostParticipants]);
+  }, [
+    participants,
+    ghostParticipants,
+    remoteLiveKitParticipants,
+    localParticipant,
+    remoteStatusMap,
+    room?.state,
+  ]);
 
   return (
     <>
       {displayParticipants.map((participant) => {
-        const identity =
-          participant.rawParticipant?.identity || String(participant.id);
-
-        const isLocal = room.localParticipant?.identity === identity;
-        const remoteInfo = remoteStatusMap[identity];
-
-        let currentStatus: ConnectionState;
-
-        if (isLocal) {
-          currentStatus = room.state;
-        } else if (remoteInfo?.status === 'disconnected') {
-          currentStatus = ConnectionState.Disconnected;
-        } else if (remoteInfo?.status === 'connecting' || !remoteInfo) {
-          currentStatus = ConnectionState.Connecting;
-        } else if (remoteInfo?.status === 'reconnecting' || remoteInfo?.status === 'poor') {
-          currentStatus = ConnectionState.Reconnecting;
-        } else {
-          currentStatus = ConnectionState.Connected;
-        }
+        const tile = <ParticipantTile participant={participant} />;
 
         return (
           <Box
@@ -250,14 +254,13 @@ export const RoomStageParticipants = ({
             }}
             {...other}
           >
-            <ParticipantContext.Provider value={participant?.rawParticipant}>
-              <ParticipantTile
-                participant={{
-                  ...participant,
-                  connectionStatus: currentStatus,
-                }}
-              />
-            </ParticipantContext.Provider>
+            {participant.rawParticipant ? (
+              <ParticipantContext.Provider value={participant.rawParticipant}>
+                {tile}
+              </ParticipantContext.Provider>
+            ) : (
+              tile
+            )}
           </Box>
         );
       })}

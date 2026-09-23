@@ -11,7 +11,7 @@ interface RoomState {
   roomId: null | string;
   room: null | RoomType;
   loading: boolean;
-  participants: { [userId: string]: RoomParticipantType };
+  participants: RoomParticipantType[];
   isUnreadRoomMessage: boolean;
 }
 
@@ -20,7 +20,7 @@ const initialState: RoomState = {
   roomId: null,
   room: null,
   loading: false,
-  participants: {} as { [userId: string]: RoomParticipantType },
+  participants: [],
   isUnreadRoomMessage: false,
 };
 
@@ -36,7 +36,15 @@ export const roomSlice = createSlice({
 
       if (action.payload?.participants) {
         action.payload.participants.forEach(participant => {
-          state.participants[participant.userId] = participant;
+          const index = state.participants.findIndex(
+            currentParticipant => currentParticipant.userId === participant.userId,
+          );
+
+          if (index >= 0) {
+            state.participants[index] = participant;
+          } else {
+            state.participants.push(participant);
+          }
         });
       }
     },
@@ -46,7 +54,7 @@ export const roomSlice = createSlice({
     },
 
     addParticipant: (state, action: PayloadAction<RoomParticipantType>) => {
-      state.participants[action.payload.userId] = action.payload;
+      state.participants.push(action.payload);
     },
 
     updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
@@ -54,27 +62,28 @@ export const roomSlice = createSlice({
         return;
       }
 
-      state.participants[action.payload.userId] = {
-        ...state.participants[action.payload.userId],
+      const index = state.participants.findIndex(
+        participant => participant.userId === action.payload.userId,
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      state.participants[index] = {
+        ...state.participants[index],
         ...action.payload,
       };
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
-      if (!state.participants[action.payload]) {
-        let removeUserId = null;
-        Object.values(state.participants).forEach((participant) => {
-          if (participant.userId === action.payload) {
-            removeUserId = participant.userId;
-          }
-        });
-        if (removeUserId) delete state.participants[removeUserId];
-      }
-      if (action.payload) delete state.participants[action.payload];
+      state.participants = state.participants.filter(
+        participant => participant.userId !== action.payload,
+      );
     },
 
     resetParticipants: (state) => {
-      state.participants = {};
+      state.participants = [];
     },
 
     resetRoom: (state) => {

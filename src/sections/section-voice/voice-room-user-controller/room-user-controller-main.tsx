@@ -116,8 +116,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   open,
   onClose,
   user,
-  onFollow,
-  onUnfollow,
   onBlock,
   onReport,
   onVolumeChange,

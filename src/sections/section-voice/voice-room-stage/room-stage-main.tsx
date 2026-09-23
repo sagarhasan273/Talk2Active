@@ -14,7 +14,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRoomTools } from '@/core/slices';
 
-import { useRoomStage } from '@/core/contexts/context-room-stage';
 import { ParticipantStageType } from '@/types/type-room';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
@@ -54,7 +53,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const { room } = useRoomTools();
 
   // 1. Consume Stage Context (Fallback to external prop if passed)
-  const { participants } = useRoomStage();
+  const { participants } = useRoomTools();
 
   // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
