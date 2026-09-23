@@ -54,7 +54,25 @@ export const roomSlice = createSlice({
     },
 
     addParticipant: (state, action: PayloadAction<RoomParticipantType>) => {
-      state.participants.push(action.payload);
+      const newParticipant = action.payload;
+      const newId = String(newParticipant.userId);
+
+      // 1. Prevent duplicates
+      const exists = state.participants.some(
+        (p) => String(p.userId) === newId
+      );
+      if (exists) return;
+
+      // 2. Update top-level array
+      state.participants.push(newParticipant);
+
+      // 3. Keep room copy in sync safely
+      if (state.room) {
+        if (!state.room.participants) {
+          state.room.participants = [];
+        }
+        state.room.participants.push(newParticipant);
+      }
     },
 
     updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
@@ -77,9 +95,15 @@ export const roomSlice = createSlice({
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
+      const targetId = String(action.payload);
+
       state.participants = state.participants.filter(
-        participant => participant.userId !== action.payload,
+        (p) => String(p.userId) !== targetId
       );
+
+      if (state.room && state.room.participants) {
+        state.room.participants = state.participants;
+      }
     },
 
     resetParticipants: (state) => {
@@ -89,6 +113,7 @@ export const roomSlice = createSlice({
     resetRoom: (state) => {
       state.roomId = null;
       state.room = null;
+      state.participants = [];
     },
   },
 });

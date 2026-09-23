@@ -12,14 +12,13 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useSocket } from '@/core/contexts/context-socket';
 import { useRoomTools } from '@/core/slices';
-
-import { ParticipantStageType } from '@/types/type-room';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
+import useRoomStageListener from './hook-room-statge-listener';
 import { RoomControlDock } from './room-stage-control-dock';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import RoomStageParticipants from './room-stage-participants';
-
 
 export type RoomAudioStageProps = {
   onBack?: () => void;
@@ -28,12 +27,13 @@ export type RoomAudioStageProps = {
   topicPrompt?: string;
   onChangePrompt?: () => void;
   handRaised?: boolean;
+  raisedHandsSet?: Set<string>;
+  participantReactions?: Record<string, string>;
   onToggleRaiseHand?: () => void;
   onToggleScreenShare?: () => void;
   onSendReaction?: (emoji: string) => void;
   onToggleChat?: () => void;
   onLeave?: () => void;
-  onProfileClick?: (participant: ParticipantStageType) => void;
 };
 
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
@@ -42,6 +42,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   topicPrompt = '',
   onChangePrompt,
   handRaised = false,
+  raisedHandsSet = new Set(),
+  participantReactions = {},
   onToggleRaiseHand,
   onToggleScreenShare,
   onSendReaction,
@@ -50,10 +52,16 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onSettingsClick,
 }) => {
   const theme = useTheme();
-  const { room } = useRoomTools();
 
-  // 1. Consume Stage Context (Fallback to external prop if passed)
-  const { participants } = useRoomTools();
+  const { socket } = useSocket();
+  const { room, roomId, participants, addParticipant, removeParticipant } = useRoomTools();
+
+  useRoomStageListener({
+    socket,
+    roomId,
+    addParticipant,
+    removeParticipant,
+  });
 
   // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
@@ -63,12 +71,14 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const [presentationOnly, setPresentationOnly] = useState(false);
   const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
-  // 2. LiveKit Screen Share Subscription
+  // LiveKit Screen Share Subscription
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const activeScreenShare = screenShareTracks[0];
 
-  const hasScreenShare = Boolean(activeScreenShare?.publication && activeScreenShare?.publication?.isSubscribed);
-  const maxParticipants = Number(room?.max_participants);
+  const hasScreenShare = Boolean(
+    activeScreenShare?.publication && activeScreenShare?.publication?.isSubscribed
+  );
+  const maxParticipants = Number(room?.max_participants) || 0;
 
   const isLocalScreenSharing = useMemo(
     () => screenShareTracks.some((t) => t.participant.isLocal),
@@ -114,11 +124,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   };
 
   const openSlots = useMemo(
-    () => Math.max(0, maxParticipants - participants.length),
-    [maxParticipants, participants.length]
+    () => Math.max(0, maxParticipants - (participants?.length || 0)),
+    [maxParticipants, participants?.length]
   );
-
-  console.log('render room-stage-main')
 
   return (
     <Box
@@ -137,7 +145,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Top Header Placement */}
+      {/* Top Header */}
       {room && (
         <CompactRoomHeader
           room={room}
@@ -302,7 +310,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     '&::-webkit-scrollbar': { display: 'none' },
                   }}
                 >
-                  <RoomStageParticipants participants={participants} />
+                  <RoomStageParticipants
+                    participants={participants}
+                    raisedHandsSet={raisedHandsSet}
+                    participantReactions={participantReactions}
+                  />
 
                   {openSlots > 0 && (
                     <Box sx={{ width: 140, minWidth: 140, height: 140 }}>
@@ -354,7 +366,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     m: 'auto',
                   }}
                 >
-                  <RoomStageParticipants participants={participants} />
+                  <RoomStageParticipants
+                    participants={participants}
+                    raisedHandsSet={raisedHandsSet}
+                    participantReactions={participantReactions}
+                  />
 
                   {openSlots > 0 && (
                     <Box

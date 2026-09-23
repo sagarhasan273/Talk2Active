@@ -351,6 +351,8 @@ export function RoomContainerMain({
         <RoomAudioStage
           topicPrompt=""
           handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
+          raisedHandsSet={raisedHandsSet}
+          participantReactions={participantReactions}
           onChangePrompt={() => { }}
           onToggleRaiseHand={handleToggleRaiseHand}
           onToggleScreenShare={handleToggleScreenShare}

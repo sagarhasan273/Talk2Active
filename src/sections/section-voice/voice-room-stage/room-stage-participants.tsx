@@ -1,5 +1,3 @@
-// src/sections/section-voice-room/voice-room-workspace/room-stage-participants.tsx
-
 import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
 import {
   ParticipantContext,
@@ -17,7 +15,9 @@ function parseParticipant(
   data: RoomParticipantType,
   livekitP?: Participant,
   roomState?: ConnectionState,
-  localIdentity?: string
+  localIdentity?: string,
+  isHandRaised: boolean = false,
+  activeReactionEmoji: string | null = null
 ): ParticipantStageType {
   const id = String(data.userId);
   const isSelf = Boolean(data.isSelf || (localIdentity && localIdentity === id));
@@ -39,8 +39,8 @@ function parseParticipant(
     accountType: data.accountType || 'member',
     status: 'online',
     isHost: Boolean(data.isHost),
-    handRaised: false,
-    activeReactionEmoji: null,
+    handRaised: isHandRaised,
+    activeReactionEmoji,
     role: data.isHost ? 'host' : 'listener',
     isSelf,
     isFollowing: Boolean(data.isFollowing),
@@ -58,7 +58,9 @@ function parseParticipant(
 // Helper 2: For users in LiveKit who haven't arrived in props yet
 function parseLiveKitOnlyParticipant(
   livekitP: Participant,
-  localIdentity?: string
+  localIdentity?: string,
+  isHandRaised: boolean = false,
+  activeReactionEmoji: string | null = null
 ): ParticipantStageType {
   let meta: Record<string, any> = {};
   try {
@@ -80,8 +82,8 @@ function parseLiveKitOnlyParticipant(
     accountType: meta.accountType || 'member',
     status: 'online',
     isHost: Boolean(meta.isHost),
-    handRaised: false,
-    activeReactionEmoji: null,
+    handRaised: isHandRaised,
+    activeReactionEmoji,
     role: meta.isHost ? 'host' : 'listener',
     isSelf,
     verified: Boolean(meta.verified),
@@ -96,10 +98,15 @@ function parseLiveKitOnlyParticipant(
 
 export interface RoomStageParticipantsProps extends BoxProps {
   participants: RoomParticipantType[];
+  raisedHandsSet?: Set<string>;
+  participantReactions?: Record<string, string>;
+  onProfileClick?: (participant: ParticipantStageType) => void;
 }
 
 export const RoomStageParticipants = ({
   participants = [],
+  raisedHandsSet = new Set(),
+  participantReactions = {},
   sx,
   ...other
 }: RoomStageParticipantsProps) => {
@@ -120,28 +127,50 @@ export const RoomStageParticipants = ({
 
     const renderedIds = new Set<string>();
 
-    // 2. Render all users from props
+    // 2. Render all users from props with real-time hand raise and reaction state
     const list: ParticipantStageType[] = participants.map((p) => {
       const id = String(p.userId);
       renderedIds.add(id);
+
+      const isHandRaised = raisedHandsSet.has(id);
+      const activeReactionEmoji = participantReactions[id] || null;
 
       return parseParticipant(
         p,
         livekitMap.get(id),
         room?.state,
-        localParticipant?.identity
+        localParticipant?.identity,
+        isHandRaised,
+        activeReactionEmoji
       );
     });
 
     // 3. Catch any active LiveKit peer missing from props
     livekitMap.forEach((livekitP, identity) => {
       if (!renderedIds.has(identity)) {
-        list.push(parseLiveKitOnlyParticipant(livekitP, localParticipant?.identity));
+        const isHandRaised = raisedHandsSet.has(identity);
+        const activeReactionEmoji = participantReactions[identity] || null;
+
+        list.push(
+          parseLiveKitOnlyParticipant(
+            livekitP,
+            localParticipant?.identity,
+            isHandRaised,
+            activeReactionEmoji
+          )
+        );
       }
     });
 
     return list;
-  }, [participants, remoteLiveKitParticipants, localParticipant, room?.state]);
+  }, [
+    participants,
+    remoteLiveKitParticipants,
+    localParticipant,
+    room?.state,
+    raisedHandsSet,
+    participantReactions,
+  ]);
 
   return (
     <>
@@ -157,10 +186,14 @@ export const RoomStageParticipants = ({
         >
           {participant.rawParticipant ? (
             <ParticipantContext.Provider value={participant.rawParticipant}>
-              <ParticipantTile participant={participant} />
+              <ParticipantTile
+                participant={participant}
+              />
             </ParticipantContext.Provider>
           ) : (
-            <ParticipantTile participant={participant} />
+            <ParticipantTile
+              participant={participant}
+            />
           )}
         </Box>
       ))}
