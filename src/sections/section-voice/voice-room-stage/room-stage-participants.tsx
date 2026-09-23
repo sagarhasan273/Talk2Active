@@ -10,7 +10,7 @@ import { ConnectionState, type Participant } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 import ParticipantTile from './room-stage-participant-tile';
 
-const GHOST_DURATION_MS = 10000;
+const GHOST_DURATION_MS = 3000;
 
 function parseParticipant(
   data: RoomParticipantType,

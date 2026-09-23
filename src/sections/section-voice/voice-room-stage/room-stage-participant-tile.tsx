@@ -284,38 +284,52 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.25,
-          borderRadius: 1,
+          borderRadius: 1.5,
           cursor: 'pointer',
           userSelect: 'none',
           outline: 'none',
           overflow: 'hidden',
           boxSizing: 'border-box',
+
+          // --- Neutral Slate Surface (works seamlessly in Dark & Light) ---
           bgcolor: isDark
-            ? alpha(theme.palette.background.paper, 0.85)
-            : alpha(theme.palette.common.white, 0.95),
+            ? alpha(theme.palette.background.paper, 0.6)
+            : alpha(theme.palette.grey[100] || '#F8FAFC', 0.8),
+          backdropFilter: 'blur(8px)',
+
           border: '1.5px solid',
           borderColor: handRaised
             ? theme.palette.warning.main
             : isDark
-              ? alpha(theme.palette.common.white, 0.08)
-              : alpha(theme.palette.common.black, 0.08),
-          transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease',
+              ? alpha(theme.palette.common.white, 0.8)
+              : alpha(theme.palette.common.black, 0.3),
+
+          boxShadow: isDark
+            ? '0 4px 16px -2px rgba(0, 0, 0, 0.45)'
+            : '0 2px 10px -2px rgba(15, 23, 42, 0.05)',
+
+          transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+
           '&:hover': {
-            transform: 'translateY(-0.5px)',
+            transform: 'translateY(-1.5px)',
             bgcolor: isDark
-              ? alpha(theme.palette.background.paper, 0.98)
+              ? alpha(theme.palette.background.paper, 0.88)
               : theme.palette.common.white,
-            borderColor: isSpeaking
-              ? theme.palette.primary.main
-              : alpha(theme.palette.primary.main, 0.4),
+            borderColor: handRaised
+              ? theme.palette.warning.main
+              : alpha(theme.palette.primary.main, 0.45),
+            boxShadow: isDark
+              ? '0 8px 24px -4px rgba(0, 0, 0, 0.6)'
+              : '0 6px 18px -3px rgba(15, 23, 42, 0.08)',
           },
+
           '&:focus-visible': {
             boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
           },
         }}
       >
         {/* 1. AFK / Busy Status Dot */}
-        {status && status !== 'online' && (
+        {status && !['online', 'offline'].includes(status) && (
           <Tooltip title={STATUS_MAP[status]?.label} arrow placement="top">
             <StatusDot status={status}>
               {(() => {
@@ -388,27 +402,43 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
 
           {/* 4. Floating Host Crown */}
           {participant?.isHost && !connectionOverlayElement && (
-            <Tooltip title="Host" arrow placement="top">
-              <Box
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 4,
+                left: 6,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                height: 20,
+                pl: 0.6,
+                pr: 0.85,
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #FFB020 0%, #D97706 100%)',
+                color: '#FFFFFF',
+                border: `1.5px solid ${theme.palette.background.paper}`,
+                boxShadow: '0 2px 8px rgba(217, 119, 6, 0.45)',
+                zIndex: 4,
+                pointerEvents: 'none',
+                userSelect: 'none',
+                transition: 'transform 0.2s ease',
+                '&:hover': { transform: 'scale(1.04)' },
+              }}
+            >
+              <Crown size={11} strokeWidth={2.8} style={{ flexShrink: 0 }} />
+              <Typography
+                component="span"
                 sx={{
-                  position: 'absolute',
-                  top: 4,
-                  left: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 22,
-                  height: 22,
-                  borderRadius: '50%',
-                  bgcolor: '#F59E0B',
-                  color: '#FFF',
-                  boxShadow: '0 2px 6px rgba(245, 158, 11, 0.45)',
-                  zIndex: 2,
+                  fontSize: '0.625rem',
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
                 }}
               >
-                <Crown size={12} strokeWidth={2.5} />
-              </Box>
-            </Tooltip>
+                Host
+              </Typography>
+            </Box>
           )}
 
           {/* 5. Hand Raised Badge */}

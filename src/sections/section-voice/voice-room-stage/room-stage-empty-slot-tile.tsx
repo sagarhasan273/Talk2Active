@@ -9,6 +9,7 @@ type EmptySlotTileProps = {
 
 export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlotTileProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   return (
     <Box
@@ -21,7 +22,9 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
         alignItems: 'center',
         justifyContent: 'center',
         border: '1px solid',
-        borderColor: 'divider',
+        borderColor: isDark
+          ? alpha(theme.palette.common.white, 0.8)
+          : alpha(theme.palette.common.black, 0.3),
         borderRadius: 1,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'border-color 0.2s ease',
