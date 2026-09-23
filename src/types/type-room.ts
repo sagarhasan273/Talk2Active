@@ -1,3 +1,4 @@
+import type { LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
 import type { LucideIcon } from 'lucide-react';
 import type {
   RoomCreateSchema,
@@ -8,6 +9,7 @@ import type {
   RoomUpdateSchema
 } from 'src/schemas/schema-chat';
 import type { z } from 'zod';
+
 
 import type { UserType } from './type-user';
 
@@ -57,13 +59,6 @@ export type LeaveRoomUserInput = {
   kicked?: boolean;
 };
 
-// src/sections/section-voice/voice-room-stage/types.ts
-
-import type { LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
-
-/**
- * Standardized parsed metadata transmitted over LiveKit room tokens or participant metadata
- */
 export interface ParticipantMetadataType {
   name?: string;
   username?: string;
@@ -76,57 +71,47 @@ export interface ParticipantMetadataType {
   [key: string]: unknown;
 }
 
-/**
- * High-level room role representation
- */
 export type ParticipantRoomRole = 'host' | 'co-host' | 'speaker' | 'listener';
 
-/**
- * Reactive audio states (used by indicators and speaking animations)
- */
 export type ParticipantAudioState = 'speaking' | 'unmuted' | 'muted' | 'listening';
 
-/**
- * Primary enriched participant type consumed by Stage, Audio Tiles, Contexts, and Drawers
- */
-export interface ParticipantStageType {
+export type ParticipantStageType = {
   // Identifiers
-  id: string;                                // LiveKit identity string
-  userId: string;                            // Unique app database user ID
-  genUserId?: string;                        // Public/display user identifier code
+  id: string;
+  userId: string;
+  genUserId?: string;
 
   // Profile & Details
-  name: string;                              // Display name
-  username: string;                          // Handle (e.g. @alex)
-  profilePhoto: string;                      // Avatar URL
-  verified: boolean;                         // Verification badge check
-  accountType?: string;                      // e.g. 'creator', 'premium', 'standard'
-  status?: string;                           // Chat user status ('online', 'afk', etc.)
+  name: string;
+  username: string;
+  profilePhoto: string;
+  verified: boolean;
+  accountType?: UserType['accountType'];
+  status?: string;
+  joinedAt: string,
+  bio?: string,
 
   // Room State & Permissions
-  role: ParticipantRoomRole;                 // 'host' | 'co-host' | 'speaker' | 'listener'
-  isHost: boolean;                           // True if host of current active room
-  isSelf: boolean;                           // True if this participant is the local viewer
-  handRaised: boolean;                       // Hand raise flag from real-time interaction
-  activeReactionEmoji: string | null;        // Active floating reaction emoji (or null)
+  role: ParticipantRoomRole;
+  isHost: boolean;
+  isSelf: boolean;
+  handRaised: boolean;
+  activeReactionEmoji: string | null;
 
-  // Optional LiveKit Connection & Audio Flags (resolved locally or in tiles)
   audioState?: ParticipantAudioState;        // 'speaking' | 'unmuted' | 'muted' | 'listening'
-  isSpeaking?: boolean;                      // Real-time audio activity flag
+  isSpeaking?: boolean;
   connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'failed' | null;
-  hasJoin?: boolean;                         // Connection lifecycle flag
+  hasJoin?: boolean;
 
-  // Social Relations (O(1) Set lookups relative to current logged-in user)
-  isFollowing: boolean;                      // True if current user follows this participant                     // True if mutual friend
-  isBlocked: boolean;                        // True if blocked by current user
+  isFollowing: boolean;
+  isBlocked: boolean;
+  follower_count: number,
+  following_count: number,
+  friend_count: number,
 
-  // Raw LiveKit Object Reference
   rawParticipant: Participant | RemoteParticipant | LocalParticipant;
 }
 
-/**
- * Chat Message Types (used by Stage Chat and Data Channel)
- */
 export interface ChatReaction {
   emoji: string;
   count: number;

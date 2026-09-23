@@ -14,7 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRoomTools } from '@/core/slices';
 
-import { useVoiceRoomStage } from '@/core/contexts/context-room-stage';
+import { useRoomStage } from '@/core/contexts/context-room-stage';
 import { ParticipantStageType } from '@/types/type-room';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
@@ -28,7 +28,7 @@ export type RoomAudioStageProps = {
   onShareClick?: () => void;
   topicPrompt?: string;
   onChangePrompt?: () => void;
-  participants?: ParticipantStageType[];
+
   micMuted?: boolean;
   deafened?: boolean;
   handRaised?: boolean;
@@ -47,7 +47,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onShareClick,
   topicPrompt = '',
   onChangePrompt,
-  participants: externalParticipants,
   micMuted = false,
   deafened = false,
   handRaised = false,
@@ -64,8 +63,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const { room } = useRoomTools();
 
   // 1. Consume Stage Context (Fallback to external prop if passed)
-  const stageContext = useVoiceRoomStage();
-  const participants = externalParticipants ?? stageContext.participants;
+  const { participants } = useRoomStage();
 
   // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);

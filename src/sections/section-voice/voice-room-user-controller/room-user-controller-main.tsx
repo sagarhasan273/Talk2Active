@@ -48,7 +48,6 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
-import { useCredentials } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
@@ -56,7 +55,7 @@ import { fUsername } from 'src/utils/helper';
 interface RoomUserControllerMainProps {
   open: boolean;
   onClose: () => void;
-  user: any;
+  user: ParticipantStageType;
   onFollow?: (userId: string) => void;
   onUnfollow?: (userId: string) => void;
   onBlock?: (userId: string) => void;
@@ -113,8 +112,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const room = useRoomContext();
 
-  const { checkIfFollowing, checkIfBlocked } = useCredentials();
-
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
 
   const participant = {
@@ -131,8 +128,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     joinedAt: user?.joinedAt,
     bio: user?.bio,
 
-    isFollowing: checkIfFollowing(user.id),
-    isBlocked: checkIfBlocked(user.id),
+    isFollowing: user?.isFollowing,
+    isBlocked: user?.isBlocked
   }
 
   const {
@@ -140,7 +137,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     audioState = 'muted',
     isSpeaking = audioState === 'speaking',
     isSelf = false,
-    level,
   } = safeUser;
 
   const isMuted = audioState === 'muted';
@@ -183,22 +179,12 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
         const currentVol = getLiveKitTrackVolume(room, userId);
         setVolume(currentVol * 100);
       } else {
-        setVolume(typeof safeUser.volume === 'number' ? safeUser.volume : 100);
+        setVolume(100);
       }
       setIsFollowing(Boolean(participant?.isFollowing));
       setIsBlocked(Boolean(participant?.isBlocked));
     }
-  }, [safeUser.volume, participant?.isFollowing, participant?.isBlocked, userId, room, isSelf, open]);
-
-  const handleFollowToggle = () => {
-    if (!userId) return;
-    if (isFollowing) {
-      onUnfollow?.(userId);
-    } else {
-      onFollow?.(userId);
-    }
-    setIsFollowing((prev) => !prev);
-  };
+  }, [participant?.isFollowing, participant?.isBlocked, userId, room, isSelf, open]);
 
   const handleBlockToggle = () => {
     if (!userId) return;
@@ -586,16 +572,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 </Box>
               </Stack>
 
-              {/* Tags / Chips */}
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {level && (
-                  <Chip
-                    label={level}
-                    size="small"
-                    variant="outlined"
-                    sx={{ height: 24, fontSize: 10 }}
-                  />
-                )}
                 {isSpeaking && (
                   <Chip
                     label="Speaking"
