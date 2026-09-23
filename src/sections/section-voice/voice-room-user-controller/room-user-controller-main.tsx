@@ -46,6 +46,7 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
+import { useCredentials } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
@@ -127,6 +128,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const { checkIfFollowing, checkIfBlocked } = useCredentials();
   const room = useRoomContext();
 
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
@@ -144,8 +147,9 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     isHost: user?.isHost,
     joinedAt: user?.joinedAt,
     bio: user?.bio,
-    isFollowing: user?.isFollowing,
-    isBlocked: user?.isBlocked,
+
+    isFollowing: checkIfFollowing(user?.userId),
+    isBlocked: checkIfBlocked(user?.userId)
   };
 
   const { id: userId = '', isSelf = false, rawParticipant } = safeUser;
@@ -928,9 +932,9 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               <ButtonRelationshipToggle
                 targetUser={{
                   id: userId,
-                  name: participant?.name as string,
+                  name: participant?.name,
                 }}
-                isFollow={participant?.isFollowing}
+                isFollow={isFollowing}
                 size="small"
                 variant="soft"
                 fullWidth

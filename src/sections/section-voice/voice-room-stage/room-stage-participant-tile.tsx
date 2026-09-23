@@ -173,12 +173,10 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   const isDark = theme.palette.mode === 'dark';
 
   const {
-    id,
     isSelf,
     handRaised,
     activeReactionEmoji,
     status,
-    hasJoin = true,
     rawParticipant,
     connectionStatus
   } = participant;

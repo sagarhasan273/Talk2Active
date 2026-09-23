@@ -8,26 +8,90 @@ import {
   useRoomContext,
 } from '@livekit/components-react';
 import { Box, BoxProps } from '@mui/material';
-import {
-  ConnectionQuality,
-  ConnectionState,
-  Participant,
-  RemoteParticipant,
-  RoomEvent,
-} from 'livekit-client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ConnectionState, type Participant } from 'livekit-client';
+import { useMemo } from 'react';
 import ParticipantTile from './room-stage-participant-tile';
 
-type RemoteStatus =
-  | 'connecting'
-  | 'connected'
-  | 'poor'
-  | 'reconnecting'
-  | 'disconnected';
+// Helper 1: For users present in the props array
+function parseParticipant(
+  data: RoomParticipantType,
+  livekitP?: Participant,
+  roomState?: ConnectionState,
+  localIdentity?: string
+): ParticipantStageType {
+  const id = String(data.userId);
+  const isSelf = Boolean(data.isSelf || (localIdentity && localIdentity === id));
 
-interface RemoteParticipantStatus {
-  status: RemoteStatus;
-  quality: ConnectionQuality;
+  const connectionStatus = isSelf
+    ? roomState || ConnectionState.Connected
+    : livekitP
+      ? ConnectionState.Connected
+      : ConnectionState.Connecting;
+
+  return {
+    ...data,
+    id,
+    userId: id,
+    name: livekitP?.name || data.name || (isSelf ? 'You' : 'Anonymous'),
+    username: data.username || '',
+    profilePhoto: data.profilePhoto || '',
+    genUserId: data.genUserId || '',
+    accountType: data.accountType || 'member',
+    status: 'online',
+    isHost: Boolean(data.isHost),
+    handRaised: false,
+    activeReactionEmoji: null,
+    role: data.isHost ? 'host' : 'listener',
+    isSelf,
+    isFollowing: Boolean(data.isFollowing),
+    isBlocked: Boolean(data.isBlocked),
+    verified: Boolean(data.verified),
+    follower_count: data.follower_count ?? 0,
+    following_count: data.following_count ?? 0,
+    friend_count: data.friend_count ?? 0,
+    joinedAt: new Date(data.joinedAt).toISOString(),
+    rawParticipant: livekitP,
+    connectionStatus,
+  } as ParticipantStageType;
+}
+
+// Helper 2: For users in LiveKit who haven't arrived in props yet
+function parseLiveKitOnlyParticipant(
+  livekitP: Participant,
+  localIdentity?: string
+): ParticipantStageType {
+  let meta: Record<string, any> = {};
+  try {
+    if (livekitP.metadata) meta = JSON.parse(livekitP.metadata);
+  } catch {
+    // Non-JSON fallback
+  }
+
+  const id = String(livekitP.identity);
+  const isSelf = Boolean(localIdentity && localIdentity === id);
+
+  return {
+    id,
+    userId: meta.userId || id,
+    name: livekitP.name || meta.name || (isSelf ? 'You' : 'Anonymous'),
+    username: meta.username || '',
+    profilePhoto: meta.profilePhoto || '',
+    genUserId: meta.genUserId || '',
+    accountType: meta.accountType || 'member',
+    status: 'online',
+    isHost: Boolean(meta.isHost),
+    handRaised: false,
+    activeReactionEmoji: null,
+    role: meta.isHost ? 'host' : 'listener',
+    isSelf,
+    verified: Boolean(meta.verified),
+    follower_count: meta.follower_count ?? 0,
+    following_count: meta.following_count ?? 0,
+    friend_count: meta.friend_count ?? 0,
+    joinedAt: meta.joinedAt || new Date().toISOString(),
+    rawParticipant: livekitP,
+    connectionStatus: ConnectionState.Connected,
+  } as ParticipantStageType;
 }
 
 export interface RoomStageParticipantsProps extends BoxProps {
@@ -43,227 +107,63 @@ export const RoomStageParticipants = ({
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
 
-  // 1. Connection states per identity
-  const [remoteStatusMap, setRemoteStatusMap] = useState<
-    Record<string, { status: ConnectionState; quality: ConnectionQuality }>
-  >({});
-
-  // 2. Ghost participants during disconnect countdown
-  const [ghostParticipants, setGhostParticipants] = useState<
-    Record<string, ParticipantStageType>
-  >({});
-
-  const participantsRef = useRef<RoomParticipantType[]>(participants);
-  useEffect(() => {
-    participantsRef.current = participants;
-  }, [participants]);
-
-  const disconnectTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-
-  // --------------------------------------------------------------------------
-  // LiveKit Connection & RTCP Watchdog
-  // --------------------------------------------------------------------------
-  useEffect(() => {
-    if (!room) return;
-
-    const handleParticipantConnected = (peer: RemoteParticipant) => {
-      const identity = peer.identity;
-
-      // Clear any pending ghost removal timer
-      if (disconnectTimersRef.current[identity]) {
-        clearTimeout(disconnectTimersRef.current[identity]);
-        delete disconnectTimersRef.current[identity];
-      }
-
-      setGhostParticipants((prev) => {
-        if (!prev[identity]) return prev;
-        const next = { ...prev };
-        delete next[identity];
-        return next;
-      });
-
-      setRemoteStatusMap((prev) => ({
-        ...prev,
-        [identity]: {
-          status: ConnectionState.Connected,
-          quality: peer.connectionQuality ?? ConnectionQuality.Unknown,
-        },
-      }));
-    };
-
-    const handleParticipantDisconnected = (peer: RemoteParticipant) => {
-      const identity = peer.identity;
-
-      setRemoteStatusMap((prev) => ({
-        ...prev,
-        [identity]: {
-          status: ConnectionState.Disconnected,
-          quality: peer.connectionQuality ?? ConnectionQuality.Unknown,
-        },
-      }));
-
-      // Snapshot the participant into ghost state for 3 seconds
-      const currentSnapshot = participantsRef.current.find(
-        (p) => String(p.userId) === identity
-      );
-
-      if (currentSnapshot) {
-        setGhostParticipants((prev) => ({
-          ...prev,
-          [identity]: {
-            ...currentSnapshot,
-            id: currentSnapshot.userId,
-            joinedAt: new Date(currentSnapshot.joinedAt).toISOString(),
-            connectionStatus: ConnectionState.Disconnected,
-            rawParticipant: undefined,
-            role: 'participant',
-            handRaised: false,
-            activeReactionEmoji: null,
-          } as unknown as ParticipantStageType,
-        }));
-      }
-
-      if (disconnectTimersRef.current[identity]) {
-        clearTimeout(disconnectTimersRef.current[identity]);
-      }
-
-      disconnectTimersRef.current[identity] = setTimeout(() => {
-        setGhostParticipants((prev) => {
-          const next = { ...prev };
-          delete next[identity];
-          return next;
-        });
-
-        setRemoteStatusMap((prev) => {
-          const next = { ...prev };
-          delete next[identity];
-          return next;
-        });
-
-        delete disconnectTimersRef.current[identity];
-      }, 3000);
-    };
-
-    const handleConnectionQualityChanged = (quality: ConnectionQuality, p: Participant) => {
-      if (p.isLocal) return;
-      const identity = p.identity;
-
-      setRemoteStatusMap((prev) => {
-        const isDegraded =
-          quality === ConnectionQuality.Poor || quality === ConnectionQuality.Lost;
-
-        return {
-          ...prev,
-          [identity]: {
-            status: isDegraded ? ConnectionState.Reconnecting : ConnectionState.Connected,
-            quality,
-          },
-        };
-      });
-    };
-
-    room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
-    room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
-    room.on(RoomEvent.ConnectionQualityChanged, handleConnectionQualityChanged);
-
-    return () => {
-      room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
-      room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
-      room.off(RoomEvent.ConnectionQualityChanged, handleConnectionQualityChanged);
-
-      Object.values(disconnectTimersRef.current).forEach(clearTimeout);
-      disconnectTimersRef.current = {};
-    };
-  }, [room]);
-
-  // --------------------------------------------------------------------------
-  // Merge Room Participants with LiveKit WebRTC Tracks & Ghosts
-  // --------------------------------------------------------------------------
   const displayParticipants = useMemo<ParticipantStageType[]>(() => {
-    // 1. Build fast identity lookup map for active LiveKit peers
+    // 1. Index all active LiveKit peers
     const livekitMap = new Map<string, Participant>();
+
     if (localParticipant?.identity) {
       livekitMap.set(String(localParticipant.identity), localParticipant);
     }
     remoteLiveKitParticipants.forEach((p) => {
-      if (p?.identity) {
-        livekitMap.set(String(p.identity), p);
-      }
+      if (p?.identity) livekitMap.set(String(p.identity), p);
     });
 
-    const list: ParticipantStageType[] = [];
-    const processedIds = new Set<string>();
+    const renderedIds = new Set<string>();
 
-    // 2. Map and enrich incoming participants prop
-    participants.forEach((p) => {
+    // 2. Render all users from props
+    const list: ParticipantStageType[] = participants.map((p) => {
       const id = String(p.userId);
-      processedIds.add(id);
+      renderedIds.add(id);
 
-      const livekitP = livekitMap.get(id);
-      const isSelf = Boolean(p.isSelf || (localParticipant && localParticipant.identity === id));
-
-      // Resolve connection status
-      let status: ConnectionState;
-      if (isSelf) {
-        status = room?.state || ConnectionState.Connected;
-      } else if (remoteStatusMap[id]) {
-        status = remoteStatusMap[id].status;
-      } else {
-        status = livekitP ? ConnectionState.Connected : ConnectionState.Connecting;
-      }
-
-      list.push({
-        ...p,
-        id,
-        joinedAt: new Date(p.joinedAt).toISOString(),
-        isSelf,
-        rawParticipant: livekitP,
-        connectionStatus: status,
-      } as ParticipantStageType);
+      return parseParticipant(
+        p,
+        livekitMap.get(id),
+        room?.state,
+        localParticipant?.identity
+      );
     });
 
-    // 3. Append remaining ghosts that are no longer in the active participants prop
-    Object.entries(ghostParticipants).forEach(([ghostId, ghost]) => {
-      if (!processedIds.has(ghostId)) {
-        list.push(ghost);
+    // 3. Catch any active LiveKit peer missing from props
+    livekitMap.forEach((livekitP, identity) => {
+      if (!renderedIds.has(identity)) {
+        list.push(parseLiveKitOnlyParticipant(livekitP, localParticipant?.identity));
       }
     });
 
     return list;
-  }, [
-    participants,
-    ghostParticipants,
-    remoteLiveKitParticipants,
-    localParticipant,
-    remoteStatusMap,
-    room?.state,
-  ]);
+  }, [participants, remoteLiveKitParticipants, localParticipant, room?.state]);
 
   return (
     <>
-      {displayParticipants.map((participant) => {
-        const tile = <ParticipantTile participant={participant} />;
-
-        return (
-          <Box
-            key={participant.id}
-            sx={{
-              width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
-              minHeight: 160,
-              ...sx,
-            }}
-            {...other}
-          >
-            {participant.rawParticipant ? (
-              <ParticipantContext.Provider value={participant.rawParticipant}>
-                {tile}
-              </ParticipantContext.Provider>
-            ) : (
-              tile
-            )}
-          </Box>
-        );
-      })}
+      {displayParticipants.map((participant) => (
+        <Box
+          key={participant.id}
+          sx={{
+            width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
+            minHeight: 160,
+            ...sx,
+          }}
+          {...other}
+        >
+          {participant.rawParticipant ? (
+            <ParticipantContext.Provider value={participant.rawParticipant}>
+              <ParticipantTile participant={participant} />
+            </ParticipantContext.Provider>
+          ) : (
+            <ParticipantTile participant={participant} />
+          )}
+        </Box>
+      ))}
     </>
   );
 };

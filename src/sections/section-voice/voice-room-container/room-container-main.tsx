@@ -10,7 +10,6 @@ import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { RoomStageProvider } from '@/core/contexts/context-room-stage';
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
@@ -334,10 +333,7 @@ export function RoomContainerMain({
   const currentUserId = user?.userId ?? '';
 
   return (
-    <RoomStageProvider
-      raisedHandsSet={raisedHandsSet}
-      participantReactions={participantReactions}
-    >
+    <>
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
       <VoiceRoomListenerUnload />
@@ -388,7 +384,7 @@ export function RoomContainerMain({
         onEditMessage={handleEditMessage}
         onReactMessage={handleReactMessage}
       />
-    </RoomStageProvider>
+    </>
   );
 }
 
