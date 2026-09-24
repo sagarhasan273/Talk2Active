@@ -4,7 +4,6 @@ import { useRoomUnloadBeacon } from '@/hooks/use-room-unload-beacon';
 import React from 'react';
 
 interface VoiceRoomListenerUnloadProps {
-
     enabled?: boolean;
 }
 

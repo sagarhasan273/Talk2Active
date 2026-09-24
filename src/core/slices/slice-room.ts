@@ -142,7 +142,6 @@ export const useRoomTools = () => {
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
 
-
   const memoizedRoom = useMemo(
     () => ({
       roomId,

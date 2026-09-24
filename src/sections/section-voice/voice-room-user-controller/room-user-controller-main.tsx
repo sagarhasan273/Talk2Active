@@ -46,8 +46,9 @@ import {
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
-import { useCredentials } from '@/core/slices';
+import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
+import { UserStats } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
 
@@ -130,6 +131,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { checkIfFollowing, checkIfBlocked } = useCredentials();
+  const { updateParticipant } = useRoomTools();
   const room = useRoomContext();
 
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
@@ -562,6 +564,20 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               >
                 <Box>
                   <Typography component="span" variant="subtitle2" fontWeight={800}>
+                    {participant?.friend_count ?? 0}
+                  </Typography>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    sx={{ ml: 0.5 }}
+                  >
+                    Friends
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography component="span" variant="subtitle2" fontWeight={800}>
                     {participant?.follower_count ?? 0}
                   </Typography>
                   <Typography
@@ -937,6 +953,12 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 isFollow={isFollowing}
                 size="small"
                 variant="soft"
+                onSuccessFollow={(data: UserStats) => {
+                  updateParticipant({ ...data })
+                }}
+                onSuccessUnfollow={(data: UserStats) => {
+                  updateParticipant({ ...data })
+                }}
                 fullWidth
               />
               <Button

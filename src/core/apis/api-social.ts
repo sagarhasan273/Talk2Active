@@ -1,5 +1,5 @@
 import type { ResponseType } from 'src/types/type-common';
-import type { RelationshipInput } from 'src/types/type-social';
+import type { RelationshipInput, UserStats } from 'src/types/type-social';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -21,7 +21,7 @@ export const socialApi = createApi({
   }),
   tagTypes: ['social-recall'],
   endpoints: (builder) => ({
-    follow: builder.mutation<{ message: string; status: boolean }, Partial<RelationshipInput>>({
+    follow: builder.mutation<{ message: string; status: boolean, data: UserStats }, Partial<RelationshipInput>>({
       query: (body) => ({
         url: `social/follow`,
         method: 'POST',
@@ -30,7 +30,7 @@ export const socialApi = createApi({
       invalidatesTags: ['social-recall'],
     }),
 
-    unfollow: builder.mutation<{ message: string; status: boolean }, Partial<RelationshipInput>>({
+    unfollow: builder.mutation<{ message: string; status: boolean, data: UserStats }, Partial<RelationshipInput>>({
       query: (body) => ({
         url: `social/unfollow`,
         method: 'POST',

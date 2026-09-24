@@ -26,6 +26,9 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
           ? alpha(theme.palette.common.white, 0.8)
           : alpha(theme.palette.common.black, 0.3),
         borderRadius: 1,
+        bgcolor: isDark
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha(theme.palette.grey[100] || '#F8FAFC', 0.8),
         cursor: onClick ? 'pointer' : 'default',
         transition: 'border-color 0.2s ease',
         '&:hover': onClick

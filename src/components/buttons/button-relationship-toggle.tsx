@@ -16,6 +16,7 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { UserStats } from '@/types/type-social';
 import { usePopover } from 'src/components/custom-popover';
 import { Iconify } from 'src/components/iconify';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
@@ -39,6 +40,8 @@ export type ButtonRelationshipToggleProps = {
   sx?: SxProps<Theme>;
   followSx?: SxProps<Theme>;
   unfollowSx?: SxProps<Theme>;
+  onSuccessFollow?: (data: UserStats) => void;
+  onSuccessUnfollow?: (data: UserStats) => void;
 };
 
 export function ButtonRelationshipToggle({
@@ -51,6 +54,8 @@ export function ButtonRelationshipToggle({
   sx,
   followSx,
   unfollowSx,
+  onSuccessFollow,
+  onSuccessUnfollow
 }: ButtonRelationshipToggleProps) {
   const theme = useTheme();
   const user = useSelector(selectAccount);
@@ -68,16 +73,20 @@ export function ButtonRelationshipToggle({
   const [unfollowMutate, { isLoading: isUnfollowLoading }] = useUnfollowMutation();
   const isLoading = isFollowLoading || isUnfollowLoading;
 
+
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setFollowing(true);
     try {
-      await followMutate({
+      const response = await followMutate({
         requester: user.userId,
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();
+      if (response.status) {
+        onSuccessFollow?.(response.data);
+      }
     } catch {
       setFollowing(false);
     }
@@ -89,11 +98,14 @@ export function ButtonRelationshipToggle({
     popover.onClose();
     setFollowing(false);
     try {
-      await unfollowMutate({
+      const response = await unfollowMutate({
         requester: user.userId,
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();
+      if (response.status) {
+        onSuccessUnfollow?.(response.data);
+      }
     } catch {
       setFollowing(true);
     }

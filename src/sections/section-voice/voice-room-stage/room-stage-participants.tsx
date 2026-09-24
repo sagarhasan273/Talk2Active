@@ -7,7 +7,7 @@ import {
 } from '@livekit/components-react';
 import { alpha, Box, BoxProps, Typography } from '@mui/material';
 import { ConnectionState, type Participant } from 'livekit-client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ParticipantTile from './room-stage-participant-tile';
 
 const GHOST_DURATION_MS = 3000;
@@ -77,46 +77,81 @@ export const RoomStageParticipants = ({
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
 
-  // Set of participant IDs that are currently in their 3-second ghost phase
   const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
-
-  // Stable list that preserves the exact slot order without reshuffling
   const [orderedParticipants, setOrderedParticipants] = useState<RoomParticipantType[]>(participants);
 
-  // Keep ordered list in sync: add newcomers, but KEEP leavers as ghosts for 3s
+  const ghostTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Clean up timers on unmount
   useEffect(() => {
-    const currentPropsIds = new Set(participants.map((p) => String(p.userId)));
+    return () => {
+      Object.values(ghostTimersRef.current).forEach(clearTimeout);
+      ghostTimersRef.current = {};
+    };
+  }, []);
 
-    setOrderedParticipants((prev) => {
-      const prevIds = new Set(prev.map((p) => String(p.userId)));
+  // Sync incoming participants: keep slots stable, update data, ghost dropouts
+  useEffect(() => {
+    const propsMap = new Map(participants.map((p) => [String(p.userId), p]));
 
-      // 1. Detect anyone who just left -> mark as ghost for 3s
-      prev.forEach((p) => {
+    // 1. Cancel ghost status for any user that returned
+    setGhostIds((prevGhosts) => {
+      let modified = false;
+      const nextGhosts = new Set(prevGhosts);
+
+      participants.forEach((p) => {
         const id = String(p.userId);
-        if (!currentPropsIds.has(id) && !ghostIds.has(id)) {
+        if (nextGhosts.has(id)) {
+          nextGhosts.delete(id);
+          modified = true;
+          if (ghostTimersRef.current[id]) {
+            clearTimeout(ghostTimersRef.current[id]);
+            delete ghostTimersRef.current[id];
+          }
+        }
+      });
+
+      return modified ? nextGhosts : prevGhosts;
+    });
+
+    setOrderedParticipants((prevOrdered) => {
+      const existingIds = new Set<string>();
+
+      // 2. Update existing entries in-place so props changes (like follower_count / isFollowing) reflect immediately
+      const updatedList = prevOrdered.map((old) => {
+        const id = String(old.userId);
+        existingIds.add(id);
+
+        const freshData = propsMap.get(id);
+
+        if (freshData) {
+          return freshData; // Data updated, position preserved
+        }
+
+        // 3. User is missing from props -> start 3s ghost timer if not already active
+        if (!ghostTimersRef.current[id]) {
           setGhostIds((g) => new Set(g).add(id));
 
-          setTimeout(() => {
-            // Remove ghost status and remove from list once 3s expires
+          ghostTimersRef.current[id] = setTimeout(() => {
             setGhostIds((g) => {
               const next = new Set(g);
               next.delete(id);
               return next;
             });
             setOrderedParticipants((current) => current.filter((item) => String(item.userId) !== id));
+            delete ghostTimersRef.current[id];
           }, GHOST_DURATION_MS);
         }
+
+        return old;
       });
 
-      // 2. Append newly joined participants to the end without reordering existing slots
-      const newcomers = participants.filter((p) => !prevIds.has(String(p.userId)));
-      if (newcomers.length > 0) {
-        return [...prev, ...newcomers];
-      }
+      // 4. Append actual newcomers to the bottom without shuffling
+      const newcomers = participants.filter((p) => !existingIds.has(String(p.userId)));
 
-      return prev;
+      return newcomers.length > 0 ? [...updatedList, ...newcomers] : updatedList;
     });
-  }, [participants, ghostIds]);
+  }, [participants]);
 
   // Map to LiveKit participant details
   const displayParticipants = useMemo(() => {
@@ -206,14 +241,10 @@ export const RoomStageParticipants = ({
 
             {participant.rawParticipant && !isGhost ? (
               <ParticipantContext.Provider value={participant.rawParticipant}>
-                <ParticipantTile
-                  participant={participant}
-                />
+                <ParticipantTile participant={participant} />
               </ParticipantContext.Provider>
             ) : (
-              <ParticipantTile
-                participant={participant}
-              />
+              <ParticipantTile participant={participant} />
             )}
           </Box>
         );
