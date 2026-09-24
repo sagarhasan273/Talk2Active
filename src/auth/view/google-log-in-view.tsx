@@ -1,18 +1,11 @@
 import type { SxProps } from '@mui/material';
-
+import { Button, CircularProgress, SvgIcon, Typography } from '@mui/material';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useState } from 'react';
 
-import { Button, CircularProgress, SvgIcon, Typography } from '@mui/material';
-
-import { CONFIG } from 'src/config-global';
-
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-
-// utils/is-mobile.ts
-export const isMobileBrowser = (): boolean =>
-  /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+import { CONFIG } from 'src/config-global';
 
 export const GoogleLogInView = ({
   sx,
@@ -27,49 +20,21 @@ export const GoogleLogInView = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // ── Mobile: redirect flow ─────────────────────────────────────────────────
-  const mobileLogin = useGoogleLogin({
-    flow: 'auth-code',
-    redirect_uri: window.location.origin,
-    onSuccess: async (codeResponse) => {
+  // Single unified handler for both Mobile & Desktop
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
       try {
         setIsLoading(true);
-        const response = await axios.post(`${CONFIG.serverUrl}/auth/google/mobile`, {
-          code: codeResponse?.code,
-          redirect_uri: window.location.origin,
-        });
-
-        if (response.data?.status && response.data?.token) {
-          sessionStorage.setItem(STORAGE_KEY, response.data.token);
-          onSuccess?.();
-        } else {
-          throw new Error('Invalid response format');
-        }
-      } catch (err) {
-        console.error('Google login failed', err);
-        // Add user-facing error message here
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    onError: (error) => {
-      console.error('Login failed', error);
-      setIsLoading(false);
-    },
-  });
-
-  // ── Desktop: popup flow ───────────────────────────────────────────────────
-  const desktopLogin = useGoogleLogin({
-    onSuccess: async (credentialResponse) => {
-      try {
         const response = await axios.post(`${CONFIG.serverUrl}/auth/google`, {
-          token: credentialResponse.access_token,
+          token: tokenResponse.access_token,
         });
+
         const { data } = response;
-        if (data.status) {
-          if (!data.token) throw new Error('Access token not found in response');
+        if (data.status && data.token) {
           sessionStorage.setItem(STORAGE_KEY, data.token);
           onSuccess?.();
+        } else {
+          throw new Error('Access token not found in response');
         }
       } catch (err) {
         console.error('Google login failed', err);
@@ -77,27 +42,21 @@ export const GoogleLogInView = ({
         setIsLoading(false);
       }
     },
-    onError: () => {
-      console.log('Login failed');
+    onError: (err) => {
+      console.error('Google Login Error:', err);
       setIsLoading(false);
     },
   });
-
-  const handleLogin = () => {
-    setIsLoading(true);
-    if (isMobileBrowser()) {
-      mobileLogin(); // redirect flow
-    } else {
-      desktopLogin(); // popup flow
-    }
-  };
 
   return (
     <Button
       fullWidth
       variant="outlined"
       disabled={isLoading}
-      onClick={handleLogin}
+      onClick={() => {
+        setIsLoading(true);
+        handleGoogleLogin();
+      }}
       sx={{
         py: 2,
         px: 1,
