@@ -28,7 +28,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Drawer,
   FormControl,
   IconButton,
@@ -42,7 +41,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
@@ -51,6 +50,7 @@ import { ParticipantStageType } from '@/types/type-room';
 import { UserStats } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
+import ParticipantStatsRow from './user-controller-participant-stats-row';
 
 interface RoomUserControllerMainProps {
   open: boolean;
@@ -147,7 +147,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     following_count: user?.following_count,
     friend_count: user?.friend_count,
     isHost: user?.isHost,
-    joinedAt: user?.joinedAt,
+    joinedAt: user?.joinedAt ? new Date(user.joinedAt) : undefined,
     bio: user?.bio,
 
     isFollowing: checkIfFollowing(user?.userId),
@@ -556,55 +556,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 @{userId || 'username'}
               </Typography>
 
-              <Stack
-                direction="row"
-                spacing={2.5}
-                sx={{ mb: 1.5 }}
-                divider={<Divider orientation="vertical" flexItem sx={{ opacity: 0.4 }} />}
-              >
-                <Box>
-                  <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {participant?.friend_count ?? 0}
-                  </Typography>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                    sx={{ ml: 0.5 }}
-                  >
-                    Friends
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {participant?.follower_count ?? 0}
-                  </Typography>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                    sx={{ ml: 0.5 }}
-                  >
-                    Followers
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography component="span" variant="subtitle2" fontWeight={800}>
-                    {participant?.following_count ?? 0}
-                  </Typography>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                    sx={{ ml: 0.5 }}
-                  >
-                    Following
-                  </Typography>
-                </Box>
-              </Stack>
+              <ParticipantStatsRow participant={participant} />
 
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {isSpeaking && (
