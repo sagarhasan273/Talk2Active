@@ -131,7 +131,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { checkIfFollowing, checkIfBlocked } = useCredentials();
-  const { updateParticipant } = useRoomTools();
+  const { updateParticipants } = useRoomTools();
   const room = useRoomContext();
 
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
@@ -953,11 +953,11 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 isFollow={isFollowing}
                 size="small"
                 variant="soft"
-                onSuccessFollow={(data: UserStats) => {
-                  updateParticipant({ ...data })
+                onSuccessFollow={(data: UserStats[]) => {
+                  updateParticipants(data)
                 }}
-                onSuccessUnfollow={(data: UserStats) => {
-                  updateParticipant({ ...data })
+                onSuccessUnfollow={(data: UserStats[]) => {
+                  updateParticipants(data)
                 }}
                 fullWidth
               />

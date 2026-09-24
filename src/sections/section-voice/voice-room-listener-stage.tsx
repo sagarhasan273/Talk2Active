@@ -2,7 +2,7 @@
 import { useSocket } from '@/core/contexts/context-socket';
 import { useRoomTools } from '@/core/slices';
 import React from 'react';
-import useRoomStageListener from './voice-room-stage/hook-room-statge-listener';
+import useRoomStageListener from './voice-room-stage/hook-room-stage-listener';
 
 interface RoomStageListenerProps {
 }

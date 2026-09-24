@@ -40,8 +40,8 @@ export type ButtonRelationshipToggleProps = {
   sx?: SxProps<Theme>;
   followSx?: SxProps<Theme>;
   unfollowSx?: SxProps<Theme>;
-  onSuccessFollow?: (data: UserStats) => void;
-  onSuccessUnfollow?: (data: UserStats) => void;
+  onSuccessFollow?: (data: UserStats[]) => void;
+  onSuccessUnfollow?: (data: UserStats[]) => void;
 };
 
 export function ButtonRelationshipToggle({

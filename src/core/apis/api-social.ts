@@ -21,7 +21,7 @@ export const socialApi = createApi({
   }),
   tagTypes: ['social-recall'],
   endpoints: (builder) => ({
-    follow: builder.mutation<{ message: string; status: boolean, data: UserStats }, Partial<RelationshipInput>>({
+    follow: builder.mutation<{ message: string; status: boolean, data: UserStats[] }, Partial<RelationshipInput>>({
       query: (body) => ({
         url: `social/follow`,
         method: 'POST',
@@ -30,7 +30,7 @@ export const socialApi = createApi({
       invalidatesTags: ['social-recall'],
     }),
 
-    unfollow: builder.mutation<{ message: string; status: boolean, data: UserStats }, Partial<RelationshipInput>>({
+    unfollow: builder.mutation<{ message: string; status: boolean, data: UserStats[] }, Partial<RelationshipInput>>({
       query: (body) => ({
         url: `social/unfollow`,
         method: 'POST',
