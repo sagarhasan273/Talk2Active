@@ -1,10 +1,9 @@
 // src/components/room-unload-listener.tsx
 import { useCredentials, useRoomTools } from '@/core/slices';
-import { useRoomUnloadBeacon } from '@/hooks/use-room-unload-beacon';
+import { useRoomUnloadBeacon } from '@/sections/section-voice/voice-room-container/hook-room-unload-beacon';
 import React from 'react';
 
 interface VoiceRoomListenerUnloadProps {
-
     enabled?: boolean;
 }
 

@@ -72,7 +72,6 @@ export const UserStatsSchema = z.object({
   follower_count: z.number().int().nonnegative().default(0),
   following_count: z.number().int().nonnegative().default(0),
   friend_count: z.number().int().nonnegative().default(0),
-  pendingRequests: z.number().int().nonnegative().default(0),
 });
 
 // Followers/Following List Schema

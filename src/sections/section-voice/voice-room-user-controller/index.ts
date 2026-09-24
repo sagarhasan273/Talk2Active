@@ -1,2 +1,2 @@
-export * from './room-user-controller-main';
+export * from './user-controller-main';
 

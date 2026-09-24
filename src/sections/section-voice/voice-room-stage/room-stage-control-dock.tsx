@@ -38,6 +38,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
 
   // LiveKit hooks for local mic and deafen controls
@@ -45,8 +46,12 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
   const [deafened, setDeafened] = useState(false);
 
-  // isMicrophoneEnabled is true when speaking/active; micMuted is the inverted state
   const micMuted = !isMicrophoneEnabled;
+
+  // Soft grey background specifically for mobile buttons
+  const mobileGreyBg = isDark
+    ? theme.palette.grey[700]
+    : theme.palette.grey[200];
 
   const handleToggleMic = useCallback(async () => {
     if (!localParticipant) return;
@@ -63,7 +68,6 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     setDeafened((prevDeafened) => {
       const nextDeafened = !prevDeafened;
 
-      // Mute or unmute incoming audio elements from remote participants
       room.remoteParticipants.forEach((participant) => {
         participant.trackPublications.forEach((publication) => {
           if (publication.source === Track.Source.Microphone && publication.track) {
@@ -75,7 +79,6 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         });
       });
 
-      // Automatically mute local mic when deafened
       if (nextDeafened && isMicrophoneEnabled) {
         localParticipant?.setMicrophoneEnabled(false);
       }
@@ -85,11 +88,15 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   }, [room, isMicrophoneEnabled, localParticipant]);
 
   const buttonSx = {
-    p: { xs: 0.9, sm: 1.1 },
+    width: { xs: 38, sm: 40 },
+    height: { xs: 38, sm: 40 },
+    p: 0,
     borderRadius: 1,
-    bgcolor: 'background.paper',
-    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+    bgcolor: { xs: mobileGreyBg, sm: 'background.paper' },
+    border: '1px solid',
+    borderColor: theme.palette.divider,
     color: 'text.primary',
+    flexShrink: 0,
     transition: 'all 0.15s ease',
     '&:hover': {
       bgcolor: alpha(theme.palette.primary.main, 0.08),
@@ -102,9 +109,9 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
       <Box
         sx={{
           m: 1,
-          p: { xs: 0.75, sm: 1 },
+          p: { xs: 1, sm: 1 },
           borderRadius: 1,
-          bgcolor: alpha(theme.palette.text.primary, 0.03),
+          bgcolor: isMobile ? 'background.paper' : alpha(theme.palette.text.primary, 0.03),
           border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           display: 'flex',
           alignItems: 'center',
@@ -119,7 +126,9 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               onClick={handleToggleMic}
               sx={{
                 ...buttonSx,
-                bgcolor: micMuted ? 'error.main' : 'background.paper',
+                bgcolor: micMuted
+                  ? 'error.main'
+                  : { xs: mobileGreyBg, sm: 'background.paper' },
                 color: micMuted ? '#fff' : 'text.primary',
                 '&:hover': {
                   bgcolor: micMuted ? 'error.dark' : alpha(theme.palette.primary.main, 0.12),
@@ -135,8 +144,21 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               onClick={handleToggleDeafen}
               sx={{
                 ...buttonSx,
-                color: deafened ? 'error.main' : 'text.primary',
-                bgcolor: deafened ? alpha(theme.palette.error.main, 0.15) : 'background.paper',
+                color: deafened ? '#fff' : 'text.primary',
+                bgcolor: deafened
+                  ? 'error.main'
+                  : { xs: mobileGreyBg, sm: 'background.paper' },
+                border: '1px solid',
+                borderColor: deafened
+                  ? 'error.main'
+                  : theme.palette.divider,
+                '&:hover, &:focus, &:active, &.Mui-focusVisible': {
+                  bgcolor: deafened
+                    ? 'error.dark'
+                    : alpha(theme.palette.primary.main, 0.08),
+                  color: deafened ? '#fff' : 'primary.main',
+                  borderColor: deafened ? 'error.dark' : undefined,
+                },
               }}
             >
               <Headphones size={18} />
@@ -149,25 +171,35 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           <Button
             size="small"
             onClick={onToggleRaiseHand}
-            startIcon={<span style={{ fontSize: 14 }}>✋</span>}
+            startIcon={<span style={{ fontSize: 14, lineHeight: 1 }}>✋</span>}
             sx={{
               textTransform: 'none',
               fontWeight: 700,
               fontSize: 12,
               borderRadius: 1,
-              px: { xs: 1, sm: 1.5 },
-              minWidth: 'auto',
-              height: 1,
-              bgcolor: handRaised ? 'warning.main' : 'background.paper',
+              px: { xs: 0, sm: 1.5 },
+              minWidth: { xs: 38, sm: 'auto' },
+              width: { xs: 38, sm: 'auto' },
+              height: { xs: 38, sm: 40 },
+              bgcolor: handRaised
+                ? 'warning.main'
+                : { xs: mobileGreyBg, sm: 'background.paper' },
               color: handRaised ? 'common.black' : 'text.primary',
-              border: `1px solid ${handRaised ? theme.palette.warning.dark : alpha(theme.palette.divider, 0.1)
-                }`,
-              '&:hover': {
+              border: '1px solid',
+              borderColor: handRaised
+                ? 'warning.dark'
+                : theme.palette.divider,
+              '& .MuiButton-startIcon': {
+                mr: { xs: 0, sm: 0.75 },
+                ml: 0,
+              },
+              '&:hover, &:focus, &:active, &.Mui-focusVisible': {
                 bgcolor: handRaised ? 'warning.dark' : alpha(theme.palette.primary.main, 0.08),
+                borderColor: handRaised ? 'warning.dark' : undefined,
               },
             }}
           >
-            {isMobile ? '' : handRaised ? 'Lower' : 'Raise'}
+            {isMobile ? null : handRaised ? 'Lower' : 'Raise'}
           </Button>
 
           <Tooltip title="Send reaction">
@@ -176,7 +208,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             </IconButton>
           </Tooltip>
 
-          {/* Screen Share: Hidden on mobile browsers where display capture is unsupported */}
+          {/* Screen Share: Hidden on mobile browsers */}
           {!isMobile && (
             <Tooltip title={isScreenSharing ? 'Stop screen share' : 'Share screen'}>
               <IconButton
@@ -211,25 +243,30 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             onClick={onLeave}
             startIcon={<PhoneOff size={16} />}
             sx={{
-              px: { xs: 1.25, sm: 2 },
-              minWidth: 'auto',
+              px: { xs: 0, sm: 2 },
+              minWidth: { xs: 38, sm: 'auto' },
+              width: { xs: 38, sm: 'auto' },
+              height: { xs: 38, sm: 40 },
               borderRadius: 1,
               fontSize: 12,
               fontWeight: 700,
-              height: '32px',
               textTransform: 'none',
               bgcolor: 'error.main',
               color: '#fff',
+              '& .MuiButton-startIcon': {
+                mr: { xs: 0, sm: 0.75 },
+                ml: 0,
+              },
               '&:hover': { bgcolor: 'error.dark' },
             }}
           >
-            {isMobile ? '' : 'Leave'}
+            {isMobile ? null : 'Leave'}
           </Button>
         </Box>
-      </Box>
+      </Box >
 
       {/* Floating Reaction Popover */}
-      <Popover
+      < Popover
         open={Boolean(emojiAnchor)}
         anchorEl={emojiAnchor}
         onClose={() => setEmojiAnchor(null)}
@@ -247,20 +284,22 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           },
         }}
       >
-        {REACTION_EMOJIS.map((emoji) => (
-          <IconButton
-            key={emoji}
-            size="small"
-            onClick={() => {
-              onSendReaction?.(emoji);
-              setEmojiAnchor(null);
-            }}
-            sx={{ fontSize: 20, p: 0.75, borderRadius: 2 }}
-          >
-            {emoji}
-          </IconButton>
-        ))}
-      </Popover>
+        {
+          REACTION_EMOJIS.map((emoji) => (
+            <IconButton
+              key={emoji}
+              size="small"
+              onClick={() => {
+                onSendReaction?.(emoji);
+                setEmojiAnchor(null);
+              }}
+              sx={{ fontSize: 20, p: 0.75, borderRadius: 2 }}
+            >
+              {emoji}
+            </IconButton>
+          ))
+        }
+      </Popover >
     </>
   );
 };

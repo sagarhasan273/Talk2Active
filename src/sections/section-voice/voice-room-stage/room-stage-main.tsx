@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { useSocket } from '@/core/contexts/context-socket';
 import { useRoomTools } from '@/core/slices';
+import { useResponsive } from '@/hooks/use-responsive';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
-import useRoomStageListener from './hook-room-statge-listener';
+import { RoomStageListener } from '../voice-room-listener-stage';
 import { RoomControlDock } from './room-stage-control-dock';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import RoomStageParticipants from './room-stage-participants';
@@ -53,15 +53,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
 }) => {
   const theme = useTheme();
 
-  const { socket } = useSocket();
-  const { room, roomId, participants, addParticipant, removeParticipant } = useRoomTools();
+  const isMobile = useResponsive('down', 'sm');
 
-  useRoomStageListener({
-    socket,
-    roomId,
-    addParticipant,
-    removeParticipant,
-  });
+  const { room, participants } = useRoomTools();
 
   // Element Refs
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
@@ -129,277 +123,280 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        width: '100%',
-        height: '100%',
-        minHeight: 0,
-        minWidth: 0,
-        bgcolor: 'background.paper',
-        borderRadius: 1,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Top Header */}
-      {room && (
-        <CompactRoomHeader
-          room={room}
-          onBack={onBack}
-          onSettingsClick={onSettingsClick}
-          onShareClick={onShareClick}
-        />
-      )}
-
-      {/* Main Stage Canvas */}
+    <>
+      <RoomStageListener />
       <Box
         sx={{
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
+          flex: 1,
+          width: '100%',
+          height: '100%',
+          minHeight: 0,
+          minWidth: 0,
+          bgcolor: isMobile ? 'transparent' : 'background.paper',
+          borderRadius: isMobile ? 0 : 1,
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Screen Share Canvas */}
-        {hasScreenShare && activeScreenShare && (
-          <Box
-            ref={screenShareContainerRef}
-            sx={{
-              flex: presentationOnly ? 1 : 'none',
-              height: presentationOnly ? '100%' : { xs: 240, sm: 340, md: '55%' },
-              width: '100%',
-              minHeight: 0,
-              position: 'relative',
-              bgcolor: '#050505',
-              overflow: 'hidden',
-              transition: 'all 0.25s ease',
-              borderBottom: !presentationOnly
-                ? `1px solid ${alpha(theme.palette.divider, 0.1)}`
-                : 'none',
-            }}
-          >
-            <VideoTrack
-              trackRef={activeScreenShare}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
+        {/* Top Header */}
+        {room && (
+          <CompactRoomHeader
+            room={room}
+            onBack={onBack}
+            onSettingsClick={onSettingsClick}
+            onShareClick={onShareClick}
+          />
+        )}
 
-            {/* Presenter Name Badge */}
+        {/* Main Stage Canvas */}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Screen Share Canvas */}
+          {hasScreenShare && activeScreenShare && (
             <Box
+              ref={screenShareContainerRef}
               sx={{
-                position: 'absolute',
-                bottom: 12,
-                left: 12,
-                bgcolor: 'rgba(0,0,0,0.75)',
-                backdropFilter: 'blur(8px)',
-                color: '#fff',
-                px: 1.25,
-                py: 0.5,
-                borderRadius: 1.25,
-                fontSize: 12,
-                fontWeight: 700,
-                zIndex: 3,
-                pointerEvents: 'none',
+                flex: presentationOnly ? 1 : 'none',
+                height: presentationOnly ? '100%' : { xs: 240, sm: 340, md: '55%' },
+                width: '100%',
+                minHeight: 0,
+                position: 'relative',
+                bgcolor: '#050505',
+                overflow: 'hidden',
+                transition: 'all 0.25s ease',
+                borderBottom: !presentationOnly
+                  ? `1px solid ${alpha(theme.palette.divider, 0.1)}`
+                  : 'none',
               }}
             >
-              {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
-            </Box>
+              <VideoTrack
+                trackRef={activeScreenShare}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
 
-            {/* Presentation Controls */}
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                zIndex: 3,
-              }}
-            >
-              <Button
-                size="small"
-                variant="contained"
-                onClick={() => setPresentationOnly((prev) => !prev)}
-                startIcon={presentationOnly ? <LayoutGrid size={14} /> : <Tv size={14} />}
+              {/* Presenter Name Badge */}
+              <Box
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.18)',
+                  position: 'absolute',
+                  bottom: 12,
+                  left: 12,
+                  bgcolor: 'rgba(0,0,0,0.75)',
                   backdropFilter: 'blur(8px)',
                   color: '#fff',
-                  fontSize: 11,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 1.25,
+                  fontSize: 12,
                   fontWeight: 700,
-                  textTransform: 'none',
-                  borderRadius: 1.5,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                  zIndex: 3,
+                  pointerEvents: 'none',
                 }}
               >
-                {presentationOnly ? 'Show Grid' : 'Presentation Only'}
-              </Button>
+                {activeScreenShare.participant.name || 'Participant'}&apos;s Presentation
+              </Box>
 
-              <Tooltip
-                title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}
+              {/* Presentation Controls */}
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  zIndex: 3,
+                }}
               >
-                <IconButton
+                <Button
                   size="small"
-                  onClick={handleToggleElementFullscreen}
+                  variant="contained"
+                  onClick={() => setPresentationOnly((prev) => !prev)}
+                  startIcon={presentationOnly ? <LayoutGrid size={14} /> : <Tv size={14} />}
                   sx={{
                     bgcolor: 'rgba(255,255,255,0.18)',
                     backdropFilter: 'blur(8px)',
                     color: '#fff',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: 'none',
                     borderRadius: 1.5,
-                    p: 0.75,
+                    border: '1px solid rgba(255,255,255,0.2)',
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
                   }}
                 >
-                  {isElementFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Box>
-        )}
+                  {presentationOnly ? 'Show Grid' : 'Presentation Only'}
+                </Button>
 
-        {/* Participant Renders */}
-        {!presentationOnly && (
-          <>
-            {hasScreenShare ? (
-              /* Strip Row Layout during Presentation */
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: '100%',
-                  flex: 1,
-                  minHeight: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  bgcolor: alpha(theme.palette.background.default, 0.4),
-                }}
-              >
-                <IconButton
-                  onClick={() => handleScroll('left')}
-                  sx={{
-                    display: { xs: 'none', md: 'flex' },
-                    position: 'absolute',
-                    left: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 5,
-                    bgcolor: theme.palette.background.paper,
-                    boxShadow: theme.shadows[4],
-                    '&:hover': { bgcolor: theme.palette.background.default },
-                  }}
+                <Tooltip
+                  title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}
                 >
-                  <ChevronLeft size={20} />
-                </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={handleToggleElementFullscreen}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.18)',
+                      backdropFilter: 'blur(8px)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: 1.5,
+                      p: 0.75,
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                    }}
+                  >
+                    {isElementFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
+          )}
 
+          {/* Participant Renders */}
+          {!presentationOnly && (
+            <>
+              {hasScreenShare ? (
+                /* Strip Row Layout during Presentation */
                 <Box
-                  ref={scrollContainerRef}
                   sx={{
+                    position: 'relative',
+                    width: '100%',
+                    flex: 1,
+                    minHeight: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2,
-                    p: 2,
-                    width: '100%',
-                    height: '100%',
-                    overflowX: 'auto',
-                    overflowY: 'hidden',
-                    scrollbarWidth: 'none',
-                    '&::-webkit-scrollbar': { display: 'none' },
+                    bgcolor: alpha(theme.palette.background.default, 0.4),
                   }}
                 >
-                  <RoomStageParticipants
-                    participants={participants}
-                    raisedHandsSet={raisedHandsSet}
-                    participantReactions={participantReactions}
-                  />
+                  <IconButton
+                    onClick={() => handleScroll('left')}
+                    sx={{
+                      display: { xs: 'none', md: 'flex' },
+                      position: 'absolute',
+                      left: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      zIndex: 5,
+                      bgcolor: theme.palette.background.paper,
+                      boxShadow: theme.shadows[4],
+                      '&:hover': { bgcolor: theme.palette.background.default },
+                    }}
+                  >
+                    <ChevronLeft size={20} />
+                  </IconButton>
 
-                  {openSlots > 0 && (
-                    <Box sx={{ width: 140, minWidth: 140, height: 140 }}>
-                      <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
-                    </Box>
-                  )}
+                  <Box
+                    ref={scrollContainerRef}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      width: '100%',
+                      height: '100%',
+                      overflowX: 'auto',
+                      overflowY: 'hidden',
+                      scrollbarWidth: 'none',
+                      '&::-webkit-scrollbar': { display: 'none' },
+                    }}
+                  >
+                    <RoomStageParticipants
+                      participants={participants}
+                      raisedHandsSet={raisedHandsSet}
+                      participantReactions={participantReactions}
+                    />
+
+                    {openSlots > 0 && (
+                      <Box sx={{ width: 140, minWidth: 140, height: 140 }}>
+                        <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
+                      </Box>
+                    )}
+                  </Box>
+
+                  <IconButton
+                    onClick={() => handleScroll('right')}
+                    sx={{
+                      display: { xs: 'none', md: 'flex' },
+                      position: 'absolute',
+                      right: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      zIndex: 5,
+                      bgcolor: theme.palette.background.paper,
+                      boxShadow: theme.shadows[4],
+                      '&:hover': { bgcolor: theme.palette.background.default },
+                    }}
+                  >
+                    <ChevronRight size={20} />
+                  </IconButton>
                 </Box>
-
-                <IconButton
-                  onClick={() => handleScroll('right')}
-                  sx={{
-                    display: { xs: 'none', md: 'flex' },
-                    position: 'absolute',
-                    right: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 5,
-                    bgcolor: theme.palette.background.paper,
-                    boxShadow: theme.shadows[4],
-                    '&:hover': { bgcolor: theme.palette.background.default },
-                  }}
-                >
-                  <ChevronRight size={20} />
-                </IconButton>
-              </Box>
-            ) : (
-              /* Standard Stage Grid Layout */
-              <Box
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  p: { xs: 2, sm: 3 },
-                }}
-              >
+              ) : (
+                /* Standard Stage Grid Layout */
                 <Box
                   sx={{
+                    flex: 1,
                     display: 'flex',
-                    flexWrap: 'wrap',
+                    alignItems: 'center',
                     justifyContent: 'center',
-                    alignItems: 'stretch',
-                    gap: 2,
-                    maxWidth: 1200,
-                    width: '100%',
-                    m: 'auto',
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    p: { xs: 2, sm: 3 },
                   }}
                 >
-                  <RoomStageParticipants
-                    participants={participants}
-                    raisedHandsSet={raisedHandsSet}
-                    participantReactions={participantReactions}
-                  />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      justifyContent: 'center',
+                      alignItems: 'stretch',
+                      gap: 2,
+                      maxWidth: 1200,
+                      width: '100%',
+                      m: 'auto',
+                    }}
+                  >
+                    <RoomStageParticipants
+                      participants={participants}
+                      raisedHandsSet={raisedHandsSet}
+                      participantReactions={participantReactions}
+                    />
 
-                  {openSlots > 0 && (
-                    <Box
-                      sx={{
-                        width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
-                        minHeight: 160,
-                      }}
-                    >
-                      <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
-                    </Box>
-                  )}
+                    {openSlots > 0 && (
+                      <Box
+                        sx={{
+                          width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
+                          minHeight: 160,
+                        }}
+                      >
+                        <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
+              )}
+            </>
+          )}
+        </Box>
 
-      {/* Persistent Bottom Controls */}
-      <RoomControlDock
-        handRaised={handRaised}
-        isScreenSharing={isLocalScreenSharing}
-        onToggleRaiseHand={onToggleRaiseHand || (() => { })}
-        onToggleScreenShare={onToggleScreenShare}
-        onSendReaction={onSendReaction}
-        onToggleChat={onToggleChat}
-        onLeave={onLeave}
-      />
-    </Box>
+        {/* Persistent Bottom Controls */}
+        <RoomControlDock
+          handRaised={handRaised}
+          isScreenSharing={isLocalScreenSharing}
+          onToggleRaiseHand={onToggleRaiseHand || (() => { })}
+          onToggleScreenShare={onToggleScreenShare}
+          onSendReaction={onSendReaction}
+          onToggleChat={onToggleChat}
+          onLeave={onLeave}
+        />
+      </Box>
+    </>
   );
 };
 

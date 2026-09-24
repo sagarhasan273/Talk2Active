@@ -94,6 +94,38 @@ export const roomSlice = createSlice({
       };
     },
 
+    updateParticipants: (
+      state,
+      action: PayloadAction<Array<Partial<RoomParticipantType>>>
+    ) => {
+      if (!Array.isArray(action.payload) || action.payload.length === 0) {
+        return;
+      }
+
+      // 1. Build a quick lookup map of updates by userId
+      const updatesMap = new Map<string, Partial<RoomParticipantType>>();
+      for (const update of action.payload) {
+        if (update?.userId) {
+          updatesMap.set(String(update.userId), update);
+        }
+      }
+
+      if (updatesMap.size === 0) {
+        return;
+      }
+
+      // 2. Update matching participants in-place (leveraging Immer)
+      state.participants.forEach((participant, index) => {
+        const update = updatesMap.get(String(participant.userId));
+        if (update) {
+          state.participants[index] = {
+            ...participant,
+            ...update,
+          };
+        }
+      });
+    },
+
     removeParticipant: (state, action: PayloadAction<string>) => {
       const targetId = String(action.payload);
 
@@ -123,6 +155,7 @@ const {
   setRoomLoading,
   addParticipant,
   updateParticipant,
+  updateParticipants,
   removeParticipant,
   resetParticipants,
   resetRoom,
@@ -142,7 +175,6 @@ export const useRoomTools = () => {
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
 
-
   const memoizedRoom = useMemo(
     () => ({
       roomId,
@@ -155,6 +187,7 @@ export const useRoomTools = () => {
       addParticipant: (participant: RoomParticipantType) => dispatch(addParticipant(participant)),
       updateParticipant: (participant: Partial<RoomParticipantType>) =>
         dispatch(updateParticipant(participant)),
+      updateParticipants: (participants: Array<Partial<RoomParticipantType>>) => dispatch(updateParticipants(participants)),
       removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
       resetParticipants: () => dispatch(resetParticipants()),
       resetRoom: () => dispatch(resetRoom()),
