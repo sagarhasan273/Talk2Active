@@ -79,7 +79,8 @@ export const CompactRoomHeader = ({
       sx={{
         width: '100%',
         position: 'relative',
-        borderRadius: 0,
+        borderRadius: isMobile ? 1 : 0,
+        p: 0.5,
         backdropFilter: 'blur(16px)',
         bgcolor: isDark
           ? alpha(theme.palette.background.paper, 0.85)

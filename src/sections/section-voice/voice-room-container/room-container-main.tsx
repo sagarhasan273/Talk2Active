@@ -345,7 +345,7 @@ export function RoomContainerMain({
           gap: 1,
           width: 1,
           height: '100%',
-          pt: 1,
+          py: 1,
         }}
       >
         <RoomAudioStage

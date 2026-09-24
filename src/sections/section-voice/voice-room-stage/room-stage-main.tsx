@@ -14,6 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useSocket } from '@/core/contexts/context-socket';
 import { useRoomTools } from '@/core/slices';
+import { useResponsive } from '@/hooks/use-responsive';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import useRoomStageListener from './hook-room-statge-listener';
 import { RoomControlDock } from './room-stage-control-dock';
@@ -52,6 +53,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onSettingsClick,
 }) => {
   const theme = useTheme();
+
+  const isMobile = useResponsive('down', 'sm');
 
   const { socket } = useSocket();
   const { room, roomId, participants, addParticipant, removeParticipant } = useRoomTools();
@@ -138,8 +141,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         height: '100%',
         minHeight: 0,
         minWidth: 0,
-        bgcolor: 'background.paper',
-        borderRadius: 1,
+        bgcolor: isMobile ? 'transparent' : 'background.paper',
+        borderRadius: isMobile ? 0 : 1,
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         position: 'relative',
         overflow: 'hidden',

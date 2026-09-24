@@ -647,7 +647,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 {participant?.joinedAt && (
                   <>
                     <Typography variant="caption" color="text.disabled">
-                      •
+                      JoinedAt:
                     </Typography>
                     <Typography variant="caption" color="text.secondary" fontWeight={500}>
                       {fDateTime(participant?.joinedAt)}
@@ -681,7 +681,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                   mb: 1,
                 }}
               >
-                Audio Hardware Devices (LiveKit)
+                Audio Hardware Devices
               </Typography>
 
               <Stack spacing={1.5}>
@@ -744,7 +744,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                 mb: 1.5,
               }}
             >
-              {isSelf ? 'Microphone Gain & Status' : 'Participant LiveKit Volume'}
+              {isSelf ? 'Microphone Gain & Status' : 'Participant Volume'}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
