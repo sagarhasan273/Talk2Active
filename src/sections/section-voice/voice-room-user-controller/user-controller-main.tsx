@@ -28,6 +28,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Drawer,
   FormControl,
   IconButton,
@@ -50,6 +51,7 @@ import { ParticipantStageType } from '@/types/type-room';
 import { UserStats } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
+import { KrispNoiseFilterToggle } from '../voice-button-krisp-noise-filter';
 import { useParticipantAudioController } from './hook-participant-audio-controller';
 import ParticipantStatsRow from './user-controller-participant-stats-row';
 
@@ -539,26 +541,39 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               </Tooltip>
 
               {isSelf ? (
-                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
-                  <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                  <Slider
-                    value={micGain}
-                    onChange={handleMicGainChange}
-                    min={0}
-                    max={200}
-                    step={5}
-                    valueLabelDisplay="auto"
-                    sx={{ flex: 1 }}
-                  />
-                  <Typography
-                    variant="caption"
-                    fontWeight={700}
-                    color="text.secondary"
-                    sx={{ minWidth: 32 }}
-                  >
-                    {micGain}%
-                  </Typography>
-                </Box>
+                <Stack spacing={1.25} sx={{ flex: 1, ml: 0.5, minWidth: 0 }}>
+                  {/* 1. Mic Gain Slider Row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                    <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
+                    <Slider
+                      value={micGain}
+                      onChange={handleMicGainChange}
+                      min={0}
+                      max={200}
+                      step={5}
+                      valueLabelDisplay="auto"
+                      sx={{ flex: 1 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.secondary"
+                      sx={{ minWidth: 36, textAlign: 'right' }}
+                    >
+                      {micGain}%
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ borderStyle: 'dashed', opacity: 0.6 }} />
+
+                  {/* 2. Krisp Noise Cancellation Toggle */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                      AI Noise Suppression
+                    </Typography>
+                    <KrispNoiseFilterToggle />
+                  </Box>
+                </Stack>
               ) : (
                 <>
                   <Tooltip title={volume === 0 ? 'Restore Audio' : 'Mute/Deafen Track'}>
