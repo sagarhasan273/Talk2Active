@@ -309,7 +309,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease',
 
           '&:hover': {
-            transform: 'translateY(-1.5px)',
             bgcolor: isDark
               ? alpha(theme.palette.background.paper, 0.88)
               : theme.palette.common.white,

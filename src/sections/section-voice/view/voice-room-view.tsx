@@ -10,6 +10,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import useRoomSounds from '@/hooks/use-room-sounds';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
@@ -22,6 +23,7 @@ export function VoiceMainView() {
   const { user, isAuthenticated } = useCredentials();
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
   const { room, setRoom, resetRoom } = useRoomTools();
+  const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
 
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
@@ -75,6 +77,7 @@ export function VoiceMainView() {
         setIsJoinGateOpen(false);
         setSelectedTab('room-space');
         await connectToRoom(response.data.token);
+        playUserJoin();
       }
     } catch (error) {
       toastErrorResponse(error);
@@ -97,6 +100,7 @@ export function VoiceMainView() {
     setLivekitToken(null);
     setIsJoinGateOpen(false);
     resetRoom();
+    playUserLeave();
   }, [room?.roomId, user?.userId, disconnectRoom, setRoom, leaveRoomMutation]);
 
   const handleCreateRoom = useCallback(() => {

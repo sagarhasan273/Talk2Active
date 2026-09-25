@@ -177,7 +177,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   };
 
   const handleOpenRating = () => {
-    onClose();
+    // onClose();
     setRatingOpen(true);
   };
 
