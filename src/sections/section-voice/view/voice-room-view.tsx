@@ -86,32 +86,17 @@ export function VoiceMainView() {
   }, []);
 
   const handleLeaveRoom = useCallback(async () => {
-    // 1. Cache IDs before wiping state
-    const currentRoomId = room?.roomId;
-    const currentUserId = user?.userId;
-
-    // 2. Disconnect WebRTC first
     try {
       await disconnectRoom();
     } catch (err) {
       console.warn('LiveKit disconnect warning:', err);
     }
 
-    // 3. Reset local view state
     setSelectedTab('room-list');
     setSelectedRoom(null);
     setLivekitToken(null);
     setIsJoinGateOpen(false);
     resetRoom();
-
-    // 4. Send leave request to backend API
-    if (currentRoomId && currentUserId) {
-      try {
-        await leaveRoomMutation({ roomId: currentRoomId, userId: currentUserId }).unwrap();
-      } catch (err) {
-        console.warn('Failed to leave room on backend:', err);
-      }
-    }
   }, [room?.roomId, user?.userId, disconnectRoom, setRoom, leaveRoomMutation]);
 
   const handleCreateRoom = useCallback(() => {

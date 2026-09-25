@@ -17,7 +17,6 @@ import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
-import { VoiceRoomListenerUnload } from '../voice-room-listener-unload';
 import { RoomAudioStage } from '../voice-room-stage';
 
 interface RoomContainerMainProps {
@@ -336,7 +335,6 @@ export function RoomContainerMain({
     <>
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
-      <VoiceRoomListenerUnload />
 
       <Box
         sx={{
