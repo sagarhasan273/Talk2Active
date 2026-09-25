@@ -1,6 +1,5 @@
 import {
-  ParticipantContext,
-  useIsSpeaking,
+  useIsSpeaking
 } from '@livekit/components-react';
 import {
   alpha,
@@ -161,7 +160,6 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
       <VoiceSpeakingIndicator
         participantId={participantId}
         isMuted={isMuted}
-        size="small"
       />
     </Box>
   );
@@ -469,13 +467,11 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
 
           {/* 6. Isolated Audio Indicator - strictly guarded */}
           {!connectionOverlayElement && rawParticipant && (
-            <ParticipantContext.Provider value={rawParticipant}>
-              <LiveParticipantAudio
-                rawParticipant={rawParticipant}
-                participantId={String(participant.id)}
-                onSpeakingChange={setIsSpeaking}
-              />
-            </ParticipantContext.Provider>
+            <LiveParticipantAudio
+              rawParticipant={rawParticipant}
+              participantId={String(participant.id)}
+              onSpeakingChange={setIsSpeaking}
+            />
           )}
         </Box>
 

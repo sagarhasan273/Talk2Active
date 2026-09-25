@@ -1,6 +1,6 @@
-import { useIsSpeaking, useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
-import { Participant, Track } from 'livekit-client';
-import React, { useEffect, useRef, useState } from 'react';
+import { useIsSpeaking } from '@livekit/components-react';
+import { Participant } from 'livekit-client';
+import React, { useEffect, useState } from 'react';
 
 import {
   Block as BlockIcon,
@@ -28,6 +28,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Drawer,
   FormControl,
   IconButton,
@@ -41,7 +42,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
@@ -50,6 +51,8 @@ import { ParticipantStageType } from '@/types/type-room';
 import { UserStats } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
+import { KrispNoiseFilterToggle } from '../voice-button-krisp-noise-filter';
+import { useParticipantAudioController } from './hook-participant-audio-controller';
 import ParticipantStatsRow from './user-controller-participant-stats-row';
 
 interface RoomUserControllerMainProps {
@@ -68,18 +71,10 @@ interface RoomUserControllerMainProps {
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
 }
 
-// --------------------------------------------------------------------------
-// Subcomponent: LiveKit Speaking Monitor (Only mounted when rawParticipant exists)
-// --------------------------------------------------------------------------
-interface LiveParticipantSpeakingWatcherProps {
+const LiveParticipantSpeakingWatcher: React.FC<{
   participant: Participant;
   onSpeakingChange: (speaking: boolean) => void;
-}
-
-const LiveParticipantSpeakingWatcher: React.FC<LiveParticipantSpeakingWatcherProps> = ({
-  participant,
-  onSpeakingChange,
-}) => {
+}> = ({ participant, onSpeakingChange }) => {
   const isSpeaking = useIsSpeaking(participant);
 
   useEffect(() => {
@@ -87,31 +82,6 @@ const LiveParticipantSpeakingWatcher: React.FC<LiveParticipantSpeakingWatcherPro
   }, [isSpeaking, onSpeakingChange]);
 
   return null;
-};
-
-// Helper to directly manipulate the HTML5 Audio element LiveKit creates
-const setLiveKitTrackVolume = (room: any, targetUserId: string, volumeLevel: number) => {
-  if (!room || !targetUserId) return;
-  const participant = room.remoteParticipants.get(targetUserId);
-  const audioPub = participant?.getTrackPublication(Track.Source.Microphone);
-
-  if (audioPub?.track?.attachedElements) {
-    audioPub.track.attachedElements.forEach((el: HTMLMediaElement) => {
-      el.volume = volumeLevel; // 0.0 to 1.0
-    });
-  }
-};
-
-// Helper to get current volume
-const getLiveKitTrackVolume = (room: any, targetUserId: string): number => {
-  if (!room || !targetUserId) return 1;
-  const participant = room.remoteParticipants.get(targetUserId);
-  const audioPub = participant?.getTrackPublication(Track.Source.Microphone);
-
-  if (audioPub?.track?.attachedElements && audioPub.track.attachedElements.length > 0) {
-    return (audioPub.track.attachedElements[0] as HTMLMediaElement).volume;
-  }
-  return 1;
 };
 
 export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
@@ -132,9 +102,39 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
   const { checkIfFollowing, checkIfBlocked } = useCredentials();
   const { updateParticipants } = useRoomTools();
-  const room = useRoomContext();
 
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
+  const { id: userId = '', isSelf = false, rawParticipant } = safeUser;
+
+  const isViewerHost = Boolean(!isSelf);
+
+  // Use persistent audio & LiveKit controller hook
+  const {
+    volume,
+    micGain,
+    isMuted,
+    microphones,
+    speakers,
+    activeMicId,
+    activeSpeakerId,
+    handleVolumeChange,
+    handleMicGainChange,
+    handleMicDeviceChange,
+    handleSpeakerDeviceChange,
+    handleToggleMic,
+    handleToggleDeafen,
+    handleHostMuteParticipant,
+    handleKickParticipant: executeKick,
+  } = useParticipantAudioController({
+    userId,
+    isSelf,
+    rawParticipant,
+    isViewerHost,
+    onVolumeChange,
+    onToggleMute,
+    onToggleDeafen,
+    onKickParticipant,
+  });
 
   const participant = {
     name: user?.name,
@@ -149,49 +149,11 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     isHost: user?.isHost,
     joinedAt: user?.joinedAt ? new Date(user.joinedAt) : undefined,
     bio: user?.bio,
-
     isFollowing: checkIfFollowing(user?.userId),
-    isBlocked: checkIfBlocked(user?.userId)
+    isBlocked: checkIfBlocked(user?.userId),
   };
 
-  const { id: userId = '', isSelf = false, rawParticipant } = safeUser;
-
-  // Track speaking activity safely without crashing when rawParticipant is undefined
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  // Derive mute status safely
-  const micPub = rawParticipant?.getTrackPublication?.(Track.Source.Microphone);
-  const isMuted = rawParticipant
-    ? !rawParticipant.isMicrophoneEnabled || !micPub || micPub.isMuted
-    : true;
-
-  // Check if current logged-in user is host
-  const isViewerHost = Boolean(
-    room?.localParticipant &&
-    (room.localParticipant.permissions?.canPublish ?? true) &&
-    !isSelf
-  );
-
-  // LiveKit Device Selectors
-  const {
-    devices: microphones,
-    activeDeviceId: activeMicId,
-    setActiveMediaDevice: setActiveMicDevice,
-  } = useMediaDeviceSelect({ kind: 'audioinput', requestPermissions: true });
-
-  const {
-    devices: speakers,
-    activeDeviceId: activeSpeakerId,
-    setActiveMediaDevice: setActiveSpeakerDevice,
-  } = useMediaDeviceSelect({ kind: 'audiooutput' });
-
-  // Refs for Web Audio API Interception (Local Mic Gain)
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-
-  const [volume, setVolume] = useState<number>(100);
-  const [micGain, setMicGain] = useState<number>(100);
-  const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(participant?.isFollowing));
   const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(participant?.isBlocked));
 
   // Rating Modal State
@@ -200,169 +162,17 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const [ratedLevel, setRatedLevel] = useState('Intermediate (B1-B2)');
 
   useEffect(() => {
-    if (open) {
-      if (!isSelf && room && userId) {
-        const currentVol = getLiveKitTrackVolume(room, userId);
-        setVolume(currentVol * 100);
-      } else {
-        setVolume(100);
-      }
-      setIsFollowing(Boolean(participant?.isFollowing));
-      setIsBlocked(Boolean(participant?.isBlocked));
-    }
-  }, [participant?.isFollowing, participant?.isBlocked, userId, room, isSelf, open]);
+    setIsBlocked(Boolean(participant?.isBlocked));
+  }, [participant?.isBlocked]);
 
   const handleBlockToggle = () => {
     if (!userId) return;
-    const nextState = !isBlocked;
-    setIsBlocked(nextState);
+    setIsBlocked(!isBlocked);
     onBlock?.(userId);
   };
 
-  // 1. HARDWARE VOLUME CONTROL (Remote)
-  const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
-    const val = Array.isArray(newValue) ? newValue[0] : newValue;
-    setVolume(val);
-
-    if (room && userId && !isSelf) {
-      setLiveKitTrackVolume(room, userId, val / 100);
-    }
-    if (userId) {
-      onVolumeChange?.(userId, val / 100);
-    }
-  };
-
-  // 2. WEB AUDIO API GAIN CONTROL (Local Microphone)
-  const handleMicGainChange = (_event: Event, newValue: number | number[]) => {
-    const value = Array.isArray(newValue) ? newValue[0] : newValue;
-    setMicGain(value);
-
-    if (!room?.localParticipant) return;
-
-    const pub = Array.from(room.localParticipant.audioTrackPublications.values())[0];
-    const localTrack = pub?.track as any;
-
-    if (!localTrack || !localTrack.sender) return;
-
-    try {
-      if (!audioCtxRef.current) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        audioCtxRef.current = new AudioContextClass();
-      }
-
-      const ctx = audioCtxRef.current;
-
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
-      if (!localTrack.__isGainWrapped && localTrack.mediaStreamTrack) {
-        const originalStream = new MediaStream([localTrack.mediaStreamTrack]);
-        const source = ctx.createMediaStreamSource(originalStream);
-
-        const gainNode = ctx.createGain();
-        gainNodeRef.current = gainNode;
-
-        const destination = ctx.createMediaStreamDestination();
-
-        source.connect(gainNode);
-        gainNode.connect(destination);
-
-        const processedTrack = destination.stream.getAudioTracks()[0];
-
-        localTrack.sender.replaceTrack(processedTrack).catch(console.warn);
-        localTrack.__isGainWrapped = true;
-      }
-
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.setTargetAtTime(value / 100, ctx.currentTime, 0.1);
-      }
-    } catch (err) {
-      console.error('Failed to intercept and apply local mic gain:', err);
-    }
-  };
-
-  // 3. HARDWARE DEVICE SWITCHER
-  const handleMicDeviceChange = async (deviceId: string) => {
-    try {
-      await setActiveMicDevice(deviceId);
-      if (room && typeof room.switchActiveDevice === 'function') {
-        await room.switchActiveDevice('audioinput', deviceId);
-      }
-    } catch (err) {
-      console.error('Failed to change microphone device:', err);
-    }
-  };
-
-  const handleSpeakerDeviceChange = async (deviceId: string) => {
-    try {
-      await setActiveSpeakerDevice(deviceId);
-      if (room && typeof room.switchActiveDevice === 'function') {
-        await room.switchActiveDevice('audiooutput', deviceId);
-      }
-    } catch (err) {
-      console.error('Failed to change speaker device:', err);
-    }
-  };
-
-  // 4. LOCAL OR HOST FORCE MUTE TOGGLE
-  const handleToggleMic = async () => {
-    if (isSelf && room?.localParticipant) {
-      const isEnabled = room.localParticipant.isMicrophoneEnabled;
-      await room.localParticipant.setMicrophoneEnabled(!isEnabled);
-    } else if (userId && isViewerHost && !isSelf) {
-      handleHostMuteParticipant(!isMuted);
-    } else if (userId) {
-      onToggleMute?.(userId);
-    }
-  };
-
-  // 5. HARDWARE DEAFEN (Set volume to 0 or restore)
-  const handleToggleDeafen = () => {
-    if (!userId || isSelf || !room) return;
-
-    const nextDeafened = volume > 0;
-    const targetVolume = nextDeafened ? 0 : 100;
-
-    setVolume(targetVolume);
-    setLiveKitTrackVolume(room, userId, targetVolume / 100);
-
-    onToggleDeafen?.(userId);
-  };
-
-  // 6. HOST FORCE MUTE BROADCAST
-  const handleHostMuteParticipant = async (shouldMute: boolean) => {
-    if (!userId || !room?.localParticipant) return;
-
-    const payload = JSON.stringify({
-      type: 'FORCE_MUTE_PARTICIPANT',
-      targetIdentity: userId,
-      mute: shouldMute,
-    });
-
-    await room.localParticipant.publishData(new TextEncoder().encode(payload), {
-      reliable: true,
-      topic: 'room_interactions',
-    });
-  };
-
-  // 7. HOST KICK USER BROADCAST
-  const handleKickParticipant = async () => {
-    if (!userId || !room?.localParticipant) return;
-
-    const payload = JSON.stringify({
-      type: 'FORCE_MUTE_PARTICIPANT',
-      targetIdentity: userId,
-      mute: true,
-      kicked: true,
-    });
-
-    await room.localParticipant.publishData(new TextEncoder().encode(payload), {
-      reliable: true,
-      topic: 'room_interactions',
-    });
-
-    onKickParticipant?.(userId);
+  const handleKickAndClose = async () => {
+    await executeKick();
     onClose();
   };
 
@@ -400,7 +210,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
   return (
     <>
-      {/* Safely observe speaking status only when LiveKit participant exists */}
       {rawParticipant && (
         <LiveParticipantSpeakingWatcher
           participant={rawParticipant}
@@ -500,7 +309,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
         {/* Profile Body */}
         <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 3 }}>
-            {/* LEFT: Avatar with Speaking Badge */}
             <Box sx={{ position: 'relative', flexShrink: 0 }}>
               <Badge
                 overlap="circular"
@@ -511,9 +319,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                       width: 16,
                       height: 16,
                       borderRadius: '50%',
-                      backgroundColor: isSpeaking
-                        ? theme.palette.success.main
-                        : theme.palette.grey[500],
+                      backgroundColor: theme.palette.success.main,
                       border: `3px solid ${theme.palette.background.paper}`,
                     }}
                   />
@@ -536,7 +342,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               </Badge>
             </Box>
 
-            {/* RIGHT: Name, Username, Stats, Chips */}
             <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                 <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
@@ -626,7 +431,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Paper>
           )}
 
-          {/* Self: LiveKit Device Settings Panel */}
+          {/* Self: Audio Hardware Devices */}
           {isSelf && (
             <Paper
               elevation={0}
@@ -690,7 +495,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Paper>
           )}
 
-          {/* Volume Control / Mic Toggle */}
+          {/* Volume Control / Mic Gain */}
           <Paper
             elevation={0}
             sx={{
@@ -734,26 +539,39 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               </Tooltip>
 
               {isSelf ? (
-                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1.5, ml: 0.5 }}>
-                  <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                  <Slider
-                    value={micGain}
-                    onChange={handleMicGainChange}
-                    min={0}
-                    max={200}
-                    step={5}
-                    valueLabelDisplay="auto"
-                    sx={{ flex: 1 }}
-                  />
-                  <Typography
-                    variant="caption"
-                    fontWeight={700}
-                    color="text.secondary"
-                    sx={{ minWidth: 32 }}
-                  >
-                    {micGain}%
-                  </Typography>
-                </Box>
+                <Stack spacing={1.25} sx={{ flex: 1, ml: 0.5, minWidth: 0 }}>
+                  {/* 1. Mic Gain Slider Row */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
+                    <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
+                    <Slider
+                      value={micGain}
+                      onChange={handleMicGainChange}
+                      min={0}
+                      max={200}
+                      step={5}
+                      valueLabelDisplay="auto"
+                      sx={{ flex: 1 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.secondary"
+                      sx={{ minWidth: 36, textAlign: 'right' }}
+                    >
+                      {micGain}%
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ borderStyle: 'dashed', opacity: 0.6 }} />
+
+                  {/* 2. Krisp Noise Cancellation Toggle */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                      AI Noise Suppression
+                    </Typography>
+                    <KrispNoiseFilterToggle />
+                  </Box>
+                </Stack>
               ) : (
                 <>
                   <Tooltip title={volume === 0 ? 'Restore Audio' : 'Mute/Deafen Track'}>
@@ -846,7 +664,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                   size="small"
                   fullWidth
                   startIcon={<KickIcon />}
-                  onClick={handleKickParticipant}
+                  onClick={handleKickAndClose}
                   sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
                 >
                   Kick User
@@ -855,7 +673,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Paper>
           )}
 
-          {/* Speaking Level Rating & Assessment Button */}
+          {/* Speaking Level Rating */}
           {!isSelf && (
             <Paper
               elevation={0}
@@ -894,7 +712,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Paper>
           )}
 
-          {/* Social Follow & Block Actions */}
+          {/* Social Follow & Block */}
           {!isSelf && (
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
               <ButtonRelationshipToggle
@@ -902,15 +720,11 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                   id: userId,
                   name: participant?.name,
                 }}
-                isFollow={isFollowing}
+                isFollow={Boolean(participant?.isFollowing)}
                 size="small"
                 variant="soft"
-                onSuccessFollow={(data: UserStats[]) => {
-                  updateParticipants(data)
-                }}
-                onSuccessUnfollow={(data: UserStats[]) => {
-                  updateParticipants(data)
-                }}
+                onSuccessFollow={(data: UserStats[]) => updateParticipants(data)}
+                onSuccessUnfollow={(data: UserStats[]) => updateParticipants(data)}
                 fullWidth
               />
               <Button
@@ -926,7 +740,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Box>
           )}
 
-          {/* Report & Share Options */}
+          {/* Report & Share */}
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
             <Button
               variant="outlined"
@@ -934,12 +748,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               startIcon={<ReportIcon />}
               disabled={!userId || isSelf}
               onClick={() => userId && onReport?.(userId)}
-              sx={{
-                borderRadius: 1,
-                fontWeight: 600,
-                textTransform: 'none',
-                fontSize: 13,
-              }}
+              sx={{ borderRadius: 1, fontWeight: 600, textTransform: 'none', fontSize: 13 }}
             >
               Report
             </Button>
@@ -950,12 +759,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               startIcon={<ShareIcon />}
               disabled={!userId}
               onClick={() => userId && onShare?.(userId)}
-              sx={{
-                borderRadius: 1,
-                fontWeight: 600,
-                textTransform: 'none',
-                fontSize: 13,
-              }}
+              sx={{ borderRadius: 1, fontWeight: 600, textTransform: 'none', fontSize: 13 }}
             >
               Share
             </Button>
@@ -963,7 +767,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
         </Box>
       </Drawer>
 
-      {/* Speaking Rating Assessment Dialog */}
+      {/* Rating Dialog */}
       <Dialog
         open={ratingOpen}
         onClose={() => setRatingOpen(false)}

@@ -1,11 +1,9 @@
+import { SOCKET_EVENTS } from '@/lib/socket-events';
 import type { RoomParticipantType } from '@/types/type-room';
 import { useEffect } from 'react';
 import type { Socket } from 'socket.io-client';
 
-const SOCKET_EVENTS = {
-  BROADCAST_USER_JOIN: 'broadcart_user_join',
-  BROADCAST_USER_LEAVE: 'broadcart_user_leave',
-} as const;
+
 
 interface UseRoomStageListenerProps {
   socket: Socket | null | undefined;
