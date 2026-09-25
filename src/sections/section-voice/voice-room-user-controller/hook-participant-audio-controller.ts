@@ -6,9 +6,10 @@ import { useCallback, useEffect, useState } from 'react';
 // 1. In-Memory Persistent Store (Survives Component Unmount / Drawer Close)
 // --------------------------------------------------------------------------
 const participantVolumeMap = new Map<string, number>();
+// Remembers previous volume level prior to deafening
+const participantPreviousVolumeMap = new Map<string, number>();
 let persistentMicGain = 100;
 
-// Listeners to trigger React re-renders when values change
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
@@ -17,11 +18,24 @@ const notifyListeners = () => {
 };
 
 export const getStoredVolume = (userId: string): number => {
-  return participantVolumeMap.get(userId) ?? 100;
+  return participantVolumeMap.get(userId) ?? 50;
 };
 
 export const setStoredVolume = (userId: string, volume: number): void => {
   participantVolumeMap.set(userId, volume);
+  notifyListeners();
+};
+
+export const removeStoredParticipantAudio = (userId: string): void => {
+  participantVolumeMap.delete(userId);
+  participantPreviousVolumeMap.delete(userId);
+  notifyListeners();
+};
+
+export const resetRoomAudioStore = (): void => {
+  participantVolumeMap.clear();
+  participantPreviousVolumeMap.clear();
+  persistentMicGain = 100;
   notifyListeners();
 };
 
@@ -33,6 +47,8 @@ export const setStoredMicGain = (gain: number): void => {
   persistentMicGain = gain;
   notifyListeners();
 };
+
+
 
 // Global Web Audio API Context & GainNode to prevent audio graph recreation
 let globalAudioCtx: AudioContext | null = null;
@@ -64,7 +80,6 @@ export const useParticipantAudioController = ({
 }: UseParticipantAudioControllerProps) => {
   const room = useRoomContext();
 
-  // Sync state with module-level store
   const [volume, setLocalVolume] = useState<number>(() => getStoredVolume(userId));
   const [micGain, setLocalMicGain] = useState<number>(() => getStoredMicGain());
 
@@ -129,6 +144,11 @@ export const useParticipantAudioController = ({
   const handleVolumeChange = (_event: Event, newValue: number | number[]) => {
     const val = Array.isArray(newValue) ? newValue[0] : newValue;
     setStoredVolume(userId, val);
+
+    // If user sets an explicit volume > 0, store as the previous non-zero volume
+    if (val > 0) {
+      participantPreviousVolumeMap.set(userId, val);
+    }
 
     if (room && userId && !isSelf) {
       applyTrackVolume(userId, val / 100);
@@ -218,12 +238,25 @@ export const useParticipantAudioController = ({
     }
   };
 
-  // Deafen toggle (set volume to 0 or restore)
-  const handleToggleDeafen = () => {
+  // Deafen toggle with auto-mute and previous volume memory
+  const handleToggleDeafen = async () => {
     if (!userId || isSelf || !room) return;
 
-    const nextDeafened = volume > 0;
-    const targetVolume = nextDeafened ? 0 : 100;
+    const isCurrentlyDeafened = volume === 0;
+
+    let targetVolume: number;
+
+    if (isCurrentlyDeafened) {
+      // Restoring volume: check previous saved volume, otherwise default to half (50%)
+      const lastKnownVolume = participantPreviousVolumeMap.get(userId);
+      targetVolume = lastKnownVolume !== undefined && lastKnownVolume > 0
+        ? (lastKnownVolume === 100 ? 50 : lastKnownVolume)
+        : 50;
+    } else {
+      // Deafening: save current volume before setting to 0
+      participantPreviousVolumeMap.set(userId, volume);
+      targetVolume = 0;
+    }
 
     setStoredVolume(userId, targetVolume);
     applyTrackVolume(userId, targetVolume / 100);
