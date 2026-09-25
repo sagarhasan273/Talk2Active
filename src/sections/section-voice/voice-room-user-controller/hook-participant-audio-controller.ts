@@ -44,11 +44,9 @@ export const getStoredMicGain = (): number => {
 };
 
 export const setStoredMicGain = (gain: number): void => {
-  persistentMicGain = gain;
+  persistentMicGain = Math.max(0, Math.min(100, gain));
   notifyListeners();
 };
-
-
 
 // Global Web Audio API Context & GainNode to prevent audio graph recreation
 let globalAudioCtx: AudioContext | null = null;
@@ -160,7 +158,8 @@ export const useParticipantAudioController = ({
 
   // Handle local microphone gain adjustment (Web Audio API)
   const handleMicGainChange = (_event: Event, newValue: number | number[]) => {
-    const val = Array.isArray(newValue) ? newValue[0] : newValue;
+    const rawVal = Array.isArray(newValue) ? newValue[0] : newValue;
+    const val = Math.max(0, Math.min(100, rawVal));
     setStoredMicGain(val);
 
     if (!room?.localParticipant) return;
