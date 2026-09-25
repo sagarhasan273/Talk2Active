@@ -319,9 +319,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                       width: 16,
                       height: 16,
                       borderRadius: '50%',
-                      backgroundColor: isSpeaking
-                        ? theme.palette.success.main
-                        : theme.palette.grey[500],
+                      backgroundColor: theme.palette.success.main,
                       border: `3px solid ${theme.palette.background.paper}`,
                     }}
                   />
