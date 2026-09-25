@@ -229,7 +229,11 @@ export const useParticipantAudioController = ({
   const handleToggleMic = async () => {
     if (isSelf && room?.localParticipant) {
       const isEnabled = room.localParticipant.isMicrophoneEnabled;
-      await room.localParticipant.setMicrophoneEnabled(!isEnabled);
+      await room.localParticipant.setMicrophoneEnabled(!isEnabled, {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      });
     } else if (userId && isViewerHost && !isSelf) {
       handleHostMuteParticipant(!isMuted);
     } else if (userId) {

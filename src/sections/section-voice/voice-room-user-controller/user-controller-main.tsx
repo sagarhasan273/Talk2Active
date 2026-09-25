@@ -222,6 +222,9 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
         open={open}
         onClose={onClose}
         PaperProps={{ elevation: 0 }}
+        ModalProps={{
+          keepMounted: true,
+        }}
         sx={{
           zIndex: theme.zIndex.modal + 1,
           '& .MuiBackdrop-root': {
@@ -547,7 +550,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                       value={micGain}
                       onChange={handleMicGainChange}
                       min={0}
-                      max={200}
+                      max={100}
                       step={5}
                       valueLabelDisplay="auto"
                       sx={{ flex: 1 }}

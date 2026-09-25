@@ -59,7 +59,11 @@ export function LiveKitProvider({
     await room.connect(targetUrl, newToken);
 
     try {
-      await room.localParticipant.setMicrophoneEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true, {
+        echoCancellation: true,      // Standard Acoustic Echo Cancellation
+        noiseSuppression: true,      // Standard WebRTC noise suppression
+        autoGainControl: true,       // Normalizes volume spikes
+      });
     } catch (err) {
       console.warn('Could not auto-enable microphone on join:', err);
     }
