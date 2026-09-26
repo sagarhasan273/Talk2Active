@@ -24,7 +24,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
   const theme = useTheme();
   const user = useSelector(selectAccount);
 
-  const isOnline = Boolean(user?.userId || user.userId);
+  const isOnline = Boolean(user?.userId);
 
   const renderFallback = (
     <Avatar
@@ -63,9 +63,9 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
       >
         <NoSsr fallback={renderFallback}>
           <AvatarUser
-            avatarUrl={user.profilePhoto}
+            avatarUrl={user?.profilePhoto}
             name={user?.name || displayName || ''}
-            verified={user?.verified}
+            verified={true}
             accountType={user?.accountType}
           />
         </NoSsr>

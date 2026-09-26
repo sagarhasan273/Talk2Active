@@ -196,11 +196,11 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
         ? await updateRoom({
           roomId: currentRoom.roomId,
           ...payload,
-          host: (currentRoom?.host as any)?.userId || user.userId,
+          host: (currentRoom?.host as any)?.userId || user?.userId,
         }).unwrap()
         : await createRoom({
           ...payload,
-          host: user.userId,
+          host: user?.userId,
         }).unwrap();
 
       if (response?.status) onClose();
@@ -243,7 +243,6 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
-      // fullScreen={isMobile}
       PaperProps={{
         sx: {
           borderRadius: isMobile ? 0 : 1,

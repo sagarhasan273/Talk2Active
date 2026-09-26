@@ -80,7 +80,7 @@ export function ButtonRelationshipToggle({
     setFollowing(true);
     try {
       const response = await followMutate({
-        requester: user.userId,
+        requester: user?.userId,
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();
@@ -99,7 +99,7 @@ export function ButtonRelationshipToggle({
     setFollowing(false);
     try {
       const response = await unfollowMutate({
-        requester: user.userId,
+        requester: user?.userId,
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();

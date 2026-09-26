@@ -15,6 +15,7 @@ import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
 import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
 
+import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
 import { RoomAudioStage } from '../voice-room-stage';
@@ -34,6 +35,7 @@ export function RoomContainerMain({
   const { user } = useCredentials();
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
+  const { playHandRaise } = useRoomSounds();
 
   const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES);
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
@@ -300,6 +302,7 @@ export function RoomContainerMain({
             else next.delete(data.identity);
             return next;
           });
+          playHandRaise();
         }
 
         if (data.type === 'FLOATING_EMOJI') {

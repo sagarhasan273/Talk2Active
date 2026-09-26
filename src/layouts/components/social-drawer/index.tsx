@@ -73,7 +73,7 @@ export function SocialDrawer({ sx, ...other }: SocialDrawerProps) {
             followers={followers}
             following={following}
             currentUserId={currentUserId}
-            currentUserName={user.name}
+            currentUserName={user?.name}
             isLoading={false}
             onClose={drawer.onFalse}
           />

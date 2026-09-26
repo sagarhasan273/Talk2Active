@@ -8,9 +8,12 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
+import Popover from '@mui/material/Popover';
 import Stack from '@mui/material/Stack';
 import { alpha, useColorScheme, useTheme } from '@mui/material/styles';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { usePathname, useRouter } from 'src/routes/route-hooks';
 
@@ -68,23 +71,45 @@ const StatItem = ({ label, value }: { label: string; value: string | number }) =
 
 export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountDrawerProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const user = useSelector(selectAccount);
   const settings = useSettingsContext();
   const { mode, setMode } = useColorScheme();
   const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
-  const handleOpenDrawer = useCallback(() => setOpen(true), []);
-  const handleCloseDrawer = useCallback(() => setOpen(false), []);
+  // Anchor element state for Popover
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const open = Boolean(anchorEl);
+
+  // Copy feedback state
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
 
   const handleClickItem = useCallback(
     (path: string) => {
-      handleCloseDrawer();
+      handleClose();
       router.push(path);
     },
-    [handleCloseDrawer, router]
+    [handleClose, router]
   );
+
+  const handleCopyUserId = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user?.genUserId) return;
+
+    navigator.clipboard.writeText(String(user.genUserId));
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 1800);
+  }, [user?.genUserId]);
 
   const accountCfg = AccountTypeConfig[user?.accountType ?? 'member'] ?? AccountTypeConfig.member;
 
@@ -92,7 +117,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
   const renderCover = (
     <Box
       sx={{
-        height: 110,
+        height: 105,
         position: 'relative',
         background: `
           radial-gradient(ellipse at 20% 50%, ${alpha(theme.palette.primary.main, 0.55)} 0%, transparent 60%),
@@ -111,13 +136,13 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           inset: 0,
           opacity: 0.04,
           backgroundImage:
-            user.profilePhoto ??
+            user?.profilePhoto ??
             `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           backgroundSize: '128px',
         }}
       />
       <IconButton
-        onClick={handleCloseDrawer}
+        onClick={handleClose}
         size="small"
         sx={{
           position: 'absolute',
@@ -140,26 +165,25 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     <Box
       sx={{
         px: 2.5,
-        pb: 2,
-        mt: '-48px', // overlap the cover
+        pb: 1.5,
+        mt: '-44px',
         position: 'relative',
         zIndex: 1,
       }}
     >
-      {/* Avatar */}
-      <Box sx={{ mb: 1.5 }}>
+      <Box sx={{ mb: 1.25 }}>
         <AvatarUser
           avatarUrl={user?.profilePhoto ?? null}
           name={user?.name ?? ''}
-          verified={user?.verified}
+          verified={true}
           accountType={user?.accountType}
-          sx={{ width: 88, height: 88, fontSize: '1.75rem', fontWeight: 800 }}
+          sx={{ width: 80, height: 80, fontSize: '1.6rem', fontWeight: 800 }}
         />
       </Box>
 
-      {/* Name + account type badge */}
+      {/* Name + account badge */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
+        <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
           {user?.name}
         </Typography>
         {user?.verified && (
@@ -182,24 +206,61 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
             border: '1px solid',
             borderColor: alpha(accountCfg.color, 0.35),
             px: 0.5,
-            '&:hover': {
-              bgcolor: accountCfg.bg,
-              color: accountCfg.color,
-            },
           }}
         />
       </Box>
 
-      {/* Username */}
-      {user?.username && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
-          @{user.username}
-        </Typography>
+      {/* Click-to-copy User ID Badge */}
+      {user?.genUserId && (
+        <Tooltip title={copiedId ? 'Copied to clipboard!' : 'Click to copy ID'} arrow placement="top">
+          <Box
+            onClick={handleCopyUserId}
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.6,
+              cursor: 'pointer',
+              mt: 1,
+              borderRadius: 1,
+              color: copiedId
+                ? alpha(theme.palette.success.main, 0.12)
+                : alpha(theme.palette.text.primary, 0.04),
+              transition: 'all 0.18s ease',
+              '&:hover': {
+                color: copiedId
+                  ? alpha(theme.palette.success.main, 0.18)
+                  : alpha(theme.palette.text.primary, 0.08),
+              },
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: copiedId ? 'success.main' : 'text.secondary',
+                userSelect: 'none',
+                lineHeight: 1,
+              }}
+            >
+              ID: {user.genUserId}
+            </Typography>
+
+            <Iconify
+              icon={copiedId ? 'mingcute:check-line' : 'solar:copy-bold-duotone'}
+              width={13}
+              sx={{
+                color: copiedId ? 'success.main' : 'text.disabled',
+                flexShrink: 0,
+              }}
+            />
+          </Box>
+        </Tooltip>
       )}
 
       {/* Email */}
       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-        {user?.email}
+        Email: {user?.email}
       </Typography>
 
       {/* Bio */}
@@ -227,8 +288,8 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     <Box
       sx={{
         mx: 2.5,
-        mb: 2,
-        p: 1.5,
+        mb: 1.5,
+        p: 1.25,
         borderRadius: 2,
         bgcolor: theme.palette.mode === 'dark' ? alpha('#fff', 0.04) : alpha('#000', 0.03),
         border: '1px solid',
@@ -238,44 +299,16 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
       }}
     >
       <StatItem label="FOLLOWERS" value={user?.follower_count ?? 0} />
-      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
       <StatItem label="FRIENDS" value={user?.friend_count ?? 0} />
-      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
       <StatItem label="FOLLOWING" value={user?.following_count ?? 0} />
     </Box>
   );
 
-  // ── User ID chip ──────────────────────────────────────────────────────
-  const renderUserId = (
-    <Box sx={{ px: 2.5, mb: 2 }}>
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.75,
-          px: 1.25,
-          py: 0.5,
-          borderRadius: 1,
-          bgcolor: alpha(theme.palette.primary.main, 0.07),
-          border: '1px dashed',
-          borderColor: alpha(theme.palette.primary.main, 0.25),
-        }}
-      >
-        <Iconify icon="mdi:identifier" width={14} sx={{ color: 'text.disabled' }} />
-        <Typography
-          variant="caption"
-          sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'monospace' }}
-        >
-          {user?.userId}
-        </Typography>
-      </Box>
-    </Box>
-  );
-
-
   // ── Theme controls ────────────────────────────────────────────────────
   const renderTheme = (
-    <Stack sx={{ py: 2, px: 2.5, gap: 2 }}>
+    <Stack sx={{ py: 1.5, px: 2.5, gap: 1.5, borderTop: `1px dashed ${theme.vars.palette.divider}` }}>
       <BaseOption
         label={settings.colorScheme === 'dark' ? 'Dark mode' : 'Light mode'}
         icon={settings.colorScheme === 'dark' ? 'moon' : 'sun'}
@@ -294,51 +327,88 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     </Stack>
   );
 
+  // ── Shared Content Layout ─────────────────────────────────────────────
+  const renderContent = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        maxHeight: isMobile ? '100vh' : '82vh',
+        overflow: 'hidden',
+      }}
+    >
+      <Scrollbar sx={{ flex: 1 }}>
+        {renderCover}
+        {renderIdentity}
+        {renderStats}
+        {renderTheme}
+      </Scrollbar>
+
+      <Box
+        sx={{
+          p: 1.5,
+          borderTop: `1px solid ${theme.vars.palette.divider}`,
+          bgcolor: 'background.paper',
+        }}
+      >
+        <SignOutButton onClose={handleClose} />
+      </Box>
+    </Box>
+  );
+
   // ─────────────────────────────────────────────────────────────────────
 
   return (
     <>
       <AccountButton
-        onClick={handleOpenDrawer}
+        onClick={handleOpen}
         photoURL={user?.profilePhoto}
         displayName={user?.name}
         sx={sx}
         {...other}
       />
 
-      <Drawer
-        open={open}
-        onClose={handleCloseDrawer}
-        anchor="right"
-        slotProps={{ backdrop: { invisible: true } }}
-        PaperProps={{
-          sx: {
-            width: 320,
-            display: 'flex',
-            flexDirection: 'column',
-          },
-        }}
-      >
-        <Scrollbar sx={{ flex: 1 }}>
-          {renderCover}
-          {renderIdentity}
-          {renderStats}
-          {renderUserId}
-          <Stack sx={{ py: 2, px: 2.5, borderTop: `1px dashed ${theme.vars.palette.divider}` }}>
-            {renderTheme}
-          </Stack>
-        </Scrollbar>
-
-        <Box
-          sx={{
-            p: 2,
-            borderTop: `1px solid ${theme.vars.palette.divider}`,
-            bgcolor: 'background.paper',
+      {isMobile ? (
+        <Drawer
+          open={open}
+          onClose={handleClose}
+          anchor="right"
+          slotProps={{ backdrop: { invisible: true } }}
+          PaperProps={{
+            sx: {
+              width: 320,
+              display: 'flex',
+              flexDirection: 'column',
+            },
           }}
         >
-          <SignOutButton onClose={handleCloseDrawer} />
-        </Box>
-      </Drawer>
+          {renderContent}
+        </Drawer>
+      ) : (
+        <Popover
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          slotProps={{
+            paper: {
+              sx: {
+                width: 340,
+                mt: 1.2,
+                borderRadius: 2.5,
+                overflow: 'hidden',
+                boxShadow: (th) =>
+                  `0 20px 40px -4px ${alpha(th.palette.common.black, th.palette.mode === 'dark' ? 0.6 : 0.16)}`,
+                border: (th) => `1px solid ${alpha(th.palette.divider, 0.12)}`,
+              },
+            },
+          }}
+        >
+          {renderContent}
+        </Popover>
+      )}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SplashScreen } from 'src/components/loading-screen';
 
@@ -11,12 +11,12 @@ type Props = {
 };
 
 export function AuthGuard({ children }: Props) {
-  const { authenticated, loading } = useAuthContext();
+  const { isLoading } = useAuthContext();
 
   const [isChecking, setIsChecking] = useState<boolean>(true);
 
   const checkPermissions = async (): Promise<void> => {
-    if (loading) {
+    if (isLoading) {
       return;
     }
 
@@ -26,7 +26,7 @@ export function AuthGuard({ children }: Props) {
   useEffect(() => {
     checkPermissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, loading]);
+  }, [isLoading]);
 
   if (isChecking) {
     return <SplashScreen />;

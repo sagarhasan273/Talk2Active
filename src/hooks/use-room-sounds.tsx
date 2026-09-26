@@ -8,6 +8,10 @@ export type RoomSoundType =
   | 'poke'
   | 'mute'
   | 'unmute'
+  | 'deafen'
+  | 'undeafen'
+  | 'handRaise'
+  | 'success'
   | 'error';
 
 interface UseRoomSoundsOptions {
@@ -16,8 +20,90 @@ interface UseRoomSoundsOptions {
   soundUrls?: Partial<Record<RoomSoundType, string>>; // Optional custom MP3 URLs
 }
 
+interface ChimeNote {
+  freq: number;
+  start: number;
+  dur: number;
+  level: number;
+  /** -1 (left) to 1 (right). Defaults to centered. */
+  pan?: number;
+  /** How loud the octave-up shimmer is relative to the fundamental. */
+  overtoneLevel?: number;
+  /** Lowpass cutoff in Hz — lower = warmer/duller, higher = brighter. */
+  filterFreq?: number;
+}
+
+function playChimeNote(
+  ctx: AudioContext,
+  destination: AudioNode,
+  now: number,
+  { freq, start, dur, level, pan = 0, overtoneLevel = 0.32, filterFreq = 4200 }: ChimeNote
+) {
+  const noteStart = now + start;
+  const noteEnd = noteStart + dur;
+
+  const fundamental = ctx.createOscillator();
+  fundamental.type = 'sine';
+  fundamental.frequency.setValueAtTime(freq, noteStart);
+
+  const overtone = ctx.createOscillator();
+  overtone.type = 'triangle';
+  overtone.frequency.setValueAtTime(freq * 2, noteStart);
+
+  const fundamentalGain = ctx.createGain();
+  const overtoneGain = ctx.createGain();
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(filterFreq, noteStart);
+  filter.Q.setValueAtTime(0.7, noteStart);
+
+  const panner = ctx.createStereoPanner();
+  panner.pan.setValueAtTime(pan, noteStart);
+
+  // Fundamental: snappy attack, a hair of hold so it doesn't click,
+  // then a natural exponential decay.
+  fundamentalGain.gain.setValueAtTime(0.0001, noteStart);
+  fundamentalGain.gain.linearRampToValueAtTime(level, noteStart + 0.004);
+  fundamentalGain.gain.setValueAtTime(level, noteStart + 0.012);
+  fundamentalGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+  // Overtone: quieter, and fades out faster than the fundamental so
+  // it reads as an initial "shimmer" rather than a constant second tone.
+  overtoneGain.gain.setValueAtTime(0.0001, noteStart);
+  overtoneGain.gain.linearRampToValueAtTime(level * overtoneLevel, noteStart + 0.003);
+  overtoneGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + dur * 0.5);
+
+  fundamental.connect(fundamentalGain);
+  overtone.connect(overtoneGain);
+  fundamentalGain.connect(filter);
+  overtoneGain.connect(filter);
+  filter.connect(panner);
+  panner.connect(destination);
+
+  fundamental.start(noteStart);
+  fundamental.stop(noteEnd);
+  overtone.start(noteStart);
+  overtone.stop(noteEnd);
+}
+
+function playChimeSequence(
+  ctx: AudioContext,
+  destination: AudioNode,
+  now: number,
+  notes: ChimeNote[],
+  effectiveVolume: number
+) {
+  notes.forEach((note) => {
+    playChimeNote(ctx, destination, now, {
+      ...note,
+      level: effectiveVolume * note.level,
+    });
+  });
+}
+
 export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
-  const { volume: initialVolume = 0.5, muted: initialMuted = false, soundUrls } = options;
+  const { volume: initialVolume = 0.8, muted: initialMuted = false, soundUrls } = options;
 
   const [isMuted, setIsMuted] = useState(initialMuted);
   const [volume, setVolume] = useState(initialVolume);
@@ -56,50 +142,102 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
 
       switch (type) {
         case 'userJoin': {
-          // Cheerful ascending two-tone chime (F5 -> A5)
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          osc1.type = 'sine';
-          osc2.type = 'sine';
+          // Bouncy modern glass-tap chime (F#5 -> A5 -> D6)
+          // Rapid triple-tap cadence like a bouncing marble that rings
+          // out, drifting from slightly left toward center as it "lands".
+          const bounceJoinNotes: ChimeNote[] = [
+            { freq: 739.99, start: 0.0, dur: 0.09, level: 0.55, pan: -0.15 },  // pre-tap (F#5)
+            { freq: 880.0, start: 0.065, dur: 0.11, level: 0.70, pan: -0.05 }, // second bounce (A5)
+            {
+              freq: 1174.66,
+              start: 0.14,
+              dur: 0.48,
+              level: 0.90,
+              pan: 0,
+              overtoneLevel: 0.4,
+              filterFreq: 5200,
+            }, // resonant landing ring (D6)
+          ];
 
-          osc1.frequency.setValueAtTime(698.46, now); // F5
-          osc2.frequency.setValueAtTime(880.0, now + 0.1); // A5
-
-          gainNode.gain.setValueAtTime(0.001, now);
-          gainNode.gain.exponentialRampToValueAtTime(effectiveVolume * 0.4, now + 0.03);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-          osc1.connect(gainNode);
-          osc2.connect(gainNode);
-
-          osc1.start(now);
-          osc1.stop(now + 0.12);
-          osc2.start(now + 0.1);
-          osc2.stop(now + 0.35);
+          playChimeSequence(ctx, gainNode, now, bounceJoinNotes, effectiveVolume);
           break;
         }
 
         case 'userLeave': {
-          // Subtle descending two-tone chime (G5 -> Eb5)
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          osc1.type = 'sine';
-          osc2.type = 'sine';
+          // Bouncy downward departure tap (A5 -> E5 -> C#5)
+          // Crisp, tight double-bounce drop, drifting slightly right
+          // then settling back to center as the tone falls away.
+          const bounceLeaveNotes: ChimeNote[] = [
+            { freq: 880.0, start: 0.0, dur: 0.08, level: 0.65, pan: 0.15 },   // initial high tap (A5)
+            { freq: 659.25, start: 0.065, dur: 0.11, level: 0.70, pan: 0.05 }, // middle bounce (E5)
+            { freq: 554.37, start: 0.14, dur: 0.4, level: 0.80, pan: 0, filterFreq: 3600 }, // deeper final drop (C#5)
+          ];
 
-          osc1.frequency.setValueAtTime(783.99, now); // G5
-          osc2.frequency.setValueAtTime(622.25, now + 0.1); // Eb5
+          playChimeSequence(ctx, gainNode, now, bounceLeaveNotes, effectiveVolume);
+          break;
+        }
 
-          gainNode.gain.setValueAtTime(0.001, now);
-          gainNode.gain.exponentialRampToValueAtTime(effectiveVolume * 0.3, now + 0.03);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        case 'success': {
+          // Uplifting, sparkling major arpeggio fanfare (C5 -> E5 -> G5 -> C6)
+          const successNotes = [
+            { freq: 523.25, start: 0.0, dur: 0.12, level: 0.65 },   // C5
+            { freq: 659.25, start: 0.08, dur: 0.12, level: 0.70 },  // E5
+            { freq: 783.99, start: 0.16, dur: 0.14, level: 0.80 },  // G5
+            { freq: 1046.5, start: 0.24, dur: 0.45, level: 0.95 },  // C6 (rings out)
+          ];
 
-          osc1.connect(gainNode);
-          osc2.connect(gainNode);
+          successNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
 
-          osc1.start(now);
-          osc1.stop(now + 0.12);
-          osc2.start(now + 0.1);
-          osc2.stop(now + 0.35);
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, noteStart);
+
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.003);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
+          break;
+        }
+
+        case 'handRaise': {
+          // Distinct, polite upward notification ping (F#5 -> B5)
+          // Gentle attention grabber like Zoom / Meet hand raise
+          const handRaiseNotes = [
+            { freq: 739.99, start: 0.0, dur: 0.10, level: 0.6 },    // F#5 (subtle lead-in)
+            { freq: 987.77, start: 0.08, dur: 0.38, level: 0.85 },  // B5 (clear ringing bell)
+          ];
+
+          handRaiseNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
+
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
+
+            // Triangle wave for a warmer, chime-like bell texture
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, noteStart);
+
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.002);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
           break;
         }
 
@@ -120,6 +258,67 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
           break;
         }
 
+        case 'deafen': {
+          // Muffled, hollow double-thud closure (D4 -> G3)
+          const deafenNotes = [
+            { freq: 293.66, start: 0.0, dur: 0.12, level: 0.65 },  // D4
+            { freq: 196.0, start: 0.09, dur: 0.28, level: 0.8 },   // G3
+          ];
+
+          deafenNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
+
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
+
+            osc.type = 'triangle'; // Gives a slightly muffled acoustic body
+            osc.frequency.setValueAtTime(freq, noteStart);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.85, noteEnd); // subtle down-pitch
+
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.003);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
+          break;
+        }
+
+        case 'undeafen': {
+          // Snappy, bright ascending pop (G3 -> D4)
+          const undeafenNotes = [
+            { freq: 196.0, start: 0.0, dur: 0.09, level: 0.65 },   // G3
+            { freq: 293.66, start: 0.08, dur: 0.22, level: 0.8 },  // D4
+          ];
+
+          undeafenNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
+
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, noteStart);
+
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.003);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
+          break;
+        }
+
         case 'messageReceive': {
           // Soft bell chime (D6)
           const osc = ctx.createOscillator();
@@ -137,29 +336,24 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
         }
 
         case 'poke': {
-          // Playful double bubble blip
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          osc1.type = 'triangle';
-          osc2.type = 'triangle';
+          // Playful upward bounce (C6 -> E6 -> G6)
+          // Quick cheeky triplet that hops up and rings out, drifting
+          // right as it climbs — feels like a friendly little nudge.
+          const bouncePokeNotes: ChimeNote[] = [
+            { freq: 1046.5, start: 0.0, dur: 0.07, level: 0.5, pan: -0.1, overtoneLevel: 0.28 },  // hop 1 (C6)
+            { freq: 1318.51, start: 0.055, dur: 0.08, level: 0.65, pan: 0.05, overtoneLevel: 0.3 }, // hop 2 (E6)
+            {
+              freq: 1567.98,
+              start: 0.11,
+              dur: 0.26,
+              level: 0.8,
+              pan: 0.15,
+              overtoneLevel: 0.45,
+              filterFreq: 5600,
+            }, // playful landing ring (G6)
+          ];
 
-          osc1.frequency.setValueAtTime(523.25, now); // C5
-          osc1.frequency.exponentialRampToValueAtTime(1046.5, now + 0.07);
-
-          osc2.frequency.setValueAtTime(659.25, now + 0.09); // E5
-          osc2.frequency.exponentialRampToValueAtTime(1318.5, now + 0.16);
-
-          gainNode.gain.setValueAtTime(0.001, now);
-          gainNode.gain.exponentialRampToValueAtTime(effectiveVolume * 0.5, now + 0.02);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-          osc1.connect(gainNode);
-          osc2.connect(gainNode);
-
-          osc1.start(now);
-          osc1.stop(now + 0.08);
-          osc2.start(now + 0.09);
-          osc2.stop(now + 0.25);
+          playChimeSequence(ctx, gainNode, now, bouncePokeNotes, effectiveVolume);
           break;
         }
 
@@ -253,6 +447,24 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
     playPoke: useCallback(() => playSound('poke'), [playSound]),
     playMute: useCallback(() => playSound('mute'), [playSound]),
     playUnmute: useCallback(() => playSound('unmute'), [playSound]),
+    playToggleMute: useCallback((value: boolean) => {
+      if (!value) {
+        playSound('mute')
+      } else {
+        playSound('unmute')
+      }
+    }, [playSound]),
+    playDeafen: useCallback(() => playSound('deafen'), [playSound]),
+    playUndeafen: useCallback(() => playSound('undeafen'), [playSound]),
+    playToggleDeafen: useCallback((value: boolean) => {
+      if (!value) {
+        playSound('deafen')
+      } else {
+        playSound('undeafen')
+      }
+    }, [playSound]),
+    playSuccess: useCallback(() => playSound('success'), [playSound]),
+    playHandRaise: useCallback(() => playSound('handRaise'), [playSound]),
     playError: useCallback(() => playSound('error'), [playSound]),
     playSound,
 

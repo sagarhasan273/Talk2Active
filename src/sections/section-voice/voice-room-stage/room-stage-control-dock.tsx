@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
+import useRoomSounds from '@/hooks/use-room-sounds';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Box, Button, IconButton, Popover, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -39,6 +40,9 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
+
+  const { playToggleMute, playToggleDeafen } = useRoomSounds();
+
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
 
   // LiveKit hooks for local mic and deafen controls
@@ -57,6 +61,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     if (!localParticipant) return;
     try {
       await localParticipant.setMicrophoneEnabled(micMuted);
+      playToggleMute(micMuted);
     } catch (err) {
       console.error('Failed to toggle microphone:', err);
     }
@@ -67,6 +72,9 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 
     setDeafened((prevDeafened) => {
       const nextDeafened = !prevDeafened;
+
+      // 🔊 Trigger sound based on the new deafen state
+      playToggleDeafen(nextDeafened);
 
       room.remoteParticipants.forEach((participant) => {
         participant.trackPublications.forEach((publication) => {
@@ -85,7 +93,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 
       return nextDeafened;
     });
-  }, [room, isMicrophoneEnabled, localParticipant]);
+  }, [room, isMicrophoneEnabled, localParticipant, playToggleDeafen]);
 
   const buttonSx = {
     width: { xs: 38, sm: 40 },
