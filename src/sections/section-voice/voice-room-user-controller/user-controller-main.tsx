@@ -98,6 +98,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   onRateUser,
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { checkIfFollowing, checkIfBlocked } = useCredentials();
@@ -207,6 +208,13 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
       zIndex: theme.zIndex.modal + 20,
     },
   };
+
+
+  const mobileGreyBg = isDark
+    ? theme.palette.grey[700]
+    : theme.palette.grey[200];
+
+  const isDeafen = volume === 0;
 
   return (
     <>
@@ -532,9 +540,12 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                     height: 40,
                     borderRadius: 1,
                     backgroundColor: isMuted
-                      ? alpha(theme.palette.error.main, 0.15)
+                      ? 'error.main'
                       : alpha(theme.palette.text.primary, 0.05),
-                    color: isMuted ? theme.palette.error.main : theme.palette.text.primary,
+                    color: isMuted ? '#fff' : theme.palette.text.primary,
+                    '&:hover': {
+                      bgcolor: isMuted ? 'error.dark' : alpha(theme.palette.primary.main, 0.12),
+                    },
                   }}
                 >
                   {isMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
@@ -584,11 +595,16 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                         width: 40,
                         height: 40,
                         borderRadius: 1,
-                        backgroundColor:
-                          volume === 0
-                            ? alpha(theme.palette.error.main, 0.15)
-                            : alpha(theme.palette.text.primary, 0.05),
-                        color: volume === 0 ? theme.palette.error.main : theme.palette.text.primary,
+                        color: isDeafen ? '#fff' : 'text.primary',
+                        bgcolor: isDeafen
+                          ? 'error.main'
+                          : { xs: mobileGreyBg, sm: 'background.paper' },
+                        '&:hover, &:focus, &:active, &.Mui-focusVisible': {
+                          bgcolor: isDeafen
+                            ? 'error.dark'
+                            : alpha(theme.palette.primary.main, 0.08),
+                          color: isDeafen ? '#fff' : 'primary.main',
+                        },
                       }}
                     >
                       {volume === 0 ? (

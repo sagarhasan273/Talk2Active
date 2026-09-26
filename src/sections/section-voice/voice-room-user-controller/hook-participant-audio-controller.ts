@@ -1,3 +1,4 @@
+import useRoomSounds from '@/hooks/use-room-sounds';
 import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
 import { Participant, Track } from 'livekit-client';
 import { useCallback, useEffect, useState } from 'react';
@@ -77,6 +78,9 @@ export const useParticipantAudioController = ({
   onKickParticipant,
 }: UseParticipantAudioControllerProps) => {
   const room = useRoomContext();
+
+
+  const { playToggleMute } = useRoomSounds();
 
   const [volume, setLocalVolume] = useState<number>(() => getStoredVolume(userId));
   const [micGain, setLocalMicGain] = useState<number>(() => getStoredMicGain());
@@ -234,6 +238,7 @@ export const useParticipantAudioController = ({
         noiseSuppression: true,
         autoGainControl: true,
       });
+      playToggleMute(isEnabled)
     } else if (userId && isViewerHost && !isSelf) {
       handleHostMuteParticipant(!isMuted);
     } else if (userId) {
