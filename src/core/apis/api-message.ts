@@ -50,7 +50,7 @@ export const messageApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: CONFIG.serverUrl,
     prepareHeaders: (headers) => {
-      const accessToken = sessionStorage.getItem(STORAGE_KEY);
+      const accessToken = localStorage.getItem(STORAGE_KEY);
       if (accessToken) {
         headers.set('authorization', `Bearer ${accessToken}`);
       }

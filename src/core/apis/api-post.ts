@@ -1,9 +1,9 @@
 import type { ResponseType } from 'src/types/type-common';
 import type {
   CreatePostInput,
-  UpdatePostInput,
-  PostResponseType,
   GetPostsByUserIdInput,
+  PostResponseType,
+  UpdatePostInput,
 } from 'src/types/type-post';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
@@ -17,7 +17,7 @@ export const postApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: CONFIG.serverUrl,
     prepareHeaders: (headers) => {
-      const accessToken = sessionStorage.getItem(STORAGE_KEY);
+      const accessToken = localStorage.getItem(STORAGE_KEY);
       if (accessToken) {
         headers.set('authorization', `Bearer ${accessToken}`);
       }

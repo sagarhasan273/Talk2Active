@@ -6,7 +6,7 @@ let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    const accessToken = sessionStorage.getItem(STORAGE_KEY);
+    const accessToken = localStorage.getItem(STORAGE_KEY);
     const serverUrl = CONFIG.serverUrl || 'http://localhost:5000';
 
     socket = io(serverUrl, {

@@ -14,10 +14,10 @@ type Props = {
 export function AuthProvider({ children }: Props) {
   const { authLoading, setAccount, setAccountLoading } = useCredentials();
 
-  // 1. Initial token check from sessionStorage
+  // 1. Initial token check from localStorage
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
     return stored && isValidToken(stored) ? stored : null;
   });
 
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: Props) {
   );
 
   const unloadCredentials = useCallback(() => {
-    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
     setSession(null);
     setAccount(null);
     setToken(null);
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: Props) {
 
   // 6. Manual session refresh helper
   const checkUserSession = useCallback(async () => {
-    const currentToken = sessionStorage.getItem(STORAGE_KEY);
+    const currentToken = localStorage.getItem(STORAGE_KEY);
     if (currentToken && isValidToken(currentToken)) {
       setToken(currentToken);
       refetch();

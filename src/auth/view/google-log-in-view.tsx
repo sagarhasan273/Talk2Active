@@ -33,7 +33,7 @@ export const GoogleLogInView = ({
         const user = resData?.user;
 
         if (token && user) {
-          sessionStorage.setItem(STORAGE_KEY, token);
+          localStorage.setItem(STORAGE_KEY, token);
           setSession(token);
           loadCredentials(user);
           onSuccess?.();
@@ -41,7 +41,7 @@ export const GoogleLogInView = ({
           throw new Error('Access token or user data missing in server response');
         }
       } catch (err) {
-        sessionStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY);
         setSession(null);
         unloadCredentials();
         console.error('Google login failed:', err);

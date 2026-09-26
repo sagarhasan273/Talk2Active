@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 
 import {
   Block as BlockIcon,
+  Check as CheckIcon,
   Close as CloseIcon,
+  ContentCopy as CopyIcon,
   Gavel as GavelIcon,
   Headset as HeadsetIcon,
   HeadsetOff as HeadsetOffIcon,
@@ -15,7 +17,7 @@ import {
   Share as ShareIcon,
   StarRounded as StarIcon,
   CheckCircle as VerifiedIcon,
-  VolumeUp as VolumeUpIcon,
+  VolumeUp as VolumeUpIcon
 } from '@mui/icons-material';
 import {
   alpha,
@@ -23,7 +25,6 @@ import {
   Badge,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -42,7 +43,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
@@ -54,7 +55,6 @@ import { fUsername } from 'src/utils/helper';
 import { KrispNoiseFilterToggle } from '../voice-button-krisp-noise-filter';
 import { useParticipantAudioController } from './hook-participant-audio-controller';
 import ParticipantStatsRow from './user-controller-participant-stats-row';
-
 interface RoomUserControllerMainProps {
   open: boolean;
   onClose: () => void;
@@ -105,7 +105,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   const { updateParticipants } = useRoomTools();
 
   const safeUser = user ?? ({} as Partial<ParticipantStageType>);
-  const { id: userId = '', isSelf = false, rawParticipant } = safeUser;
+  const { id: userId = '', isSelf = false, rawParticipant, isHost } = safeUser;
 
   const isViewerHost = Boolean(!isSelf);
 
@@ -154,13 +154,23 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
     isBlocked: checkIfBlocked(user?.userId),
   };
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(participant?.isBlocked));
 
   // Rating Modal State
   const [ratingOpen, setRatingOpen] = useState(false);
   const [starRating, setStarRating] = useState<number | null>(4);
   const [ratedLevel, setRatedLevel] = useState('Intermediate (B1-B2)');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const idToCopy = participant?.genUserId || userId || '';
+    if (!idToCopy) return;
+
+    navigator.clipboard.writeText(idToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
 
   useEffect(() => {
     setIsBlocked(Boolean(participant?.isBlocked));
@@ -218,13 +228,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
 
   return (
     <>
-      {rawParticipant && (
-        <LiveParticipantSpeakingWatcher
-          participant={rawParticipant}
-          onSpeakingChange={setIsSpeaking}
-        />
-      )}
-
       <Drawer
         anchor={isMobile ? 'bottom' : undefined}
         open={open}
@@ -324,16 +327,44 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
               <Badge
                 overlap="circular"
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                sx={{
+                  '& .MuiBadge-badge': {
+                    bottom: { xs: 8, sm: 12 },
+                    right: { xs: 8, sm: 12 },
+                    transform: 'none',
+                    p: 0,
+                    height: 'auto',
+                  },
+                }}
                 badgeContent={
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      backgroundColor: theme.palette.success.main,
-                      border: `3px solid ${theme.palette.background.paper}`,
-                    }}
-                  />
+                  (isMuted || volume === 0) ? (
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.6,
+                        px: 1,
+                        py: 0.4,
+                        borderRadius: 999,
+                        bgcolor: alpha(theme.palette.error.dark, 0.9),
+                        color: theme.palette.common.white,
+                        backdropFilter: 'blur(8px)',
+                        border: `2px solid ${theme.palette.background.paper}`,
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.25)}`,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {isMuted ? (
+                        <MicOffIcon sx={{ fontSize: 13 }} />
+                      ) : (
+                        <HeadsetOffIcon sx={{ fontSize: 13 }} />
+                      )}
+                      <span>{isMuted ? 'Muted' : 'Deafened'}</span>
+                    </Box>
+                  ) : null
                 }
               >
                 <Avatar
@@ -345,6 +376,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                     fontSize: 28,
                     fontWeight: 800,
                     border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
+                    boxShadow: `0 8px 24px -4px ${alpha(theme.palette.common.black, 0.15)}`,
+                    transition: 'all 0.25s ease',
                   }}
                   variant="rounded"
                 >
@@ -354,54 +387,70 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-                <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
+              {/* Name & Verified Badge */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+                <Typography variant="h6" noWrap sx={{ flexShrink: 1 }}>
                   {participant?.name || 'Unknown User'} {isSelf && '(You)'}
                 </Typography>
                 {participant?.verified && (
-                  <VerifiedIcon sx={{ color: '#5865F2', fontSize: 18, flexShrink: 0 }} />
+                  <VerifiedIcon sx={{ color: '#5865F2', fontSize: 17, flexShrink: 0 }} />
                 )}
               </Box>
 
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 1.5, fontSize: 13 }}
-                noWrap
+              {/* User Handle & Copy ID Interactive Pill */}
+              <Box
+                onClick={handleCopyId}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  cursor: 'pointer',
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                  mb: 1.25,
+                  py: 0.2,
+                  borderRadius: 0.5,
+                  transition: 'all 0.18s ease',
+                  '&:hover': {
+                    color: (theme) =>
+                      copied
+                        ? alpha(theme.palette.success.main, 0.16)
+                        : alpha(theme.palette.text.primary, 0.08),
+                    borderColor: (theme) => (copied ? alpha(theme.palette.success.main, 0.4) : 'text.disabled'),
+                  },
+                }}
               >
-                @{userId || 'username'}
-              </Typography>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  sx={{
+                    color: copied ? 'success.main' : 'text.secondary',
+                    userSelect: 'none',
+                  }}
+                >
+                  @{participant?.genUserId || 'username'}
+                </Typography>
 
-              <ParticipantStatsRow participant={participant} />
-
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {isSpeaking && (
-                  <Chip
-                    label="Speaking"
+                <Tooltip title={copied ? 'Copied to clipboard!' : 'Copy user ID'} arrow placement="top">
+                  <IconButton
                     size="small"
+                    disableRipple
                     sx={{
-                      height: 24,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: theme.palette.success.main,
-                      backgroundColor: alpha(theme.palette.success.main, 0.12),
+                      p: 0,
+                      color: copied ? 'success.main' : 'text.disabled',
                     }}
-                  />
-                )}
-                {(isMuted || volume === 0) && (
-                  <Chip
-                    label={isMuted ? 'Muted' : 'Deafened'}
-                    size="small"
-                    sx={{
-                      height: 24,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: theme.palette.error.main,
-                      backgroundColor: alpha(theme.palette.error.main, 0.12),
-                    }}
-                  />
-                )}
+                  >
+                    {copied ? (
+                      <CheckIcon sx={{ fontSize: 13 }} />
+                    ) : (
+                      <CopyIcon sx={{ fontSize: 12 }} />
+                    )}
+                  </IconButton>
+                </Tooltip>
               </Box>
+
+              {/* Modernized Stats Row */}
+              <ParticipantStatsRow participant={participant} />
             </Box>
           </Box>
 
@@ -547,6 +596,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
                       bgcolor: isMuted ? 'error.dark' : alpha(theme.palette.primary.main, 0.12),
                     },
                   }}
+                  disabled={isSelf ? false : isHost}
                 >
                   {isMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
                 </IconButton>
@@ -641,7 +691,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
           </Paper>
 
           {/* Host Moderation Section */}
-          {isViewerHost && !isSelf && (
+          {isViewerHost && !isHost && (
             <Paper
               elevation={0}
               sx={{
@@ -784,10 +834,10 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             </Button>
           </Box>
         </Box>
-      </Drawer>
+      </Drawer >
 
       {/* Rating Dialog */}
-      <Dialog
+      < Dialog
         open={ratingOpen}
         onClose={() => setRatingOpen(false)}
         maxWidth="xs"
@@ -853,7 +903,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
             Submit Rating
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
     </>
   );
 };
