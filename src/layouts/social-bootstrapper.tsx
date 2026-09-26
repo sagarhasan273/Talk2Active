@@ -18,7 +18,6 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
 
   const currentUserId = user?.userId;
 
-  // 1. Fetch relations only when an authenticated user ID exists
   const { data: friendsData } = useGetFriendsQuery(currentUserId, { skip: !currentUserId });
   const { data: followersData } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
   const { data: followingData } = useGetFollowingQuery(currentUserId, { skip: !currentUserId });
@@ -46,7 +45,7 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
     }
   }, [followingData, dispatch]);
 
-  /* 
+  /*
   useEffect(() => {
     if (blockedData !== undefined) {
       const items = Array.isArray(blockedData) ? blockedData : blockedData?.data ?? [];

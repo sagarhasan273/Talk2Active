@@ -39,22 +39,22 @@ export const socialApi = createApi({
       invalidatesTags: ['social-recall'],
     }),
 
-    getFriends: builder.query<ResponseType, string>({
+    getFriends: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/friends/${userId}`,
       providesTags: ['social-recall'],
     }),
 
-    getFollowers: builder.query<ResponseType, string>({
+    getFollowers: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/followers/${userId}`,
       providesTags: ['social-recall'],
     }),
 
-    getFollowing: builder.query<ResponseType, string>({
+    getFollowing: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/following/${userId}`,
       providesTags: ['social-recall'],
     }),
 
-    getAllRelations: builder.query<ResponseType, string>({
+    getAllRelations: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/all-relations/${userId}`,
       providesTags: ['social-recall'],
     }),
