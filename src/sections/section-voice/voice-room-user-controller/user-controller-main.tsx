@@ -1,5 +1,3 @@
-import { useIsSpeaking } from '@livekit/components-react';
-import { Participant } from 'livekit-client';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -70,19 +68,6 @@ interface RoomUserControllerMainProps {
   onKickParticipant?: (userId: string) => void;
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
 }
-
-const LiveParticipantSpeakingWatcher: React.FC<{
-  participant: Participant;
-  onSpeakingChange: (speaking: boolean) => void;
-}> = ({ participant, onSpeakingChange }) => {
-  const isSpeaking = useIsSpeaking(participant);
-
-  useEffect(() => {
-    onSpeakingChange(isSpeaking);
-  }, [isSpeaking, onSpeakingChange]);
-
-  return null;
-};
 
 export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
   open,

@@ -139,6 +139,7 @@ export interface ChatReaction {
   emoji: string;
   count: number;
   reactedBySelf?: boolean;
+  userIds?: string[];
 }
 
 export interface ChatMessage {

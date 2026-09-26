@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
-import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
+import { DEMO_MESSAGES } from '../@mock_/messages-data';
 
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
@@ -77,7 +77,7 @@ export function RoomContainerMain({
         id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         authorId: localParticipant.identity,
         authorName: localParticipant.name || localParticipant.identity,
-        avatarUrl: CURRENT_USER.avatarUrl,
+        avatarUrl: user?.profilePhoto,
         text,
         imageUrl,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -109,7 +109,7 @@ export function RoomContainerMain({
 
       await localParticipant.publishData(new TextEncoder().encode(payload), publishOptions);
     },
-    [localParticipant]
+    [user, localParticipant]
   );
 
   const handleEditMessage = useCallback(
@@ -139,37 +139,73 @@ export function RoomContainerMain({
   const handleReactMessage = useCallback(
     async (id: string, emoji: string) => {
       if (!localParticipant) return;
+      const currentUserId = localParticipant.identity;
 
-      let decrement = false;
       setMessages((prev) =>
         prev.map((m) => {
           if (m.id !== id) return m;
-          const existing = m.reactions ?? [];
-          const current = existing.find((r) => r.emoji === emoji);
 
-          if (!current) {
-            return {
-              ...m,
-              reactions: [...existing, { emoji, count: 1, reactedBySelf: true }],
-            };
+          // 1. Remove this user from any other emoji on this message
+          let nextReactions = (m.reactions ?? [])
+            .map((r) => {
+              if (r.emoji === emoji) return r;
+              const filteredIds = (r.userIds ?? []).filter((uid) => uid !== currentUserId);
+              return {
+                ...r,
+                userIds: filteredIds,
+                count: filteredIds.length,
+                reactedBySelf: false,
+              };
+            })
+            .filter((r) => r.count > 0);
+
+          // 2. Toggle target emoji: remove if already active, add if not
+          const targetIndex = nextReactions.findIndex((r) => r.emoji === emoji);
+
+          if (targetIndex >= 0) {
+            const target = nextReactions[targetIndex];
+            const alreadyReacted = (target.userIds ?? []).includes(currentUserId);
+
+            if (alreadyReacted) {
+              const updatedIds = (target.userIds ?? []).filter((uid) => uid !== currentUserId);
+              if (updatedIds.length === 0) {
+                nextReactions.splice(targetIndex, 1);
+              } else {
+                nextReactions[targetIndex] = {
+                  ...target,
+                  userIds: updatedIds,
+                  count: updatedIds.length,
+                  reactedBySelf: false,
+                };
+              }
+            } else {
+              const updatedIds = [...(target.userIds ?? []), currentUserId];
+              nextReactions[targetIndex] = {
+                ...target,
+                userIds: updatedIds,
+                count: updatedIds.length,
+                reactedBySelf: true,
+              };
+            }
+          } else {
+            nextReactions.push({
+              emoji,
+              count: 1,
+              userIds: [currentUserId],
+              reactedBySelf: true,
+            });
           }
-
-          decrement = Boolean(current.reactedBySelf);
-          const nextCount = decrement ? current.count - 1 : current.count + 1;
-          const nextReactions =
-            nextCount <= 0
-              ? existing.filter((r) => r.emoji !== emoji)
-              : existing.map((r) => (r.emoji === emoji ? { ...r, count: nextCount } : r));
 
           return { ...m, reactions: nextReactions };
         })
       );
 
+      // 3. Broadcast reaction with userId over data channel
       const payload = JSON.stringify({
         type: 'CHAT_REACTION',
         messageId: id,
         emoji,
-        decrement,
+        userId: currentUserId,
       });
 
       await localParticipant.publishData(new TextEncoder().encode(payload), {
@@ -255,6 +291,7 @@ export function RoomContainerMain({
         const data = JSON.parse(text);
 
         if (data.type === 'CHAT_MESSAGE') {
+          console.log(data.message);
           setMessages((prev) =>
             prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]
           );
@@ -269,26 +306,65 @@ export function RoomContainerMain({
         }
 
         if (data.type === 'CHAT_REACTION') {
+          const { messageId, emoji, userId } = data;
+          if (!messageId || !emoji || !userId) return;
+
+          const isSelf = userId === localParticipant?.identity;
+
           setMessages((prev) =>
             prev.map((m) => {
-              if (m.id !== data.messageId) return m;
-              const existing = m.reactions ?? [];
-              const current = existing.find((r) => r.emoji === data.emoji);
+              if (m.id !== messageId) return m;
 
-              if (!current) {
-                return {
-                  ...m,
-                  reactions: [...existing, { emoji: data.emoji, count: 1, reactedBySelf: false }],
-                };
+              // 1. Remove this user from any other emoji on this message
+              let nextReactions = (m.reactions ?? [])
+                .map((r) => {
+                  if (r.emoji === emoji) return r;
+                  const filteredIds = (r.userIds ?? []).filter((uid) => uid !== userId);
+                  return {
+                    ...r,
+                    userIds: filteredIds,
+                    count: filteredIds.length,
+                    reactedBySelf: isSelf ? false : r.reactedBySelf,
+                  };
+                })
+                .filter((r) => r.count > 0);
+
+              // 2. Toggle target emoji: remove if already present, add if not
+              const targetIndex = nextReactions.findIndex((r) => r.emoji === emoji);
+
+              if (targetIndex >= 0) {
+                const target = nextReactions[targetIndex];
+                const alreadyReacted = (target.userIds ?? []).includes(userId);
+
+                if (alreadyReacted) {
+                  const updatedIds = (target.userIds ?? []).filter((uid) => uid !== userId);
+                  if (updatedIds.length === 0) {
+                    nextReactions.splice(targetIndex, 1);
+                  } else {
+                    nextReactions[targetIndex] = {
+                      ...target,
+                      userIds: updatedIds,
+                      count: updatedIds.length,
+                      reactedBySelf: isSelf ? false : target.reactedBySelf,
+                    };
+                  }
+                } else {
+                  const updatedIds = [...(target.userIds ?? []), userId];
+                  nextReactions[targetIndex] = {
+                    ...target,
+                    userIds: updatedIds,
+                    count: updatedIds.length,
+                    reactedBySelf: isSelf ? true : target.reactedBySelf,
+                  };
+                }
+              } else {
+                nextReactions.push({
+                  emoji,
+                  count: 1,
+                  userIds: [userId],
+                  reactedBySelf: isSelf,
+                });
               }
-
-              const nextCount = data.decrement ? current.count - 1 : current.count + 1;
-              const nextReactions =
-                nextCount <= 0
-                  ? existing.filter((r) => r.emoji !== data.emoji)
-                  : existing.map((r) =>
-                    r.emoji === data.emoji ? { ...r, count: nextCount } : r
-                  );
 
               return { ...m, reactions: nextReactions };
             })

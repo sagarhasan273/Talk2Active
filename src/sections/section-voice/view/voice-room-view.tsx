@@ -91,6 +91,8 @@ export function VoiceMainView() {
   const handleLeaveRoom = useCallback(async () => {
     try {
       await disconnectRoom();
+      // if (room?.roomId && user?.userId)
+      //   await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });
     } catch (err) {
       console.warn('LiveKit disconnect warning:', err);
     }
