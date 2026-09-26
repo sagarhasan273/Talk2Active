@@ -24,8 +24,6 @@ export const GoogleLogInView = ({
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-
-
         const response = await axios.post(`${CONFIG.serverUrl}/auth/google`, {
           token: tokenResponse.access_token,
         });

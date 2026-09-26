@@ -104,7 +104,7 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
       {/* Action Button */}
       <Button
         fullWidth
-        size="small"
+        size="medium"
         variant="contained"
         startIcon={<AddRoundedIcon sx={{ fontSize: 18 }} />}
         onClick={(e) => {
@@ -112,8 +112,7 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
           onCreateRoom();
         }}
         sx={{
-          height: 38,
-          borderRadius: 1.25,
+          borderRadius: 1,
           textTransform: 'none',
           fontWeight: 700,
           fontSize: 13,

@@ -328,7 +328,7 @@ export const VoiceRoomCard = ({
         {/* Footer Action Button */}
         <Button
           fullWidth
-          size="small"
+          size="medium"
           variant={isFull ? 'outlined' : 'contained'}
           disabled={isFull}
           color={isFull ? 'inherit' : 'primary'}
@@ -338,8 +338,7 @@ export const VoiceRoomCard = ({
           }}
           endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
           sx={{
-            height: 38,
-            borderRadius: 1.25,
+            borderRadius: 1,
             textTransform: 'none',
             fontWeight: 700,
             fontSize: 13,

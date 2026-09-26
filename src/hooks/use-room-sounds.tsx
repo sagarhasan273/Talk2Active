@@ -56,50 +56,67 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
 
       switch (type) {
         case 'userJoin': {
-          // Cheerful ascending two-tone chime (F5 -> A5)
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          osc1.type = 'sine';
-          osc2.type = 'sine';
+          // Bouncy modern glass-tap chime (F#5 -> A5 -> D6)
+          // Rapid triple-tap cadence like a bouncing marble that rings out
+          const bounceJoinNotes = [
+            { freq: 739.99, start: 0.0, dur: 0.08, level: 0.55 },   // quick pre-tap (F#5)
+            { freq: 880.0, start: 0.065, dur: 0.10, level: 0.70 },  // second bounce (A5)
+            { freq: 1174.66, start: 0.14, dur: 0.42, level: 0.90 }, // resonant landing ring (D6)
+          ];
 
-          osc1.frequency.setValueAtTime(698.46, now); // F5
-          osc2.frequency.setValueAtTime(880.0, now + 0.1); // A5
+          bounceJoinNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
 
-          gainNode.gain.setValueAtTime(0.001, now);
-          gainNode.gain.exponentialRampToValueAtTime(effectiveVolume * 0.4, now + 0.03);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
 
-          osc1.connect(gainNode);
-          osc2.connect(gainNode);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, noteStart);
 
-          osc1.start(now);
-          osc1.stop(now + 0.12);
-          osc2.start(now + 0.1);
-          osc2.stop(now + 0.35);
+            // Snappy 2ms percussive attack, tight bounce decay
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.002);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
           break;
         }
 
         case 'userLeave': {
-          // Subtle descending two-tone chime (G5 -> Eb5)
-          const osc1 = ctx.createOscillator();
-          const osc2 = ctx.createOscillator();
-          osc1.type = 'sine';
-          osc2.type = 'sine';
+          // Bouncy downward departure tap (A5 -> E5 -> C#5)
+          // Crisp, tight double-bounce drop
+          const bounceLeaveNotes = [
+            { freq: 880.0, start: 0.0, dur: 0.07, level: 0.65 },   // initial high tap (A5)
+            { freq: 659.25, start: 0.065, dur: 0.10, level: 0.70 }, // middle bounce (E5)
+            { freq: 554.37, start: 0.14, dur: 0.35, level: 0.80 },  // deeper final drop (C#5)
+          ];
 
-          osc1.frequency.setValueAtTime(783.99, now); // G5
-          osc2.frequency.setValueAtTime(622.25, now + 0.1); // Eb5
+          bounceLeaveNotes.forEach(({ freq, start, dur, level }) => {
+            const noteStart = now + start;
+            const noteEnd = noteStart + dur;
 
-          gainNode.gain.setValueAtTime(0.001, now);
-          gainNode.gain.exponentialRampToValueAtTime(effectiveVolume * 0.3, now + 0.03);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            const osc = ctx.createOscillator();
+            const noteGain = ctx.createGain();
 
-          osc1.connect(gainNode);
-          osc2.connect(gainNode);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, noteStart);
 
-          osc1.start(now);
-          osc1.stop(now + 0.12);
-          osc2.start(now + 0.1);
-          osc2.stop(now + 0.35);
+            noteGain.gain.setValueAtTime(0.0001, noteStart);
+            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.002);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+            osc.connect(noteGain);
+            noteGain.connect(ctx.destination);
+
+            osc.start(noteStart);
+            osc.stop(noteEnd);
+          });
           break;
         }
 
