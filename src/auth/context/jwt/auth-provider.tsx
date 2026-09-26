@@ -1,96 +1,98 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCredentials } from 'src/core/slices';
 import type { UserType } from 'src/types/type-user';
 
-
-import { useCallback, useEffect, useMemo } from 'react';
-
-import { useSetState } from 'src/hooks/use-set-state';
-
-import axios, { endpoints } from 'src/utils/axios';
-
-import { useCredentials } from 'src/core/slices';
-
+import { useGetMeQuery } from '@/core/apis';
 import { AuthContext } from '../auth-context';
 import { STORAGE_KEY } from './constant';
 import { isValidToken, setSession } from './utils';
-
-import type { AuthState } from '../../types';
-
-// ----------------------------------------------------------------------
-
-/**
- * NOTE:
- * We only build demo at basic level.
- * Customer will need to do some extra handling yourself if you want to extend the logic and other features...
- */
 
 type Props = {
   children: React.ReactNode;
 };
 
 export function AuthProvider({ children }: Props) {
-  const {  setAccount } = useCredentials();
+  const { authLoading, setAccount, setAccountLoading } = useCredentials();
 
-  const { state, setState } = useSetState<AuthState>({
-    authUser: {} as AuthState['authUser'],
-    loading: true,
+  // 1. Initial token check from sessionStorage
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored && isValidToken(stored) ? stored : null;
   });
 
-  const loadCredentials = useCallback(
-    (user: UserType) => {
-      setState({ authUser: user, loading: false });
+  const hasValidToken = Boolean(token && isValidToken(token));
 
+  // 2. Synchronize token with axios / session headers
+  useEffect(() => {
+    if (hasValidToken && token) {
+      setSession(token);
+    } else {
+      setSession(null);
+    }
+  }, [hasValidToken, token]);
+
+  // 3. RTK Query Hook
+  const {
+    data: response,
+    isLoading: isQueryLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useGetMeQuery(null, {
+    skip: !hasValidToken,
+  });
+
+  // 4. Load credentials (also accept token to update state instantly on login)
+  const loadCredentials = useCallback(
+    (user: UserType, newToken?: string) => {
+      if (newToken) {
+        setToken(newToken);
+        setSession(newToken);
+      }
       setAccount(user);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [setAccount]
   );
 
-  const checkUserSession = useCallback(async () => {
-    try {
-      const accessToken = sessionStorage.getItem(STORAGE_KEY);
+  const unloadCredentials = useCallback(() => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    setSession(null);
+    setAccount(null);
+    setToken(null);
+  }, [setAccount]);
 
-      if (accessToken && isValidToken(accessToken)) {
-        setSession(accessToken);
-
-        const res = await axios.get(endpoints.auth.me);
-        const { data, status } = res.data;
-        if (status) {
-          loadCredentials(data);
-        }
-      } else {
-        setState({ authUser: {} as AuthState['authUser'], loading: false });
-      }
-    } catch (error) {
-      setState({ authUser: {} as AuthState['authUser'], loading: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setState]);
-
+  // 5. Handle response & error from RTK Query safely
   useEffect(() => {
-    checkUserSession();
-  }, [checkUserSession]);
+    if (response?.status && response?.data) {
+      setAccount(response.data);
+    } else if (error) {
+      unloadCredentials();
+    }
+  }, [response, error, setAccount, unloadCredentials]);
 
-  // ----------------------------------------------------------------------
+  // 6. Manual session refresh helper
+  const checkUserSession = useCallback(async () => {
+    const currentToken = sessionStorage.getItem(STORAGE_KEY);
+    if (currentToken && isValidToken(currentToken)) {
+      setToken(currentToken);
+      refetch();
+    } else {
+      unloadCredentials();
+    }
+  }, [refetch, unloadCredentials]);
 
-  const checkAuthenticated =
-    state.authUser && state.authUser.userId ? 'authenticated' : 'unauthenticated';
-
-  const status = state.loading ? 'loading' : checkAuthenticated;
+  const isLoading = hasValidToken ? (isQueryLoading || isFetching) : false;
 
   const memoizedValue = useMemo(
     () => ({
-      authUser: state.authUser
-        ? {
-            ...state.authUser,
-          }
-        : ({} as AuthState['authUser']),
+      isLoading: authLoading,
+      setIsLoading: (value: boolean) => setAccountLoading(value),
       checkUserSession,
       loadCredentials,
-      loading: status === 'loading',
-      authenticated: status === 'authenticated',
-      unauthenticated: status === 'unauthenticated',
+      unloadCredentials,
     }),
-    [checkUserSession, loadCredentials, state.authUser, status]
+    [isLoading, checkUserSession, loadCredentials, unloadCredentials, setAccountLoading]
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

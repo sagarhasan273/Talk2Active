@@ -2,10 +2,11 @@ import type { SxProps } from '@mui/material';
 import { Button, CircularProgress, SvgIcon, Typography } from '@mui/material';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
-import { useState } from 'react';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
+import { setSession } from 'src/auth/context/jwt/utils'; // Make sure to import setSession
 import { CONFIG } from 'src/config-global';
+import { useAuthContext } from '../hooks';
 
 export const GoogleLogInView = ({
   sx,
@@ -18,32 +19,44 @@ export const GoogleLogInView = ({
   title?: string;
   onSuccess?: () => void;
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, setIsLoading, loadCredentials, unloadCredentials } = useAuthContext();
 
-  // Single unified handler for both Mobile & Desktop
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        setIsLoading(true);
+
+
         const response = await axios.post(`${CONFIG.serverUrl}/auth/google`, {
           token: tokenResponse.access_token,
         });
 
-        const { data } = response;
-        if (data.status && data.token) {
-          sessionStorage.setItem(STORAGE_KEY, data.token);
+        const resData = response.data;
+        const token = resData?.token;
+        const user = resData?.user;
+
+        if (token && user) {
+          sessionStorage.setItem(STORAGE_KEY, token);
+          setSession(token);
+          loadCredentials(user);
           onSuccess?.();
         } else {
-          throw new Error('Access token not found in response');
+          throw new Error('Access token or user data missing in server response');
         }
       } catch (err) {
-        console.error('Google login failed', err);
+        sessionStorage.removeItem(STORAGE_KEY);
+        setSession(null);
+        unloadCredentials();
+        console.error('Google login failed:', err);
       } finally {
         setIsLoading(false);
       }
     },
     onError: (err) => {
       console.error('Google Login Error:', err);
+      setIsLoading(false);
+    },
+    onNonOAuthError: (nonOAuthError) => {
+      console.warn('Google popup closed or dismissed:', nonOAuthError);
       setIsLoading(false);
     },
   });

@@ -6,9 +6,9 @@ export type AuthState = {
 };
 
 export type AuthContextValue = {
-  authUser: UserType;
-  loading: boolean;
-  authenticated: boolean;
-  unauthenticated: boolean;
+  isLoading: boolean;
+  setIsLoading: (value: boolean) => void;
+  loadCredentials: (user: UserType) => void;
+  unloadCredentials: () => void;
   checkUserSession?: () => Promise<void>;
 };

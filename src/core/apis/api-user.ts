@@ -24,7 +24,7 @@ export const userApi = createApi({
   }), // your REST API base
   tagTypes: ['user-recall'],
   endpoints: (builder) => ({
-    getUser: builder.query<ResponseType, null>({
+    getMe: builder.query<ResponseType, null>({
       query: () => `user/u/me`,
       providesTags: ['user-recall'],
     }),
@@ -33,8 +33,6 @@ export const userApi = createApi({
       query: (id) => `user/profile/${id}`,
       providesTags: ['user-recall'],
     }),
-
-
 
     createUser: builder.mutation<UserType, UserType>({
       query: (newUser) => ({
@@ -65,7 +63,7 @@ export const userApi = createApi({
 });
 
 export const {
-  useGetUserQuery,
+  useGetMeQuery,
   useGetUserByIdQuery,
   useUpdateUserRecentRoomsMutation,
   useCreateUserMutation,

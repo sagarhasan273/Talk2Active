@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../types';
 
 interface UserState {
-  user: UserType;
+  user: UserType | null;
   friends: AllRelationsType[];
   following: AllRelationsType[];
   followers: AllRelationsType[];
@@ -19,7 +19,7 @@ interface UserState {
 }
 
 const initialState: UserState = {
-  user: {} as UserType,
+  user: null,
   friends: [],
   following: [],
   followers: [],
@@ -34,7 +34,7 @@ export const accountSlice = createSlice({
   reducers: {
     setAccount: (state, action: PayloadAction<UserState['user']>) => {
       state.user = action.payload;
-      state.isAuthenticated = true;
+      state.isAuthenticated = action.payload && action.payload.userId ? true : false;
     },
 
     setFriends: (state, action: PayloadAction<UserState['friends']>) => {
@@ -140,11 +140,11 @@ export const useCredentials = () => {
   const dispatch = useDispatch();
 
   const user = useSelector(selectAccount);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const followers = useSelector(selectFollowers);
   const following = useSelector(selectFollowing);
   const friends = useSelector(selectFriends);
   const blockedUserIds = useSelector(selectBlockedUserIds);
-  const isAuthenticated = useSelector(selectIsAuthenticated);
   const authLoading = useSelector(selectAuthLoading);
 
   const currentUserId = String(user?.userId || (user as any)?._id || '');
@@ -211,9 +211,9 @@ export const useCredentials = () => {
 
   return useMemo(
     () => ({
+      user,
       isAuthenticated,
       authLoading,
-      user,
       currentUserId,
       followers,
       following,
