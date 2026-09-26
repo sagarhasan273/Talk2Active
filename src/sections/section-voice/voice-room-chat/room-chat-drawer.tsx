@@ -46,7 +46,6 @@ export const RoomChatDrawer = ({
     <RoomChatPanel
       messages={messages}
       currentUserId={currentUserId}
-      participants={participants}
       onSendMessage={onSendMessage}
       onEditMessage={onEditMessage}
       onReactMessage={onReactMessage}
