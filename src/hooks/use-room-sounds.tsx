@@ -16,6 +16,99 @@ interface UseRoomSoundsOptions {
   soundUrls?: Partial<Record<RoomSoundType, string>>; // Optional custom MP3 URLs
 }
 
+// ----------------------------------------------------------------------
+// Chime note helper
+//
+// Each note layers two oscillators:
+//   - fundamental (sine)   -> the body of the tone
+//   - overtone (triangle, one octave up, quieter) -> a glassy shimmer
+// Both pass through a shared lowpass filter so the harmonics blend
+// instead of sounding like two separate beeps, then through a stereo
+// panner so a bounce sequence can drift slightly as it "lands".
+// ----------------------------------------------------------------------
+
+interface ChimeNote {
+  freq: number;
+  start: number;
+  dur: number;
+  level: number;
+  /** -1 (left) to 1 (right). Defaults to centered. */
+  pan?: number;
+  /** How loud the octave-up shimmer is relative to the fundamental. */
+  overtoneLevel?: number;
+  /** Lowpass cutoff in Hz — lower = warmer/duller, higher = brighter. */
+  filterFreq?: number;
+}
+
+function playChimeNote(
+  ctx: AudioContext,
+  destination: AudioNode,
+  now: number,
+  { freq, start, dur, level, pan = 0, overtoneLevel = 0.32, filterFreq = 4200 }: ChimeNote
+) {
+  const noteStart = now + start;
+  const noteEnd = noteStart + dur;
+
+  const fundamental = ctx.createOscillator();
+  fundamental.type = 'sine';
+  fundamental.frequency.setValueAtTime(freq, noteStart);
+
+  const overtone = ctx.createOscillator();
+  overtone.type = 'triangle';
+  overtone.frequency.setValueAtTime(freq * 2, noteStart);
+
+  const fundamentalGain = ctx.createGain();
+  const overtoneGain = ctx.createGain();
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(filterFreq, noteStart);
+  filter.Q.setValueAtTime(0.7, noteStart);
+
+  const panner = ctx.createStereoPanner();
+  panner.pan.setValueAtTime(pan, noteStart);
+
+  // Fundamental: snappy attack, a hair of hold so it doesn't click,
+  // then a natural exponential decay.
+  fundamentalGain.gain.setValueAtTime(0.0001, noteStart);
+  fundamentalGain.gain.linearRampToValueAtTime(level, noteStart + 0.004);
+  fundamentalGain.gain.setValueAtTime(level, noteStart + 0.012);
+  fundamentalGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+
+  // Overtone: quieter, and fades out faster than the fundamental so
+  // it reads as an initial "shimmer" rather than a constant second tone.
+  overtoneGain.gain.setValueAtTime(0.0001, noteStart);
+  overtoneGain.gain.linearRampToValueAtTime(level * overtoneLevel, noteStart + 0.003);
+  overtoneGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + dur * 0.5);
+
+  fundamental.connect(fundamentalGain);
+  overtone.connect(overtoneGain);
+  fundamentalGain.connect(filter);
+  overtoneGain.connect(filter);
+  filter.connect(panner);
+  panner.connect(destination);
+
+  fundamental.start(noteStart);
+  fundamental.stop(noteEnd);
+  overtone.start(noteStart);
+  overtone.stop(noteEnd);
+}
+
+function playChimeSequence(
+  ctx: AudioContext,
+  destination: AudioNode,
+  now: number,
+  notes: ChimeNote[],
+  effectiveVolume: number
+) {
+  notes.forEach((note) => {
+    playChimeNote(ctx, destination, now, {
+      ...note,
+      level: effectiveVolume * note.level,
+    });
+  });
+}
+
 export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
   const { volume: initialVolume = 0.5, muted: initialMuted = false, soundUrls } = options;
 
@@ -57,66 +150,37 @@ export const useRoomSounds = (options: UseRoomSoundsOptions = {}) => {
       switch (type) {
         case 'userJoin': {
           // Bouncy modern glass-tap chime (F#5 -> A5 -> D6)
-          // Rapid triple-tap cadence like a bouncing marble that rings out
-          const bounceJoinNotes = [
-            { freq: 739.99, start: 0.0, dur: 0.08, level: 0.55 },   // quick pre-tap (F#5)
-            { freq: 880.0, start: 0.065, dur: 0.10, level: 0.70 },  // second bounce (A5)
-            { freq: 1174.66, start: 0.14, dur: 0.42, level: 0.90 }, // resonant landing ring (D6)
+          // Rapid triple-tap cadence like a bouncing marble that rings
+          // out, drifting from slightly left toward center as it "lands".
+          const bounceJoinNotes: ChimeNote[] = [
+            { freq: 739.99, start: 0.0, dur: 0.09, level: 0.55, pan: -0.15 },  // pre-tap (F#5)
+            { freq: 880.0, start: 0.065, dur: 0.11, level: 0.70, pan: -0.05 }, // second bounce (A5)
+            {
+              freq: 1174.66,
+              start: 0.14,
+              dur: 0.48,
+              level: 0.90,
+              pan: 0,
+              overtoneLevel: 0.4,
+              filterFreq: 5200,
+            }, // resonant landing ring (D6)
           ];
 
-          bounceJoinNotes.forEach(({ freq, start, dur, level }) => {
-            const noteStart = now + start;
-            const noteEnd = noteStart + dur;
-
-            const osc = ctx.createOscillator();
-            const noteGain = ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, noteStart);
-
-            // Snappy 2ms percussive attack, tight bounce decay
-            noteGain.gain.setValueAtTime(0.0001, noteStart);
-            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.002);
-            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
-
-            osc.connect(noteGain);
-            noteGain.connect(ctx.destination);
-
-            osc.start(noteStart);
-            osc.stop(noteEnd);
-          });
+          playChimeSequence(ctx, gainNode, now, bounceJoinNotes, effectiveVolume);
           break;
         }
 
         case 'userLeave': {
           // Bouncy downward departure tap (A5 -> E5 -> C#5)
-          // Crisp, tight double-bounce drop
-          const bounceLeaveNotes = [
-            { freq: 880.0, start: 0.0, dur: 0.07, level: 0.65 },   // initial high tap (A5)
-            { freq: 659.25, start: 0.065, dur: 0.10, level: 0.70 }, // middle bounce (E5)
-            { freq: 554.37, start: 0.14, dur: 0.35, level: 0.80 },  // deeper final drop (C#5)
+          // Crisp, tight double-bounce drop, drifting slightly right
+          // then settling back to center as the tone falls away.
+          const bounceLeaveNotes: ChimeNote[] = [
+            { freq: 880.0, start: 0.0, dur: 0.08, level: 0.65, pan: 0.15 },   // initial high tap (A5)
+            { freq: 659.25, start: 0.065, dur: 0.11, level: 0.70, pan: 0.05 }, // middle bounce (E5)
+            { freq: 554.37, start: 0.14, dur: 0.4, level: 0.80, pan: 0, filterFreq: 3600 }, // deeper final drop (C#5)
           ];
 
-          bounceLeaveNotes.forEach(({ freq, start, dur, level }) => {
-            const noteStart = now + start;
-            const noteEnd = noteStart + dur;
-
-            const osc = ctx.createOscillator();
-            const noteGain = ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, noteStart);
-
-            noteGain.gain.setValueAtTime(0.0001, noteStart);
-            noteGain.gain.linearRampToValueAtTime(effectiveVolume * level, noteStart + 0.002);
-            noteGain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
-
-            osc.connect(noteGain);
-            noteGain.connect(ctx.destination);
-
-            osc.start(noteStart);
-            osc.stop(noteEnd);
-          });
+          playChimeSequence(ctx, gainNode, now, bounceLeaveNotes, effectiveVolume);
           break;
         }
 
