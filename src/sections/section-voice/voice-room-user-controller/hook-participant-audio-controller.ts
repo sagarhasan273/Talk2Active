@@ -9,7 +9,9 @@ import { useCallback, useEffect, useState } from 'react';
 const participantVolumeMap = new Map<string, number>();
 // Remembers previous volume level prior to deafening
 const participantPreviousVolumeMap = new Map<string, number>();
-let persistentMicGain = 50;
+
+const DEFAULT_MIC_GAIN = 25;
+let persistentMicGain = DEFAULT_MIC_GAIN;
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -36,7 +38,7 @@ export const removeStoredParticipantAudio = (userId: string): void => {
 export const resetRoomAudioStore = (): void => {
   participantVolumeMap.clear();
   participantPreviousVolumeMap.clear();
-  persistentMicGain = 50;
+  persistentMicGain = DEFAULT_MIC_GAIN;
   notifyListeners();
 };
 

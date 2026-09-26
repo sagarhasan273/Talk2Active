@@ -13,16 +13,20 @@ import React, { useState } from 'react';
 import {
   alpha,
   Avatar,
+  AvatarGroup,
   Box,
   Button,
   IconButton,
   Popover,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 
 import { ChatMessage } from '@/types/type-room';
+import { getCachedUserInfo } from '@/utils/user-cache';
 import { QUICK_REACTIONS } from '../@mock_/messages-data';
+
 
 type RoomChatMessageProps = {
   message: ChatMessage;
@@ -104,6 +108,7 @@ export const RoomChatMessage = ({
         maxWidth: '85%',
       }}
     >
+      {/* Sender Header */}
       <Box
         sx={{
           display: 'flex',
@@ -126,7 +131,7 @@ export const RoomChatMessage = ({
                 bgcolor: theme.palette.primary.main,
               }}
             >
-              {message.authorName.charAt(0)}
+              {message.authorName?.charAt(0)}
             </Avatar>
             <Typography
               variant="caption"
@@ -149,6 +154,7 @@ export const RoomChatMessage = ({
         </Typography>
       </Box>
 
+      {/* Message Body & Actions */}
       <Box sx={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
         {hovered && !editing && (
           <Box
@@ -257,7 +263,6 @@ export const RoomChatMessage = ({
               </Box>
             )}
 
-            {/* Display Image Upload If Present */}
             {message.imageUrl && (
               <Box
                 component="img"
@@ -274,9 +279,7 @@ export const RoomChatMessage = ({
                   objectFit: 'cover',
                   border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
                   transition: 'transform 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                  },
+                  '&:hover': { transform: 'scale(1.02)' },
                 }}
               />
             )}
@@ -336,6 +339,7 @@ export const RoomChatMessage = ({
             )}
           </Box>
 
+          {/* Reactions Row with Micro Avatars & Tooltips */}
           {!!message.reactions?.length && (
             <Box
               sx={{
@@ -346,45 +350,86 @@ export const RoomChatMessage = ({
                 justifyContent: message.isSelf ? 'flex-end' : 'flex-start',
               }}
             >
-              {message.reactions.map((r) => (
-                <Box
-                  key={r.emoji}
-                  component="button"
-                  onClick={() => pickReaction(r.emoji)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.4,
-                    px: 0.75,
-                    py: 0.2,
-                    fontSize: 11,
-                    borderRadius: 5,
-                    cursor: 'pointer',
-                    bgcolor: r.reactedBySelf
-                      ? alpha(theme.palette.primary.main, 0.15)
-                      : 'background.paper',
-                    border: `1px solid ${r.reactedBySelf
-                      ? theme.palette.primary.main
-                      : alpha(theme.palette.divider, 0.3)
-                      }`,
-                    color: r.reactedBySelf
-                      ? theme.palette.primary.main
-                      : theme.palette.text.secondary,
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      transform: 'scale(1.08)',
-                    },
-                  }}
-                >
-                  <span>{r.emoji}</span>
-                  <span>{r.count}</span>
-                </Box>
-              ))}
+              {message.reactions.map((r) => {
+                // Resolve users from userIds via sessionStorage
+                const reactedUsers = (r.userIds ?? []).map((uid) => {
+                  const cached = getCachedUserInfo(uid);
+                  return {
+                    userId: uid,
+                    name: cached?.name || (uid === message.authorId ? message.authorName : 'User'),
+                    avatarUrl: cached?.avatarUrl || '',
+                  };
+                });
+
+                const tooltipNames = reactedUsers.map((u) => u.name).join(', ') || `${r.count} reacted`;
+
+                return (
+                  <Box
+                    key={r.emoji}
+                    component="button"
+                    onClick={() => pickReaction(r.emoji)}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 0.75,
+                      py: 0.25,
+                      fontSize: 11,
+                      borderRadius: 999,
+                      cursor: 'pointer',
+                      bgcolor: r.reactedBySelf
+                        ? alpha(theme.palette.primary.main, 0.12)
+                        : 'background.paper',
+                      border: `1px solid ${r.reactedBySelf
+                        ? theme.palette.primary.main
+                        : alpha(theme.palette.divider, 0.3)
+                        }`,
+                      color: r.reactedBySelf
+                        ? theme.palette.primary.main
+                        : theme.palette.text.secondary,
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        borderColor: theme.palette.primary.main,
+                      },
+                    }}
+                  >
+                    <span>{r.emoji}</span>
+                    <span style={{ fontWeight: 700, fontSize: 10.5 }}>{r.count}</span>
+
+                    {/* Small Avatars Stack */}
+                    {reactedUsers.length > 0 && (
+                      <AvatarGroup
+                        max={3}
+                        sx={{
+                          ml: 0.25,
+                          '& .MuiAvatar-root': {
+                            width: 14,
+                            height: 14,
+                            fontSize: 7,
+                            fontWeight: 800,
+                            border: `1px solid ${theme.palette.background.paper}`,
+                          },
+                        }}
+                      >
+                        {reactedUsers.map((u) => (
+                          <Tooltip key={u.userId} title={u.name} arrow placement="top">
+                            <Avatar src={u.avatarUrl} alt={u.name}>
+                              {u.name.charAt(0).toUpperCase()}
+                            </Avatar>
+                          </Tooltip>
+                        ))}
+                      </AvatarGroup>
+                    )}
+                  </Box>
+                );
+              })}
             </Box>
           )}
         </Box>
       </Box>
 
+      {/* Quick Reaction Picker */}
       <Popover
         open={Boolean(reactAnchor)}
         anchorEl={reactAnchor}

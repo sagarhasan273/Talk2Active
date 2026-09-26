@@ -5,6 +5,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { cacheUserInfo } from '@/utils/user-cache';
 import type { RootState } from '../types';
 
 interface RoomState {
@@ -45,6 +46,14 @@ export const roomSlice = createSlice({
           } else {
             state.participants.push(participant);
           }
+
+          if (participant.userId) {
+            cacheUserInfo({
+              userId: participant.userId,
+              name: participant.name as string,
+              avatarUrl: participant.profilePhoto
+            })
+          }
         });
       }
     },
@@ -72,6 +81,14 @@ export const roomSlice = createSlice({
           state.room.participants = [];
         }
         state.room.participants.push(newParticipant);
+      }
+
+      if (newParticipant.userId) {
+        cacheUserInfo({
+          userId: newParticipant.userId,
+          name: newParticipant.name as string,
+          avatarUrl: newParticipant.profilePhoto
+        })
       }
     },
 
