@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 import { UseBooleanReturn } from '@/hooks/use-boolean';
 
-import { ChatMessage, RoomParticipantType } from '@/types/type-room';
+import { ChatMessage } from '@/types/type-room';
 import RoomChatPanel from './room-chat-panel';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
@@ -19,7 +19,6 @@ export type RoomChatMainProps = {
   messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
-  participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
     replyToId?: string,
@@ -37,7 +36,6 @@ export function RoomChatMain({
   messages,
   currentUserId,
   topicContext = '',
-  participants = [],
   collapsedBoolean,
   onSendMessage,
   onEditMessage,
@@ -128,7 +126,6 @@ export function RoomChatMain({
               messages={messages}
               currentUserId={currentUserId}
               topicContext={topicContext}
-              participants={participants}
               onSendMessage={onSendMessage}
               onEditMessage={onEditMessage}
               onReactMessage={onReactMessage}

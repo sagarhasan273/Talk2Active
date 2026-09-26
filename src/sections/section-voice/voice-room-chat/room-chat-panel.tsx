@@ -18,7 +18,8 @@ import axios from 'axios';
 import { filterVisibleMessages } from '../@mock_/messages-data';
 import { RoomChatMessage } from './room-chat-message';
 
-import { ChatMessage, RoomParticipantType } from '@/types/type-room';
+import { useRoomTools } from '@/core/slices';
+import { ChatMessage } from '@/types/type-room';
 import { uploadImage } from '@/utils/helper';
 
 
@@ -28,7 +29,6 @@ type RoomChatPanelProps = {
   messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
-  participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
     replyToId?: string,
@@ -45,7 +45,6 @@ export const RoomChatPanel = ({
   messages,
   currentUserId,
   topicContext = '',
-  participants = [],
   onSendMessage,
   onEditMessage,
   onReactMessage,
@@ -53,6 +52,9 @@ export const RoomChatPanel = ({
   title = 'Chat',
 }: RoomChatPanelProps) => {
   const theme = useTheme();
+
+  const { participants } = useRoomTools();
+
   const [draft, setDraft] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [whisperTarget, setWhisperTarget] = useState<{ id: string; name: string } | null>(null);

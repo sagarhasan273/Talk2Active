@@ -233,10 +233,6 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
   const primaryColor = varAlpha(theme.vars.palette.primary.lightChannel, 1);
 
-  const lockedLevel = currentRoom?.level || 'all';
-
-  // ----------------------------------------------------------------------
-
   return (
     <Dialog
       open={open}

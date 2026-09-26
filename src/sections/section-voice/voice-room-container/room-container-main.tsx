@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
-import { CURRENT_USER, DEMO_MESSAGES } from '../@mock_/messages-data';
+import { DEMO_MESSAGES } from '../@mock_/messages-data';
 
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
@@ -77,7 +77,7 @@ export function RoomContainerMain({
         id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         authorId: localParticipant.identity,
         authorName: localParticipant.name || localParticipant.identity,
-        avatarUrl: CURRENT_USER.avatarUrl,
+        avatarUrl: user?.profilePhoto,
         text,
         imageUrl,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -109,7 +109,7 @@ export function RoomContainerMain({
 
       await localParticipant.publishData(new TextEncoder().encode(payload), publishOptions);
     },
-    [localParticipant]
+    [user, localParticipant]
   );
 
   const handleEditMessage = useCallback(
@@ -255,6 +255,7 @@ export function RoomContainerMain({
         const data = JSON.parse(text);
 
         if (data.type === 'CHAT_MESSAGE') {
+          console.log(data.message);
           setMessages((prev) =>
             prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]
           );
