@@ -1,10 +1,12 @@
-import { Globe, Image as ImageIcon, Lock, Send, Sparkles, X } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, Globe, Image as ImageIcon, Lock, Send, Sparkles, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   alpha,
+  Avatar,
   Box,
   Button,
+  Fade,
   IconButton,
   LinearProgress,
   Menu,
@@ -15,18 +17,17 @@ import {
 } from '@mui/material';
 
 import axios from 'axios';
-import { filterVisibleMessages } from '../@mock_/messages-data';
 import { RoomChatMessage } from './room-chat-message';
 
 import { useRoomTools } from '@/core/slices';
 import { ChatMessage } from '@/types/type-room';
 import { uploadImage } from '@/utils/helper';
-
+import { filterVisibleMessages } from '@/_mock/_messages';
+import { useRoomChat } from '@/core/contexts/context-room-chat';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 type RoomChatPanelProps = {
-  messages: ChatMessage[];
   currentUserId: string;
   topicContext?: string;
   onSendMessage?: (
@@ -42,7 +43,6 @@ type RoomChatPanelProps = {
 };
 
 export const RoomChatPanel = ({
-  messages,
   currentUserId,
   topicContext = '',
   onSendMessage,
@@ -52,8 +52,16 @@ export const RoomChatPanel = ({
   title = 'Chat',
 }: RoomChatPanelProps) => {
   const theme = useTheme();
-
   const { participants } = useRoomTools();
+
+  const {
+    messages,
+    unreadCount,
+    latestUnreadSender,
+    isChatVisible,
+    setIsAtBottom,
+    markAllAsRead,
+  } = useRoomChat();
 
   const [draft, setDraft] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -70,7 +78,9 @@ export const RoomChatPanel = ({
   const [isAskingAi, setIsAskingAi] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const localIsAtBottomRef = useRef<boolean>(true);
 
   const visibleMessages = useMemo(
     () => filterVisibleMessages(messages, currentUserId),
@@ -89,20 +99,68 @@ export const RoomChatPanel = ({
     });
   }, [participants, currentUserId]);
 
+  // 1. Observe bottom sentinel ONLY when chat is visible
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [visibleMessages.length]);
+    if (!isChatVisible) return;
+    const sentinel = messagesEndRef.current;
+    const container = scrollContainerRef.current;
+    if (!sentinel || !container) return;
 
-  const handleInitiateReply = (message: ChatMessage) => {
-    setReplyingTo(message);
-    if (message.privateTo) {
-      if (message.authorId === currentUserId) {
-        setWhisperTarget({ id: message.privateTo.id, name: message.privateTo.name });
-      } else {
-        setWhisperTarget({ id: message.authorId, name: message.authorName });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        localIsAtBottomRef.current = entry.isIntersecting;
+        setIsAtBottom(entry.isIntersecting);
+      },
+      {
+        root: container,
+        threshold: 0.1,
+        rootMargin: '0px 0px 60px 0px',
       }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [isChatVisible, setIsAtBottom]);
+
+  const scrollToBottom = useCallback(
+    (behavior: ScrollBehavior = 'smooth', shouldMarkRead = false) => {
+      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+      if (shouldMarkRead && isChatVisible) {
+        markAllAsRead();
+      }
+    },
+    [isChatVisible, markAllAsRead]
+  );
+
+  // 2. Auto-scroll when a new message arrives ONLY if chat is visible and user is at bottom
+  useEffect(() => {
+    if (!isChatVisible) return;
+
+    const lastMessage = visibleMessages[visibleMessages.length - 1];
+    const isOwnMessage =
+      Boolean(lastMessage?.isSelf) ||
+      (Boolean(currentUserId) && String(lastMessage?.authorId) === String(currentUserId));
+
+    if (localIsAtBottomRef.current || isOwnMessage) {
+      requestAnimationFrame(() => {
+        scrollToBottom('smooth', true);
+      });
     }
-  };
+  }, [visibleMessages.length, isChatVisible, currentUserId, scrollToBottom]);
+
+  const handleInitiateReply = useCallback(
+    (message: ChatMessage) => {
+      setReplyingTo(message);
+      if (message.privateTo) {
+        if (message.authorId === currentUserId) {
+          setWhisperTarget({ id: message.privateTo.id, name: message.privateTo.name });
+        } else {
+          setWhisperTarget({ id: message.authorId, name: message.authorName });
+        }
+      }
+    },
+    [currentUserId]
+  );
 
   const handleCancelReply = () => {
     if (replyingTo?.privateTo) {
@@ -120,7 +178,6 @@ export const RoomChatPanel = ({
 
   const send = () => {
     const text = draft.trim();
-    // Allow sending if there is text OR an uploaded image ready
     if ((!text && !uploadedImageUrl) || isUploading || isAskingAi) return;
 
     onSendMessage?.(
@@ -158,7 +215,6 @@ export const RoomChatPanel = ({
       setUploadProgress(100);
 
       if (result?.imageUrl) {
-        // Stage image for preview rather than sending immediately
         setUploadedImageUrl(result.imageUrl);
       }
     } catch (err) {
@@ -229,43 +285,94 @@ export const RoomChatPanel = ({
         )}
       </Box>
 
-      {/* Messages Feed */}
+      {/* Messages Feed + Floating Unread Indicator Wrapper */}
       <Box
         sx={{
+          position: 'relative',
           flex: 1,
           minHeight: 0,
-          overflowY: 'auto',
-          px: 2,
-          py: 1.5,
           display: 'flex',
           flexDirection: 'column',
-          gap: 1.25,
         }}
       >
-        {visibleMessages.length === 0 ? (
-          <Typography
-            variant="caption"
-            sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}
+        <Box
+          ref={scrollContainerRef}
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            px: 2,
+            py: 1.5,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.25,
+          }}
+        >
+          {visibleMessages.length === 0 ? (
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}
+            >
+              No messages yet — say hello!
+            </Typography>
+          ) : (
+            visibleMessages.map((m) => (
+              <RoomChatMessage
+                key={m.id}
+                message={m as ChatMessage}
+                replyTo={m.replyToId ? (byId[m.replyToId] as ChatMessage) : undefined}
+                onReply={handleInitiateReply}
+                onEdit={onEditMessage}
+                onReact={onReactMessage}
+              />
+            ))
+          )}
+          <div ref={messagesEndRef} style={{ height: 1, width: '100%', flexShrink: 0 }} />
+        </Box>
+
+        {/* Floating "New Message" Pill when scrolled up */}
+        <Fade in={unreadCount > 0} unmountOnExit>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => scrollToBottom('smooth', true)}
+            endIcon={<ArrowDown size={14} />}
+            sx={{
+              position: 'absolute',
+              bottom: 10,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 20,
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.5,
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: 12,
+              bgcolor: 'primary.main',
+              boxShadow: `0 8px 20px -4px ${alpha(theme.palette.common.black, 0.45)}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.75,
+              whiteSpace: 'nowrap',
+              '&:hover': { bgcolor: 'primary.dark' },
+            }}
           >
-            No messages yet — say hello!
-          </Typography>
-        ) : (
-          visibleMessages.map((m) => (
-            <RoomChatMessage
-              key={m.id}
-              message={{ ...m, privateTo: m.privateTo ?? undefined }}
-              replyTo={
-                m.replyToId && byId[m.replyToId]
-                  ? { ...byId[m.replyToId], privateTo: byId[m.replyToId].privateTo ?? undefined }
-                  : undefined
-              }
-              onReply={(message) => handleInitiateReply(message as ChatMessage)}
-              onEdit={onEditMessage}
-              onReact={onReactMessage}
-            />
-          ))
-        )}
-        <div ref={messagesEndRef} />
+            {latestUnreadSender && (
+              <Avatar
+                src={latestUnreadSender.avatarUrl}
+                sx={{ width: 18, height: 18, fontSize: 10 }}
+              >
+                {latestUnreadSender.name.charAt(0)}
+              </Avatar>
+            )}
+            <span>
+              {unreadCount === 1
+                ? `New message from ${latestUnreadSender?.name || 'user'}`
+                : `${unreadCount} new messages`}
+            </span>
+          </Button>
+        </Fade>
       </Box>
 
       {/* Reply Banner */}

@@ -1,13 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
-import { alpha, Badge, Box, IconButton, type SxProps, useMediaQuery, useTheme } from '@mui/material';
+import {
+  alpha,
+  Badge,
+  Box,
+  IconButton,
+  type SxProps,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 
+import { useSocialChat } from '@/core/contexts/context-social-chat';
 import { useCredentials } from '@/core/slices';
-import SocialChat from '@/sections/section-common/social-chat';
+import { SocialChatMain } from '../section-common/social-chat-main';
 
 /* ------------------------------------------------------------------ */
-/* Resize limits                                                      */
+/* Resize limits                                                       */
 /* ------------------------------------------------------------------ */
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 500;
@@ -17,7 +26,7 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 550;
 
 /* ------------------------------------------------------------------ */
-/* Component                                                          */
+/* Component                                                           */
 /* ------------------------------------------------------------------ */
 const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const theme = useTheme();
@@ -25,14 +34,17 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
 
   const { user, followers, following, friends } = useCredentials();
 
+  // Pull live unread metrics from SocialChatContext
+  const { unreadFriendsCount, hasUnreadMessages } = useSocialChat();
+
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [open, setOpen] = useState(false);
   const [chatWidth, setChatWidth] = useState(DEFAULT_WIDTH);
   const [chatHeight, setChatHeight] = useState(DEFAULT_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const buttonContainerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +81,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
       if (!direction) return;
 
       if (direction === 'left') {
-        // Dragging left increases width because the panel is anchored on the right
         const deltaX = startX.current - event.clientX;
         const newWidth = startWidth.current + deltaX;
         const maxAvailableWidth = Math.min(MAX_WIDTH, window.innerWidth - 32);
@@ -133,8 +144,9 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
     <Box
       sx={{
         position: 'fixed',
-        zIndex: (muiTheme) => (open ? muiTheme.zIndex.modal : muiTheme.zIndex.speedDial),
-        // Anchored strictly to the bottom-right corner
+        // Closed: above AppBar/BottomNav (1110). Open: Modal level (1300)
+        zIndex: (muiTheme) =>
+          open ? muiTheme.zIndex.modal : muiTheme.zIndex.appBar + 10,
         bottom: { xs: 16, sm: 20 },
         right: { xs: 16, sm: 20 },
         display: 'flex',
@@ -156,6 +168,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             bottom: { xs: 0, sm: -45 },
             width: { xs: '100vw', sm: `${chatWidth}px` },
             height: { xs: '100dvh', sm: `${chatHeight}px` },
+            zIndex: 2,
             pointerEvents: 'auto',
             display: 'flex',
             flexDirection: 'column',
@@ -176,7 +189,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               left: 0,
               right: 0,
               height: 10,
-              zIndex: 1500,
+              zIndex: 3,
               cursor: 'ns-resize',
               justifyContent: 'center',
               alignItems: 'center',
@@ -192,7 +205,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             }}
           />
 
-          {/* Left Resize Handle (Expands width toward the left) */}
+          {/* Left Resize Handle */}
           <Box
             onMouseDown={(e) => startResize('left', e)}
             sx={{
@@ -202,7 +215,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               top: 0,
               bottom: 0,
               width: 10,
-              zIndex: 1500,
+              zIndex: 3,
               cursor: 'ew-resize',
               justifyContent: 'center',
               alignItems: 'center',
@@ -238,7 +251,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               ...(isResizing && { transition: 'none !important' }),
             }}
           >
-            <SocialChat
+            <SocialChatMain
               friends={friends}
               followers={followers}
               following={following}
@@ -251,16 +264,24 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
         </Box>
       )}
 
-      {/* ── Fixed Bottom-Right Trigger Button ── */}
+      {/* ── Fixed Bottom-Right Trigger Button (Visible on Mobile & Desktop) ── */}
       <Box
         ref={buttonContainerRef}
         sx={{
-          display: { xs: 'none', sm: 'inline-flex' },
+          // Visible on mobile & desktop; hides on mobile only while full-screen chat is open so it doesn't cover the Send button
+          display: { xs: open ? 'none' : 'inline-flex', sm: 'inline-flex' },
           pointerEvents: 'auto',
           position: 'relative',
+          zIndex: 1,
         }}
       >
-        <Badge color="error" badgeContent={0} overlap="circular">
+        <Badge
+          color="error"
+          badgeContent={unreadFriendsCount}
+          invisible={!hasUnreadMessages}
+          max={99}
+          overlap="rectangular"
+        >
           <IconButton
             onClick={() => setOpen((prev) => !prev)}
             size="small"

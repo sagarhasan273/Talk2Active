@@ -1,3 +1,4 @@
+import useRoomSounds from '@/hooks/use-room-sounds';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
 import type { RoomParticipantType } from '@/types/type-room';
 import { useEffect } from 'react';
@@ -18,6 +19,7 @@ export const useRoomStageListener = ({
   addParticipant,
   removeParticipant,
 }: UseRoomStageListenerProps) => {
+  const { playUserJoin } = useRoomSounds();
   useEffect(() => {
     if (!socket || !roomId) return;
 
@@ -25,6 +27,7 @@ export const useRoomStageListener = ({
     const handleUserJoin = (data: { roomId: string; participant: RoomParticipantType }) => {
       if (String(data?.roomId) === String(roomId) && data?.participant) {
         addParticipant(data.participant);
+        playUserJoin();
       }
     };
 

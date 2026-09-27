@@ -19,6 +19,7 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 import { CONFIG } from './config-global';
 import { LiveKitProvider } from './core/contexts/context-livekit';
+import { SocialChatProvider } from './core/contexts/context-social-chat';
 import { SocketProvider } from './core/contexts/context-socket';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
@@ -36,14 +37,16 @@ export default function App() {
             <AuthProvider>
               <LiveKitProvider>
                 <SettingsProvider settings={defaultSettings}>
-                  <ThemeProvider>
-                    <MotionLazy>
-                      <Snackbar />
-                      <ProgressBar />
-                      <SettingsDrawer />
-                      <Router />
-                    </MotionLazy>
-                  </ThemeProvider>
+                  <SocialChatProvider>
+                    <ThemeProvider>
+                      <MotionLazy>
+                        <Snackbar />
+                        <ProgressBar />
+                        <SettingsDrawer />
+                        <Router />
+                      </MotionLazy>
+                    </ThemeProvider>
+                  </SocialChatProvider>
                 </SettingsProvider>
               </LiveKitProvider>
             </AuthProvider>

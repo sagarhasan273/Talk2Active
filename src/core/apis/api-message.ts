@@ -41,6 +41,16 @@ export interface MessageResponse<T = any> {
   message?: string;
 }
 
+export interface UnreadSummaryResponse {
+  success: boolean;
+  data: {
+    unreadBySender: Record<string, number>;
+    unreadFriendsCount: number;
+    totalUnreadMessages: number;
+  };
+}
+
+
 /* ------------------------------------------------------------------ */
 /*  API Slice                                                         */
 /* ------------------------------------------------------------------ */
@@ -105,10 +115,18 @@ export const messageApi = createApi({
       }),
       invalidatesTags: ['chat-recall'],
     }),
+
+    getUnreadMessages: builder.query<UnreadSummaryResponse, void>({
+      query: () => ({
+        url: '/message/unread', // Adjust prefix if your base route is different
+        method: 'GET',
+      }),
+    }),
   }),
 });
 
 export const {
+  useGetUnreadMessagesQuery,
   useGetHistoryQuery,
   useSaveMessageMutation,
   useUpdateMessageMutation,

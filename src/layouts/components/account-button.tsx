@@ -6,11 +6,9 @@ import { useSelector } from 'react-redux';
 import { Badge } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
-import NoSsr from '@mui/material/NoSsr';
 import SvgIcon from '@mui/material/SvgIcon';
 import { useTheme } from '@mui/material/styles';
 
-import { AvatarUser } from 'src/components/avatar-user';
 import { selectAccount } from 'src/core/slices';
 
 // ----------------------------------------------------------------------
@@ -61,14 +59,19 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
           },
         }}
       >
-        <NoSsr fallback={renderFallback}>
-          <AvatarUser
-            avatarUrl={user?.profilePhoto}
-            name={user?.name || displayName || ''}
-            verified={true}
-            accountType={user?.accountType}
-          />
-        </NoSsr>
+        <Avatar
+          src={user?.profilePhoto}
+          alt={user?.name || displayName || ''}
+          sx={{
+            fontWeight: 800,
+            fontSize: '0.875rem',
+            letterSpacing: '0.04em',
+            width: 40,
+            height: 40,
+            ...sx,
+          }}
+        />
+
       </Badge>
     </IconButton>
   );

@@ -156,5 +156,5 @@ export interface ChatMessage {
   privateTo?: { id: string; name: string };
   reactions?: ChatReaction[];
   isSystem?: boolean;
-  systemType?: string;
+  systemType?: 'info' | 'success' | 'warning' | 'error';
 }

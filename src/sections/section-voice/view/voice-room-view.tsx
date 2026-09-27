@@ -12,6 +12,8 @@ import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+
+import { RoomChatProvider } from '@/core/contexts/context-room-chat';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
@@ -91,8 +93,8 @@ export function VoiceMainView() {
   const handleLeaveRoom = useCallback(async () => {
     try {
       await disconnectRoom();
-      // if (room?.roomId && user?.userId)
-      //   await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });
+      if (room?.roomId && user?.userId)
+        await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });
     } catch (err) {
       console.warn('LiveKit disconnect warning:', err);
     }
@@ -130,7 +132,7 @@ export function VoiceMainView() {
   }, [isInRoom, room, selectedTab, participants, currentSpeaker, handleLeaveRoom]);
 
   const mainContent = (
-    <>
+    <RoomChatProvider>
       <VoiceTabPanel value={selectedTab === 'room-list' ? 0 : 1} index={0}>
         <RoomlistMain
           onSelectRoom={handleSelectRoom}
@@ -150,7 +152,7 @@ export function VoiceMainView() {
           />
         ) : null}
       </VoiceTabPanel>
-    </>
+    </RoomChatProvider>
   );
 
   return (

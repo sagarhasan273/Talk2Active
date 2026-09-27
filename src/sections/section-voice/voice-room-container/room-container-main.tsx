@@ -10,11 +10,7 @@ import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useCredentials } from '@/core/slices';
-import { useBoolean } from '@/hooks/use-boolean';
-import { ChatMessage } from '@/types/type-room';
-import { DEMO_MESSAGES } from '../@mock_/messages-data';
-
+import { useRoomChat } from '@/core/contexts/context-room-chat';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
@@ -32,17 +28,15 @@ export function RoomContainerMain({
   onSettingsClick,
   onBack,
 }: RoomContainerMainProps) {
-  const { user } = useCredentials();
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
   const { playHandRaise } = useRoomSounds();
 
-  const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES);
+  // Pull chat toggle directly from RoomChatContext
+  const { onToggleChat } = useRoomChat();
+
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
-  const [chatOpen, setChatOpen] = useState(false);
-
-  const chatCollapsedBoolean = useBoolean();
   const micInitializedRef = useRef(false);
 
   // --- Auto-enable mic once connected if requested ---
@@ -51,9 +45,9 @@ export function RoomContainerMain({
 
     localParticipant
       .setMicrophoneEnabled(true, {
-        echoCancellation: true,      // Standard Acoustic Echo Cancellation
-        noiseSuppression: true,      // Standard WebRTC noise suppression
-        autoGainControl: true,       // Normalizes volume spikes
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
       })
       .then(() => {
         micInitializedRef.current = true;
@@ -63,159 +57,7 @@ export function RoomContainerMain({
       });
   }, [localParticipant]);
 
-  // --- Handlers ---
-  const handleSendMessage = useCallback(
-    async (
-      text: string,
-      replyToId?: string,
-      privateTo?: { id: string; name: string },
-      imageUrl?: string
-    ) => {
-      if ((!text.trim() && !imageUrl) || !localParticipant) return;
-
-      const newMsg: ChatMessage = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        authorId: localParticipant.identity,
-        authorName: localParticipant.name || localParticipant.identity,
-        avatarUrl: user?.profilePhoto,
-        text,
-        imageUrl,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        replyToId,
-        isSelf: true,
-        privateTo,
-        reactions: [],
-      };
-
-      setMessages((prev) => [...prev, newMsg]);
-
-      const payload = JSON.stringify({
-        type: 'CHAT_MESSAGE',
-        message: { ...newMsg, isSelf: false },
-      });
-
-      const publishOptions: {
-        reliable: boolean;
-        topic: string;
-        destinationIdentities?: string[];
-      } = {
-        reliable: true,
-        topic: 'room_chat',
-      };
-
-      if (privateTo?.id) {
-        publishOptions.destinationIdentities = [privateTo.id];
-      }
-
-      await localParticipant.publishData(new TextEncoder().encode(payload), publishOptions);
-    },
-    [user, localParticipant]
-  );
-
-  const handleEditMessage = useCallback(
-    async (id: string, text: string) => {
-      if (!localParticipant) return;
-
-      const editedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m))
-      );
-
-      const payload = JSON.stringify({
-        type: 'CHAT_EDIT',
-        messageId: id,
-        text,
-        editedAt,
-      });
-
-      await localParticipant.publishData(new TextEncoder().encode(payload), {
-        reliable: true,
-        topic: 'room_chat',
-      });
-    },
-    [localParticipant]
-  );
-
-  const handleReactMessage = useCallback(
-    async (id: string, emoji: string) => {
-      if (!localParticipant) return;
-      const currentUserId = localParticipant.identity;
-
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id !== id) return m;
-
-          // 1. Remove this user from any other emoji on this message
-          let nextReactions = (m.reactions ?? [])
-            .map((r) => {
-              if (r.emoji === emoji) return r;
-              const filteredIds = (r.userIds ?? []).filter((uid) => uid !== currentUserId);
-              return {
-                ...r,
-                userIds: filteredIds,
-                count: filteredIds.length,
-                reactedBySelf: false,
-              };
-            })
-            .filter((r) => r.count > 0);
-
-          // 2. Toggle target emoji: remove if already active, add if not
-          const targetIndex = nextReactions.findIndex((r) => r.emoji === emoji);
-
-          if (targetIndex >= 0) {
-            const target = nextReactions[targetIndex];
-            const alreadyReacted = (target.userIds ?? []).includes(currentUserId);
-
-            if (alreadyReacted) {
-              const updatedIds = (target.userIds ?? []).filter((uid) => uid !== currentUserId);
-              if (updatedIds.length === 0) {
-                nextReactions.splice(targetIndex, 1);
-              } else {
-                nextReactions[targetIndex] = {
-                  ...target,
-                  userIds: updatedIds,
-                  count: updatedIds.length,
-                  reactedBySelf: false,
-                };
-              }
-            } else {
-              const updatedIds = [...(target.userIds ?? []), currentUserId];
-              nextReactions[targetIndex] = {
-                ...target,
-                userIds: updatedIds,
-                count: updatedIds.length,
-                reactedBySelf: true,
-              };
-            }
-          } else {
-            nextReactions.push({
-              emoji,
-              count: 1,
-              userIds: [currentUserId],
-              reactedBySelf: true,
-            });
-          }
-
-          return { ...m, reactions: nextReactions };
-        })
-      );
-
-      // 3. Broadcast reaction with userId over data channel
-      const payload = JSON.stringify({
-        type: 'CHAT_REACTION',
-        messageId: id,
-        emoji,
-        userId: currentUserId,
-      });
-
-      await localParticipant.publishData(new TextEncoder().encode(payload), {
-        reliable: true,
-        topic: 'room_chat',
-      });
-    },
-    [localParticipant]
-  );
-
+  // --- Stage Interaction Handlers ---
   const handleToggleRaiseHand = useCallback(async () => {
     if (!localParticipant) return;
     const isCurrentlyRaised = raisedHandsSet.has(localParticipant.identity);
@@ -281,7 +123,7 @@ export function RoomContainerMain({
     }
   }, [localParticipant]);
 
-  // --- Data Channel Listener ---
+  // --- Stage Data Channel Listener (Hand Raise, Emoji, Force Mute) ---
   useEffect(() => {
     if (!room) return;
 
@@ -289,87 +131,6 @@ export function RoomContainerMain({
       try {
         const text = new TextDecoder().decode(payload);
         const data = JSON.parse(text);
-
-        if (data.type === 'CHAT_MESSAGE') {
-          console.log(data.message);
-          setMessages((prev) =>
-            prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]
-          );
-        }
-
-        if (data.type === 'CHAT_EDIT') {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === data.messageId ? { ...m, text: data.text, editedAt: data.editedAt } : m
-            )
-          );
-        }
-
-        if (data.type === 'CHAT_REACTION') {
-          const { messageId, emoji, userId } = data;
-          if (!messageId || !emoji || !userId) return;
-
-          const isSelf = userId === localParticipant?.identity;
-
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.id !== messageId) return m;
-
-              // 1. Remove this user from any other emoji on this message
-              let nextReactions = (m.reactions ?? [])
-                .map((r) => {
-                  if (r.emoji === emoji) return r;
-                  const filteredIds = (r.userIds ?? []).filter((uid) => uid !== userId);
-                  return {
-                    ...r,
-                    userIds: filteredIds,
-                    count: filteredIds.length,
-                    reactedBySelf: isSelf ? false : r.reactedBySelf,
-                  };
-                })
-                .filter((r) => r.count > 0);
-
-              // 2. Toggle target emoji: remove if already present, add if not
-              const targetIndex = nextReactions.findIndex((r) => r.emoji === emoji);
-
-              if (targetIndex >= 0) {
-                const target = nextReactions[targetIndex];
-                const alreadyReacted = (target.userIds ?? []).includes(userId);
-
-                if (alreadyReacted) {
-                  const updatedIds = (target.userIds ?? []).filter((uid) => uid !== userId);
-                  if (updatedIds.length === 0) {
-                    nextReactions.splice(targetIndex, 1);
-                  } else {
-                    nextReactions[targetIndex] = {
-                      ...target,
-                      userIds: updatedIds,
-                      count: updatedIds.length,
-                      reactedBySelf: isSelf ? false : target.reactedBySelf,
-                    };
-                  }
-                } else {
-                  const updatedIds = [...(target.userIds ?? []), userId];
-                  nextReactions[targetIndex] = {
-                    ...target,
-                    userIds: updatedIds,
-                    count: updatedIds.length,
-                    reactedBySelf: isSelf ? true : target.reactedBySelf,
-                  };
-                }
-              } else {
-                nextReactions.push({
-                  emoji,
-                  count: 1,
-                  userIds: [userId],
-                  reactedBySelf: isSelf,
-                });
-              }
-
-              return { ...m, reactions: nextReactions };
-            })
-          );
-        }
 
         if (data.type === 'HAND_RAISE') {
           setRaisedHandsSet((prev) => {
@@ -410,9 +171,7 @@ export function RoomContainerMain({
     return () => {
       room.off(RoomEvent.DataReceived, handleDataReceived);
     };
-  }, [room, localParticipant, onLeaveRoom]);
-
-  const currentUserId = user?.userId ?? '';
+  }, [room, localParticipant, onLeaveRoom, playHandRaise]);
 
   return (
     <>
@@ -438,37 +197,16 @@ export function RoomContainerMain({
           onToggleRaiseHand={handleToggleRaiseHand}
           onToggleScreenShare={handleToggleScreenShare}
           onSendReaction={handleSendReaction}
-          onToggleChat={() => {
-            chatCollapsedBoolean.onToggle();
-            setChatOpen(true);
-          }}
+          onToggleChat={onToggleChat}
           onLeave={onLeaveRoom}
           onSettingsClick={onSettingsClick}
           onBack={onBack}
         />
 
-        <RoomChatMain
-          messages={messages}
-          currentUserId={currentUserId}
-          topicContext=""
-          onSendMessage={handleSendMessage}
-          onEditMessage={handleEditMessage}
-          onReactMessage={handleReactMessage}
-          collapsedBoolean={chatCollapsedBoolean}
-        />
+        <RoomChatMain topicContext="" />
       </Box>
 
-      <RoomChatDrawer
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        messages={messages}
-        currentUserId={currentUserId}
-        onSendMessage={handleSendMessage}
-        onEditMessage={handleEditMessage}
-        onReactMessage={handleReactMessage}
-      />
+      <RoomChatDrawer />
     </>
   );
 }
-
-export default RoomContainerMain;

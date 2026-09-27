@@ -325,6 +325,12 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 : alpha(theme.palette.text.primary, 0.04),
               border: `1px solid ${hideFullRooms ? alpha(theme.palette.info.main, 0.3) : 'transparent'
                 }`,
+              '&:hover': {
+                color: hideFullRooms ? 'info.dark' : 'text.secondary',
+                bgcolor: hideFullRooms
+                  ? alpha(theme.palette.info.main, 0.22)
+                  : alpha(theme.palette.text.primary, 0.24),
+              }
             }}
           />
 

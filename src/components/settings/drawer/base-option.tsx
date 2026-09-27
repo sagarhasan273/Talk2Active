@@ -1,9 +1,9 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
 import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
-import ButtonBase from '@mui/material/ButtonBase';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
@@ -48,7 +48,7 @@ export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Pro
         sx={{ width: 1, mb: 1 }}
       >
         <SvgColor src={`${CONFIG.assetsDir}/assets/icons/settings/ic-${icon}.svg`} />
-        <Switch name={label} size="small" color="default" checked={selected} sx={{ mr: -0.75 }} />
+        <Switch name={label} size="small" checked={selected} sx={{ mr: -0.75 }} />
       </Box>
 
       <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ width: 1 }}>
