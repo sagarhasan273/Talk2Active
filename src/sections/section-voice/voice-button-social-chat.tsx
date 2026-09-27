@@ -26,13 +26,9 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 550;
 
 /* ------------------------------------------------------------------ */
-/* Inner Component (Consumes useSocialChat for the Badge)              */
+/* Component                                                           */
 /* ------------------------------------------------------------------ */
-const VoiceButtonSocialChat = ({
-  sx,
-}: {
-  sx?: SxProps;
-}) => {
+const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -142,13 +138,15 @@ const VoiceButtonSocialChat = ({
       document.removeEventListener('mousedown', handleClickOutside, true);
       document.removeEventListener('touchstart', handleClickOutside, true);
     };
-  }, [open, isResizing, setOpen]);
+  }, [open, isResizing]);
 
   return (
     <Box
       sx={{
         position: 'fixed',
-        zIndex: (muiTheme) => (open ? muiTheme.zIndex.modal : muiTheme.zIndex.speedDial),
+        // Closed: above AppBar/BottomNav (1110). Open: Modal level (1300)
+        zIndex: (muiTheme) =>
+          open ? muiTheme.zIndex.modal : muiTheme.zIndex.appBar + 10,
         bottom: { xs: 16, sm: 20 },
         right: { xs: 16, sm: 20 },
         display: 'flex',
@@ -170,6 +168,7 @@ const VoiceButtonSocialChat = ({
             bottom: { xs: 0, sm: -45 },
             width: { xs: '100vw', sm: `${chatWidth}px` },
             height: { xs: '100dvh', sm: `${chatHeight}px` },
+            zIndex: 2,
             pointerEvents: 'auto',
             display: 'flex',
             flexDirection: 'column',
@@ -190,7 +189,7 @@ const VoiceButtonSocialChat = ({
               left: 0,
               right: 0,
               height: 10,
-              zIndex: 1500,
+              zIndex: 3,
               cursor: 'ns-resize',
               justifyContent: 'center',
               alignItems: 'center',
@@ -216,7 +215,7 @@ const VoiceButtonSocialChat = ({
               top: 0,
               bottom: 0,
               width: 10,
-              zIndex: 1500,
+              zIndex: 3,
               cursor: 'ew-resize',
               justifyContent: 'center',
               alignItems: 'center',
@@ -265,13 +264,15 @@ const VoiceButtonSocialChat = ({
         </Box>
       )}
 
-      {/* ── Fixed Bottom-Right Trigger Button with Unread Friends Counter ── */}
+      {/* ── Fixed Bottom-Right Trigger Button (Visible on Mobile & Desktop) ── */}
       <Box
         ref={buttonContainerRef}
         sx={{
-          display: { xs: 'inline-flex' },
+          // Visible on mobile & desktop; hides on mobile only while full-screen chat is open so it doesn't cover the Send button
+          display: { xs: open ? 'none' : 'inline-flex', sm: 'inline-flex' },
           pointerEvents: 'auto',
           position: 'relative',
+          zIndex: 1,
         }}
       >
         <Badge
@@ -279,7 +280,7 @@ const VoiceButtonSocialChat = ({
           badgeContent={unreadFriendsCount}
           invisible={!hasUnreadMessages}
           max={99}
-          overlap="circular"
+          overlap="rectangular"
         >
           <IconButton
             onClick={() => setOpen((prev) => !prev)}
@@ -311,6 +312,5 @@ const VoiceButtonSocialChat = ({
     </Box>
   );
 };
-
 
 export default VoiceButtonSocialChat;
