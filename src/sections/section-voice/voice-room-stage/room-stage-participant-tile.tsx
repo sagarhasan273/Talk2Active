@@ -29,6 +29,7 @@ import { useBoolean } from '@/hooks/use-boolean';
 import type { ChatUserStatus, ParticipantStageType } from '@/types/type-room';
 
 import { RoomUserControllerMain } from '../voice-room-user-controller';
+import DialogRateSpeakingLevel from '../voice-room-user-controller/dialog-rate-speaking-level';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
 // --- ANIMATIONS ---
@@ -169,6 +170,8 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   const theme = useTheme();
   const openDrawer = useBoolean();
   const isDark = theme.palette.mode === 'dark';
+
+  const onRateOpen = useBoolean();
 
   const {
     isSelf,
@@ -537,8 +540,18 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           open={openDrawer.value}
           onClose={openDrawer.onFalse}
           user={participant}
+          onRateOpen={onRateOpen}
         />
       )}
+
+      {/* Standalone Rating Dialog */}
+      <DialogRateSpeakingLevel
+        open={onRateOpen.value}
+        onClose={() => onRateOpen.onFalse()}
+        userId={participant?.userId}
+        userName={participant?.name}
+        onRateUser={() => { }}
+      />
     </>
   );
 });

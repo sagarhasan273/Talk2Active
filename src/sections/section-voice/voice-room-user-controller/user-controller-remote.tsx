@@ -1,7 +1,3 @@
-import { ButtonRelationshipToggle } from '@/components/buttons';
-import { useCredentials, useRoomTools } from '@/core/slices';
-import { ParticipantStageType } from '@/types/type-room';
-import { UserStats } from '@/types/type-social';
 import { useRoomContext } from '@livekit/components-react';
 import {
   Block as BlockIcon,
@@ -19,17 +15,8 @@ import {
   alpha,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Rating,
-  Select,
   Slider,
   Stack,
   Tooltip,
@@ -37,6 +24,11 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { useState } from 'react';
+
+import { ButtonRelationshipToggle } from '@/components/buttons';
+import { useCredentials, useRoomTools } from '@/core/slices';
+import { ParticipantStageType } from '@/types/type-room';
+import { UserStats } from '@/types/type-social';
 
 const remoteVolumeMap = new Map<string, number>();
 
@@ -51,6 +43,7 @@ interface RoomUserControllerRemoteProps {
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
   onClose: () => void;
   onLocalVolumeTracked?: (volume: number) => void;
+  onOpenRating?: () => void;
 }
 
 export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> = ({
@@ -61,26 +54,23 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   onToggleDeafen,
   onShare,
   onKickParticipant,
-  onRateUser,
   onClose,
   onLocalVolumeTracked,
+  onOpenRating,
 }) => {
   const theme = useTheme();
   const room = useRoomContext();
 
-  const { user: currentUser } = useCredentials();
-  const { room: roomJoined } = useRoomTools();
-  const { checkIfFollowing, checkIfBlocked } = useCredentials();
-  const { updateParticipants } = useRoomTools();
+  const { user: currentUser, checkIfFollowing, checkIfBlocked } = useCredentials();
+  const { room: roomJoined, updateParticipants } = useRoomTools();
 
   const userId = String(user.userId);
-  const isHost = currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId);
+  const isHost = Boolean(
+    currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId)
+  );
+
   const [isBlocked, setIsBlocked] = useState(() => checkIfBlocked(userId));
   const [volume, setVolume] = useState<number>(() => remoteVolumeMap.get(userId) ?? 50);
-
-  const [ratingOpen, setRatingOpen] = useState(false);
-  const [starRating, setStarRating] = useState<number | null>(4);
-  const [ratedLevel, setRatedLevel] = useState('Intermediate (B1-B2)');
 
   const handleVolumeChange = (_: Event, val: number | number[]) => {
     const level = Array.isArray(val) ? val[0] : val;
@@ -133,14 +123,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
     });
     onKickParticipant?.(userId);
     onClose();
-  };
-
-  const handleSaveRating = () => {
-    if (userId && starRating) {
-      onRateUser?.(userId, starRating, ratedLevel);
-    }
-    setRatingOpen(false);
-    onClose?.();
   };
 
   return (
@@ -269,7 +251,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
             variant="contained"
             size="small"
             startIcon={<StarIcon />}
-            onClick={() => setRatingOpen(true)}
+            onClick={onOpenRating}
             sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
           >
             Rate
@@ -324,51 +306,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           Share
         </Button>
       </Box>
-
-      {/* Rating Dialog */}
-      <Dialog
-        open={ratingOpen}
-        onClose={() => setRatingOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 2 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 800 }}>Rate Speaking Level</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
-            <Rating
-              size="large"
-              value={starRating}
-              onChange={(_, val) => setStarRating(val)}
-              sx={{ fontSize: '2.5rem', mb: 1 }}
-            />
-            <Typography variant="caption" fontWeight={700} color="primary.main">
-              {starRating === 5 ? 'Native / Fluent' : starRating === 4 ? 'Advanced (C1)' : 'Intermediate (B2)'}
-            </Typography>
-          </Box>
-
-          <FormControl fullWidth size="small">
-            <InputLabel id="remote-rate-cefr-label">CEFR Level</InputLabel>
-            <Select
-              labelId="remote-rate-cefr-label"
-              value={ratedLevel}
-              label="CEFR Level"
-              onChange={(e) => setRatedLevel(e.target.value)}
-            >
-              <MenuItem value="Beginner (A1-A2)">Beginner (A1-A2)</MenuItem>
-              <MenuItem value="Intermediate (B1-B2)">Intermediate (B1-B2)</MenuItem>
-              <MenuItem value="Advanced (C1)">Advanced (C1)</MenuItem>
-              <MenuItem value="Fluent / Native (C2)">Fluent / Native (C2)</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRatingOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveRating}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };
+
+export default React.memo(RoomUserControllerRemote);
