@@ -26,6 +26,7 @@ export type RelationshipStatusEnumProps =
   (typeof RelationshipStatusEnum)[keyof typeof RelationshipStatusEnum];
 export type RelationshipTypeEnumProps =
   (typeof RelationshipTypeEnum)[keyof typeof RelationshipTypeEnum];
+
 export type AuthorRelationship = {
   relationship: 'following' | 'followers' | 'friends' | 'blocked' | 'pending' | 'none';
   following: boolean;
@@ -34,6 +35,7 @@ export type AuthorRelationship = {
   blocked: boolean;
   pending: boolean;
 };
+
 export type AllRelationsType = {
   accountDetails: UserType;
   latestMessage: {
@@ -52,3 +54,43 @@ export type SocialContextTypes = {
   isSocialLoading: boolean;
   setSocialLoading: Dispatch<SetStateAction<boolean>>;
 };
+
+// ----------------------------------------------------------------------
+// Social Chat Types (Named to avoid conflict with Room ChatMessage)
+// ----------------------------------------------------------------------
+
+export type SocialChatSystemType = 'info' | 'success' | 'warning' | 'error';
+export type SocialChatTabKey = 'friends' | 'followers' | 'following';
+
+export interface SocialChatReaction {
+  emoji: string;
+  count: number;
+  reactedBySelf: boolean;
+}
+
+export interface SocialChatMessage {
+  id: string;
+  text: string;
+  isSelf?: boolean;
+  isSystem?: boolean;
+  systemType?: SocialChatSystemType;
+  authorId?: string;
+  authorName?: string;
+  recipientId?: string;
+  editedAt?: number;
+  reactions?: SocialChatReaction[];
+  replyToId?: string;
+  createdAt?: string;
+}
+
+export interface SocialChatProps {
+  friends?: AllRelationsType[];
+  followers?: AllRelationsType[];
+  following?: AllRelationsType[];
+  currentUserId: string;
+  currentUserName?: string;
+  isLoading?: boolean;
+  onClose?: () => void;
+  onUnfollow?: (targetUserId: string, person: AllRelationsType) => Promise<void> | void;
+  onJoinRoom?: (roomId: string, person: AllRelationsType) => void;
+}
