@@ -25,7 +25,7 @@ import {
 
 import { ChatMessage } from '@/types/type-room';
 import { getCachedUserInfo } from '@/utils/user-cache';
-import { QUICK_REACTIONS } from '../@mock_/messages-data';
+import { QUICK_REACTIONS } from '../../../_mock/_messages';
 
 
 type RoomChatMessageProps = {

@@ -1,49 +1,39 @@
 import { useTracks } from '@livekit/components-react';
-import { Box, Tooltip } from '@mui/material';
+import { Badge, Box, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { Track } from 'livekit-client';
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ResizeWidthLeft } from '@/components/resizeable-container';
-import { UseBooleanReturn } from '@/hooks/use-boolean';
 
-import { ChatMessage } from '@/types/type-room';
 import RoomChatPanel from './room-chat-panel';
+import { useRoomChat } from '@/core/contexts/context-room-chat';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
 const MIN_SIDEBAR_WIDTH = 300;
 const MAX_SIDEBAR_WIDTH = 580;
 
 export type RoomChatMainProps = {
-  messages: ChatMessage[];
-  currentUserId: string;
   topicContext?: string;
-  onSendMessage?: (
-    text: string,
-    replyToId?: string,
-    privateTo?: { id: string; name: string },
-    imageUrl?: string
-  ) => void;
-  onEditMessage?: (id: string, text: string) => void;
-  onReactMessage?: (id: string, emoji: string) => void;
-  onClose?: () => void;
   title?: string;
-  collapsedBoolean: UseBooleanReturn;
 };
 
-export function RoomChatMain({
-  messages,
-  currentUserId,
-  topicContext = '',
-  collapsedBoolean,
-  onSendMessage,
-  onEditMessage,
-  onReactMessage,
-}: RoomChatMainProps) {
+export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
   const theme = useTheme();
-
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+
+  const {
+    messages,
+    currentUserId,
+    unreadCount,
+    isUnreadMessage,
+    chatCollapsedBoolean,
+    markAllAsRead,
+    handleSendMessage,
+    handleEditMessage,
+    handleReactMessage,
+  } = useRoomChat();
 
   // Detect active screen shares
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
@@ -52,9 +42,14 @@ export function RoomChatMain({
   // Auto-collapse chat rail when presentation mode begins
   useEffect(() => {
     if (isPresenting) {
-      collapsedBoolean.onTrue();
+      chatCollapsedBoolean.onTrue();
     }
-  }, [isPresenting, collapsedBoolean]);
+  }, [isPresenting, chatCollapsedBoolean]);
+
+  const handleExpand = () => {
+    chatCollapsedBoolean.onFalse();
+    markAllAsRead();
+  };
 
   return (
     <Box
@@ -70,15 +65,15 @@ export function RoomChatMain({
         position: 'relative',
       }}
     >
-      {collapsedBoolean.value ? (
+      {chatCollapsedBoolean.value ? (
         /* Collapsed Icon Rail */
         <Tooltip title="Expand chat" placement="left">
           <Box
-            onClick={() => collapsedBoolean.onFalse()}
+            onClick={handleExpand}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') collapsedBoolean.onFalse();
+              if (e.key === 'Enter' || e.key === ' ') handleExpand();
             }}
             sx={{
               width: 32,
@@ -102,7 +97,14 @@ export function RoomChatMain({
             }}
           >
             <ChevronLeft size={18} />
-            <MessageSquare size={18} style={{ transform: 'rotate(90deg)' }} />
+            <Badge
+              badgeContent={unreadCount}
+              color="error"
+              invisible={!isUnreadMessage}
+              max={99}
+            >
+              <MessageSquare size={18} style={{ transform: 'rotate(90deg)' }} />
+            </Badge>
             <ChevronLeft size={18} />
           </Box>
         </Tooltip>
@@ -123,13 +125,13 @@ export function RoomChatMain({
             maxWidth={MAX_SIDEBAR_WIDTH}
           >
             <RoomChatPanel
-              messages={messages}
               currentUserId={currentUserId}
               topicContext={topicContext}
-              onSendMessage={onSendMessage}
-              onEditMessage={onEditMessage}
-              onReactMessage={onReactMessage}
-              onClose={() => collapsedBoolean.onTrue()}
+              title={title}
+              onSendMessage={handleSendMessage}
+              onEditMessage={handleEditMessage}
+              onReactMessage={handleReactMessage}
+              onClose={() => chatCollapsedBoolean.onTrue()}
             />
           </ResizeWidthLeft>
 
@@ -137,11 +139,11 @@ export function RoomChatMain({
           {isPresenting && (
             <Tooltip title="Collapse chat for presentation" placement="left">
               <Box
-                onClick={() => collapsedBoolean.onTrue()}
+                onClick={() => chatCollapsedBoolean.onTrue()}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') collapsedBoolean.onTrue();
+                  if (e.key === 'Enter' || e.key === ' ') chatCollapsedBoolean.onTrue();
                 }}
                 sx={{
                   position: 'absolute',
