@@ -25,11 +25,9 @@ import type {
 import { useCredentials } from '../slices';
 
 interface SocialChatContextValue {
-  // Panel Open / Visibility State
   isChatPanelVisible: boolean;
   setIsChatPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
 
-  // Navigation & Directory
   tab: SocialChatTabKey;
   setTab: React.Dispatch<React.SetStateAction<SocialChatTabKey>>;
   activeFriend: AllRelationsType | null;
@@ -37,23 +35,20 @@ interface SocialChatContextValue {
   closeActiveChat: () => void;
   syncFriendsUnreadState: (friends: AllRelationsType[]) => void;
 
-  // Messages & Conversation
   messages: SocialChatMessage[];
   messageMap: Record<string, SocialChatMessage>;
   fetchingHistory: boolean;
   replyingTo: SocialChatMessage | null;
   setReplyingTo: React.Dispatch<React.SetStateAction<SocialChatMessage | null>>;
 
-  // Unread Metrics (Use anywhere in app!)
   unreadCounts: Record<string, number>;
-  unreadFriendsCount: number; // Unique friends with unseen messages
-  totalUnreadMessages: number; // Total unseen messages across all friends
+  unreadFriendsCount: number;
+  totalUnreadMessages: number;
   hasUnreadMessages: boolean;
   activeChatUnreadCount: number;
   setIsAtBottom: (atBottom: boolean) => void;
-  markFriendAsRead: (friendUserId: string) => void;
+  markFriendAsRead: (friendUserId: string, forceApi?: boolean) => void;
 
-  // Actions
   sendMessage: (text: string) => Promise<void>;
   editMessage: (id: string, text: string) => void;
   reactMessage: (id: string, emoji: string) => void;
@@ -74,9 +69,12 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [messages, setMessages] = useState<SocialChatMessage[]>([]);
   const [replyingTo, setReplyingTo] = useState<SocialChatMessage | null>(null);
 
-  // Per-friend unread message counter: { [friendUserId]: count }
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [activeChatUnreadCount, setActiveChatUnreadCount] = useState<number>(0);
+
+  // Refs to prevent duplicate API calls
+  const unreadCountsRef = useRef<Record<string, number>>({});
+  unreadCountsRef.current = unreadCounts;
 
   const isAtBottomRef = useRef<boolean>(true);
   const isPanelVisibleRef = useRef<boolean>(isChatPanelVisible);
@@ -85,7 +83,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const friendId = activeFriend?.accountDetails?.userId || '';
 
-  // Sync initial `latestMessage.isUnread` from `friends` list
   const syncFriendsUnreadState = useCallback((friendsList: AllRelationsType[]) => {
     if (!friendsList?.length) return;
     setUnreadCounts((prev) => {
@@ -105,7 +102,11 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       });
 
-      return changed ? next : prev;
+      if (changed) {
+        unreadCountsRef.current = next;
+        return next;
+      }
+      return prev;
     });
   }, []);
 
@@ -115,17 +116,15 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [friends, syncFriendsUnreadState]);
 
-  // RTK Query hooks
+  // RTK Query hooks (Removed refetchOnMountOrArgChange: true if it was causing extra fetches)
   const { data: historyResponse, isFetching: fetchingHistory } = useGetHistoryQuery(friendId, {
     skip: !friendId,
-    refetchOnMountOrArgChange: true,
   });
   const [saveMessage] = useSaveMessageMutation();
   const [updateMessage] = useUpdateMessageMutation();
   const [toggleReaction] = useToggleReactionMutation();
   const [readMessages] = useReadMessagesMutation();
 
-  // O(1) lookup map for reply previews
   const messageMap = useMemo(() => {
     const map: Record<string, SocialChatMessage> = {};
     for (let i = 0; i < messages.length; i += 1) {
@@ -134,7 +133,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return map;
   }, [messages]);
 
-  // Calculate unique friends with unseen messages & total unseen messages
   const { unreadFriendsCount, totalUnreadMessages } = useMemo(() => {
     let uniqueFriends = 0;
     let totalMessages = 0;
@@ -152,23 +150,25 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [unreadCounts]);
 
-  // Mark a specific friend's messages as read locally + on backend
+  // Guarded: Only calls backend API if this friend actually has unread messages!
   const markFriendAsRead = useCallback(
-    (targetUserId: string) => {
+    (targetUserId: string, forceApi = false) => {
       if (!targetUserId) return;
 
+      const hadUnreadInMap = Boolean(unreadCountsRef.current[targetUserId] > 0);
       readFriendIdsRef.current.add(targetUserId);
 
-      setUnreadCounts((prev) => {
-        if (!prev[targetUserId]) return prev;
-        const next = { ...prev };
+      if (hadUnreadInMap) {
+        const next = { ...unreadCountsRef.current };
         delete next[targetUserId];
-        return next;
-      });
+        unreadCountsRef.current = next;
+        setUnreadCounts(next);
+      }
 
       setActiveChatUnreadCount(0);
 
-      if (currentUserId) {
+      // Only hit the network if there were actually unread messages (or explicitly forced)
+      if (currentUserId && (hadUnreadInMap || forceApi)) {
         readMessages({ userId1: currentUserId, userId2: targetUserId }).catch(console.error);
       }
     },
@@ -178,19 +178,12 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const setIsAtBottom = useCallback(
     (atBottom: boolean) => {
       isAtBottomRef.current = atBottom;
-      if (atBottom && friendId && isPanelVisibleRef.current) {
-        setActiveChatUnreadCount(0);
+      if (atBottom && friendId && isPanelVisibleRef.current && unreadCountsRef.current[friendId]) {
         markFriendAsRead(friendId);
       }
     },
     [friendId, markFriendAsRead]
   );
-
-  useEffect(() => {
-    if (isChatPanelVisible && friendId && isAtBottomRef.current) {
-      markFriendAsRead(friendId);
-    }
-  }, [isChatPanelVisible, friendId, markFriendAsRead]);
 
   // Load history into local state when switching active friend
   useEffect(() => {
@@ -236,18 +229,20 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           } else {
             readFriendIdsRef.current.delete(senderId);
             setActiveChatUnreadCount((prev) => prev + 1);
-            setUnreadCounts((prev) => ({
-              ...prev,
-              [senderId]: (prev[senderId] || 0) + 1,
-            }));
+            setUnreadCounts((prev) => {
+              const next = { ...prev, [senderId]: (prev[senderId] || 0) + 1 };
+              unreadCountsRef.current = next;
+              return next;
+            });
           }
         }
       } else if (!isFromSelf) {
         readFriendIdsRef.current.delete(senderId);
-        setUnreadCounts((prev) => ({
-          ...prev,
-          [senderId]: (prev[senderId] || 0) + 1,
-        }));
+        setUnreadCounts((prev) => {
+          const next = { ...prev, [senderId]: (prev[senderId] || 0) + 1 };
+          unreadCountsRef.current = next;
+          return next;
+        });
       }
     };
 
@@ -287,7 +282,12 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     (item: AllRelationsType) => {
       setActiveFriend(item);
       const targetUserId = item.accountDetails.userId;
-      markFriendAsRead(targetUserId);
+      const hasUnreadFromBackend = Boolean(item.latestMessage?.isUnread);
+      const hasUnreadLocal = Boolean(unreadCountsRef.current[targetUserId] > 0);
+
+      if (hasUnreadFromBackend || hasUnreadLocal) {
+        markFriendAsRead(targetUserId, true);
+      }
     },
     [markFriendAsRead]
   );
