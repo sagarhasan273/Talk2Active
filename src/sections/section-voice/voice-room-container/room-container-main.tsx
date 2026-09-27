@@ -10,10 +10,9 @@ import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useCredentials } from '@/core/slices';
+import { useCredentials, useRoomTools } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import { ChatMessage } from '@/types/type-room';
-import { DEMO_MESSAGES } from '../@mock_/messages-data';
 
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
@@ -36,8 +35,17 @@ export function RoomContainerMain({
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
   const { playHandRaise } = useRoomSounds();
+  const { room: joinRoom } = useRoomTools();
 
-  const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>([{
+    id: 'm1',
+    authorId: 'system',
+    authorName: 'System',
+    text: joinRoom?.welcome_message || 'Welcome to the chat room!',
+    timestamp: '10:00 AM',
+    isSystem: true,
+    systemType: 'info',
+  }]);
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
   const [chatOpen, setChatOpen] = useState(false);
@@ -291,7 +299,6 @@ export function RoomContainerMain({
         const data = JSON.parse(text);
 
         if (data.type === 'CHAT_MESSAGE') {
-          console.log(data.message);
           setMessages((prev) =>
             prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]
           );

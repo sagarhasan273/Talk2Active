@@ -21,15 +21,13 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid',
-        borderColor: isDark
-          ? alpha(theme.palette.common.white, 0.8)
-          : alpha(theme.palette.common.black, 0.3),
-        borderRadius: 1,
         bgcolor: isDark
-          ? alpha(theme.palette.background.paper, 0.6)
-          : alpha(theme.palette.grey[100] || '#F8FAFC', 0.8),
-        cursor: onClick ? 'pointer' : 'default',
+          ? alpha(theme.palette.background.paper, 0.88)
+          : theme.palette.common.white,
+        border: '1.5px solid',
+        borderColor: alpha(theme.palette.primary.main, 0.45),
+        borderRadius: 1,
+
         transition: 'border-color 0.2s ease',
         '&:hover': onClick
           ? {

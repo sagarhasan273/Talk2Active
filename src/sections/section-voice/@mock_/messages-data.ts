@@ -80,10 +80,10 @@ export const DEMO_MESSAGES: ChatMessage[] = [
     id: 'm1',
     authorId: 'system',
     authorName: 'System',
-    text: '🎉 You have joined the chat room!',
+    text: 'Welcome to the chat room!',
     timestamp: '10:00 AM',
     isSystem: true,
-    systemType: 'success',
+    systemType: 'info',
   },
 ];
 

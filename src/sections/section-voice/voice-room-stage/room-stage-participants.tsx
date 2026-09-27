@@ -1,3 +1,4 @@
+import useRoomSounds from '@/hooks/use-room-sounds';
 import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
 import {
   ParticipantContext,
@@ -76,11 +77,18 @@ export const RoomStageParticipants = ({
   const room = useRoomContext();
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
+  const { playUserLeave } = useRoomSounds();
 
   const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
   const [orderedParticipants, setOrderedParticipants] = useState<RoomParticipantType[]>(participants);
 
   const ghostTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const playUserLeaveRef = useRef(playUserLeave);
+
+  // Keep play sound reference fresh without triggering effect re-runs
+  useEffect(() => {
+    playUserLeaveRef.current = playUserLeave;
+  }, [playUserLeave]);
 
   // Clean up timers on unmount
   useEffect(() => {
@@ -117,7 +125,7 @@ export const RoomStageParticipants = ({
     setOrderedParticipants((prevOrdered) => {
       const existingIds = new Set<string>();
 
-      // 2. Update existing entries in-place so props changes (like follower_count / isFollowing) reflect immediately
+      // 2. Update existing entries in-place so props changes reflect immediately
       const updatedList = prevOrdered.map((old) => {
         const id = String(old.userId);
         existingIds.add(id);
@@ -128,17 +136,24 @@ export const RoomStageParticipants = ({
           return freshData; // Data updated, position preserved
         }
 
-        // 3. User is missing from props -> start 3s ghost timer if not already active
+        // 3. User missing from props -> start 3s ghost timer if not already active
         if (!ghostTimersRef.current[id]) {
           setGhostIds((g) => new Set(g).add(id));
 
           ghostTimersRef.current[id] = setTimeout(() => {
+            // Remove ghost state
             setGhostIds((g) => {
               const next = new Set(g);
               next.delete(id);
               return next;
             });
+
+            // Remove participant completely from stage
             setOrderedParticipants((current) => current.filter((item) => String(item.userId) !== id));
+
+            // 🔊 Trigger user leave sound once ghost is pruned
+            playUserLeaveRef.current?.();
+
             delete ghostTimersRef.current[id];
           }, GHOST_DURATION_MS);
         }
@@ -153,7 +168,7 @@ export const RoomStageParticipants = ({
     });
   }, [participants]);
 
-  // Map to LiveKit participant details
+  // Map to LiveKit participant details and pin self to the end
   const displayParticipants = useMemo(() => {
     const livekitMap = new Map<string, Participant>();
 
@@ -164,7 +179,7 @@ export const RoomStageParticipants = ({
       if (p?.identity) livekitMap.set(String(p.identity), p);
     });
 
-    return orderedParticipants.map((p) => {
+    const parsed = orderedParticipants.map((p) => {
       const id = String(p.userId);
       const isGhost = ghostIds.has(id);
       const isHandRaised = raisedHandsSet.has(id);
@@ -180,6 +195,12 @@ export const RoomStageParticipants = ({
         isGhost
       );
     });
+
+    // 🔒 Always keep self at the end of the list
+    const others = parsed.filter((p) => !p.isSelf);
+    const self = parsed.filter((p) => p.isSelf);
+
+    return [...others, ...self];
   }, [
     orderedParticipants,
     ghostIds,

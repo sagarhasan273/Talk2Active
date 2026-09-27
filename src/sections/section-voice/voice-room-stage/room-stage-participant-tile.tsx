@@ -288,23 +288,14 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           outline: 'none',
           overflow: 'hidden',
           boxSizing: 'border-box',
-
-          // --- Neutral Slate Surface (works seamlessly in Dark & Light) ---
-          bgcolor: isDark
-            ? alpha(theme.palette.background.paper, 0.6)
-            : alpha(theme.palette.grey[100] || '#F8FAFC', 0.8),
           backdropFilter: 'blur(8px)',
-
+          bgcolor: isDark
+            ? alpha(theme.palette.background.paper, 0.88)
+            : theme.palette.common.white,
           border: '1.5px solid',
           borderColor: handRaised
             ? theme.palette.warning.main
-            : isDark
-              ? alpha(theme.palette.common.white, 0.8)
-              : alpha(theme.palette.common.black, 0.3),
-
-          boxShadow: isDark
-            ? '0 4px 16px -2px rgba(0, 0, 0, 0.45)'
-            : '0 2px 10px -2px rgba(15, 23, 42, 0.05)',
+            : alpha(theme.palette.primary.main, 0.45),
 
           transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease',
 
@@ -552,4 +543,4 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   );
 });
 
-export default ParticipantTile;
+export default React.memo(ParticipantTile);

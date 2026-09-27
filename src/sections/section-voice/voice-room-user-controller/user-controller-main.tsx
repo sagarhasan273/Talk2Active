@@ -1,58 +1,33 @@
-import React, { useEffect, useState } from 'react';
-
+import { useRoomContext } from '@livekit/components-react';
 import {
-  Block as BlockIcon,
   Check as CheckIcon,
   Close as CloseIcon,
   ContentCopy as CopyIcon,
-  Gavel as GavelIcon,
-  Headset as HeadsetIcon,
   HeadsetOff as HeadsetOffIcon,
-  PersonRemoveTwoTone as KickIcon,
-  Mic as MicIcon,
   MicOff as MicOffIcon,
-  Report as ReportIcon,
-  Share as ShareIcon,
-  StarRounded as StarIcon,
   CheckCircle as VerifiedIcon,
-  VolumeUp as VolumeUpIcon
 } from '@mui/icons-material';
 import {
   alpha,
   Avatar,
   Badge,
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
   Drawer,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Rating,
-  Select,
-  Slider,
-  Stack,
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from '@mui/material';
+import { Track } from 'livekit-client';
+import React, { useState } from 'react';
 
-import { ButtonRelationshipToggle } from '@/components/buttons';
-import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
-import { UserStats } from '@/types/type-social';
-import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
-import { KrispNoiseFilterToggle } from '../voice-button-krisp-noise-filter';
-import { useParticipantAudioController } from './hook-participant-audio-controller';
 import ParticipantStatsRow from './user-controller-participant-stats-row';
+import { RoomUserControllerRemote } from './user-controller-remote';
+import { RoomUserControllerSelf } from './user-controller-self';
+
 interface RoomUserControllerMainProps {
   open: boolean;
   onClose: () => void;
@@ -69,828 +44,248 @@ interface RoomUserControllerMainProps {
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
 }
 
-export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = ({
-  open,
-  onClose,
-  user,
-  onBlock,
-  onReport,
-  onVolumeChange,
-  onToggleMute,
-  onToggleDeafen,
-  onShare,
-  onKickParticipant,
-  onRateUser,
-}) => {
+export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (props) => {
+  const { open, onClose, user } = props;
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const room = useRoomContext();
 
-  const { checkIfFollowing, checkIfBlocked } = useCredentials();
-  const { updateParticipants } = useRoomTools();
-
-  const safeUser = user ?? ({} as Partial<ParticipantStageType>);
-  const { id: userId = '', isSelf = false, rawParticipant, isHost } = safeUser;
-
-  const isViewerHost = Boolean(!isSelf);
-
-  // Use persistent audio & LiveKit controller hook
-  const {
-    volume,
-    micGain,
-    isMuted,
-    microphones,
-    speakers,
-    activeMicId,
-    activeSpeakerId,
-    handleVolumeChange,
-    handleMicGainChange,
-    handleMicDeviceChange,
-    handleSpeakerDeviceChange,
-    handleToggleMic,
-    handleToggleDeafen,
-    handleHostMuteParticipant,
-    handleKickParticipant: executeKick,
-  } = useParticipantAudioController({
-    userId,
-    isSelf,
-    rawParticipant,
-    isViewerHost,
-    onVolumeChange,
-    onToggleMute,
-    onToggleDeafen,
-    onKickParticipant,
-  });
-
-  const participant = {
-    name: user?.name,
-    username: user?.username,
-    verified: user?.verified,
-    profilePhoto: user?.profilePhoto || '',
-    genUserId: user?.genUserId || '',
-    accountType: user?.accountType,
-    follower_count: user?.follower_count,
-    following_count: user?.following_count,
-    friend_count: user?.friend_count,
-    isHost: user?.isHost,
-    joinedAt: user?.joinedAt ? new Date(user.joinedAt) : undefined,
-    bio: user?.bio,
-    isFollowing: checkIfFollowing(user?.userId),
-    isBlocked: checkIfBlocked(user?.userId),
-  };
-
-  const [isBlocked, setIsBlocked] = useState<boolean>(Boolean(participant?.isBlocked));
-
-  // Rating Modal State
-  const [ratingOpen, setRatingOpen] = useState(false);
-  const [starRating, setStarRating] = useState<number | null>(4);
-  const [ratedLevel, setRatedLevel] = useState('Intermediate (B1-B2)');
   const [copied, setCopied] = useState(false);
+  const [remoteVolume, setRemoteVolume] = useState<number>(50);
+
+  if (!open || !user) return null;
+
+  const isSelf = Boolean(user.isSelf);
+  const userId = String(user.userId || user.id);
+
+  // 1. Determine Muted State
+  const isMuted = isSelf
+    ? room?.localParticipant
+      ? !room.localParticipant.isMicrophoneEnabled
+      : true
+    : (() => {
+      const p = room?.remoteParticipants.get(userId);
+      const micPub = p?.getTrackPublication(Track.Source.Microphone);
+      return p ? !p.isMicrophoneEnabled || !micPub || micPub.isMuted : true;
+    })();
+
+  // 2. Determine Deafened State
+  const isDeafened = isSelf ? false : remoteVolume === 0;
 
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const idToCopy = participant?.genUserId || userId || '';
+    const idToCopy = user.genUserId || userId || '';
     if (!idToCopy) return;
-
     navigator.clipboard.writeText(idToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
 
-  useEffect(() => {
-    setIsBlocked(Boolean(participant?.isBlocked));
-  }, [participant?.isBlocked]);
-
-  const handleBlockToggle = () => {
-    if (!userId) return;
-    setIsBlocked(!isBlocked);
-    onBlock?.(userId);
-  };
-
-  const handleKickAndClose = async () => {
-    await executeKick();
-    onClose();
-  };
-
-  const handleOpenRating = () => {
-    // onClose();
-    setRatingOpen(true);
-  };
-
-  const handleSaveRating = () => {
-    if (userId && starRating) {
-      onRateUser?.(userId, starRating, ratedLevel);
-    }
-    setRatingOpen(false);
-  };
-
-  const initials = (() => {
-    try {
-      return fUsername(participant?.name || 'User');
-    } catch {
-      return 'U';
-    }
-  })();
-
-  const elevatedSelectMenuProps = {
-    PaperProps: {
-      sx: {
-        zIndex: theme.zIndex.modal + 20,
-        maxHeight: 260,
-      },
-    },
-    sx: {
-      zIndex: theme.zIndex.modal + 20,
-    },
-  };
-
-
-  const mobileGreyBg = isDark
-    ? theme.palette.grey[700]
-    : theme.palette.grey[200];
-
-  const isDeafen = volume === 0;
+  const initials = fUsername(user?.name || (isSelf ? 'You' : 'User'));
 
   return (
-    <>
-      <Drawer
-        anchor={isMobile ? 'bottom' : undefined}
-        open={open}
-        onClose={onClose}
-        PaperProps={{ elevation: 0 }}
-        ModalProps={{
-          keepMounted: true,
-        }}
+    <Drawer
+      anchor={isMobile ? 'bottom' : undefined}
+      open={open}
+      onClose={onClose}
+      PaperProps={{ elevation: 0 }}
+      sx={{
+        zIndex: theme.zIndex.modal + 1,
+        '& .MuiBackdrop-root': {
+          backdropFilter: 'blur(10px)',
+          backgroundColor: alpha(theme.palette.common.black, 0.4),
+        },
+        '& .MuiDrawer-paper': {
+          width: '100%',
+          maxWidth: { xs: '100%', sm: 520 },
+          height: 'fit-content',
+          maxHeight: { xs: '90vh', sm: '88vh' },
+          margin: '0 auto',
+          position: 'fixed',
+          bottom: { xs: 0, sm: 'auto' },
+          top: { xs: 'auto', sm: '50%' },
+          left: { sm: '50%' },
+          transform: { xs: 'none', sm: 'translate(-50%, -50%) !important' },
+          borderRadius: { xs: 1 },
+          overflow: 'hidden',
+          backgroundColor: alpha(theme.palette.background.paper, 0.94),
+          border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
+          boxShadow: `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.5)}`,
+        },
+      }}
+    >
+      {/* Shared Drawer Top Header */}
+      <Box
         sx={{
-          zIndex: theme.zIndex.modal + 1,
-          '& .MuiBackdrop-root': {
-            backdropFilter: 'blur(16px)',
-            backgroundColor: alpha(theme.palette.common.black, 0.4),
-          },
-          '& .MuiDrawer-paper': {
-            width: '100%',
-            maxWidth: { xs: '100%', sm: 520 },
-            margin: '0 auto',
-            position: 'fixed',
-            bottom: { xs: 0, sm: 'auto' },
-            top: { xs: 'auto', sm: '50%' },
-            left: { sm: '50%' },
-            transform: { xs: 'none', sm: 'translate(-50%, -50%) !important' },
-            borderRadius: { xs: 1 },
-            height: 'fit-content',
-            maxHeight: { xs: '90vh', sm: '88vh' },
-            minHeight: { xs: '65vh', sm: 'auto' },
-            overflow: 'hidden',
-            backgroundColor: alpha(theme.palette.background.paper, 0.88),
-            backdropFilter: 'blur(20px) saturate(180%)',
-            border: `1px solid ${alpha(theme.palette.common.white, 0.15)}`,
-            boxShadow: `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.5)}`,
-          },
+          px: 3,
+          py: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: alpha(theme.palette.background.neutral, 0.4),
+          position: 'relative',
         }}
       >
-        {/* Header */}
-        <Box
+        <Typography
+          variant="subtitle2"
+          fontWeight={800}
           sx={{
-            position: 'relative',
-            px: 3,
-            pt: 2,
-            pb: 1.5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: alpha(theme.palette.background.neutral, 0.4),
+            color: 'text.secondary',
+            fontSize: 12,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
           }}
         >
-          {isMobile && (
-            <Box
+          {isSelf ? 'Your Audio & Profile' : 'User Profile'}
+        </Typography>
+
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            position: 'absolute',
+            right: 14,
+            width: 32,
+            height: 32,
+            backgroundColor: alpha(theme.palette.text.primary, 0.05),
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      {/* Main Scrollable Body */}
+      <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
+        {/* User Identity Row with Avatar & Status Badge */}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 2.5 }}>
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Badge
+              overlap="circular"
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               sx={{
-                position: 'absolute',
-                top: 8,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 36,
-                height: 4,
-                borderRadius: 999,
-                backgroundColor: alpha(theme.palette.text.primary, 0.2),
+                '& .MuiBadge-badge': {
+                  bottom: { xs: 6, sm: 10 },
+                  right: { xs: 6, sm: 10 },
+                  transform: 'none',
+                  p: 0,
+                  height: 'auto',
+                },
               }}
-            />
-          )}
-          <Typography
-            variant="subtitle2"
-            fontWeight={800}
-            sx={{
-              color: theme.palette.text.secondary,
-              fontSize: 12,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              mt: isMobile ? 1 : 0,
-            }}
-          >
-            {isSelf ? 'Your Audio & Profile' : 'User Profile'}
-          </Typography>
-
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{
-              position: 'absolute',
-              right: 14,
-              top: isMobile ? 14 : 10,
-              width: 32,
-              height: 32,
-              backgroundColor: alpha(theme.palette.text.primary, 0.05),
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        {/* Profile Body */}
-        <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 3 }}>
-            <Box sx={{ position: 'relative', flexShrink: 0 }}>
-              <Badge
-                overlap="circular"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                sx={{
-                  '& .MuiBadge-badge': {
-                    bottom: { xs: 8, sm: 12 },
-                    right: { xs: 8, sm: 12 },
-                    transform: 'none',
-                    p: 0,
-                    height: 'auto',
-                  },
-                }}
-                badgeContent={
-                  (isMuted || volume === 0) ? (
-                    <Box
-                      sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 0.6,
-                        px: 1,
-                        py: 0.4,
-                        borderRadius: 999,
-                        bgcolor: alpha(theme.palette.error.dark, 0.9),
-                        color: theme.palette.common.white,
-                        backdropFilter: 'blur(8px)',
-                        border: `2px solid ${theme.palette.background.paper}`,
-                        boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.25)}`,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {isMuted ? (
-                        <MicOffIcon sx={{ fontSize: 13 }} />
-                      ) : (
-                        <HeadsetOffIcon sx={{ fontSize: 13 }} />
-                      )}
-                      <span>{isMuted ? 'Muted' : 'Deafened'}</span>
-                    </Box>
-                  ) : null
-                }
-              >
-                <Avatar
-                  src={participant?.profilePhoto || undefined}
-                  alt={participant?.name}
-                  sx={{
-                    width: { xs: 120, sm: 160 },
-                    height: { xs: 120, sm: 160 },
-                    fontSize: 28,
-                    fontWeight: 800,
-                    border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
-                    boxShadow: `0 8px 24px -4px ${alpha(theme.palette.common.black, 0.15)}`,
-                    transition: 'all 0.25s ease',
-                  }}
-                  variant="rounded"
-                >
-                  {initials}
-                </Avatar>
-              </Badge>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
-              {/* Name & Verified Badge */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-                <Typography variant="h6" noWrap sx={{ flexShrink: 1 }}>
-                  {participant?.name || 'Unknown User'} {isSelf && '(You)'}
-                </Typography>
-                {participant?.verified && (
-                  <VerifiedIcon sx={{ color: '#5865F2', fontSize: 17, flexShrink: 0 }} />
-                )}
-              </Box>
-
-              {/* User Handle & Copy ID Interactive Pill */}
-              <Box
-                onClick={handleCopyId}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  cursor: 'pointer',
-                  width: 'fit-content',
-                  maxWidth: '100%',
-                  mb: 1.25,
-                  py: 0.2,
-                  borderRadius: 0.5,
-                  transition: 'all 0.18s ease',
-                  '&:hover': {
-                    color: (theme) =>
-                      copied
-                        ? alpha(theme.palette.success.main, 0.16)
-                        : alpha(theme.palette.text.primary, 0.08),
-                    borderColor: (theme) => (copied ? alpha(theme.palette.success.main, 0.4) : 'text.disabled'),
-                  },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  noWrap
-                  sx={{
-                    color: copied ? 'success.main' : 'text.secondary',
-                    userSelect: 'none',
-                  }}
-                >
-                  @{participant?.genUserId || 'username'}
-                </Typography>
-
-                <Tooltip title={copied ? 'Copied to clipboard!' : 'Copy user ID'} arrow placement="top">
-                  <IconButton
-                    size="small"
-                    disableRipple
+              badgeContent={
+                (isMuted || isDeafened) ? (
+                  <Box
                     sx={{
-                      p: 0,
-                      color: copied ? 'success.main' : 'text.disabled',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 0.9,
+                      py: 0.35,
+                      borderRadius: 999,
+                      bgcolor: alpha(theme.palette.error.dark, 0.92),
+                      color: theme.palette.common.white,
+                      backdropFilter: 'blur(8px)',
+                      border: `2px solid ${theme.palette.background.paper}`,
+                      boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.25)}`,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      userSelect: 'none',
                     }}
                   >
-                    {copied ? (
-                      <CheckIcon sx={{ fontSize: 13 }} />
+                    {isDeafened ? (
+                      <HeadsetOffIcon sx={{ fontSize: 13 }} />
                     ) : (
-                      <CopyIcon sx={{ fontSize: 12 }} />
+                      <MicOffIcon sx={{ fontSize: 13 }} />
                     )}
-                  </IconButton>
-                </Tooltip>
-              </Box>
-
-              {/* Modernized Stats Row */}
-              <ParticipantStatsRow participant={participant} />
-            </Box>
+                    <span>{isDeafened ? 'Deafened' : 'Muted'}</span>
+                  </Box>
+                ) : null
+              }
+            >
+              <Avatar
+                src={user.profilePhoto || undefined}
+                alt={user.name}
+                sx={{
+                  width: { xs: 100, sm: 120 },
+                  height: { xs: 100, sm: 120 },
+                  fontSize: 26,
+                  fontWeight: 800,
+                  border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
+                  boxShadow: `0 8px 24px -4px ${alpha(theme.palette.common.black, 0.15)}`,
+                }}
+                variant="rounded"
+              >
+                {initials}
+              </Avatar>
+            </Badge>
           </Box>
 
-          {/* Bio Card */}
-          {(participant?.bio || participant?.joinedAt) && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 1,
-                borderRadius: 1,
-                backgroundColor: alpha(theme.palette.text.primary, 0.03),
-                border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-              }}
-            >
-              {participant?.bio && (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ lineHeight: 1.6, mb: 1.5, fontSize: 13 }}
-                >
-                  {participant?.bio}
-                </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
+              <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
+                {user.name || 'Unknown User'} {isSelf && '(You)'}
+              </Typography>
+              {user.verified && (
+                <VerifiedIcon sx={{ color: '#5865F2', fontSize: 17, flexShrink: 0 }} />
               )}
+            </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {participant?.joinedAt && (
-                  <>
-                    <Typography variant="caption" color="text.disabled">
-                      JoinedAt:
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                      {fDateTime(participant?.joinedAt)}
-                    </Typography>
-                  </>
-                )}
-              </Box>
-            </Paper>
-          )}
-
-          {/* Self: Audio Hardware Devices */}
-          {isSelf && (
-            <Paper
-              elevation={0}
+            <Box
+              onClick={handleCopyId}
               sx={{
-                p: 2,
-                mb: 1,
-                borderRadius: 1,
-                backgroundColor: alpha(theme.palette.text.primary, 0.03),
-                border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                cursor: 'pointer',
+                width: 'fit-content',
+                maxWidth: '100%',
+                mb: 1.25,
+                py: 0.2,
+                borderRadius: 0.5,
+                '&:hover': {
+                  color: alpha(theme.palette.text.primary, 0.8),
+                },
               }}
             >
               <Typography
                 variant="caption"
-                fontWeight={800}
-                color="text.secondary"
-                sx={{
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  mb: 1,
-                }}
+                noWrap
+                sx={{ color: copied ? 'success.main' : 'text.secondary', fontWeight: 600 }}
               >
-                Audio Hardware Devices
+                @{user.genUserId || 'username'}
               </Typography>
 
-              <Stack spacing={1.5}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="user-mic-select-label">Input Microphone</InputLabel>
-                  <Select
-                    labelId="user-mic-select-label"
-                    value={activeMicId || ''}
-                    label="Input Microphone"
-                    onChange={(e) => handleMicDeviceChange(e.target.value)}
-                    MenuProps={elevatedSelectMenuProps}
-                  >
-                    {microphones.map((device) => (
-                      <MenuItem key={device.deviceId} value={device.deviceId}>
-                        {device.label || `Microphone (${device.deviceId.slice(0, 5)})`}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl fullWidth size="small" disabled={speakers.length === 0}>
-                  <InputLabel id="user-speaker-select-label">Output Speaker</InputLabel>
-                  <Select
-                    labelId="user-speaker-select-label"
-                    value={activeSpeakerId || ''}
-                    label="Output Speaker"
-                    onChange={(e) => handleSpeakerDeviceChange(e.target.value)}
-                    MenuProps={elevatedSelectMenuProps}
-                  >
-                    {speakers.map((device) => (
-                      <MenuItem key={device.deviceId} value={device.deviceId}>
-                        {device.label || `Speaker (${device.deviceId.slice(0, 5)})`}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-            </Paper>
-          )}
-
-          {/* Volume Control / Mic Gain */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2,
-              mb: 1,
-              borderRadius: 1,
-              backgroundColor: alpha(theme.palette.text.primary, 0.03),
-              border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            }}
-          >
-            <Typography
-              variant="caption"
-              fontWeight={800}
-              color="text.secondary"
-              sx={{
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase',
-                display: 'block',
-                mb: 1.5,
-              }}
-            >
-              {isSelf ? 'Microphone Gain & Status' : 'Participant Volume'}
-            </Typography>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Tooltip title={isMuted ? 'Unmute' : 'Mute'}>
-                <IconButton
-                  onClick={handleToggleMic}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    backgroundColor: isMuted
-                      ? 'error.main'
-                      : alpha(theme.palette.text.primary, 0.05),
-                    color: isMuted ? '#fff' : theme.palette.text.primary,
-                    '&:hover': {
-                      bgcolor: isMuted ? 'error.dark' : alpha(theme.palette.primary.main, 0.12),
-                    },
-                  }}
-                  disabled={isSelf ? false : isHost}
-                >
-                  {isMuted ? <MicOffIcon fontSize="small" /> : <MicIcon fontSize="small" />}
+              <Tooltip title={copied ? 'Copied to clipboard!' : 'Copy user ID'} arrow placement="top">
+                <IconButton size="small" disableRipple sx={{ p: 0, ml: 0.25 }}>
+                  {copied ? (
+                    <CheckIcon sx={{ fontSize: 13, color: 'success.main' }} />
+                  ) : (
+                    <CopyIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
+                  )}
                 </IconButton>
               </Tooltip>
-
-              {isSelf ? (
-                <Stack spacing={1.25} sx={{ flex: 1, ml: 0.5, minWidth: 0 }}>
-                  {/* 1. Mic Gain Slider Row */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                    <MicIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                    <Slider
-                      value={micGain}
-                      onChange={handleMicGainChange}
-                      min={0}
-                      max={100}
-                      step={5}
-                      valueLabelDisplay="auto"
-                      sx={{ flex: 1 }}
-                    />
-                    <Typography
-                      variant="caption"
-                      fontWeight={700}
-                      color="text.secondary"
-                      sx={{ minWidth: 36, textAlign: 'right' }}
-                    >
-                      {micGain}%
-                    </Typography>
-                  </Box>
-
-                  <Divider sx={{ borderStyle: 'dashed', opacity: 0.6 }} />
-
-                  {/* 2. Krisp Noise Cancellation Toggle */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                    <Typography variant="caption" fontWeight={600} color="text.secondary">
-                      AI Noise Suppression
-                    </Typography>
-                    <KrispNoiseFilterToggle />
-                  </Box>
-                </Stack>
-              ) : (
-                <>
-                  <Tooltip title={volume === 0 ? 'Restore Audio' : 'Mute/Deafen Track'}>
-                    <IconButton
-                      onClick={handleToggleDeafen}
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                        color: isDeafen ? '#fff' : 'text.primary',
-                        bgcolor: isDeafen
-                          ? 'error.main'
-                          : { xs: mobileGreyBg, sm: 'background.paper' },
-                        '&:hover, &:focus, &:active, &.Mui-focusVisible': {
-                          bgcolor: isDeafen
-                            ? 'error.dark'
-                            : alpha(theme.palette.primary.main, 0.08),
-                          color: isDeafen ? '#fff' : 'primary.main',
-                        },
-                      }}
-                    >
-                      {volume === 0 ? (
-                        <HeadsetOffIcon fontSize="small" />
-                      ) : (
-                        <HeadsetIcon fontSize="small" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-
-                  <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1, ml: 0.5 }}>
-                    <VolumeUpIcon fontSize="small" color="action" sx={{ opacity: 0.6 }} />
-                    <Slider
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      min={0}
-                      max={100}
-                      step={1}
-                      valueLabelDisplay="auto"
-                      sx={{ flex: 1 }}
-                    />
-                    <Typography
-                      variant="caption"
-                      fontWeight={700}
-                      color="text.secondary"
-                      sx={{ minWidth: 32, ml: 0.5 }}
-                    >
-                      {Math.round(volume)}%
-                    </Typography>
-                  </Box>
-                </>
-              )}
             </Box>
-          </Paper>
 
-          {/* Host Moderation Section */}
-          {isViewerHost && !isHost && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 1,
-                borderRadius: 1,
-                bgcolor: alpha(theme.palette.warning.main, 0.06),
-                border: `1px dashed ${alpha(theme.palette.warning.main, 0.35)}`,
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                <GavelIcon sx={{ fontSize: 16, color: 'warning.dark' }} />
-                <Typography
-                  variant="caption"
-                  fontWeight={800}
-                  color="warning.dark"
-                  sx={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}
-                >
-                  Host Moderation
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={1}>
-                <Button
-                  variant="contained"
-                  color={isMuted ? 'success' : 'error'}
-                  size="small"
-                  fullWidth
-                  startIcon={isMuted ? <MicIcon /> : <MicOffIcon />}
-                  onClick={() => handleHostMuteParticipant(!isMuted)}
-                  sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
-                >
-                  {isMuted ? 'Request Unmute' : 'Mute for All'}
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  fullWidth
-                  startIcon={<KickIcon />}
-                  onClick={handleKickAndClose}
-                  sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
-                >
-                  Kick User
-                </Button>
-              </Stack>
-            </Paper>
-          )}
-
-          {/* Speaking Level Rating */}
-          {!isSelf && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 1,
-                borderRadius: 1,
-                bgcolor: alpha(theme.palette.primary.main, 0.04),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-              }}
-            >
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="subtitle2" fontWeight={800}>
-                    Rate Speaking Proficiency
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Provide feedback on fluency and pronunciation
-                  </Typography>
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<StarIcon />}
-                  onClick={handleOpenRating}
-                  sx={{
-                    borderRadius: 1,
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    bgcolor: 'primary.main',
-                  }}
-                >
-                  Rate Level
-                </Button>
-              </Stack>
-            </Paper>
-          )}
-
-          {/* Social Follow & Block */}
-          {!isSelf && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
-              <ButtonRelationshipToggle
-                targetUser={{
-                  id: userId,
-                  name: participant?.name,
-                }}
-                isFollow={Boolean(participant?.isFollowing)}
-                size="small"
-                variant="soft"
-                onSuccessFollow={(data: UserStats[]) => updateParticipants(data)}
-                onSuccessUnfollow={(data: UserStats[]) => updateParticipants(data)}
-                fullWidth
-              />
-              <Button
-                fullWidth
-                variant="outlined"
-                color={isBlocked ? 'error' : 'warning'}
-                startIcon={<BlockIcon />}
-                onClick={handleBlockToggle}
-                sx={{ borderRadius: 1, fontWeight: 700, textTransform: 'none' }}
-              >
-                {isBlocked ? 'Unblock' : 'Block'}
-              </Button>
-            </Box>
-          )}
-
-          {/* Report & Share */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<ReportIcon />}
-              disabled={!userId || isSelf}
-              onClick={() => userId && onReport?.(userId)}
-              sx={{ borderRadius: 1, fontWeight: 600, textTransform: 'none', fontSize: 13 }}
-            >
-              Report
-            </Button>
-
-            <Button
-              variant="outlined"
-              color="info"
-              startIcon={<ShareIcon />}
-              disabled={!userId}
-              onClick={() => userId && onShare?.(userId)}
-              sx={{ borderRadius: 1, fontWeight: 600, textTransform: 'none', fontSize: 13 }}
-            >
-              Share
-            </Button>
+            <ParticipantStatsRow participant={{
+              follower_count: user.follower_count,
+              following_count: user.following_count,
+              friend_count: user.friend_count
+            }} />
           </Box>
         </Box>
-      </Drawer >
 
-      {/* Rating Dialog */}
-      < Dialog
-        open={ratingOpen}
-        onClose={() => setRatingOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        sx={{ zIndex: theme.zIndex.modal + 10 }}
-        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Rate Speaking Level</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-            How well is <strong>{participant?.name}</strong> communicating and expressing ideas?
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-            <Rating
-              size="large"
-              value={starRating}
-              onChange={(_, val) => setStarRating(val)}
-              precision={1}
-              sx={{ mb: 1, fontSize: '2.4rem' }}
-            />
-            <Typography variant="caption" fontWeight={700} color="primary.main">
-              {starRating === 5
-                ? 'Native / Fluent'
-                : starRating === 4
-                  ? 'Advanced (C1)'
-                  : starRating === 3
-                    ? 'Intermediate (B2)'
-                    : starRating === 2
-                      ? 'Pre-Intermediate (B1)'
-                      : 'Beginner (A1-A2)'}
-            </Typography>
-          </Box>
-
-          <FormControl fullWidth size="small">
-            <InputLabel id="rated-level-label">Estimated CEFR Level</InputLabel>
-            <Select
-              labelId="rated-level-label"
-              value={ratedLevel}
-              label="Estimated CEFR Level"
-              onChange={(e) => setRatedLevel(e.target.value)}
-              MenuProps={{
-                PaperProps: { sx: { zIndex: theme.zIndex.modal + 30 } },
-                sx: { zIndex: theme.zIndex.modal + 30 },
-              }}
-            >
-              <MenuItem value="Beginner (A1-A2)">Beginner (A1-A2)</MenuItem>
-              <MenuItem value="Intermediate (B1-B2)">Intermediate (B1-B2)</MenuItem>
-              <MenuItem value="Advanced (C1)">Advanced (C1)</MenuItem>
-              <MenuItem value="Fluent / Native (C2)">Fluent / Native (C2)</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRatingOpen(false)} color="inherit" sx={{ fontWeight: 600 }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveRating}
-            sx={{ fontWeight: 700, borderRadius: 2 }}
-          >
-            Submit Rating
-          </Button>
-        </DialogActions>
-      </Dialog >
-    </>
+        {/* View Specific Modules */}
+        {isSelf ? (
+          <RoomUserControllerSelf user={user} isMuted={isMuted} />
+        ) : (
+          <RoomUserControllerRemote
+            {...props}
+            onLocalVolumeTracked={(vol) => setRemoteVolume(vol)}
+          />
+        )}
+      </Box>
+    </Drawer>
   );
 };
 
-export default RoomUserControllerMain;
+export default React.memo(RoomUserControllerMain);
