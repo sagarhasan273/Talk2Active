@@ -550,7 +550,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
         onClose={() => onRateOpen.onFalse()}
         userId={participant?.userId}
         userName={participant?.name}
-        onRateUser={() => { }}
       />
     </>
   );

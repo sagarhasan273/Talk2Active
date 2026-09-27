@@ -29,6 +29,7 @@ import { ButtonRelationshipToggle } from '@/components/buttons';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import { UserStats } from '@/types/type-social';
+import { fDateTime } from '@/utils/format-time';
 
 const remoteVolumeMap = new Map<string, number>();
 
@@ -127,6 +128,27 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
   return (
     <>
+      {/* Bio / Joined Date */}
+      {user.joinedAt && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 1.5,
+            borderRadius: 1,
+            bgcolor: alpha(theme.palette.text.primary, 0.03),
+            border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          }}
+        >
+          <Typography variant="caption" color="text.disabled">
+            Joined At:
+          </Typography>{' '}
+          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+            {fDateTime(user.joinedAt)}
+          </Typography>
+        </Paper>
+      )}
+
       {/* Remote Audio Volume */}
       <Paper
         elevation={0}
@@ -138,6 +160,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
         }}
       >
+
+
         <Typography
           variant="caption"
           fontWeight={800}

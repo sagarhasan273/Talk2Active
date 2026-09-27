@@ -1,7 +1,9 @@
+import { useSubmitRatingMutation } from '@/core/apis';
 import {
   alpha,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,20 +18,26 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 
-const PROFICIENCY_LEVELS = [
-  { value: 'beginner', label: 'A1-A2 Beginner', emoji: '🌱' },
-  { value: 'intermediate', label: 'B1-B2 Intermediate', emoji: '📈' },
-  { value: 'advanced', label: 'C1 Advanced', emoji: '🏆' },
-  { value: 'fluent', label: 'C2 Fluent / Proficient', emoji: '💎' },
-  { value: 'native', label: 'Native / Bilingual Mastery', emoji: '👑' },
-];
+import type { SpeakingProficiencyLevel } from 'src/types/type-rating';
+
+const PROFICIENCY_LEVELS: {
+  value: SpeakingProficiencyLevel;
+  label: string;
+  emoji: string;
+}[] = [
+    { value: 'beginner', label: 'A1-A2 Beginner', emoji: '🌱' },
+    { value: 'intermediate', label: 'B1-B2 Intermediate', emoji: '📈' },
+    { value: 'advanced', label: 'C1 Advanced', emoji: '🏆' },
+    { value: 'fluent', label: 'C2 Fluent / Proficient', emoji: '💎' },
+    { value: 'native', label: 'Native / Bilingual Mastery', emoji: '👑' },
+  ];
 
 interface DialogRateSpeakingLevelProps {
   open: boolean;
   onClose: () => void;
   userId: string;
   userName?: string;
-  onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
+  onRateSuccess?: (rating: number, levelFeedback: SpeakingProficiencyLevel) => void;
 }
 
 export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = ({
@@ -37,17 +45,22 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
   onClose,
   userId,
   userName = 'User',
-  onRateUser,
+  onRateSuccess,
 }) => {
   const theme = useTheme();
 
   const [starRating, setStarRating] = useState<number>(4);
-  const [ratedLevel, setRatedLevel] = useState<string>('fluent');
+  const [ratedLevel, setRatedLevel] = useState<SpeakingProficiencyLevel>('fluent');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Direct 1-to-1 sync between 1–5 stars and the 5 proficiency tiers
+  // RTK Query Mutation Hook
+  const [submitRating, { isLoading }] = useSubmitRatingMutation();
+
+  // Sync stars with proficiency tiers
   const handleRatingChange = (_: React.SyntheticEvent, val: number | null) => {
     const nextVal = val ?? 1;
     setStarRating(nextVal);
+    setErrorMessage(null);
 
     switch (nextVal) {
       case 1:
@@ -70,19 +83,33 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
     }
   };
 
-  const handleLevelChange = (newLevel: string) => {
+  const handleLevelChange = (newLevel: SpeakingProficiencyLevel) => {
     setRatedLevel(newLevel);
+    setErrorMessage(null);
     const index = PROFICIENCY_LEVELS.findIndex((item) => item.value === newLevel);
     if (index !== -1) {
       setStarRating(index + 1);
     }
   };
 
-  const handleSave = () => {
-    if (userId && starRating) {
-      onRateUser?.(userId, starRating, ratedLevel);
+  // Submit Rating Handler
+  const handleSave = async () => {
+    if (!userId) return;
+    setErrorMessage(null);
+
+    try {
+      await submitRating({
+        targetUserId: userId,
+        rating: starRating,
+        levelFeedback: ratedLevel,
+      }).unwrap();
+
+      onRateSuccess?.(starRating, ratedLevel);
+      onClose();
+    } catch (err: any) {
+      console.error('Failed to submit rating:', err);
+      setErrorMessage(err?.data?.message || err?.message || 'Failed to submit rating. Please try again.');
     }
-    onClose();
   };
 
   const currentLevelObj =
@@ -91,7 +118,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={isLoading ? undefined : onClose}
       maxWidth="xs"
       fullWidth
       sx={{
@@ -123,6 +150,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             size="large"
             value={starRating}
             onChange={handleRatingChange}
+            disabled={isLoading}
             max={5}
             sx={{ fontSize: '2.5rem', mb: 1 }}
           />
@@ -131,14 +159,15 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
           </Typography>
         </Box>
 
-        {/* 5-Tier Select Menu with Elevated Z-Index */}
+        {/* 5-Tier Select Menu */}
         <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
           <InputLabel id="rate-proficiency-tier-label">Assessed Proficiency</InputLabel>
           <Select
             labelId="rate-proficiency-tier-label"
             value={ratedLevel}
             label="Assessed Proficiency"
-            onChange={(e) => handleLevelChange(e.target.value)}
+            disabled={isLoading}
+            onChange={(e) => handleLevelChange(e.target.value as SpeakingProficiencyLevel)}
             MenuProps={{
               sx: {
                 zIndex: theme.zIndex.modal + 30,
@@ -157,18 +186,31 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             ))}
           </Select>
         </FormControl>
+
+        {/* Error Feedback */}
+        {errorMessage && (
+          <Typography
+            variant="caption"
+            color="error.main"
+            sx={{ display: 'block', mt: 1.5, textAlign: 'center', fontWeight: 600 }}
+          >
+            {errorMessage}
+          </Typography>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} color="inherit" sx={{ fontWeight: 600 }}>
+        <Button onClick={onClose} color="inherit" disabled={isLoading} sx={{ fontWeight: 600 }}>
           Cancel
         </Button>
         <Button
           variant="contained"
           onClick={handleSave}
-          sx={{ fontWeight: 700, borderRadius: 1.5 }}
+          disabled={isLoading}
+          startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
+          sx={{ fontWeight: 700, borderRadius: 1.5, minWidth: 120 }}
         >
-          Submit Rating
+          {isLoading ? 'Submitting...' : 'Submit Rating'}
         </Button>
       </DialogActions>
     </Dialog>

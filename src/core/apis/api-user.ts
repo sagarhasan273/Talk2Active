@@ -1,8 +1,11 @@
 // services/userApi.ts
 import type { ResponseType } from 'src/types/type-common';
 import type {
-  UserType,
-} from 'src/types/type-user';
+  SubmitRatingReq,
+  SubmitRatingRes,
+  UserRatingStatsRes
+} from 'src/types/type-rating';
+import type { UserType } from 'src/types/type-user';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -14,15 +17,15 @@ export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
     baseUrl: CONFIG.serverUrl,
-    prepareHeaders: (headers, { getState }) => {
+    prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem(STORAGE_KEY);
       if (accessToken) {
         headers.set('authorization', `Bearer ${accessToken}`);
       }
       return headers;
     },
-  }), // your REST API base
-  tagTypes: ['user-recall'],
+  }),
+  tagTypes: ['user-recall', 'user-rating'],
   endpoints: (builder) => ({
     getMe: builder.query<ResponseType, null>({
       query: () => `user/u/me`,
@@ -51,13 +54,32 @@ export const userApi = createApi({
       invalidatesTags: ['user-recall'],
     }),
 
-
-
     deleteUser: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
         url: `users/${id}`,
         method: 'DELETE',
       }),
+    }),
+
+    // ------------------------------------------------------------------
+    // Rating Endpoints
+    // ------------------------------------------------------------------
+
+    submitRating: builder.mutation<SubmitRatingRes, SubmitRatingReq>({
+      query: (body) => ({
+        url: `rating`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { targetUserId }) => [
+        { type: 'user-rating', id: targetUserId },
+        'user-recall',
+      ],
+    }),
+
+    getUserRatingStats: builder.query<UserRatingStatsRes, string>({
+      query: (userId) => `rating/stats/${userId}`,
+      providesTags: (_result, _error, userId) => [{ type: 'user-rating', id: userId }],
     }),
   }),
 });
@@ -68,4 +90,7 @@ export const {
   useUpdateUserRecentRoomsMutation,
   useCreateUserMutation,
   useDeleteUserMutation,
+  useSubmitRatingMutation,
+  useGetUserRatingStatsQuery,
+  useLazyGetUserRatingStatsQuery,
 } = userApi;
