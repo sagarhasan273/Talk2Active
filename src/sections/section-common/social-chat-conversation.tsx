@@ -24,9 +24,9 @@ import {
 
 import type { AllRelationsType } from '@/types/type-social';
 
-import { SocialMessageBubble } from './social-chat-message-bubble';
 import { useSocialChat } from '@/core/contexts/context-social-chat';
 import { getActiveRoomId, getInitials, isOnline } from '@/utils/social-chat-helper';
+import { SocialMessageBubble } from './social-chat-message-bubble';
 
 interface SocialChatConversationProps {
   onClose?: () => void;
@@ -87,14 +87,26 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
   }, [setIsAtBottom]);
 
   const scrollToBottom = useCallback(
-    (behavior: ScrollBehavior = 'smooth') => {
+    (behavior: ScrollBehavior = 'smooth', shouldMarkRead = false) => {
       messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-      if (friendDetails?.userId) {
+      if (shouldMarkRead && friendDetails?.userId) {
         markFriendAsRead(friendDetails.userId);
       }
     },
     [friendDetails?.userId, markFriendAsRead]
   );
+
+  // Auto-scroll on new messages without firing redundant markFriendAsRead API calls
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+
+    if (localIsAtBottomRef.current || lastMsg?.isSelf) {
+      requestAnimationFrame(() => {
+        scrollToBottom('smooth', false);
+      });
+    }
+  }, [messages.length, scrollToBottom]);
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -320,7 +332,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
           <Button
             variant="contained"
             size="small"
-            onClick={() => scrollToBottom('smooth')}
+            onClick={() => scrollToBottom('smooth', true)}
             endIcon={<ArrowDown size={13} />}
             sx={{
               position: 'absolute',

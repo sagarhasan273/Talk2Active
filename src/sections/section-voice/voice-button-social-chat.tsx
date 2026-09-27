@@ -269,7 +269,7 @@ const VoiceButtonSocialChat = ({
       <Box
         ref={buttonContainerRef}
         sx={{
-          display: { xs: 'none', sm: 'inline-flex' },
+          display: { xs: 'inline-flex' },
           pointerEvents: 'auto',
           position: 'relative',
         }}

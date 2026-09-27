@@ -5,7 +5,7 @@ import {
   UserMinus,
   X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
   alpha,
@@ -21,9 +21,9 @@ import {
   useTheme,
 } from '@mui/material';
 
-import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
-
 import { useSocialChat } from '@/core/contexts/context-social-chat';
+import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
+import { fDateTime } from '@/utils/format-time';
 import { getActiveRoomId, getInitials, isOnline } from '@/utils/social-chat-helper';
 
 interface SocialChatDirectoryProps {
@@ -54,17 +54,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     openChat,
     unreadCounts,
     unreadFriendsCount,
-    syncFriendsUnreadState,
   } = useSocialChat();
 
   const [unfollowedIds, setUnfollowedIds] = useState<Set<string>>(new Set());
   const [loadingUnfollowId, setLoadingUnfollowId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (friends.length > 0) {
-      syncFriendsUnreadState(friends);
-    }
-  }, [friends, syncFriendsUnreadState]);
 
   const friendIds = useMemo(
     () => new Set(friends.map((f) => f.accountDetails.userId)),
@@ -322,9 +315,9 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                     >
                       {activeRoomId
                         ? '🎙️ In a voice room'
-                        : unreadCount > 1
+                        : unreadCount > 0
                           ? `${unreadCount} unread messages`
-                          : latestText || person.bio || `@${person.username}`}
+                          : latestText || person.bio || `@${fDateTime(person.lastActive)}`}
                     </Typography>
                   </Box>
 
