@@ -301,6 +301,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       {person.name}
                     </Typography>
                     <Typography
+                      variant='caption'
                       sx={{
                         fontSize: 11,
                         color: activeRoomId
@@ -317,7 +318,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         ? '🎙️ In a voice room'
                         : unreadCount > 0
                           ? `${unreadCount} unread messages`
-                          : latestText || person.bio || `@${fDateTime(person.lastActive)}`}
+                          : latestText || person.bio || `Last seen: ${fDateTime(person.lastActive)}`}
                     </Typography>
                   </Box>
 

@@ -16,7 +16,6 @@ import { GoogleLogInView } from 'src/auth/view/google-log-in-view';
 
 import { layoutClasses } from '../classes';
 import { AccountDrawer } from '../components/account-drawer';
-import { SocialDrawer } from '../components/social-drawer';
 import { _user_account } from '../config-nav-account';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
@@ -69,7 +68,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
             ),
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
-                {isMobile && isAuthenticated && <SocialDrawer sx={{ mt: 0.5 }} />}
                 {isAuthenticated && <AccountDrawer data={_user_account} status={getUserStatus()} />}
                 {!isAuthenticated && <GoogleLogInView sx={{ ml: 1 }} />}
               </Box>
