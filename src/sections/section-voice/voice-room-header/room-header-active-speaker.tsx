@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-header/room-header-active-speaker.tsx
+
 import { MicIcon } from 'lucide-react';
 
 import { Box, Stack, Typography, alpha, useTheme } from '@mui/material';
@@ -18,13 +20,14 @@ export function ActiveSpeaker({
   mobile?: boolean;
 }) {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   if (!speaker) {
     return (
       <Stack
         direction="row"
         alignItems="center"
-        spacing={0.75}
+        spacing={1}
         sx={{
           minWidth: 0,
           maxWidth: mobile ? 120 : 190,
@@ -38,23 +41,25 @@ export function ActiveSpeaker({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha(theme.palette.text.primary, 0.06),
-            color: 'text.disabled',
+            bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
+            border: '1px dashed',
+            borderColor: isDark ? alpha('#fff', 0.15) : '#cbd5e1',
+            color: isDark ? 'text.disabled' : '#94a3b8',
             flexShrink: 0,
           }}
         >
-          <MicIcon size={14} />
+          <MicIcon size={13} />
         </Box>
 
         <Typography
           variant="caption"
           noWrap
           sx={{
-            color: 'text.secondary',
+            color: isDark ? 'text.secondary' : '#64748b',
             fontWeight: 600,
           }}
         >
-          No one speaking
+          Stage quiet
         </Typography>
       </Stack>
     );
@@ -64,7 +69,7 @@ export function ActiveSpeaker({
     <Stack
       direction="row"
       alignItems="center"
-      spacing={0.75}
+      spacing={1}
       sx={{
         minWidth: 0,
         maxWidth: mobile ? 140 : 210,
@@ -78,16 +83,16 @@ export function ActiveSpeaker({
             position: 'absolute',
             inset: -3,
             borderRadius: '50%',
-            border: `1px solid ${alpha(theme.palette.success.main, 0.5)}`,
-            animation: 'voiceSpeakerPulse 1.2s ease-in-out infinite',
+            border: `1.5px solid ${alpha(theme.palette.success.main, 0.55)}`,
+            animation: 'voiceSpeakerPulse 1.4s ease-in-out infinite',
 
             '@keyframes voiceSpeakerPulse': {
               '0%, 100%': {
                 transform: 'scale(1)',
-                opacity: 0.45,
+                opacity: 0.5,
               },
               '50%': {
-                transform: 'scale(1.12)',
+                transform: 'scale(1.14)',
                 opacity: 0,
               },
             },
@@ -123,7 +128,7 @@ export function ActiveSpeaker({
             color: 'success.main',
             fontWeight: 800,
             textTransform: 'uppercase',
-            letterSpacing: 0.4,
+            letterSpacing: 0.5,
             mb: 0.25,
           }}
         >
@@ -135,7 +140,7 @@ export function ActiveSpeaker({
           noWrap
           sx={{
             display: 'block',
-            color: 'text.primary',
+            color: isDark ? 'text.primary' : '#0f172a',
             fontWeight: 700,
           }}
         >

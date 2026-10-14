@@ -2,7 +2,6 @@
 
 import type { NavSectionProps } from 'src/components/nav-section';
 
-import { useResponsive } from '@/hooks/use-responsive';
 
 import { Box } from '@mui/material';
 import { useTheme, type Breakpoint, type SxProps, type Theme } from '@mui/material/styles';
@@ -37,8 +36,6 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
   const theme = useTheme();
 
   const { isAuthenticated } = useCredentials();
-
-  const isMobile = useResponsive('down', 'sm');
 
   const layoutQuery: Breakpoint = 'lg';
 

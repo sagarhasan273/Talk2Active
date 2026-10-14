@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-filter-rooms.tsx
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Label } from '@/components/label';
@@ -62,6 +64,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   initialFilters = {},
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || '');
@@ -111,17 +114,20 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     if (updates.showActiveOnly !== undefined) setShowActiveOnly(updates.showActiveOnly);
   }, []);
 
-  // Micro 32px height styling for selects
+  const inputSurfaceBg = isDark ? alpha('#fff', 0.035) : '#f8fafc';
+  const inputBorderColor = isDark ? alpha('#fff', 0.1) : '#e2e8f0';
+
   const compactSelectSx = {
-    height: 32,
+    height: 36,
     borderRadius: 1,
-    bgcolor: alpha(theme.palette.background.default, 0.6),
-    fontSize: '0.78rem',
+    bgcolor: inputSurfaceBg,
+    fontSize: '0.8rem',
+    color: isDark ? 'text.primary' : '#0f172a',
     '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: alpha(theme.palette.divider, 0.14),
+      borderColor: inputBorderColor,
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: alpha(theme.palette.primary.main, 0.4),
+      borderColor: alpha(theme.palette.primary.main, 0.5),
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
       borderColor: theme.palette.primary.main,
@@ -132,9 +138,9 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       alignItems: 'center',
       py: 0,
       px: 1.25,
-      height: '32px !important',
-      fontSize: '0.78rem',
-      fontWeight: 500,
+      height: '36px !important',
+      fontSize: '0.8rem',
+      fontWeight: 600,
     },
   };
 
@@ -143,16 +149,18 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       elevation={0}
       sx={{
         gridColumn: '1 / -1',
-        p: { xs: 1, sm: 1.25 },
-        bgcolor: alpha(theme.palette.background.paper, 0.9),
-        backdropFilter: 'blur(16px)',
+        p: { xs: 1.25, sm: 1.5 },
+        bgcolor: isDark ? '#181c26' : '#ffffff',
         borderRadius: 1,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-        boxShadow: `0 2px 10px -2px ${alpha(theme.palette.common.black, 0.04)}`,
+        border: '1px solid',
+        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+        boxShadow: isDark
+          ? '0 4px 20px -2px rgba(0, 0, 0, 0.35)'
+          : '0 2px 10px -2px rgba(15, 23, 42, 0.04)',
       }}
     >
-      <Grid container spacing={1} alignItems="center">
-        {/* Search Field - Compact 32px */}
+      <Grid container spacing={1.25} alignItems="center">
+        {/* Search Field */}
         <Grid size={{ xs: 12, md: 4.5 }}>
           <TextField
             fullWidth
@@ -165,8 +173,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 <InputAdornment position="start" sx={{ mr: 0.75 }}>
                   <SearchIcon
                     sx={{
-                      fontSize: 17,
-                      color: searchQuery ? 'primary.main' : 'text.disabled',
+                      fontSize: 18,
+                      color: searchQuery ? 'primary.main' : isDark ? 'text.disabled' : '#94a3b8',
                     }}
                   />
                 </InputAdornment>
@@ -176,24 +184,25 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   <IconButton
                     size="small"
                     onClick={() => setSearchQuery('')}
-                    sx={{ p: 0.25 }}
+                    sx={{ p: 0.25, borderRadius: 1 }}
                   >
-                    <ClearIcon sx={{ fontSize: 14 }} />
+                    <ClearIcon sx={{ fontSize: 15 }} />
                   </IconButton>
                 </InputAdornment>
               ) : null,
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                height: 32,
+                height: 36,
                 borderRadius: 1,
-                bgcolor: alpha(theme.palette.background.default, 0.6),
-                fontSize: '0.78rem',
+                bgcolor: inputSurfaceBg,
+                fontSize: '0.8rem',
+                color: isDark ? 'text.primary' : '#0f172a',
                 '& fieldset': {
-                  borderColor: alpha(theme.palette.divider, 0.14),
+                  borderColor: inputBorderColor,
                 },
                 '&:hover fieldset': {
-                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
                 },
                 '&.Mui-focused fieldset': {
                   borderColor: theme.palette.primary.main,
@@ -202,7 +211,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               },
               '& .MuiOutlinedInput-input': {
                 py: 0,
-                fontSize: '0.78rem',
+                fontSize: '0.8rem',
+                fontWeight: 500,
               },
             }}
           />
@@ -219,8 +229,15 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 if (!selected || selected === 'all') {
                   return (
                     <Stack direction="row" spacing={0.75} alignItems="center">
-                      <LanguageIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary" fontSize="0.78rem" fontWeight={500}>
+                      <LanguageIcon
+                        sx={{ fontSize: 16, color: isDark ? 'text.secondary' : '#64748b' }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color={isDark ? 'text.secondary' : '#475569'}
+                        fontSize="0.8rem"
+                        fontWeight={600}
+                      >
                         Language
                       </Typography>
                     </Stack>
@@ -232,7 +249,14 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               sx={compactSelectSx}
               MenuProps={{
                 PaperProps: {
-                  sx: { maxHeight: 280, borderRadius: 1.5 },
+                  sx: {
+                    maxHeight: 280,
+                    borderRadius: 1,
+                    mt: 0.5,
+                    bgcolor: isDark ? '#181c26' : '#ffffff',
+                    border: '1px solid',
+                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                  },
                 },
               }}
             >
@@ -240,7 +264,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 <MenuItem
                   key={opt.value}
                   value={opt.value}
-                  sx={{ fontSize: '0.78rem', py: 0.5, gap: 1, minHeight: 32 }}
+                  sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
                 >
                   <Typography component="span" sx={{ fontSize: 14 }}>
                     {opt.emoji}
@@ -263,8 +287,15 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 if (!selected || selected === 'all') {
                   return (
                     <Stack direction="row" spacing={0.75} alignItems="center">
-                      <SchoolIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary" fontSize="0.78rem" fontWeight={500}>
+                      <SchoolIcon
+                        sx={{ fontSize: 16, color: isDark ? 'text.secondary' : '#64748b' }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color={isDark ? 'text.secondary' : '#475569'}
+                        fontSize="0.8rem"
+                        fontWeight={600}
+                      >
                         Level
                       </Typography>
                     </Stack>
@@ -276,7 +307,14 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               sx={compactSelectSx}
               MenuProps={{
                 PaperProps: {
-                  sx: { maxHeight: 280, borderRadius: 1.5 },
+                  sx: {
+                    maxHeight: 280,
+                    borderRadius: 1,
+                    mt: 0.5,
+                    bgcolor: isDark ? '#181c26' : '#ffffff',
+                    border: '1px solid',
+                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                  },
                 },
               }}
             >
@@ -284,7 +322,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 <MenuItem
                   key={opt.value}
                   value={opt.value}
-                  sx={{ fontSize: '0.78rem', py: 0.5, gap: 1, minHeight: 32 }}
+                  sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
                 >
                   <Typography component="span" sx={{ fontSize: 14 }}>
                     {opt.emoji}
@@ -308,44 +346,51 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         >
           {/* Quick Pill: Available Seats */}
           <Chip
-            icon={<PeopleIcon sx={{ fontSize: '14px !important' }} />}
+            icon={<PeopleIcon sx={{ fontSize: '15px !important' }} />}
             label="Available Seats"
             clickable
             size="small"
             onClick={() => handleFilterUpdate({ hideFullRooms: !hideFullRooms })}
             sx={{
-              height: 32,
+              height: 36,
               borderRadius: 1,
-              px: 0.25,
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              color: hideFullRooms ? 'info.dark' : 'text.secondary',
+              px: 0.5,
+              fontWeight: 700,
+              fontSize: '0.76rem',
+              color: hideFullRooms
+                ? 'primary.main'
+                : isDark
+                  ? 'text.secondary'
+                  : '#475569',
               bgcolor: hideFullRooms
-                ? alpha(theme.palette.info.main, 0.12)
-                : alpha(theme.palette.text.primary, 0.04),
-              border: `1px solid ${hideFullRooms ? alpha(theme.palette.info.main, 0.3) : 'transparent'
-                }`,
+                ? alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1)
+                : inputSurfaceBg,
+              border: '1px solid',
+              borderColor: hideFullRooms
+                ? alpha(theme.palette.primary.main, 0.4)
+                : inputBorderColor,
               '&:hover': {
-                color: hideFullRooms ? 'info.dark' : 'text.secondary',
+                borderColor: alpha(theme.palette.primary.main, 0.5),
                 bgcolor: hideFullRooms
-                  ? alpha(theme.palette.info.main, 0.22)
-                  : alpha(theme.palette.text.primary, 0.24),
-              }
+                  ? alpha(theme.palette.primary.main, 0.22)
+                  : alpha(theme.palette.primary.main, 0.06),
+              },
             }}
           />
 
           {/* Filter Toggle Button */}
-          <Tooltip title={isExpanded ? 'Hide options' : 'More filters'}>
+          <Tooltip title={isExpanded ? 'Hide options' : 'More filters'} arrow>
             <Badge
               badgeContent={activeFilterCount}
               color="primary"
-              overlap="circular"
+              overlap="rectangular"
               sx={{
                 '& .MuiBadge-badge': {
                   fontSize: 9,
                   height: 16,
                   minWidth: 16,
                   fontWeight: 800,
+                  borderRadius: 0.75,
                 },
               }}
             >
@@ -353,15 +398,25 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 onClick={() => setIsExpanded(!isExpanded)}
                 size="small"
                 sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 1.5,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1,
                   bgcolor: isExpanded
-                    ? alpha(theme.palette.primary.main, 0.1)
-                    : alpha(theme.palette.text.primary, 0.04),
-                  color: isExpanded ? 'primary.main' : 'text.primary',
-                  border: `1px solid ${isExpanded ? alpha(theme.palette.primary.main, 0.25) : alpha(theme.palette.divider, 0.12)
-                    }`,
+                    ? alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1)
+                    : inputSurfaceBg,
+                  color: isExpanded
+                    ? 'primary.main'
+                    : isDark
+                      ? 'text.primary'
+                      : '#475569',
+                  border: '1px solid',
+                  borderColor: isExpanded
+                    ? alpha(theme.palette.primary.main, 0.4)
+                    : inputBorderColor,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    color: 'primary.main',
+                  },
                 }}
               >
                 <FilterListIcon sx={{ fontSize: 18 }} />
@@ -376,8 +431,9 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         <Box
           sx={{
             pt: 1.25,
-            mt: 1,
-            borderTop: `1px dashed ${alpha(theme.palette.divider, 0.15)}`,
+            mt: 1.25,
+            borderTop: '1px dashed',
+            borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
           }}
         >
           <Grid container spacing={1} alignItems="center">
@@ -398,17 +454,29 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 sx={{
                   width: '100%',
                   justifyContent: 'flex-start',
-                  height: 28,
+                  height: 30,
                   borderRadius: 1,
                   px: 0.5,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: '0.75rem',
                   bgcolor: showActiveOnly
-                    ? alpha(theme.palette.success.main, 0.12)
-                    : alpha(theme.palette.background.default, 0.5),
-                  color: showActiveOnly ? 'success.dark' : 'text.secondary',
-                  border: `1px solid ${showActiveOnly ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.divider, 0.1)
-                    }`,
+                    ? isDark
+                      ? alpha(theme.palette.success.main, 0.14)
+                      : '#ecfdf5'
+                    : inputSurfaceBg,
+                  color: showActiveOnly
+                    ? isDark
+                      ? 'success.main'
+                      : '#059669'
+                    : isDark
+                      ? 'text.secondary'
+                      : '#475569',
+                  border: '1px solid',
+                  borderColor: showActiveOnly
+                    ? isDark
+                      ? alpha(theme.palette.success.main, 0.35)
+                      : '#a7f3d0'
+                    : inputBorderColor,
                 }}
               />
             </Grid>
@@ -416,7 +484,13 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             {/* Popular Languages */}
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} fontSize="0.7rem" sx={{ mr: 0.25 }}>
+                <Typography
+                  variant="caption"
+                  color={isDark ? 'text.secondary' : '#64748b'}
+                  fontWeight={700}
+                  fontSize="0.7rem"
+                  sx={{ mr: 0.25 }}
+                >
                   Popular:
                 </Typography>
                 {LANGUAGE_OPTIONS.slice(1, 5).map((lang) => {
@@ -440,12 +514,16 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                       sx={{
                         borderRadius: 1,
                         fontSize: '0.7rem',
-                        fontWeight: isSelected ? 700 : 500,
-                        height: 24,
-                        bgcolor: isSelected
-                          ? theme.palette.primary.main
-                          : alpha(theme.palette.text.primary, 0.04),
-                        color: isSelected ? 'primary.contrastText' : 'text.primary',
+                        fontWeight: isSelected ? 700 : 600,
+                        height: 26,
+                        bgcolor: isSelected ? theme.palette.primary.main : inputSurfaceBg,
+                        color: isSelected
+                          ? 'primary.contrastText'
+                          : isDark
+                            ? 'text.primary'
+                            : '#334155',
+                        border: '1px solid',
+                        borderColor: isSelected ? theme.palette.primary.main : inputBorderColor,
                       }}
                     />
                   );
@@ -468,10 +546,10 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 sx={{
                   textTransform: 'none',
                   fontWeight: 700,
-                  fontSize: '0.72rem',
+                  fontSize: '0.74rem',
                   py: 0.25,
                   px: 1,
-                  height: 26,
+                  height: 28,
                   borderRadius: 1,
                 }}
               >
@@ -491,10 +569,16 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               sx={{
                 mt: 1,
                 pt: 1,
-                borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                borderTop: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.06) : '#f1f5f9',
               }}
             >
-              <Typography variant="caption" color="text.secondary" fontWeight={600} fontSize="0.7rem">
+              <Typography
+                variant="caption"
+                color={isDark ? 'text.secondary' : '#64748b'}
+                fontWeight={700}
+                fontSize="0.7rem"
+              >
                 Applied:
               </Typography>
               {selectedLanguage !== 'all' && (
@@ -504,7 +588,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="primary"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ selectedLanguage: 'all' })}
-                  sx={{ height: 20, fontSize: '0.68rem' }}
+                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
                 />
               )}
               {selectedLevel !== 'all' && (
@@ -514,7 +598,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="secondary"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ selectedLevel: 'all' })}
-                  sx={{ height: 20, fontSize: '0.68rem' }}
+                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
                 />
               )}
               {hideFullRooms && (
@@ -524,7 +608,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="info"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ hideFullRooms: false })}
-                  sx={{ height: 20, fontSize: '0.68rem' }}
+                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
                 />
               )}
               {showActiveOnly && (
@@ -534,7 +618,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="success"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ showActiveOnly: false })}
-                  sx={{ height: 20, fontSize: '0.68rem' }}
+                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
                 />
               )}
             </Stack>

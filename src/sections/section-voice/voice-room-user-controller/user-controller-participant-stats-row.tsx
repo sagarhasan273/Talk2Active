@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-user-controller/user-controller-participant-stats-row.tsx
+
 import { RoomParticipantType } from '@/types/type-room';
 import { Box, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -10,7 +12,11 @@ function formatCompactNumber(num: number = 0): string {
   }).format(num);
 }
 
-export const ParticipantStatsRow = ({ participant }: { participant: Partial<RoomParticipantType> }) => {
+export const ParticipantStatsRow = ({
+  participant,
+}: {
+  participant: Partial<RoomParticipantType>;
+}) => {
   const stats = [
     { label: 'Friends', value: participant?.friend_count ?? 0 },
     { label: 'Followers', value: participant?.follower_count ?? 0 },
@@ -20,10 +26,9 @@ export const ParticipantStatsRow = ({ participant }: { participant: Partial<Room
   return (
     <Stack
       direction="row"
-      spacing={0.75}
+      spacing={1}
       sx={{
         width: '100%',
-        mb: 1.5,
       }}
     >
       {stats.map((item) => (
@@ -41,20 +46,15 @@ export const ParticipantStatsRow = ({ participant }: { participant: Partial<Room
             justifyContent: 'center',
             borderRadius: 1.5,
             bgcolor: (theme) =>
-              theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.04)
-                : alpha(theme.palette.text.primary, 0.03),
+              theme.palette.mode === 'dark' ? alpha('#fff', 0.03) : alpha('#000', 0.025),
             border: '1px solid',
-            borderColor: (theme) => alpha(theme.palette.divider, 0.08),
-            backdropFilter: 'blur(8px)',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? alpha('#fff', 0.07) : alpha('#000', 0.06),
+            transition: 'all 0.18s ease',
             '&:hover': {
               bgcolor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? alpha(theme.palette.common.white, 0.07)
-                  : alpha(theme.palette.text.primary, 0.05),
-              borderColor: (theme) => alpha(theme.palette.primary.main, 0.25),
-              transform: 'translateY(-1px)',
+                theme.palette.mode === 'dark' ? alpha('#fff', 0.05) : alpha('#000', 0.04),
+              borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
             },
           }}
         >
@@ -64,7 +64,7 @@ export const ParticipantStatsRow = ({ participant }: { participant: Partial<Room
               fontWeight: 800,
               fontSize: { xs: 13, sm: 14 },
               lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.01em',
               color: 'text.primary',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -77,13 +77,13 @@ export const ParticipantStatsRow = ({ participant }: { participant: Partial<Room
           <Typography
             variant="caption"
             sx={{
-              fontSize: { xs: 9.5, sm: 10.5 },
-              fontWeight: 700,
+              fontSize: { xs: 9.5, sm: 10 },
+              fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
               color: 'text.secondary',
               lineHeight: 1.2,
-              mt: 0.35,
+              mt: 0.25,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',

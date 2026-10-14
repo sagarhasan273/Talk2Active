@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-user-controller/dialog-rate-speaking-level.tsx
+
 import { useSubmitRatingMutation } from '@/core/apis';
 import {
   alpha,
@@ -26,9 +28,9 @@ const PROFICIENCY_LEVELS: {
   emoji: string;
 }[] = [
     { value: 'beginner', label: 'A1-A2 Beginner', emoji: '🌱' },
-    { value: 'intermediate', label: 'B1-B2 Intermediate', emoji: '📈' },
-    { value: 'advanced', label: 'C1 Advanced', emoji: '🏆' },
-    { value: 'fluent', label: 'C2 Fluent / Proficient', emoji: '💎' },
+    { value: 'intermediate', label: 'B1-B2 Intermediate', emoji: '🌿' },
+    { value: 'advanced', label: 'C1 Advanced', emoji: '🌳' },
+    { value: 'fluent', label: 'C2 Fluent / Proficient', emoji: '🔥' },
     { value: 'native', label: 'Native / Bilingual Mastery', emoji: '👑' },
   ];
 
@@ -48,6 +50,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
   onRateSuccess,
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const [starRating, setStarRating] = useState<number>(4);
   const [ratedLevel, setRatedLevel] = useState<SpeakingProficiencyLevel>('fluent');
@@ -108,7 +111,9 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
       onClose();
     } catch (err: any) {
       console.error('Failed to submit rating:', err);
-      setErrorMessage(err?.data?.message || err?.message || 'Failed to submit rating. Please try again.');
+      setErrorMessage(
+        err?.data?.message || err?.message || 'Failed to submit rating. Please try again.'
+      );
     }
   };
 
@@ -124,43 +129,82 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
       sx={{
         zIndex: theme.zIndex.modal + 20,
         '& .MuiBackdrop-root': {
-          backdropFilter: 'blur(8px)',
-          backgroundColor: alpha(theme.palette.common.black, 0.45),
+          backdropFilter: 'blur(10px)',
+          backgroundColor: alpha(theme.palette.common.black, 0.55),
         },
       }}
       PaperProps={{
+        elevation: 0,
         sx: {
-          borderRadius: 2,
-          p: 1,
-          backgroundColor: theme.palette.background.paper,
-          boxShadow: `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.4)}`,
+          borderRadius: 2.5,
+          p: 0.5,
+          bgcolor: isDark ? '#1a1f2b' : theme.palette.background.paper,
+          backgroundImage: 'none',
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
+          boxShadow: isDark
+            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
+            : `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.25)}`,
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Rate Speaking Level</DialogTitle>
+      <DialogTitle
+        sx={{
+          fontWeight: 800,
+          fontSize: '1.125rem',
+          pb: 0.75,
+          letterSpacing: '-0.01em',
+        }}
+      >
+        Rate Speaking Level
+      </DialogTitle>
 
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          How well is <strong>{userName}</strong> communicating and expressing ideas?
+      <DialogContent sx={{ pt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.5 }}>
+          How well is <Box component="strong" sx={{ color: 'text.primary' }}>{userName}</Box>{' '}
+          communicating and expressing ideas?
         </Typography>
 
-        {/* 1 to 5 Star Rating */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', my: 2 }}>
+        {/* 1 to 5 Star Rating Container */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            py: 2,
+            px: 1.5,
+            my: 1.5,
+            borderRadius: 2,
+            bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06),
+          }}
+        >
           <Rating
             size="large"
             value={starRating}
             onChange={handleRatingChange}
             disabled={isLoading}
             max={5}
-            sx={{ fontSize: '2.5rem', mb: 1 }}
+            sx={{ fontSize: '2.4rem', mb: 1 }}
           />
-          <Typography variant="subtitle2" fontWeight={800} color="primary.main">
-            {starRating} of 5 Stars — {currentLevelObj.emoji} {currentLevelObj.label}
+          <Typography
+            variant="caption"
+            fontWeight={800}
+            sx={{
+              color: 'primary.main',
+              px: 1.25,
+              py: 0.4,
+              borderRadius: 1,
+              bgcolor: alpha(theme.palette.primary.main, 0.12),
+            }}
+          >
+            {starRating} of 5 Stars • {currentLevelObj.emoji} {currentLevelObj.label}
           </Typography>
         </Box>
 
         {/* 5-Tier Select Menu */}
-        <FormControl fullWidth size="small" sx={{ mt: 1.5 }}>
+        <FormControl fullWidth size="small" sx={{ mt: 2 }}>
           <InputLabel id="rate-proficiency-tier-label">Assessed Proficiency</InputLabel>
           <Select
             labelId="rate-proficiency-tier-label"
@@ -168,15 +212,27 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             label="Assessed Proficiency"
             disabled={isLoading}
             onChange={(e) => handleLevelChange(e.target.value as SpeakingProficiencyLevel)}
+            sx={{
+              borderRadius: 1.5,
+              bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
+            }}
             MenuProps={{
               sx: {
                 zIndex: theme.zIndex.modal + 30,
               },
+              PaperProps: {
+                sx: {
+                  borderRadius: 1.5,
+                  bgcolor: isDark ? '#1a1f2b' : 'background.paper',
+                  border: '1px solid',
+                  borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08),
+                },
+              },
             }}
           >
             {PROFICIENCY_LEVELS.map((tier) => (
-              <MenuItem key={tier.value} value={tier.value}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <MenuItem key={tier.value} value={tier.value} sx={{ borderRadius: 1, mx: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                   <span>{tier.emoji}</span>
                   <Typography variant="body2" fontWeight={600}>
                     {tier.label}
@@ -199,16 +255,34 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} color="inherit" disabled={isLoading} sx={{ fontWeight: 600 }}>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
+        <Button
+          onClick={onClose}
+          color="inherit"
+          disabled={isLoading}
+          sx={{
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: 1.5,
+            color: 'text.secondary',
+          }}
+        >
           Cancel
         </Button>
         <Button
           variant="contained"
+          disableElevation
           onClick={handleSave}
           disabled={isLoading}
           startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
-          sx={{ fontWeight: 700, borderRadius: 1.5, minWidth: 120 }}
+          sx={{
+            fontWeight: 600,
+            textTransform: 'none',
+            borderRadius: 1.5,
+            minWidth: 130,
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
+          }}
         >
           {isLoading ? 'Submitting...' : 'Submit Rating'}
         </Button>

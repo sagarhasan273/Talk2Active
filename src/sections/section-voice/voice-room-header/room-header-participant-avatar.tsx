@@ -1,15 +1,12 @@
+// src/sections/section-voice/voice-room-header/room-header-participant-avatar.tsx
 
 import { Avatar, Box, useTheme } from '@mui/material';
 
 import { RoomParticipantType } from '@/types/type-room';
 import { getParticipantAvatar, getParticipantName } from './utils';
 
-
 // ----------------------------------------------------------------------
 // Participant Avatar
-//
-// The green ring + dot animate in when the participant starts speaking,
-// rather than just appearing, so the state change is easy to notice.
 // ----------------------------------------------------------------------
 
 export function ParticipantAvatar({
@@ -22,6 +19,7 @@ export function ParticipantAvatar({
   speaking?: boolean;
 }) {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const name = getParticipantName(participant);
   const avatar = getParticipantAvatar(participant);
@@ -41,14 +39,15 @@ export function ParticipantAvatar({
         sx={{
           width: size,
           height: size,
-          fontSize: size * 0.42,
+          fontSize: size * 0.4,
           fontWeight: 700,
-
-          border: `2px solid ${theme.palette.background.paper}`,
-          transition: theme.transitions.create(['box-shadow'], { duration: 200 }),
+          bgcolor: isDark ? '#252b3b' : '#f1f5f9',
+          color: isDark ? '#ffffff' : '#0f172a',
+          border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
+          transition: theme.transitions.create(['box-shadow', 'transform'], { duration: 200 }),
 
           ...(speaking && {
-            boxShadow: `0 0 0 2px ${theme.palette.success.main}`,
+            boxShadow: `0 0 0 1.5px ${theme.palette.success.main}`,
           }),
         }}
       >
@@ -61,11 +60,11 @@ export function ParticipantAvatar({
             position: 'absolute',
             right: -1,
             bottom: -1,
-            width: Math.max(8, size * 0.28),
-            height: Math.max(8, size * 0.28),
+            width: Math.max(9, size * 0.3),
+            height: Math.max(9, size * 0.3),
             borderRadius: '50%',
             bgcolor: 'success.main',
-            border: `2px solid ${theme.palette.background.paper}`,
+            border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
             animation: 'voiceSpeakingDotIn 0.2s ease-out',
 
             '@keyframes voiceSpeakingDotIn': {

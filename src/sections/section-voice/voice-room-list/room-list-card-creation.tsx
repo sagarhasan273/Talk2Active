@@ -1,4 +1,4 @@
-// src/sections/section-voice/voice-room-card/room-card-creation.tsx
+// src/sections/section-voice/voice-room-card/room-list-card-creation.tsx
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RadioRoundedIcon from '@mui/icons-material/RadioRounded';
@@ -6,7 +6,7 @@ import { alpha, Box, Button, Paper, Stack, SxProps, Typography, useTheme } from 
 
 type RoomCardCreationProps = {
   onCreateRoom: () => void;
-  sx?: SxProps
+  sx?: SxProps;
 };
 
 export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) => {
@@ -21,36 +21,34 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        p: 2,
+        p: 2.25,
         borderRadius: 1,
         cursor: 'pointer',
         userSelect: 'none',
-        bgcolor: 'background.paper',
+        bgcolor: isDark ? '#181c26' : '#ffffff',
         border: '1.5px dashed',
-        borderColor: alpha(theme.palette.primary.main, isDark ? 0.35 : 0.28),
-        transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+        borderColor: isDark ? alpha('#38bdf8', 0.3) : '#cbd5e1',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: 'primary.main',
-          bgcolor: isDark ? alpha(theme.palette.primary.main, 0.08) : alpha(theme.palette.primary.main, 0.04),
-          boxShadow: `0 12px 28px -4px ${alpha(theme.palette.primary.main, 0.16)}`,
-          '& .creation-icon-badge': {
-            transform: 'scale(1.08)',
-            bgcolor: 'primary.main',
-            color: '#fff',
+          borderColor: isDark ? '#38bdf8' : 'primary.main',
+          '& .creation-circle': {
+            transform: 'scale(1.06)',
+            borderColor: isDark ? '#38bdf8' : 'primary.main',
+            color: isDark ? '#38bdf8' : 'primary.main',
           },
         },
-        ...sx
+        ...sx,
       }}
     >
-      {/* Top Banner */}
-      <Stack direction="row" alignItems="center">
+      {/* Top Header */}
+      <Stack direction="row" alignItems="center" spacing={1}>
         <Box
           sx={{
             px: 0.85,
             py: 0.25,
             borderRadius: 1,
-            bgcolor: alpha(theme.palette.primary.main, 0.12),
-            color: 'primary.main',
+            bgcolor: isDark ? alpha('#38bdf8', 0.12) : alpha(theme.palette.primary.main, 0.08),
+            color: isDark ? '#38bdf8' : 'primary.main',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.5,
@@ -63,64 +61,80 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
         </Box>
       </Stack>
 
-      {/* Central Illustration Area */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          px: 1,
-        }}
-      >
+      {/* Center 78px Circle matching the Speaker Stage Circles */}
+      <Stack alignItems="center" spacing={1} sx={{ my: 'auto' }}>
         <Box
-          className="creation-icon-badge"
+          className="creation-circle"
           sx={{
-            width: 48,
-            height: 48,
+            width: 78,
+            height: 78,
             borderRadius: '50%',
-            bgcolor: alpha(theme.palette.primary.main, 0.12),
-            color: 'primary.main',
+            border: '1.5px dashed',
+            borderColor: isDark ? alpha('#fff', 0.22) : '#cbd5e1',
+            bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
+            color: isDark ? 'text.secondary' : '#64748b',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            mb: 1.25,
             transition: 'all 0.2s ease',
           }}
         >
-          <AddRoundedIcon sx={{ fontSize: 26 }} />
+          <AddRoundedIcon sx={{ fontSize: 30 }} />
         </Box>
 
-        <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary', lineHeight: 1.2 }}>
-          Create Voice Room
-        </Typography>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography
+            variant="subtitle2"
+            fontWeight={800}
+            sx={{ color: isDark ? '#f8fafc' : '#0f172a', lineHeight: 1.2 }}
+          >
+            Create a New Group
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: isDark ? '#94a3b8' : '#64748b',
+              display: 'block',
+              mt: 0.25,
+            }}
+          >
+            Pick languages, level & topic
+          </Typography>
+        </Box>
+      </Stack>
 
-        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, maxWidth: 210, lineHeight: 1.35 }}>
-          Pick languages, topic, and invite peers to join your discussion.
-        </Typography>
-      </Box>
-
-      {/* Action Button */}
-      <Button
-        fullWidth
-        size="medium"
-        variant="contained"
-        startIcon={<AddRoundedIcon sx={{ fontSize: 18 }} />}
-        onClick={(e) => {
-          e.stopPropagation();
-          onCreateRoom();
-        }}
-        sx={{
-          borderRadius: 1,
-          textTransform: 'none',
-          fontWeight: 700,
-          fontSize: 13,
-          boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.28)}`,
-        }}
-      >
-        Start Room
-      </Button>
+      {/* Bottom Centered Dashed Button */}
+      <Stack direction="row" justifyContent="center">
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<AddRoundedIcon sx={{ fontSize: 16 }} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCreateRoom();
+          }}
+          sx={{
+            px: 2.5,
+            py: 0.65,
+            borderRadius: 1,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+            borderStyle: 'dashed',
+            borderColor: isDark ? alpha('#38bdf8', 0.38) : alpha(theme.palette.primary.main, 0.4),
+            color: isDark ? '#38bdf8' : 'primary.main',
+            '&:hover': {
+              borderStyle: 'solid',
+              borderColor: isDark ? '#38bdf8' : 'primary.main',
+              bgcolor: isDark
+                ? alpha('#38bdf8', 0.12)
+                : alpha(theme.palette.primary.main, 0.08),
+            },
+          }}
+        >
+          Create a new group
+        </Button>
+      </Stack>
     </Paper>
   );
 };

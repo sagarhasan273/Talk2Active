@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-user-controller/user-controller-main.tsx
+
 import { useRoomContext } from '@livekit/components-react';
 import {
   Check as CheckIcon,
@@ -48,6 +50,7 @@ interface RoomUserControllerMainProps {
 export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (props) => {
   const { open, onClose, user, onRateOpen } = props;
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const room = useRoomContext();
 
@@ -84,57 +87,70 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
 
   return (
     <Drawer
-      anchor={isMobile ? 'bottom' : 'bottom'}
+      anchor="bottom"
       open={open}
       onClose={onClose}
       PaperProps={{ elevation: 0 }}
-      transitionDuration={{ enter: 320, exit: 260 }}
+      SlideProps={{
+        direction: 'up',
+        timeout: { enter: 320, exit: 240 },
+      }}
       sx={{
         zIndex: theme.zIndex.drawer,
         '& .MuiBackdrop-root': {
           backdropFilter: 'blur(10px)',
-          backgroundColor: alpha(theme.palette.common.black, 0.45),
+          backgroundColor: alpha(theme.palette.common.black, 0.55),
         },
         '& .MuiDrawer-paper': {
           width: '100%',
-          maxWidth: { xs: '100%', sm: 520 },
+          maxWidth: { xs: '100%', sm: 500 },
           height: 'fit-content',
           maxHeight: { xs: '90vh', sm: '88vh' },
-          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
           overflow: 'hidden',
-          backgroundColor: alpha(theme.palette.background.paper, 0.94),
+          backgroundColor: isDark ? '#1a1f2b' : alpha(theme.palette.background.paper, 0.98),
+          backgroundImage: 'none',
           backdropFilter: 'blur(16px)',
-          border: `1px solid ${alpha(theme.palette.common.white, 0.12)}`,
-          boxShadow: `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.5)}`,
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
+          boxShadow: isDark
+            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
+            : `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.25)}`,
 
-          // Mobile: Clean bottom sheet with rounded top corners (lets MUI control slide transform)
-          borderTopLeftRadius: { xs: 16, sm: 8 },
-          borderTopRightRadius: { xs: 16, sm: 8 },
-          borderBottomLeftRadius: { xs: 0, sm: 8 },
-          borderBottomRightRadius: { xs: 0, sm: 8 },
-
-          // Desktop: Centered card look
           ...(isMobile
-            ? {}
-            : {
+            ? {
+              // Mobile: Bottom sheet that slides smoothly from bottom -> up
               position: 'fixed',
-              top: '50%',
-              left: '50%',
-              bottom: 'auto',
-              transform: 'translate(-50%, -50%) !important',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              top: 'auto',
+              margin: 0,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+            }
+            : {
+              // Desktop: Perfectly centered on screen while keeping slide-up animation
+              position: 'fixed',
+              inset: 0,
+              margin: 'auto',
+              borderRadius: 2,
             }),
         },
       }}
     >
       {/* Mobile drag handle bar */}
       {isMobile && (
-        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 1, pb: 0.5 }}>
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 1.25, pb: 0.5 }}>
           <Box
             sx={{
               width: 38,
               height: 4,
               borderRadius: 2,
-              bgcolor: alpha(theme.palette.text.disabled, 0.4),
+              bgcolor: isDark ? alpha('#fff', 0.2) : alpha('#000', 0.2),
             }}
           />
         </Box>
@@ -144,11 +160,15 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
       <Box
         sx={{
           px: 3,
-          py: 1.5,
+          py: 1.75,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: alpha(theme.palette.background.neutral, 0.4),
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)} 0%, ${alpha('#1a1f2b', 0.4)} 100%)`
+            : alpha(theme.palette.primary.main, 0.04),
+          borderBottom: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
           position: 'relative',
         }}
       >
@@ -157,12 +177,12 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           fontWeight={800}
           sx={{
             color: 'text.secondary',
-            fontSize: 12,
-            letterSpacing: '0.1em',
+            fontSize: 11.5,
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}
         >
-          {isSelf ? 'Your Audio & Profile' : 'User Profile'}
+          {isSelf ? 'Your Audio & Profile' : 'Speaker Profile'}
         </Typography>
 
         <IconButton
@@ -171,57 +191,62 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           sx={{
             position: 'absolute',
             right: 14,
-            width: 32,
-            height: 32,
-            backgroundColor: alpha(theme.palette.text.primary, 0.05),
+            width: 30,
+            height: 30,
+            borderRadius: 1.25,
+            bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
+            '&:hover': {
+              bgcolor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
+            },
           }}
         >
-          <CloseIcon fontSize="small" />
+          <CloseIcon sx={{ fontSize: 16 }} />
         </IconButton>
       </Box>
 
       {/* Main Scrollable Body */}
-      <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 2.5 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3 }, py: 2.5 }}>
         {/* User Identity Row with Avatar & Status Badge */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 2.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 2 }}>
           <Box sx={{ position: 'relative', flexShrink: 0 }}>
             <Badge
               overlap="circular"
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               sx={{
                 '& .MuiBadge-badge': {
-                  bottom: { xs: 6, sm: 10 },
-                  right: { xs: 6, sm: 10 },
+                  bottom: { xs: 6, sm: 8 },
+                  right: { xs: 6, sm: 8 },
                   transform: 'none',
                   p: 0,
                   height: 'auto',
                 },
               }}
               badgeContent={
-                (isMuted || isDeafened) ? (
+                isMuted || isDeafened ? (
                   <Box
                     sx={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 0.5,
-                      px: 0.9,
-                      py: 0.35,
-                      borderRadius: 999,
-                      bgcolor: alpha(theme.palette.error.dark, 0.92),
-                      color: theme.palette.common.white,
-                      backdropFilter: 'blur(8px)',
-                      border: `2px solid ${theme.palette.background.paper}`,
-                      boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.25)}`,
-                      fontSize: 11,
+                      gap: 0.4,
+                      px: 0.85,
+                      py: 0.3,
+                      borderRadius: 1,
+                      bgcolor: 'error.main',
+                      color: '#fff',
+                      border: `2px solid ${isDark ? '#1a1f2b' : '#ffffff'}`,
+                      boxShadow: '0 4px 10px rgba(0, 0, 0, 0.3)',
+                      fontSize: 10.5,
                       fontWeight: 700,
                       letterSpacing: '0.02em',
                       userSelect: 'none',
                     }}
                   >
                     {isDeafened ? (
-                      <HeadsetOffIcon sx={{ fontSize: 13 }} />
+                      <HeadsetOffIcon sx={{ fontSize: 12 }} />
                     ) : (
-                      <MicOffIcon sx={{ fontSize: 13 }} />
+                      <MicOffIcon sx={{ fontSize: 12 }} />
                     )}
                     <span>{isDeafened ? 'Deafened' : 'Muted'}</span>
                   </Box>
@@ -232,12 +257,17 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
                 src={user?.profilePhoto || undefined}
                 alt={user?.name}
                 sx={{
-                  width: { xs: 100, sm: 120 },
-                  height: { xs: 100, sm: 120 },
+                  width: { xs: 92, sm: 108 },
+                  height: { xs: 92, sm: 108 },
+                  borderRadius: 2.5,
                   fontSize: 26,
                   fontWeight: 800,
-                  border: `3px solid ${alpha(theme.palette.background.paper, 0.8)}`,
-                  boxShadow: `0 8px 24px -4px ${alpha(theme.palette.common.black, 0.15)}`,
+                  bgcolor: alpha(theme.palette.primary.main, 0.15),
+                  color: 'primary.main',
+                  border: `2px solid ${isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08)}`,
+                  boxShadow: isDark
+                    ? '0 8px 20px -4px rgba(0, 0, 0, 0.45)'
+                    : '0 8px 20px -4px rgba(0, 0, 0, 0.12)',
                 }}
                 variant="rounded"
               >
@@ -246,13 +276,18 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
             </Badge>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
-              <Typography variant="h6" fontWeight={800} noWrap sx={{ flexShrink: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.25 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.35 }}>
+              <Typography
+                variant="h6"
+                fontWeight={800}
+                noWrap
+                sx={{ flexShrink: 1, fontSize: { xs: '1.05rem', sm: '1.15rem' } }}
+              >
                 {user?.name || 'Unknown User'} {isSelf && '(You)'}
               </Typography>
               {user?.verified && (
-                <VerifiedIcon sx={{ color: '#5865F2', fontSize: 17, flexShrink: 0 }} />
+                <VerifiedIcon sx={{ color: 'info.main', fontSize: 17, flexShrink: 0 }} />
               )}
             </Box>
 
@@ -265,23 +300,40 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
                 cursor: 'pointer',
                 width: 'fit-content',
                 maxWidth: '100%',
-                mb: 1.25,
-                py: 0.2,
-                borderRadius: 0.5,
+                mb: 1.5,
+                px: 0.85,
+                py: 0.25,
+                borderRadius: 1,
+                bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
+                border: '1px solid',
+                borderColor: copied
+                  ? alpha(theme.palette.success.main, 0.4)
+                  : isDark
+                    ? alpha('#fff', 0.06)
+                    : alpha('#000', 0.06),
+                transition: 'all 0.15s ease',
                 '&:hover': {
-                  color: alpha(theme.palette.text.primary, 0.8),
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
                 },
               }}
             >
               <Typography
                 variant="caption"
                 noWrap
-                sx={{ color: copied ? 'success.main' : 'text.secondary', fontWeight: 600 }}
+                sx={{
+                  color: copied ? 'success.main' : 'text.secondary',
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                }}
               >
                 @{user?.genUserId || 'username'}
               </Typography>
 
-              <Tooltip title={copied ? 'Copied to clipboard!' : 'Copy user ID'} arrow placement="top">
+              <Tooltip
+                title={copied ? 'Copied to clipboard!' : 'Copy user ID'}
+                arrow
+                placement="top"
+              >
                 <IconButton size="small" disableRipple sx={{ p: 0, ml: 0.25 }}>
                   {copied ? (
                     <CheckIcon sx={{ fontSize: 13, color: 'success.main' }} />

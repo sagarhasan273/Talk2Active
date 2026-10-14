@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-header/room-header-active-bar.tsx
+
 import type { RoomParticipantType, RoomType } from '@/types/type-room';
 
 import {
@@ -33,9 +35,8 @@ const soundwave = keyframes`
 `;
 
 const liveGlow = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
-  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.88); }
 `;
 
 // ----------------------------------------------------------------------
@@ -69,33 +70,24 @@ export const VoiceRoomActiveBar = ({
         overflow: 'hidden',
         borderRadius: 1,
         backdropFilter: 'blur(20px)',
-        bgcolor: isDark
-          ? alpha(theme.palette.background.paper, 0.82)
-          : alpha(theme.palette.common.white, 0.92),
+        bgcolor: isDark ? alpha('#181c26', 0.94) : alpha('#ffffff', 0.96),
         border: '1px solid',
-        borderColor: isDark
-          ? alpha(theme.palette.primary.main, 0.28)
-          : alpha(theme.palette.primary.main, 0.2),
-
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+        transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.45),
-          boxShadow: isDark
-            ? `0 12px 20px -4px rgba(0, 0, 0, 0.65), 0 0 18px ${alpha(theme.palette.primary.main, 0.15)}`
-            : `0 12px 20px -4px ${alpha(theme.palette.primary.main, 0.18)}, 0 6px 16px rgba(0,0,0,0.05)`,
+          borderColor: alpha(theme.palette.primary.main, 0.4),
         },
       }}
     >
-
       {/* Main Bar Content */}
       <Box
         sx={{
-          px: { xs: 1.25, sm: 2 },
-          py: { xs: 1, sm: 1.2 },
+          px: { xs: 1.5, sm: 2.25 },
+          py: { xs: 1.25, sm: 1.5 },
           display: 'flex',
           alignItems: 'center',
-          gap: { xs: 1, sm: 1.75 },
-          minHeight: { xs: 56, sm: 66 },
+          gap: { xs: 1.25, sm: 2 },
+          minHeight: { xs: 58, sm: 68 },
         }}
       >
         {/* Animated Equalizer Wave Badge */}
@@ -103,31 +95,30 @@ export const VoiceRoomActiveBar = ({
           onClick={onEnterRoom}
           sx={{
             position: 'relative',
-            width: { xs: 38, sm: 44 },
-            height: { xs: 38, sm: 44 },
-            borderRadius: 1.75,
+            width: { xs: 38, sm: 42 },
+            height: { xs: 38, sm: 42 },
+            borderRadius: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
             cursor: 'pointer',
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, ${alpha(theme.palette.primary.main, 0.06)})`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-            transition: 'transform 0.2s ease, background-color 0.2s ease',
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+            transition: 'all 0.2s ease',
             '&:hover': {
-              transform: 'scale(1.05)',
-              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.28)}, ${alpha(theme.palette.primary.main, 0.12)})`,
+              transform: 'scale(1.04)',
+              bgcolor: alpha(theme.palette.primary.main, 0.18),
             },
           }}
         >
-          {/* Sound bars animation */}
           <Stack direction="row" alignItems="center" spacing={0.45} sx={{ height: 18 }}>
             {[0.1, 0.4, 0.2, 0.5].map((delay, idx) => (
               <Box
                 key={idx}
                 sx={{
                   width: 3,
-                  borderRadius: 1.5,
+                  borderRadius: 1,
                   bgcolor: 'primary.main',
                   animation: `${soundwave} 1.2s ease-in-out infinite`,
                   animationDelay: `${delay}s`,
@@ -147,77 +138,59 @@ export const VoiceRoomActiveBar = ({
             overflow: 'hidden',
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, mb: 0.35 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, mb: 0.4 }}>
+            {/* Simplified Pulsing Live Dot */}
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: 'success.main',
+                flexShrink: 0,
+                boxShadow: `0 0 8px ${alpha(theme.palette.success.main, isDark ? 0.8 : 0.5)}`,
+                animation: `${liveGlow} 2s infinite ease-in-out`,
+              }}
+            />
+
             <Typography
               noWrap
               sx={{
-                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                fontSize: { xs: '0.875rem', sm: '0.975rem' },
                 fontWeight: 800,
-                color: 'text.primary',
+                color: isDark ? 'text.primary' : '#0f172a',
                 letterSpacing: '-0.01em',
               }}
             >
               {room?.topic || 'Untitled voice room'}
             </Typography>
-
-            {/* Pulsing Live Chip */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 0.75,
-                py: 0.2,
-                borderRadius: 1,
-                bgcolor: alpha(theme.palette.success.main, 0.12),
-                color: 'success.main',
-                flexShrink: 0,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: 'success.main',
-                  animation: `${liveGlow} 1.8s infinite`,
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: '0.625rem',
-                  fontWeight: 900,
-                  lineHeight: 1,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Live
-              </Typography>
-            </Box>
           </Stack>
 
           {/* Sub-meta: Languages & Listener counts */}
           <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-            {room?.languages?.length ? room?.languages?.map((lang, index) => (
-              <Label
-                key={`${lang}-${index}`}
-                label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
-                size="small"
-                color="primary"
-                sx={{
-                  borderRadius: 1,
-                  bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
-                }}
-              />
-            )) : null}
+            {room?.languages?.length
+              ? room?.languages?.map((lang, index) => (
+                <Label
+                  key={`${lang}-${index}`}
+                  label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    borderRadius: 1,
+                    bgcolor: isDark
+                      ? alpha(theme.palette.primary.main, 0.14)
+                      : alpha(theme.palette.primary.main, 0.08),
+                    fontWeight: 700,
+                  }}
+                />
+              ))
+              : null}
 
             <Box
               sx={{
                 width: 3,
                 height: 3,
                 borderRadius: '50%',
-                bgcolor: 'text.disabled',
+                bgcolor: isDark ? 'text.disabled' : '#cbd5e1',
                 flexShrink: 0,
               }}
             />
@@ -225,10 +198,10 @@ export const VoiceRoomActiveBar = ({
             <Stack
               direction="row"
               alignItems="center"
-              spacing={0.4}
+              spacing={0.5}
               sx={{
                 flexShrink: 0,
-                color: 'text.secondary',
+                color: isDark ? 'text.secondary' : '#475569',
               }}
             >
               <Headphones size={12} />
@@ -236,8 +209,8 @@ export const VoiceRoomActiveBar = ({
                 variant="caption"
                 sx={{
                   fontSize: '0.725rem',
-                  fontWeight: 700,
-                  color: 'text.secondary',
+                  fontWeight: 600,
+                  color: isDark ? 'text.secondary' : '#475569',
                 }}
               >
                 {participantCount} {participantCount === 1 ? 'peer' : 'peers'}
@@ -257,8 +230,8 @@ export const VoiceRoomActiveBar = ({
         {!isMobile && (
           <Box
             sx={{
-              pl: 1.5,
-              borderLeft: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+              pl: 1.75,
+              borderLeft: `1px solid ${isDark ? alpha('#fff', 0.08) : '#e2e8f0'}`,
               flexShrink: 0,
             }}
           >
@@ -278,19 +251,20 @@ export const VoiceRoomActiveBar = ({
           <Button
             size="small"
             variant="contained"
+            disableElevation
             onClick={onEnterRoom}
             endIcon={<ArrowRightIcon size={15} />}
             sx={{
               height: { xs: 34, sm: 38 },
-              px: { xs: 1.25, sm: 2 },
-              borderRadius: 1.25,
+              px: { xs: 1.5, sm: 2 },
+              borderRadius: 1,
               textTransform: 'none',
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: { xs: '0.75rem', sm: '0.8125rem' },
               flexShrink: 0,
-              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.35)}`,
+              boxShadow: 'none',
               '&:hover': {
-                boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.45)}`,
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
                 transform: 'translateY(-1px)',
               },
             }}
@@ -307,16 +281,15 @@ export const VoiceRoomActiveBar = ({
             sx={{
               width: { xs: 34, sm: 38 },
               height: { xs: 34, sm: 38 },
-              borderRadius: 1.25,
+              borderRadius: 1,
               color: 'error.main',
-              bgcolor: alpha(theme.palette.error.main, 0.08),
-              border: `1px solid ${alpha(theme.palette.error.main, 0.18)}`,
+              bgcolor: alpha(theme.palette.error.main, 0.1),
+              border: `1px solid ${alpha(theme.palette.error.main, 0.22)}`,
               flexShrink: 0,
               transition: 'all 0.18s ease',
               '&:hover': {
                 bgcolor: alpha(theme.palette.error.main, 0.18),
                 borderColor: theme.palette.error.main,
-                transform: 'scale(1.05)',
               },
             }}
           >
@@ -333,11 +306,9 @@ export const VoiceRoomActiveBar = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             px: 1.5,
-            py: 0.6,
-            borderTop: `1px solid ${alpha(theme.palette.divider, 0.55)}`,
-            bgcolor: isDark
-              ? alpha('#fff', 0.02)
-              : alpha(theme.palette.primary.main, 0.02),
+            py: 0.75,
+            borderTop: `1px solid ${isDark ? alpha('#fff', 0.06) : '#e2e8f0'}`,
+            bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
           }}
         >
           <Typography
@@ -345,7 +316,7 @@ export const VoiceRoomActiveBar = ({
             sx={{
               fontSize: '0.675rem',
               fontWeight: 700,
-              color: 'text.secondary',
+              color: isDark ? 'text.secondary' : '#475569',
               letterSpacing: 0.2,
             }}
           >

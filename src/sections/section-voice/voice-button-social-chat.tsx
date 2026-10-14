@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-button-social-chat.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 
 import Diversity2Icon from '@mui/icons-material/Diversity2';
@@ -144,7 +146,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
     <Box
       sx={{
         position: 'fixed',
-        // Closed: above AppBar/BottomNav (1110). Open: Modal level (1300)
         zIndex: (muiTheme) =>
           open ? muiTheme.zIndex.modal : muiTheme.zIndex.appBar + 10,
         bottom: { xs: 16, sm: 20 },
@@ -174,9 +175,6 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             flexDirection: 'column',
             minWidth: 0,
             minHeight: 0,
-            filter: isDark
-              ? 'drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75))'
-              : `drop-shadow(0 20px 40px ${alpha(theme.palette.common.black, 0.18)})`,
           }}
         >
           {/* Top Resize Handle */}
@@ -239,15 +237,13 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               minWidth: 0,
               minHeight: 0,
               overflow: 'hidden',
-              bgcolor: 'background.paper',
+              bgcolor: isDark ? '#181c26' : '#ffffff',
               borderRadius: { xs: 0, sm: 1 },
               border: '1px solid',
-              borderColor: isDark
-                ? alpha(theme.palette.common.white, 0.12)
-                : alpha(theme.palette.common.black, 0.1),
+              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
               boxShadow: isDark
-                ? '0 28px 64px -8px rgba(0, 0, 0, 0.85), 0 12px 24px -4px rgba(0, 0, 0, 0.55)'
-                : `0 24px 56px -8px ${alpha(theme.palette.common.black, 0.48)}, 0 10px 20px -4px ${alpha(theme.palette.common.black, 0.28)}`,
+                ? '0 24px 56px -8px rgba(0, 0, 0, 0.75)'
+                : '0 20px 48px -8px rgba(15, 23, 42, 0.18)',
               ...(isResizing && { transition: 'none !important' }),
             }}
           >
@@ -264,11 +260,10 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
         </Box>
       )}
 
-      {/* ── Fixed Bottom-Right Trigger Button (Visible on Mobile & Desktop) ── */}
+      {/* ── Fixed Bottom-Right Trigger Button ── */}
       <Box
         ref={buttonContainerRef}
         sx={{
-          // Visible on mobile & desktop; hides on mobile only while full-screen chat is open so it doesn't cover the Send button
           display: { xs: open ? 'none' : 'inline-flex', sm: 'inline-flex' },
           pointerEvents: 'auto',
           position: 'relative',
@@ -288,19 +283,18 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
             sx={{
               bgcolor: 'primary.main',
               color: '#fff',
-              borderRadius: 1.5,
-              px: 2.25,
+              borderRadius: 1,
+              px: 2,
               py: 1,
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.825rem',
               boxShadow: isDark
-                ? '0 8px 24px rgba(0, 0, 0, 0.55)'
-                : `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
+                ? '0 8px 20px rgba(0, 0, 0, 0.5)'
+                : `0 6px 18px ${alpha(theme.palette.primary.main, 0.3)}`,
+              transition: 'all 0.18s ease',
               '&:hover': {
                 bgcolor: 'primary.dark',
-                boxShadow: isDark
-                  ? '0 12px 28px rgba(0, 0, 0, 0.7)'
-                  : `0 12px 28px ${alpha(theme.palette.primary.main, 0.45)}`,
+                transform: 'translateY(-1px)',
               },
               ...sx,
             }}

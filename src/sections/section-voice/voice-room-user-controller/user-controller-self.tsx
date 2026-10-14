@@ -1,11 +1,10 @@
+// src/sections/section-voice/voice-room-user-controller/user-controller-self.tsx
+
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
 import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
-import {
-  Mic as MicIcon,
-  MicOff as MicOffIcon,
-} from '@mui/icons-material';
+import { Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
 import {
   alpha,
   Box,
@@ -30,8 +29,12 @@ interface RoomUserControllerSelfProps {
   isMuted: boolean;
 }
 
-export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ user, isMuted }) => {
+export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
+  user,
+  isMuted,
+}) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const room = useRoomContext();
   const { playToggleMute } = useRoomSounds();
 
@@ -50,6 +53,15 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
     activeDeviceId: activeSpeakerId,
     setActiveMediaDevice: setActiveSpeakerDevice,
   } = useMediaDeviceSelect({ kind: 'audiooutput' });
+
+  const sectionCardSx = {
+    p: 2,
+    mb: 1.5,
+    borderRadius: 1.5,
+    bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
+    border: '1px solid',
+    borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
+  };
 
   const handleToggleMic = async () => {
     if (!room?.localParticipant) return;
@@ -72,18 +84,9 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
     <>
       {/* Bio / Joined Date */}
       {user.joinedAt && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            mt: 1.5,
-            borderRadius: 1,
-            bgcolor: alpha(theme.palette.text.primary, 0.03),
-            border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-          }}
-        >
+        <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
           <Typography variant="caption" color="text.disabled">
-            Joined At:
+            Joined Stage:
           </Typography>{' '}
           <Typography variant="caption" color="text.secondary" fontWeight={600}>
             {fDateTime(user.joinedAt)}
@@ -92,37 +95,40 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
       )}
 
       {/* Microphone Gain & AI Filter */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 1.5,
-          borderRadius: 1,
-          bgcolor: alpha(theme.palette.text.primary, 0.03),
-          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
+      <Paper elevation={0} sx={sectionCardSx}>
         <Typography
           variant="caption"
           fontWeight={800}
           color="text.secondary"
-          sx={{ textTransform: 'uppercase', display: 'block', mb: 1.5 }}
+          sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.5 }}
         >
           Microphone Gain & Control
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Tooltip title={isMuted ? 'Unmute' : 'Mute'}>
+          <Tooltip title={isMuted ? 'Unmute' : 'Mute'} arrow>
             <IconButton
               onClick={handleToggleMic}
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: isMuted ? 'error.main' : alpha(theme.palette.text.primary, 0.06),
-                color: isMuted ? '#fff' : 'text.primary',
+                width: 42,
+                height: 42,
+                borderRadius: 1.5,
+                bgcolor: isMuted
+                  ? alpha(theme.palette.error.main, 0.16)
+                  : isDark
+                    ? alpha('#fff', 0.05)
+                    : alpha('#000', 0.04),
+                border: '1px solid',
+                borderColor: isMuted
+                  ? alpha(theme.palette.error.main, 0.35)
+                  : isDark
+                    ? alpha('#fff', 0.08)
+                    : alpha('#000', 0.08),
+                color: isMuted ? 'error.main' : 'text.primary',
                 '&:hover': {
-                  bgcolor: isMuted ? 'error.dark' : alpha(theme.palette.primary.main, 0.12),
+                  bgcolor: isMuted
+                    ? alpha(theme.palette.error.main, 0.25)
+                    : alpha(theme.palette.primary.main, 0.12),
                 },
               }}
             >
@@ -141,12 +147,16 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
                 valueLabelDisplay="auto"
                 sx={{ flex: 1 }}
               />
-              <Typography variant="caption" fontWeight={700} sx={{ minWidth: 32 }}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{ minWidth: 34, textAlign: 'right' }}
+              >
                 {micGain}%
               </Typography>
             </Box>
 
-            <Divider sx={{ borderStyle: 'dashed', opacity: 0.6 }} />
+            <Divider sx={{ borderStyle: 'dashed', opacity: 0.5 }} />
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="caption" fontWeight={600} color="text.secondary">
@@ -159,21 +169,12 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
       </Paper>
 
       {/* Hardware Devices */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 1.5,
-          borderRadius: 1,
-          bgcolor: alpha(theme.palette.text.primary, 0.03),
-          border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
+      <Paper elevation={0} sx={{ ...sectionCardSx, mb: 0 }}>
         <Typography
           variant="caption"
           fontWeight={800}
           color="text.secondary"
-          sx={{ textTransform: 'uppercase', display: 'block', mb: 1.5 }}
+          sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.5 }}
         >
           Audio Hardware Devices
         </Typography>
@@ -186,6 +187,10 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
               value={activeMicId || ''}
               label="Input Microphone"
               onChange={(e) => setActiveMicDevice(e.target.value)}
+              sx={{
+                borderRadius: 1.25,
+                bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
+              }}
             >
               {microphones.map((d) => (
                 <MenuItem key={d.deviceId} value={d.deviceId}>
@@ -202,6 +207,10 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
               value={activeSpeakerId || ''}
               label="Output Speaker"
               onChange={(e) => setActiveSpeakerDevice(e.target.value)}
+              sx={{
+                borderRadius: 1.25,
+                bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
+              }}
             >
               {speakers.map((d) => (
                 <MenuItem key={d.deviceId} value={d.deviceId}>
@@ -212,8 +221,6 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({ 
           </FormControl>
         </Stack>
       </Paper>
-
-
     </>
   );
 };

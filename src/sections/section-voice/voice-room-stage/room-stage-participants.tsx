@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-stage/room-stage-participants.tsx
+
 import useRoomSounds from '@/hooks/use-room-sounds';
 import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
 import {
@@ -5,9 +7,11 @@ import {
   useLocalParticipant,
   useParticipants,
   useRoomContext,
+  useTracks,
 } from '@livekit/components-react';
 import { alpha, Box, BoxProps, Typography } from '@mui/material';
-import { ConnectionState, type Participant } from 'livekit-client';
+import { ConnectionState, Track, type Participant } from 'livekit-client';
+import { Monitor } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ParticipantTile from './room-stage-participant-tile';
 
@@ -79,6 +83,18 @@ export const RoomStageParticipants = ({
   const { localParticipant } = useLocalParticipant();
   const { playUserLeave } = useRoomSounds();
 
+  // Track which participants are actively sharing their screen
+  const screenShareTracks = useTracks([Track.Source.ScreenShare]);
+  const sharingParticipantIds = useMemo(
+    () =>
+      new Set(
+        screenShareTracks
+          .filter((t) => Boolean(t?.publication))
+          .map((t) => String(t.participant.identity))
+      ),
+    [screenShareTracks]
+  );
+
   const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
   const [orderedParticipants, setOrderedParticipants] = useState<RoomParticipantType[]>(participants);
 
@@ -149,7 +165,9 @@ export const RoomStageParticipants = ({
             });
 
             // Remove participant completely from stage
-            setOrderedParticipants((current) => current.filter((item) => String(item.userId) !== id));
+            setOrderedParticipants((current) =>
+              current.filter((item) => String(item.userId) !== id)
+            );
 
             // 🔊 Trigger user leave sound once ghost is pruned
             playUserLeaveRef.current?.();
@@ -215,13 +233,14 @@ export const RoomStageParticipants = ({
     <>
       {displayParticipants.map((participant) => {
         const isGhost = Boolean(participant.isGhost);
+        const isSharingScreen = sharingParticipantIds.has(String(participant.id));
 
         return (
           <Box
             key={participant.id}
             sx={{
-              width: { xs: 'calc(50% - 8px)', sm: 140, md: 160 },
-              minHeight: 160,
+              width: { xs: 'calc(50% - 8px)', sm: 148, md: 168 },
+              minHeight: 168,
               position: 'relative',
               transition: 'opacity 0.4s ease, filter 0.4s ease',
               opacity: isGhost ? 0.35 : 1,
@@ -231,6 +250,40 @@ export const RoomStageParticipants = ({
             }}
             {...other}
           >
+            {/* Live Screen-Sharing Indicator Badge on Tile */}
+            {isSharingScreen && !isGhost && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  zIndex: 6,
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 0.75,
+                  bgcolor: 'info.main',
+                  color: '#fff',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.4,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  pointerEvents: 'none',
+                }}
+              >
+                <Monitor size={10} />
+                <Typography
+                  sx={{
+                    fontSize: '0.55rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    lineHeight: 1,
+                  }}
+                >
+                  Live
+                </Typography>
+              </Box>
+            )}
+
             {isGhost && (
               <Box
                 sx={{
@@ -238,11 +291,11 @@ export const RoomStageParticipants = ({
                   top: 8,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  bgcolor: alpha('#000', 0.7),
-                  backdropFilter: 'blur(4px)',
+                  bgcolor: alpha('#000', 0.78),
+                  backdropFilter: 'blur(6px)',
                   color: '#fff',
                   px: 1,
-                  py: 0.2,
+                  py: 0.25,
                   borderRadius: 1,
                   zIndex: 4,
                 }}

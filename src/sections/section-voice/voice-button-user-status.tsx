@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-button-user-status.tsx
+
 import type { ChatUserStatus } from '@/types/type-room';
 
 import { CheckCircle, CircleOff, Clock, Moon, Pause, UserX } from 'lucide-react';
@@ -73,7 +75,8 @@ const MARGIN = 8;
 const Backdrop = styled(Box)({
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,0.38)',
+  background: 'rgba(0,0,0,0.45)',
+  backdropFilter: 'blur(4px)',
   zIndex: 1299,
   transition: 'opacity 0.2s ease',
 });
@@ -84,9 +87,9 @@ const Sheet = styled(Box)(({ theme }) => ({
   left: 0,
   right: 0,
   zIndex: 1300,
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: '14px 14px 0 0',
-  border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+  backgroundColor: theme.palette.mode === 'dark' ? '#181c26' : '#ffffff',
+  borderRadius: '12px 12px 0 0',
+  borderTop: `1px solid ${theme.palette.mode === 'dark' ? alpha('#fff', 0.1) : '#e2e8f0'}`,
   paddingBottom: 10,
 }));
 
@@ -96,7 +99,7 @@ interface ChatStatusButtonProps {
   onStatusChange?: (status: string) => void;
 }
 
-// ─── Status grid (shared between mobile sheet and desktop popover) ────────────
+// ─── Status grid ──────────────────────────────────────────────────────────────
 
 function StatusGrid({
   currentStatus,
@@ -128,9 +131,9 @@ function StatusGrid({
             onClick={() => onSelect(status)}
             sx={{
               width: '100%',
-              borderRadius: 1.5,
+              borderRadius: 1,
               display: 'flex',
-              flexDirection: 'row', // ← icon left, label right
+              flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 0.6,
@@ -156,8 +159,8 @@ function StatusGrid({
             <Typography
               variant="caption"
               sx={{
-                fontWeight: isSelected ? 800 : 500,
-                fontSize: isMobile ? '0.72rem' : '0.63rem',
+                fontWeight: isSelected ? 800 : 600,
+                fontSize: isMobile ? '0.72rem' : '0.64rem',
                 letterSpacing: 0.2,
                 color: 'inherit',
                 lineHeight: 1,
@@ -171,6 +174,7 @@ function StatusGrid({
     </Box>
   );
 }
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatusChange }) => {
@@ -180,15 +184,11 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
 
   const [currentStatus, setCurrentStatus] = useState<ChatUserStatus>(INITIAL_STATUS);
   const [isOpen, setIsOpen] = useState(false);
-  const [visible, setVisible] = useState(false); // drives mobile sheet animation
+  const [visible, setVisible] = useState(false);
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // ── Desktop: anchor popup to the button ─────────────────────────────────
-  // We compute `left` immediately on open (button rect is known).
-  // `top` is computed after the Paper renders so we use its actual height.
 
   const computePos = useCallback((paperHeight = 0) => {
     if (!buttonRef.current) return null;
@@ -196,45 +196,37 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    // Center horizontally on the button, then clamp
     let left = rect.left + rect.width / 2 - POPOVER_WIDTH / 2;
     left = Math.max(MARGIN, Math.min(left, vw - POPOVER_WIDTH - MARGIN));
 
-    // Prefer above the button; flip below if not enough channel
     const spaceAbove = rect.top - MARGIN;
     const spaceBelow = vh - rect.bottom - MARGIN;
     let top: number;
 
     if (paperHeight > 0) {
-      // We know the real height — place flush above with 8px gap
       if (paperHeight <= spaceAbove) {
         top = rect.top - paperHeight - 8;
       } else if (paperHeight <= spaceBelow) {
         top = rect.bottom + 8;
       } else {
-        // Neither side fits perfectly — pick whichever has more channel
         top =
           spaceAbove >= spaceBelow ? Math.max(MARGIN, rect.top - paperHeight - 8) : rect.bottom + 8;
       }
     } else {
-      // First pass (height unknown) — guess above, will correct on next frame
       top = rect.top - 8;
     }
 
-    // Final vertical clamp
     top = Math.max(MARGIN, Math.min(top, vh - (paperHeight || 200) - MARGIN));
 
     return { top, left };
   }, []);
-
-  // ── Open / close ─────────────────────────────────────────────────────────
 
   const handleOpen = () => {
     if (isMobile) {
       setIsOpen(true);
       requestAnimationFrame(() => setVisible(true));
     } else {
-      const pos = computePos(0); // height unknown on first open — corrected after render
+      const pos = computePos(0);
       if (pos) setPopoverPos(pos);
       setIsOpen((p) => !p);
     }
@@ -243,7 +235,7 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
   const handleClose = useCallback(() => {
     if (isMobile) {
       setVisible(false);
-      setTimeout(() => setIsOpen(false), 280); // wait for slide-out animation
+      setTimeout(() => setIsOpen(false), 280);
     } else {
       setIsOpen(false);
     }
@@ -255,7 +247,6 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
     onStatusChange?.(status.name);
   };
 
-  // After Paper renders, measure its actual height and snap position
   useEffect(() => {
     if (!isOpen || isMobile || !dropdownRef.current) return;
     const paperHeight = dropdownRef.current.getBoundingClientRect().height;
@@ -263,7 +254,6 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
     if (pos) setPopoverPos(pos);
   }, [isOpen, isMobile, computePos]);
 
-  // Recompute desktop position on scroll / resize
   useEffect(() => {
     if (!isOpen || isMobile) return undefined;
     const update = () => {
@@ -279,7 +269,6 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
     };
   }, [isOpen, isMobile, computePos]);
 
-  // Outside click — desktop only (mobile uses Backdrop)
   useEffect(() => {
     if (isMobile) return undefined;
     const handler = (e: MouseEvent) => {
@@ -309,13 +298,13 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
 
   return (
     <Box sx={{ position: 'relative', display: 'inline-block' }}>
-      {/* ── Trigger ───────────────────────────────────────────────────── */}
+      {/* ── Trigger ── */}
       <IconButton
         ref={buttonRef}
         size="small"
         onClick={handleOpen}
         sx={{
-          borderRadius: '10px',
+          borderRadius: 1,
           color: currentStatus.color,
           border:
             primaryName !== 'online' ? `1px solid ${varAlpha(currentChannel, 0.4)}` : '1px solid',
@@ -346,12 +335,10 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
       {isOpen && (
         <Portal>
           {isMobile ? (
-            // ── Mobile: bottom sheet ───────────────────────────────────
             <>
               <Backdrop onClick={handleClose} sx={{ opacity: visible ? 1 : 0 }} />
               <Slide direction="up" in={visible} mountOnEnter unmountOnExit>
                 <Sheet ref={dropdownRef}>
-                  {/* Drag handle */}
                   <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1.25, pb: 0.5 }}>
                     <Box sx={{ width: 36, height: 4, borderRadius: 2, bgcolor: 'divider' }} />
                   </Box>
@@ -368,7 +355,7 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
                         px: 0.5,
                         py: 0.5,
                         borderBottom: '1px solid',
-                        borderColor: 'divider',
+                        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                         mb: 1,
                         display: 'block',
                       }}
@@ -386,7 +373,6 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
               </Slide>
             </>
           ) : (
-            // ── Desktop: clamped floating popover ─────────────────────
             popoverPos && (
               <Fade in={isOpen}>
                 <Paper
@@ -397,11 +383,13 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
                     left: popoverPos.left,
                     width: POPOVER_WIDTH,
                     zIndex: 9999,
-                    bgcolor: 'background.paper',
+                    bgcolor: isDark ? '#181c26' : '#ffffff',
                     border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2.5,
-                    boxShadow: `0 8px 28px ${alpha('#000', isDark ? 0.5 : 0.14)}`,
+                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                    borderRadius: 1,
+                    boxShadow: isDark
+                      ? '0 12px 28px rgba(0, 0, 0, 0.55)'
+                      : '0 12px 28px rgba(15, 23, 42, 0.14)',
                     overflow: 'hidden',
                   }}
                 >
@@ -417,7 +405,7 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
                         px: 1,
                         py: 0.5,
                         borderBottom: '1px solid',
-                        borderColor: 'divider',
+                        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                         mb: 0.75,
                         display: 'block',
                       }}

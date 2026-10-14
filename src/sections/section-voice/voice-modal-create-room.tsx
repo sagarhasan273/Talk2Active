@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-modal-create-room.tsx
+
 import type { RoomType } from '@/types/type-room';
 
 import React, { useEffect, useState } from 'react';
@@ -13,22 +15,21 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   MenuItem,
   Slider,
   TextField,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { useCreateRoomMutation, useUpdateRoomMutation } from 'src/core/apis/api-chat';
 import { selectAccount } from 'src/core/slices';
-import { varAlpha } from 'src/theme/styles';
 
 import { Label, LEVEL_OPTIONS, ParticipantLevel } from '@/components/label';
 import { languages } from '@/lib/filter-data';
-import { Scrollbar } from 'src/components/scrollbar';
 
 // ----------------------------------------------------------------------
 
@@ -42,21 +43,15 @@ export const LanguageLevelEnum = {
   CONVERSATION: 'conversation',
 } as const;
 
-
 const LEVEL_COLORS: Record<string, string> = {
-  all: '#818cf8',
-  beginner: '#4ade80',
-  intermediate: '#facc15',
-  advanced: '#f87171',
-  ielts: '#38bdf8',
-  business: '#c084fc',
-  conversation: '#fb923c',
+  all: '#6366f1',
+  beginner: '#10b981',
+  intermediate: '#f59e0b',
+  advanced: '#ef4444',
+  ielts: '#0ea5e9',
+  business: '#8b5cf6',
+  conversation: '#f97316',
 };
-
-const LEVEL_LABELS: Record<string, string> = LEVEL_OPTIONS.reduce(
-  (acc, { value, label }) => ({ ...acc, [value]: label }),
-  {} as Record<string, string>
-);
 
 type FormData = {
   topic: string;
@@ -214,24 +209,34 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
   // ----------------------------------------------------------------------
 
   const sectionSx = {
-    p: 1.5,
+    p: 1.75,
     borderRadius: 1,
-    border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-    bgcolor: isDark
-      ? alpha(theme.palette.background.paper, 0.4)
-      : alpha(theme.palette.grey[50], 0.8),
+    border: '1px solid',
+    borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+    bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
   };
 
   const sectionLabelSx = {
     mb: 1,
     fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: '.08em',
+    fontWeight: 800,
+    letterSpacing: '0.06em',
     textTransform: 'uppercase' as const,
-    color: theme.palette.text.disabled,
+    color: isDark ? 'text.secondary' : '#64748b',
   };
 
-  const primaryColor = varAlpha(theme.vars.palette.primary.lightChannel, 1);
+  const inputSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 1,
+      bgcolor: isDark ? '#181c26' : '#ffffff',
+      '& fieldset': {
+        borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+      },
+      '&:hover fieldset': {
+        borderColor: alpha(theme.palette.primary.main, 0.5),
+      },
+    },
+  };
 
   return (
     <Dialog
@@ -240,26 +245,27 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       maxWidth="xs"
       fullWidth
       PaperProps={{
+        elevation: 0,
         sx: {
           borderRadius: isMobile ? 0 : 1,
           overflow: 'hidden',
-          boxShadow: '0 24px 64px rgba(0,0,0,.18)',
+          bgcolor: isDark ? '#181c26' : '#ffffff',
+          backgroundImage: 'none',
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+          boxShadow: isDark
+            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
+            : '0 24px 48px -12px rgba(15, 23, 42, 0.18)',
         },
       }}
     >
       {/* Header */}
-
       <DialogTitle
         sx={{
           p: 0,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-          background: isDark
-            ? `linear-gradient(135deg,
-                ${varAlpha(theme.vars.palette.primary.mainChannel, 0.25)},
-                ${varAlpha(theme.vars.palette.primary.lightChannel, 0.15)})`
-            : `linear-gradient(135deg,
-                ${varAlpha(theme.vars.palette.primary.mainChannel, 0.08)},
-                ${varAlpha(theme.vars.palette.primary.lightChannel, 0.05)})`,
+          borderBottom: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? alpha(theme.palette.primary.main, 0.08) : '#f8fafc',
         }}
       >
         <Box
@@ -273,28 +279,29 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 borderRadius: 1,
                 display: 'grid',
                 placeItems: 'center',
                 flexShrink: 0,
-                background: `linear-gradient(
-                  135deg,
-                  ${varAlpha(theme.vars.palette.primary.mainChannel, 1)},
-                  ${varAlpha(theme.vars.palette.primary.lightChannel, 0.7)}
-                )`,
+                bgcolor: 'primary.main',
+                color: '#fff',
               }}
             >
-              <MicNone sx={{ color: '#fff', fontSize: 20 }} />
+              <MicNone sx={{ fontSize: 20 }} />
             </Box>
 
             <Box>
-              <Typography fontWeight={700} fontSize={isMobile ? 15 : 16}>
+              <Typography
+                fontWeight={800}
+                fontSize={isMobile ? 15 : 16}
+                color={isDark ? 'text.primary' : '#0f172a'}
+              >
                 {isEditMode ? 'Update Voice Channel' : 'Create Voice Channel'}
               </Typography>
 
-              <Typography fontSize={12} color="text.secondary">
+              <Typography fontSize={12} color={isDark ? 'text.secondary' : '#64748b'}>
                 {isEditMode
                   ? 'Update the topic, languages, or capacity'
                   : 'Set up your language learning space'}
@@ -302,251 +309,273 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
             </Box>
           </Box>
 
-          <Button
+          <IconButton
             onClick={onClose}
+            size="small"
             sx={{
-              minWidth: 32,
-              width: 32,
-              height: 32,
-              p: 0,
+              width: 30,
+              height: 30,
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               color: 'text.secondary',
             }}
           >
-            <Close fontSize="small" />
-          </Button>
+            <Close sx={{ fontSize: 16 }} />
+          </IconButton>
         </Box>
       </DialogTitle>
 
-      {/* Body */}
-
-      <DialogContent sx={{ p: 0 }}>
-        <Scrollbar
+      {/* Body (Native hidden scrollbar) */}
+      <DialogContent
+        sx={{
+          p: 2,
+          overflowY: 'auto',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        }}
+      >
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
           sx={{
-            maxHeight: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
           }}
         >
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-              p: 1,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Basic Info */}
+          {/* Basic Info */}
+          <Box sx={sectionSx}>
+            <Typography sx={sectionLabelSx}>Basic Info</Typography>
 
-            <Box sx={sectionSx}>
-              <Typography sx={sectionLabelSx}>Basic Info</Typography>
-
-              <Box sx={{ display: 'grid', gap: 1 }}>
-                <TextField
-                  label="Choose a topic"
-                  placeholder="e.g., Spanish Conversation Circle"
-                  size="small"
-                  required
-                  fullWidth
-                  value={formData.topic}
-                  onChange={(e) => updateForm('topic', e.target.value)}
-                />
-
-                {isEditMode ? (
-                  formData.welcome_message && (
-                    <Box>
-                      <Typography fontSize={11} color="text.disabled" mb={0.5}>
-                        Welcome message (not editable)
-                      </Typography>
-                      <Typography fontSize={13} color="text.secondary" fontStyle="italic">
-                        {formData.welcome_message}
-                      </Typography>
-                    </Box>
-                  )
-                ) : (
-                  <TextField
-                    label="Welcome message.."
-                    placeholder="What will learners practice here?"
-                    size="small"
-                    fullWidth
-                    multiline
-                    rows={2}
-                    value={formData.welcome_message}
-                    onChange={(e) => updateForm('welcome_message', e.target.value)}
-                  />
-                )}
-              </Box>
-            </Box>
-
-            {/* Languages */}
-
-            <Box sx={sectionSx}>
-              <Typography sx={sectionLabelSx}>Languages</Typography>
-
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                {formData.languages.map((code) => {
-                  const lang = languages.find((item) => item.code === code);
-
-                  return (
-                    <Label
-                      key={code}
-                      size="small"
-                      label={lang ? `${lang.flag} ${lang.name}` : `${code}`}
-                      onDelete={() => removeLanguage(code)}
-                      sx={{
-                        height: 26,
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: primaryColor,
-                        bgcolor: varAlpha(theme.vars.palette.primary.lightChannel, 0.15),
-                        '&:hover': {
-                          bgcolor: varAlpha(theme.vars.palette.primary.lightChannel, 0.25),
-                        },
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-
-              <Autocomplete
-                freeSolo
+            <Box sx={{ display: 'grid', gap: 1.25 }}>
+              <TextField
+                label="Choose a topic"
+                placeholder="e.g., Spanish Conversation Circle"
                 size="small"
-                disabled={formData.languages.length >= 2}
-                options={languages.map((lang) => ({
-                  code: lang.code,
-                  label: `${lang.flag} ${lang.name}`,
-                }))}
-                inputValue={inputValue}
-                onInputChange={(_, value) => setInputValue(value)}
-                onChange={(_, value) => {
-                  if (value && typeof value !== 'string') {
-                    addLanguage(value.code);
-                  }
-                }}
-                getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Search language & press Enter…"
-                    onKeyDown={handleLanguageKeyDown}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <MenuItem {...props} key={option.code}>
-                    {option.label}
-                  </MenuItem>
-                )}
+                required
+                fullWidth
+                value={formData.topic}
+                onChange={(e) => updateForm('topic', e.target.value)}
+                sx={inputSx}
               />
+
+              {isEditMode ? (
+                formData.welcome_message && (
+                  <Box>
+                    <Typography fontSize={11} color="text.disabled" mb={0.5}>
+                      Welcome message (not editable)
+                    </Typography>
+                    <Typography fontSize={13} color="text.secondary" fontStyle="italic">
+                      {formData.welcome_message}
+                    </Typography>
+                  </Box>
+                )
+              ) : (
+                <TextField
+                  label="Welcome message.."
+                  placeholder="What will learners practice here?"
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  value={formData.welcome_message}
+                  onChange={(e) => updateForm('welcome_message', e.target.value)}
+                  sx={inputSx}
+                />
+              )}
             </Box>
+          </Box>
 
-            {/* Settings */}
+          {/* Languages */}
+          <Box sx={sectionSx}>
+            <Typography sx={sectionLabelSx}>Languages</Typography>
 
-            <Box sx={sectionSx}>
-              <Typography sx={sectionLabelSx}>Skill Level</Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.25 }}>
+              {formData.languages.map((code) => {
+                const lang = languages.find((item) => item.code === code);
 
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {LEVEL_OPTIONS.map(({ value, label }) => {
-                  const selected = formData.level === value;
-                  const color = LEVEL_COLORS[value];
-
-                  return (
-                    <ParticipantLevel
-                      key={value}
-                      value={value}
-                      label={label}
-                      showEmoji={true}
-                      size="small"
-                      selected={selected}
-                      onClick={() => updateForm('level', value)}
-                      sx={{
-                        height: 28,
-                        fontSize: 11.5,
-                        fontWeight: selected ? 700 : 500,
-                        transform: 'none !important', // Prevents shifting neighboring chips
-                        border: '1px solid',
-                        borderColor: theme.palette.divider,
-                        bgcolor: selected ? alpha(color, 0.12) : 'transparent',
-                        color: selected ? color : theme.palette.text.secondary,
-                        transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
-                        '&:hover': {
-                          transform: 'none !important', // Stops any vertical translation on hover
-                          bgcolor: selected ? alpha(color, 0.18) : alpha(color, 0.06),
-                          borderColor: color,
-                          color,
-                        },
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-
-              {/* Participants — always editable */}
-
-              <Box sx={{ mt: 1.5 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography sx={sectionLabelSx}>Max Participants</Typography>
-
+                return (
                   <Label
+                    key={code}
                     size="small"
-                    label={String(formData.max_participants)}
+                    label={lang ? `${lang.flag} ${lang.name}` : `${code}`}
+                    onDelete={() => removeLanguage(code)}
                     sx={{
-                      height: 24,
+                      height: 26,
+                      borderRadius: 1,
                       fontSize: 12,
-                      color: 'text.primary',
-                      backgroundColor: 'background.neutral'
+                      fontWeight: 700,
+                      color: 'primary.main',
+                      bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.22),
+                      },
                     }}
                   />
-                </Box>
+                );
+              })}
+            </Box>
 
-                <Slider
-                  value={formData.max_participants}
-                  min={2}
-                  max={20}
-                  marks
-                  valueLabelDisplay="auto"
-                  onChange={(_, value) => updateForm('max_participants', value as number)}
-                  sx={{ color: primaryColor }}
+            <Autocomplete
+              freeSolo
+              size="small"
+              disabled={formData.languages.length >= 2}
+              options={languages.map((lang) => ({
+                code: lang.code,
+                label: `${lang.flag} ${lang.name}`,
+              }))}
+              inputValue={inputValue}
+              onInputChange={(_, value) => setInputValue(value)}
+              onChange={(_, value) => {
+                if (value && typeof value !== 'string') {
+                  addLanguage(value.code);
+                }
+              }}
+              getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search language & press Enter…"
+                  onKeyDown={handleLanguageKeyDown}
+                  sx={inputSx}
                 />
+              )}
+              renderOption={(props, option) => (
+                <MenuItem {...props} key={option.code} sx={{ fontSize: '0.8rem' }}>
+                  {option.label}
+                </MenuItem>
+              )}
+            />
+          </Box>
 
-                <Box
+          {/* Settings */}
+          <Box sx={sectionSx}>
+            <Typography sx={sectionLabelSx}>Skill Level</Typography>
+
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              {LEVEL_OPTIONS.map(({ value, label }) => {
+                const selected = formData.level === value;
+                const color = LEVEL_COLORS[value] || theme.palette.primary.main;
+
+                return (
+                  <ParticipantLevel
+                    key={value}
+                    value={value}
+                    label={label}
+                    showEmoji={true}
+                    size="small"
+                    selected={selected}
+                    onClick={() => updateForm('level', value)}
+                    sx={{
+                      height: 28,
+                      borderRadius: 1,
+                      fontSize: 11.5,
+                      fontWeight: selected ? 700 : 600,
+                      transform: 'none !important',
+                      border: '1px solid',
+                      borderColor: selected
+                        ? color
+                        : isDark
+                          ? alpha('#fff', 0.1)
+                          : '#e2e8f0',
+                      bgcolor: selected
+                        ? alpha(color, isDark ? 0.16 : 0.1)
+                        : isDark
+                          ? '#181c26'
+                          : '#ffffff',
+                      color: selected ? color : isDark ? 'text.secondary' : '#475569',
+                      transition:
+                        'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                      '&:hover': {
+                        transform: 'none !important',
+                        bgcolor: selected ? alpha(color, 0.2) : alpha(color, 0.08),
+                        borderColor: color,
+                        color,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+
+            {/* Participants */}
+            <Box sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Max Participants</Typography>
+
+                <Label
+                  size="small"
+                  label={String(formData.max_participants)}
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    height: 24,
+                    borderRadius: 1,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: 'primary.main',
+                    bgcolor: alpha(theme.palette.primary.main, 0.12),
                   }}
-                >
-                  <Typography fontSize={10} color="text.primary">
-                    2
-                  </Typography>
-                  <Typography fontSize={10} color="text.primary">
-                    20
-                  </Typography>
-                </Box>
+                />
+              </Box>
+
+              <Slider
+                value={formData.max_participants}
+                min={2}
+                max={20}
+                marks
+                valueLabelDisplay="auto"
+                onChange={(_, value) => updateForm('max_participants', value as number)}
+                sx={{ color: 'primary.main', mt: 1 }}
+              />
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Typography fontSize={10.5} fontWeight={600} color="text.secondary">
+                  2
+                </Typography>
+                <Typography fontSize={10.5} fontWeight={600} color="text.secondary">
+                  20
+                </Typography>
               </Box>
             </Box>
           </Box>
-        </Scrollbar>
+        </Box>
       </DialogContent>
 
       {/* Actions */}
-
       <DialogActions
         sx={{
           p: isMobile ? 1.5 : 2,
           gap: 1,
-          borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          bgcolor: isDark ? 'transparent' : '#f8fafc',
+          borderTop: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
         }}
       >
         <Button
           onClick={onClose}
           variant="outlined"
+          color="inherit"
           fullWidth={isMobile}
           sx={{
-            borderRadius: 2,
+            borderRadius: 1,
+            textTransform: 'none',
             fontWeight: 600,
+            borderColor: isDark ? alpha('#fff', 0.14) : '#cbd5e1',
             flex: isMobile ? 1 : undefined,
           }}
         >
@@ -556,19 +585,20 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
         <Button
           type="submit"
           variant="contained"
+          disableElevation
           disabled={loading}
           onClick={() => handleSubmit()}
           fullWidth={isMobile}
           startIcon={<RecordVoiceOver />}
           sx={{
-            borderRadius: 2,
+            borderRadius: 1,
+            textTransform: 'none',
             fontWeight: 700,
             flex: isMobile ? 2 : undefined,
-            background: `linear-gradient(
-              135deg,
-              ${theme.palette.primary.dark},
-              ${theme.palette.primary.main}
-            )`,
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
+            },
           }}
         >
           {isEditMode ? 'Update Channel' : 'Create Channel'}

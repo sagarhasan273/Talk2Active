@@ -1,8 +1,9 @@
-import { varAlpha } from '@/theme/styles';
+// src/sections/section-voice/voice-button-raise-hand.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 
 import Hand from '@mui/icons-material/WavingHandRounded';
-import { Box, IconButton, keyframes, Popover, Tooltip, useTheme } from '@mui/material';
+import { alpha, Box, IconButton, keyframes, Popover, Tooltip, useTheme } from '@mui/material';
 
 // ── Keyframe Animations ───────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ export const VoiceButtonRaiseHand = ({
   handBtnRef,
 }: VoiceButtonRaiseHandProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const internalRef = useRef<HTMLButtonElement>(null);
   const buttonRef = handBtnRef ?? internalRef;
@@ -119,10 +121,6 @@ export const VoiceButtonRaiseHand = ({
     setAnchorEl(null);
   };
 
-  const isLight = theme.palette.mode === 'light';
-  const primaryMainChannel =
-    theme.vars?.palette?.primary?.mainChannel || theme.palette.primary.main;
-
   return (
     <>
       <Tooltip title={handIsActive ? `Lower hand (${selectedEmoji})` : 'Raise hand'} arrow>
@@ -132,16 +130,30 @@ export const VoiceButtonRaiseHand = ({
           onClick={handleButtonClick}
           sx={{
             p: 1,
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 34,
             borderRadius: 1,
-            bgcolor: handIsActive ? 'warning.lighter' : 'background.paper',
+            bgcolor: handIsActive
+              ? alpha(theme.palette.warning.main, 0.16)
+              : isDark
+                ? alpha('#fff', 0.04)
+                : '#f8fafc',
             border: '1px solid',
-            borderColor: handIsActive ? 'warning.main' : 'transparent',
-            color: handIsActive ? 'warning.dark' : 'text.primary',
+            borderColor: handIsActive
+              ? alpha(theme.palette.warning.main, 0.45)
+              : isDark
+                ? alpha('#fff', 0.08)
+                : '#e2e8f0',
+            color: handIsActive ? 'warning.main' : isDark ? 'text.primary' : '#334155',
+            transition: 'all 0.18s ease',
             '&:hover': {
-              color: isLight ? 'common.black' : 'common.white',
-              bgcolor: handIsActive ? 'warning.light' : varAlpha(primaryMainChannel, 0.15),
+              color: handIsActive ? 'warning.main' : 'primary.main',
+              borderColor: handIsActive
+                ? 'warning.main'
+                : alpha(theme.palette.primary.main, 0.4),
+              bgcolor: handIsActive
+                ? alpha(theme.palette.warning.main, 0.24)
+                : alpha(theme.palette.primary.main, 0.08),
             },
           }}
         >
@@ -149,7 +161,7 @@ export const VoiceButtonRaiseHand = ({
             <Box
               component="span"
               sx={{
-                fontSize: '1.25rem',
+                fontSize: '1.2rem',
                 lineHeight: 1,
                 display: 'flex',
                 alignItems: 'center',
@@ -186,12 +198,16 @@ export const VoiceButtonRaiseHand = ({
           paper: {
             sx: {
               mt: -1,
-              p: 1.25,
-              borderRadius: 2,
+              p: 1,
+              borderRadius: 1,
               minWidth: 190,
               maxWidth: 230,
-              bgcolor: 'background.paper',
-              boxShadow: theme.shadows[8],
+              bgcolor: isDark ? '#181c26' : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+              boxShadow: isDark
+                ? '0 12px 28px rgba(0, 0, 0, 0.55)'
+                : '0 12px 28px rgba(15, 23, 42, 0.14)',
             },
           },
         }}
@@ -213,7 +229,10 @@ export const VoiceButtonRaiseHand = ({
                   type="button"
                   onClick={() => handleEmojiSelect(hand.emoji)}
                   sx={{
-                    border: 'none',
+                    border: '1px solid',
+                    borderColor: isSelected
+                      ? alpha(theme.palette.warning.main, 0.45)
+                      : 'transparent',
                     outline: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -221,13 +240,14 @@ export const VoiceButtonRaiseHand = ({
                     justifyContent: 'center',
                     width: 40,
                     height: 40,
-                    borderRadius: 1.5,
-                    fontSize: '1.35rem',
-                    bgcolor: isSelected ? 'rgba(249, 202, 36, 0.18)' : 'transparent',
-                    boxShadow: isSelected ? 'inset 0 0 0 1px rgba(249, 202, 36, 0.35)' : 'none',
-                    transition: 'background-color 0.15s ease, transform 0.15s ease',
+                    borderRadius: 1,
+                    fontSize: '1.3rem',
+                    bgcolor: isSelected
+                      ? alpha(theme.palette.warning.main, 0.16)
+                      : 'transparent',
+                    transition: 'all 0.15s ease',
                     '&:hover': {
-                      bgcolor: 'rgba(249, 202, 36, 0.14)',
+                      bgcolor: isDark ? alpha('#fff', 0.06) : '#f8fafc',
                       transform: 'scale(1.08)',
                     },
                     '&:active': {

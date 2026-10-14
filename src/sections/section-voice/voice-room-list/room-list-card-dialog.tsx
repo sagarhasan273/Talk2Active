@@ -1,4 +1,4 @@
-// src/sections/section-voice/voice-room-card/room-card-dialog.tsx
+// src/sections/section-voice/voice-room-card/room-list-card-dialog.tsx
 
 import { useState } from 'react';
 
@@ -104,13 +104,18 @@ export const RoomParticipantsDialog = ({
       maxWidth={size}
       fullWidth
       PaperProps={{
+        elevation: 0,
         sx: {
           borderRadius: 1,
-          bgcolor: isDark ? alpha(theme.palette.background.paper, 0.95) : '#ffffff',
+          overflow: 'hidden',
+          bgcolor: isDark ? '#181c26' : '#ffffff',
           backgroundImage: 'none',
           backdropFilter: 'blur(16px)',
           border: '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08),
+          borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+          boxShadow: isDark
+            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
+            : '0 24px 48px -12px rgba(15, 23, 42, 0.18)',
         },
       }}
     >
@@ -122,8 +127,9 @@ export const RoomParticipantsDialog = ({
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
+          bgcolor: isDark ? 'transparent' : '#f8fafc',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
         }}
       >
         <Box sx={{ minWidth: 0 }}>
@@ -132,6 +138,7 @@ export const RoomParticipantsDialog = ({
             fontWeight={800}
             noWrap
             sx={{
+              color: isDark ? 'text.primary' : '#0f172a',
               fontSize: { xs: '1rem', sm: size === 'md' ? '1.25rem' : '1.05rem' },
               lineHeight: 1.2,
             }}
@@ -145,10 +152,19 @@ export const RoomParticipantsDialog = ({
                 label="Host"
                 size="small"
                 color="warning"
-                sx={{ height: 18, fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}
+                sx={{
+                  height: 18,
+                  borderRadius: 1,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                }}
               />
             )}
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: isDark ? 'text.secondary' : '#64748b', fontWeight: 600 }}
+            >
               {dedupedUsers.length} {dedupedUsers.length === 1 ? 'speaker' : 'speakers'} on stage
             </Typography>
           </Stack>
@@ -157,13 +173,31 @@ export const RoomParticipantsDialog = ({
         <Stack direction="row" alignItems="center" spacing={0.5}>
           {isHost && onEditRoom && (
             <Tooltip title="Room settings">
-              <IconButton size="small" onClick={() => onEditRoom(room)}>
-                <EditRoundedIcon sx={{ fontSize: 18 }} />
+              <IconButton
+                size="small"
+                onClick={() => onEditRoom(room)}
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                }}
+              >
+                <EditRoundedIcon sx={{ fontSize: 17 }} />
               </IconButton>
             </Tooltip>
           )}
-          <IconButton size="small" onClick={onClose}>
-            <CloseRoundedIcon sx={{ fontSize: 18 }} />
+          <IconButton
+            size="small"
+            onClick={onClose}
+            sx={{
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            }}
+          >
+            <CloseRoundedIcon sx={{ fontSize: 17 }} />
           </IconButton>
         </Stack>
       </Box>
@@ -175,15 +209,19 @@ export const RoomParticipantsDialog = ({
             sx={{
               p: 1.25,
               mb: 2,
-              borderRadius: 1.5,
-              bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.03),
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
             }}
           >
             <Typography
               variant="caption"
-              sx={{ color: 'text.secondary', fontStyle: 'italic', display: 'block' }}
+              sx={{
+                color: isDark ? 'text.secondary' : '#475569',
+                fontStyle: 'italic',
+                display: 'block',
+              }}
             >
               &ldquo;{room.welcome_message}&rdquo;
             </Typography>
@@ -191,7 +229,10 @@ export const RoomParticipantsDialog = ({
         )}
 
         {dedupedUsers.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.disabled', textAlign: 'center', py: 4 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.disabled', textAlign: 'center', py: 4 }}
+          >
             Stage is empty
           </Typography>
         ) : (
@@ -199,7 +240,7 @@ export const RoomParticipantsDialog = ({
             sx={{
               display: 'grid',
               gridTemplateColumns: getGridColumns(),
-              gap: { xs: 1, sm: 1.25 },
+              gap: { xs: 1.25, sm: 1.5 },
               maxHeight: getMaxHeight(),
               overflowY: 'auto',
               p: 0.5,
@@ -207,7 +248,7 @@ export const RoomParticipantsDialog = ({
               '&::-webkit-scrollbar': { width: 5 },
               '&::-webkit-scrollbar-thumb': {
                 bgcolor: alpha(theme.palette.divider, 0.4),
-                borderRadius: 2,
+                borderRadius: 1,
               },
             }}
           >
@@ -229,18 +270,19 @@ export const RoomParticipantsDialog = ({
                       onClick={(e) => setAnchor({ el: e.currentTarget, id: id! })}
                       sx={{
                         position: 'absolute',
-                        top: 4,
-                        right: 4,
+                        top: 6,
+                        right: 6,
                         zIndex: 4,
-                        width: 22,
-                        height: 22,
-                        bgcolor: 'background.paper',
+                        width: 24,
+                        height: 24,
+                        borderRadius: 1,
+                        bgcolor: isDark ? '#181c26' : '#ffffff',
                         border: '1px solid',
-                        borderColor: 'divider',
+                        borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
                         boxShadow: theme.shadows[2],
                       }}
                     >
-                      <MoreVertRoundedIcon sx={{ fontSize: 13 }} />
+                      <MoreVertRoundedIcon sx={{ fontSize: 14 }} />
                     </IconButton>
                   )}
                 </Box>
@@ -252,6 +294,7 @@ export const RoomParticipantsDialog = ({
         {onJoinRoom && (
           <Button
             variant="contained"
+            disableElevation
             fullWidth
             disabled={isFull}
             onClick={() => {
@@ -261,10 +304,13 @@ export const RoomParticipantsDialog = ({
             sx={{
               mt: 2.5,
               height: 42,
-              borderRadius: 1.25,
+              borderRadius: 1,
               fontWeight: 700,
               textTransform: 'none',
-              boxShadow: isFull ? 'none' : `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+              boxShadow: 'none',
+              '&:hover': {
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
+              },
             }}
           >
             {isFull ? 'Room Full' : 'Join Stage'}
@@ -279,7 +325,14 @@ export const RoomParticipantsDialog = ({
         onClose={() => setAnchor(null)}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        PaperProps={{ sx: { borderRadius: 1.5, minWidth: 160 } }}
+        PaperProps={{
+          sx: {
+            borderRadius: 1,
+            minWidth: 160,
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          },
+        }}
       >
         {onTransferHost && (
           <MenuItem

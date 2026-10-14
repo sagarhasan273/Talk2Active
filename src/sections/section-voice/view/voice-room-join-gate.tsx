@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-view/voice-room-join-gate.tsx
+
 import { ArrowRightIcon, MicIcon, UsersIcon, Volume2Icon, XIcon } from 'lucide-react';
 
 import { alpha, Box, Button, IconButton, Paper, Typography, useTheme } from '@mui/material';
@@ -22,12 +24,12 @@ export function VoiceRoomJoinGate({
   onCancel,
 }: VoiceRoomJoinGateProps) {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const hasParticipants = participantCount > 0;
   const isFull = maxParticipants !== undefined && participantCount >= maxParticipants;
 
   return (
-
     <Box
       role="dialog"
       aria-modal="true"
@@ -43,7 +45,7 @@ export function VoiceRoomJoinGate({
 
         p: 2,
 
-        bgcolor: alpha(theme.palette.background.default, 0.72),
+        bgcolor: alpha(theme.palette.common.black, isDark ? 0.65 : 0.45),
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
@@ -56,15 +58,19 @@ export function VoiceRoomJoinGate({
           maxWidth: 380,
           overflow: 'hidden',
 
-          p: { xs: 3, sm: 4 },
-          borderRadius: 3,
+          p: { xs: 3, sm: 3.5 },
+          borderRadius: 1,
 
           textAlign: 'center',
-          bgcolor: 'background.paper',
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
-          boxShadow: `0 24px 60px ${alpha(theme.palette.common.black, 0.18)}`,
+          bgcolor: isDark ? '#181c26' : '#ffffff',
+          backgroundImage: 'none',
+          border: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+          boxShadow: isDark
+            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
+            : '0 24px 48px -12px rgba(15, 23, 42, 0.18)',
 
-          animation: 'voiceJoinGateIn 0.32s cubic-bezier(0.16, 1, 0.3, 1)',
+          animation: 'voiceJoinGateIn 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
 
           '@keyframes voiceJoinGateIn': {
             from: {
@@ -89,26 +95,31 @@ export function VoiceRoomJoinGate({
           size="small"
           sx={{
             position: 'absolute',
-            top: 10,
-            right: 10,
+            top: 12,
+            right: 12,
             zIndex: 2,
-
-            color: 'text.secondary',
+            width: 30,
+            height: 30,
+            borderRadius: 1,
+            bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            color: isDark ? 'text.secondary' : '#64748b',
 
             '&:hover': {
-              bgcolor: alpha(theme.palette.text.primary, 0.06),
-              color: 'text.primary',
+              bgcolor: isDark ? alpha('#fff', 0.1) : '#f1f5f9',
+              color: isDark ? 'text.primary' : '#0f172a',
             },
           }}
         >
-          <XIcon size={18} />
+          <XIcon size={16} />
         </IconButton>
 
         {/* Ambient accent glow */}
         <Box
           sx={{
             position: 'absolute',
-            top: -60,
+            top: -70,
             left: '50%',
             transform: 'translateX(-50%)',
 
@@ -116,7 +127,7 @@ export function VoiceRoomJoinGate({
             height: 220,
 
             borderRadius: '50%',
-            bgcolor: alpha(theme.palette.primary.main, 0.14),
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
             filter: 'blur(40px)',
 
             pointerEvents: 'none',
@@ -128,11 +139,11 @@ export function VoiceRoomJoinGate({
           sx={{
             position: 'relative',
 
-            width: 72,
-            height: 72,
+            width: 68,
+            height: 68,
 
             mx: 'auto',
-            mb: 2.5,
+            mb: 2.25,
 
             display: 'flex',
             alignItems: 'center',
@@ -147,7 +158,7 @@ export function VoiceRoomJoinGate({
                 inset: 0,
 
                 borderRadius: '50%',
-                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+                border: `1.5px solid ${alpha(theme.palette.primary.main, isDark ? 0.38 : 0.3)}`,
 
                 animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
 
@@ -157,7 +168,7 @@ export function VoiceRoomJoinGate({
                     opacity: 0.6,
                   },
                   '100%': {
-                    transform: 'scale(1.5)',
+                    transform: 'scale(1.45)',
                     opacity: 0,
                   },
                 },
@@ -174,8 +185,8 @@ export function VoiceRoomJoinGate({
             sx={{
               position: 'relative',
 
-              width: 60,
-              height: 60,
+              width: 56,
+              height: 56,
 
               borderRadius: '50%',
 
@@ -183,11 +194,12 @@ export function VoiceRoomJoinGate({
               alignItems: 'center',
               justifyContent: 'center',
 
-              bgcolor: alpha(theme.palette.primary.main, 0.12),
+              bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.1),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
               color: 'primary.main',
             }}
           >
-            <Volume2Icon size={26} />
+            <Volume2Icon size={24} />
           </Box>
         </Box>
 
@@ -198,6 +210,7 @@ export function VoiceRoomJoinGate({
           sx={{
             fontWeight: 800,
             letterSpacing: '-0.01em',
+            color: isDark ? 'text.primary' : '#0f172a',
             mb: 0.75,
           }}
         >
@@ -208,7 +221,8 @@ export function VoiceRoomJoinGate({
         <Typography
           variant="body2"
           sx={{
-            color: 'text.secondary',
+            color: isDark ? 'text.secondary' : '#475569',
+            fontWeight: 500,
 
             mb: hasParticipants ? 2 : 3,
 
@@ -230,15 +244,17 @@ export function VoiceRoomJoinGate({
 
               gap: 0.6,
               mx: 'auto',
-              mb: 3,
+              mb: 2.75,
 
               px: 1.25,
               py: 0.5,
 
-              borderRadius: 5,
+              borderRadius: 1,
 
-              bgcolor: alpha(theme.palette.success.main, 0.1),
-              color: 'success.dark',
+              bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
+              border: '1px solid',
+              borderColor: isDark ? alpha(theme.palette.success.main, 0.25) : '#a7f3d0',
+              color: isDark ? 'success.main' : '#059669',
             }}
           >
             <UsersIcon size={13} />
@@ -284,17 +300,19 @@ export function VoiceRoomJoinGate({
             fullWidth
             size="large"
             variant="contained"
+            disableElevation
             disabled={isFull}
             onClick={onJoin}
             endIcon={<ArrowRightIcon size={18} />}
             sx={{
-              borderRadius: 2,
-              py: 1.15,
+              borderRadius: 1,
+              py: 1.1,
 
               fontWeight: 700,
+              fontSize: 14,
               textTransform: 'none',
 
-              boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.32)}`,
+              boxShadow: 'none',
 
               transition: theme.transitions.create(['transform', 'box-shadow'], {
                 duration: 150,
@@ -302,7 +320,7 @@ export function VoiceRoomJoinGate({
 
               '&:hover': {
                 transform: 'translateY(-1px)',
-                boxShadow: `0 14px 28px ${alpha(theme.palette.primary.main, 0.4)}`,
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
               },
 
               '&.Mui-disabled': {
@@ -316,16 +334,21 @@ export function VoiceRoomJoinGate({
           <Button
             fullWidth
             size="medium"
-            variant="text"
+            variant="outlined"
+            color="inherit"
             onClick={onCancel}
             sx={{
-              borderRadius: 2,
+              borderRadius: 1,
+              py: 0.9,
               textTransform: 'none',
               fontWeight: 600,
-              color: 'text.secondary',
+              color: isDark ? 'text.secondary' : '#475569',
+              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+              bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
 
               '&:hover': {
-                bgcolor: alpha(theme.palette.text.primary, 0.05),
+                bgcolor: isDark ? alpha('#fff', 0.06) : '#f1f5f9',
+                borderColor: isDark ? alpha('#fff', 0.18) : '#cbd5e1',
               },
             }}
           >
@@ -342,9 +365,10 @@ export function VoiceRoomJoinGate({
             justifyContent: 'center',
 
             gap: 0.5,
-            mt: 1.5,
+            mt: 1.75,
 
-            color: 'text.disabled',
+            color: isDark ? 'text.disabled' : '#94a3b8',
+            fontWeight: 500,
           }}
         >
           <MicIcon size={12} />

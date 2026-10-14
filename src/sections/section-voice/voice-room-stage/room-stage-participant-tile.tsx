@@ -1,6 +1,6 @@
-import {
-  useIsSpeaking
-} from '@livekit/components-react';
+// src/sections/section-voice/voice-room-stage/room-stage-participant-tile.tsx
+
+import { useIsSpeaking } from '@livekit/components-react';
 import {
   alpha,
   Avatar,
@@ -65,24 +65,24 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   return {
     position: 'absolute',
     bottom: '30%',
-    left: 2,
+    left: 4,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 6,
     padding: '0px 6px',
     color: '#fff',
     backgroundColor:
       paletteColor && typeof paletteColor === 'object' && 'main' in paletteColor
         ? paletteColor.main
         : theme.palette.success.main,
-    border: `2px solid ${theme.palette.background.paper}`,
+    border: `2px solid ${theme.palette.mode === 'dark' ? '#181c26' : '#ffffff'}`,
     zIndex: 15,
-    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'transform 0.2s ease',
-    '&:hover': { transform: 'scale(1.1)' },
-    '& svg': { width: 12, height: 12, color: '#fff' },
+    '&:hover': { transform: 'scale(1.08)' },
+    '& svg': { width: 11, height: 11, color: '#fff' },
   };
 });
 
@@ -100,15 +100,15 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
     left: '50%',
     transform: 'translate(-50%, -50%)',
     backgroundColor: alpha(colors[status as keyof typeof colors] || colors.closed, 0.9),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(6px)',
     color: 'white',
     padding: theme.spacing(0.5, 1.25),
-    borderRadius: 12,
+    borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing(0.75),
-    border: `1.5px solid ${alpha(theme.palette.common.white, 0.2)}`,
+    border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
     zIndex: 10,
     animation: 'fadeIn 0.3s ease',
     '@keyframes fadeIn': {
@@ -149,7 +149,7 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
     <Box
       sx={{
         position: 'absolute',
-        bottom: 10,
+        bottom: 8,
         left: '70%',
         transform: 'translateX(-50%)',
         zIndex: 3,
@@ -158,10 +158,7 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
         justifyContent: 'center',
       }}
     >
-      <VoiceSpeakingIndicator
-        participantId={participantId}
-        isMuted={isMuted}
-      />
+      <VoiceSpeakingIndicator participantId={participantId} isMuted={isMuted} />
     </Box>
   );
 };
@@ -179,7 +176,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     activeReactionEmoji,
     status,
     rawParticipant,
-    connectionStatus
+    connectionStatus,
   } = participant;
 
   // 2. Safe speaking state (never calls useIsSpeaking at top level)
@@ -213,15 +210,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
   // 5. Connection Overlay
   const connectionOverlayElement = useMemo(() => {
     switch (connectionStatus) {
-      // case 'closed':
-      //   return (
-      //     <ConnectionOverlay status="closed">
-      //       <Typography variant="caption" sx={{ fontWeight: 700 }}>
-      //         Voice Closed
-      //       </Typography>
-      //     </ConnectionOverlay>
-      //   );
-
       case 'connecting':
         return (
           <ConnectionOverlay status="connecting">
@@ -279,39 +267,45 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           position: 'relative',
           width: '100%',
           height: '100%',
-          minHeight: 140,
+          minHeight: 148,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'space-between',
-          p: 1.25,
-          borderRadius: 1.5,
+          p: 1.5,
+          borderRadius: 1,
           cursor: 'pointer',
           userSelect: 'none',
           outline: 'none',
           overflow: 'hidden',
           boxSizing: 'border-box',
-          backdropFilter: 'blur(8px)',
-          bgcolor: isDark
-            ? alpha(theme.palette.background.paper, 0.88)
-            : theme.palette.common.white,
+          bgcolor: isDark ? '#181c26' : '#ffffff',
           border: '1.5px solid',
           borderColor: handRaised
             ? theme.palette.warning.main
-            : alpha(theme.palette.primary.main, 0.45),
-
-          transition: 'border-color 0.2s ease, transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease',
+            : isSpeaking
+              ? theme.palette.success.main
+              : isDark
+                ? alpha('#fff', 0.08)
+                : '#e2e8f0',
+          boxShadow: isSpeaking
+            ? `0 0 16px -2px ${alpha(theme.palette.success.main, 0.35)}`
+            : isDark
+              ? '0 4px 16px -2px rgba(0, 0, 0, 0.35)'
+              : '0 4px 14px -2px rgba(15, 23, 42, 0.05)',
+          transition:
+            'border-color 0.2s ease, transform 0.18s ease, background-color 0.2s ease, box-shadow 0.2s ease',
 
           '&:hover': {
-            bgcolor: isDark
-              ? alpha(theme.palette.background.paper, 0.88)
-              : theme.palette.common.white,
+            transform: 'translateY(-2px)',
             borderColor: handRaised
               ? theme.palette.warning.main
-              : alpha(theme.palette.primary.main, 0.45),
+              : isSpeaking
+                ? theme.palette.success.main
+                : alpha(theme.palette.primary.main, 0.45),
             boxShadow: isDark
-              ? '0 8px 24px -4px rgba(0, 0, 0, 0.6)'
-              : '0 6px 18px -3px rgba(15, 23, 42, 0.08)',
+              ? '0 10px 24px -4px rgba(0, 0, 0, 0.5)'
+              : '0 10px 24px -4px rgba(15, 23, 42, 0.09)',
           },
 
           '&:focus-visible': {
@@ -327,7 +321,9 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
                 const IconComponent = STATUS_MAP[status]?.icon;
                 return IconComponent ? <IconComponent /> : null;
               })()}
-              <Typography variant='caption' sx={{ ml: 0.5 }}>{STATUS_MAP[status]?.label}</Typography>
+              <Typography variant="caption" sx={{ ml: 0.5, fontSize: 10, fontWeight: 700 }}>
+                {STATUS_MAP[status]?.label}
+              </Typography>
             </StatusDot>
           </Tooltip>
         )}
@@ -367,23 +363,27 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             alt={participant?.name}
             sx={{
               width: '100%',
-              maxWidth: { xs: 72, sm: 92, md: 100 },
+              maxWidth: { xs: 72, sm: 88, md: 96 },
               aspectRatio: '1/1',
               height: 'auto',
               fontSize: 22,
-              fontWeight: 700,
-              bgcolor: alpha(theme.palette.primary.main, 0.18),
+              fontWeight: 800,
+              bgcolor: isDark
+                ? alpha(theme.palette.primary.main, 0.14)
+                : alpha(theme.palette.primary.main, 0.08),
               color: theme.palette.primary.main,
               borderRadius: '50%',
-              border: '2px solid',
+              border: '2.5px solid',
               opacity: connectionOverlayElement ? 0.4 : 1,
               filter: connectionOverlayElement ? 'blur(2px) grayscale(50%)' : 'none',
               borderColor: isSpeaking
-                ? theme.palette.primary.main
-                : isDark
-                  ? alpha(theme.palette.common.white, 0.15)
-                  : alpha(theme.palette.common.black, 0.08),
-              transition: 'all 0.3s ease',
+                ? theme.palette.success.main
+                : participant?.isHost
+                  ? alpha(theme.palette.primary.main, 0.55)
+                  : isDark
+                    ? alpha(theme.palette.common.white, 0.12)
+                    : '#e2e8f0',
+              transition: 'all 0.25s ease',
             }}
           >
             {initials}
@@ -396,31 +396,28 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             <Box
               sx={{
                 position: 'absolute',
-                top: 4,
-                left: 6,
+                top: 2,
+                left: 4,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 0.5,
+                gap: 0.4,
                 height: 20,
-                pl: 0.6,
+                pl: 0.65,
                 pr: 0.85,
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #FFB020 0%, #D97706 100%)',
-                color: '#FFFFFF',
-                border: `1.5px solid ${theme.palette.background.paper}`,
-                boxShadow: '0 2px 8px rgba(217, 119, 6, 0.45)',
+                borderRadius: 1,
+                bgcolor: 'warning.main',
+                color: '#000',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                 zIndex: 4,
                 pointerEvents: 'none',
                 userSelect: 'none',
-                transition: 'transform 0.2s ease',
-                '&:hover': { transform: 'scale(1.04)' },
               }}
             >
               <Crown size={11} strokeWidth={2.8} style={{ flexShrink: 0 }} />
               <Typography
                 component="span"
                 sx={{
-                  fontSize: '0.625rem',
+                  fontSize: '0.6rem',
                   fontWeight: 900,
                   lineHeight: 1,
                   letterSpacing: '0.04em',
@@ -438,22 +435,22 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
               <Box
                 sx={{
                   position: 'absolute',
-                  top: 4,
-                  right: 6,
+                  top: 2,
+                  right: 4,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 22,
-                  height: 22,
-                  borderRadius: '50%',
+                  width: 24,
+                  height: 24,
+                  borderRadius: 1,
                   bgcolor: theme.palette.warning.main,
-                  color: '#FFF',
-                  boxShadow: `0 2px 6px ${alpha(theme.palette.warning.main, 0.45)}`,
+                  color: '#000',
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.45)}`,
                   zIndex: 2,
                   animation: `${handWiggle} 1.2s infinite ease-in-out`,
                 }}
               >
-                <Hand size={12} strokeWidth={2.5} />
+                <Hand size={13} strokeWidth={2.5} />
               </Box>
             </Tooltip>
           )}
@@ -476,7 +473,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             alignItems: 'center',
             justifyContent: 'center',
             gap: 0.5,
-            pt: 0.75,
+            pt: 1,
             px: 0.5,
           }}
         >
@@ -487,7 +484,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             sx={{
               fontSize: '0.8125rem',
               lineHeight: 1.2,
-              color: 'text.primary',
+              color: isDark ? 'text.primary' : '#0f172a',
               maxWidth: '100%',
               textAlign: 'center',
               opacity: connectionOverlayElement ? 0.6 : 1,
@@ -500,13 +497,13 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             <Box
               component="span"
               sx={{
-                fontSize: '0.65rem',
+                fontSize: '0.625rem',
                 fontWeight: 800,
                 lineHeight: 1,
-                px: 0.5,
+                px: 0.6,
                 py: 0.25,
-                borderRadius: 0.5,
-                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                borderRadius: 0.75,
+                bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.1),
                 color: theme.palette.primary.main,
                 textTransform: 'uppercase',
                 flexShrink: 0,
@@ -534,15 +531,13 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
         </Box>
       </Box>
 
-      {/* Profile Modal Drawer: Lazy-mount only on click */}
-      {openDrawer.value && (
-        <RoomUserControllerMain
-          open={openDrawer.value}
-          onClose={openDrawer.onFalse}
-          user={participant}
-          onRateOpen={onRateOpen}
-        />
-      )}
+      {/* Profile Modal Drawer */}
+      <RoomUserControllerMain
+        open={openDrawer.value}
+        onClose={openDrawer.onFalse}
+        user={participant}
+        onRateOpen={onRateOpen}
+      />
 
       {/* Standalone Rating Dialog */}
       <DialogRateSpeakingLevel

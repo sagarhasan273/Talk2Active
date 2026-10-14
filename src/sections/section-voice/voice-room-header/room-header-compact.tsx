@@ -20,7 +20,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
 import { Label, ParticipantLevel } from '@/components/label';
@@ -60,7 +60,8 @@ export const CompactRoomHeader = ({
 
   const isHost = useMemo(() => {
     if (!room || !user) return false;
-    const hostId = typeof room.host === 'object' ? room.host?.userId || (room.host as any)?._id : room.host;
+    const hostId =
+      typeof room.host === 'object' ? room.host?.userId || (room.host as any)?._id : room.host;
     return String(hostId) === String(user.userId);
   }, [room, user]);
 
@@ -82,11 +83,9 @@ export const CompactRoomHeader = ({
         borderRadius: isMobile ? 1 : 0,
         p: 0.5,
         backdropFilter: 'blur(16px)',
-        bgcolor: isDark
-          ? alpha(theme.palette.background.paper, 0.85)
-          : alpha(theme.palette.common.white, 0.92),
-        borderBottom: '2px solid',
-        borderColor: theme.palette.divider,
+        bgcolor: isDark ? alpha('#181c26', 0.94) : alpha('#ffffff', 0.96),
+        borderBottom: '1px solid',
+        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
       }}
     >
       <Stack
@@ -101,7 +100,12 @@ export const CompactRoomHeader = ({
         }}
       >
         {/* Left Side: Back Navigation & Room Info */}
-        <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.25 }} sx={{ minWidth: 0, flex: 1 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={{ xs: 1, sm: 1.5 }}
+          sx={{ minWidth: 0, flex: 1 }}
+        >
           {onBack && (
             <Tooltip title="Leave room view" arrow>
               <Button
@@ -110,16 +114,16 @@ export const CompactRoomHeader = ({
                 variant="outlined"
                 startIcon={<ArrowBackRoundedIcon sx={{ fontSize: 17 }} />}
                 sx={{
-                  height: 34,
-                  minWidth: { xs: 34, sm: 'auto' },
+                  height: 36,
+                  minWidth: { xs: 36, sm: 'auto' },
                   px: { xs: 1, sm: 1.5 },
-                  borderRadius: 1.5,
+                  borderRadius: 1,
                   textTransform: 'none',
                   fontWeight: 700,
                   fontSize: '0.8rem',
-                  color: 'text.secondary',
-                  borderColor: alpha(theme.palette.divider, 0.6),
-                  bgcolor: alpha(theme.palette.action.hover, 0.04),
+                  color: isDark ? 'text.secondary' : '#475569',
+                  borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                  bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
                   flexShrink: 0,
                   '& .MuiButton-startIcon': {
                     mr: { xs: 0, sm: 0.75 },
@@ -139,20 +143,25 @@ export const CompactRoomHeader = ({
 
           {/* Room Topic & Metadata */}
           <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, mb: 0.35 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ minWidth: 0, mb: 0.35 }}
+            >
               <Typography
                 noWrap
                 sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.975rem' },
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
                   fontWeight: 800,
-                  color: 'text.primary',
+                  color: isDark ? 'text.primary' : '#0f172a',
                   letterSpacing: '-0.01em',
                 }}
               >
                 {room?.topic || 'Untitled voice room'}
               </Typography>
 
-              {/* Pulsing Live Pill with Equalizer Wave */}
+              {/* Micro Audio Equalizer Indicator */}
               <Box
                 sx={{
                   display: 'inline-flex',
@@ -160,14 +169,14 @@ export const CompactRoomHeader = ({
                   gap: 0.5,
                   px: 0.75,
                   py: 0.25,
-                  borderRadius: '6px',
-                  bgcolor: alpha(theme.palette.success.main, 0.12),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.25)}`,
-                  color: 'success.main',
+                  borderRadius: 1,
+                  bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
+                  border: '1px solid',
+                  borderColor: isDark ? alpha(theme.palette.success.main, 0.25) : '#a7f3d0',
+                  color: isDark ? 'success.main' : '#059669',
                   flexShrink: 0,
                 }}
               >
-                {/* Micro Audio Equalizer bars */}
                 <Stack direction="row" alignItems="center" spacing={0.3} sx={{ height: 10 }}>
                   {[0.1, 0.3, 0.2].map((delay, idx) => (
                     <Box
@@ -185,7 +194,7 @@ export const CompactRoomHeader = ({
                 <Typography
                   sx={{
                     fontSize: '0.625rem',
-                    fontWeight: 900,
+                    fontWeight: 800,
                     lineHeight: 1,
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
@@ -197,8 +206,12 @@ export const CompactRoomHeader = ({
             </Stack>
 
             {/* Badges: Languages & Learning Level */}
-            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flexWrap: 'nowrap', overflow: 'hidden' }}>
-
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.75}
+              sx={{ flexWrap: 'nowrap', overflow: 'hidden' }}
+            >
               {languageDetails.map((lang, index) => (
                 <Label
                   key={`${lang.code}-${index}`}
@@ -207,11 +220,13 @@ export const CompactRoomHeader = ({
                   color="primary"
                   sx={{
                     borderRadius: 1,
-                    bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+                    bgcolor: isDark
+                      ? alpha(theme.palette.primary.main, 0.14)
+                      : alpha(theme.palette.primary.main, 0.08),
+                    fontWeight: 700,
                   }}
                 />
-              ))
-              }
+              ))}
               {room?.level && (
                 <ParticipantLevel
                   value={room.level}
@@ -220,11 +235,11 @@ export const CompactRoomHeader = ({
                   size="small"
                   sx={{
                     transform: 'none !important',
+                    borderRadius: 1,
                     border: '1px solid',
-                    borderColor: theme.palette.divider,
-                    bgcolor: 'transparent',
-                    color: theme.palette.text.secondary,
-                    transition: 'color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease',
+                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                    bgcolor: isDark ? 'transparent' : '#f8fafc',
+                    color: isDark ? theme.palette.text.secondary : '#475569',
                   }}
                 />
               )}
@@ -235,9 +250,20 @@ export const CompactRoomHeader = ({
                   <Avatar
                     src={room.host.profilePhoto}
                     alt={room.host.name}
-                    sx={{ width: 18, height: 18, border: `1px solid ${theme.palette.divider}` }}
+                    sx={{
+                      width: 18,
+                      height: 18,
+                      border: `1px solid ${theme.palette.primary.main}`,
+                    }}
                   />
-                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isDark ? 'text.secondary' : '#475569',
+                      fontSize: '0.725rem',
+                      fontWeight: 600,
+                    }}
+                  >
                     {room.host.name}
                   </Typography>
                   {isHost && (
@@ -259,21 +285,32 @@ export const CompactRoomHeader = ({
               sx={{
                 width: 36,
                 height: 36,
-                borderRadius: 1.5,
-                color: copied ? 'success.main' : 'text.secondary',
-                bgcolor: copied ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.action.hover, 0.05),
+                borderRadius: 1,
+                color: copied ? 'success.main' : isDark ? 'text.secondary' : '#475569',
+                bgcolor: copied
+                  ? alpha(theme.palette.success.main, 0.1)
+                  : isDark
+                    ? alpha('#fff', 0.03)
+                    : '#f8fafc',
                 border: '1px solid',
-                borderColor: copied ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.divider, 0.6),
+                borderColor: copied
+                  ? alpha(theme.palette.success.main, 0.3)
+                  : isDark
+                    ? alpha('#fff', 0.08)
+                    : '#e2e8f0',
                 transition: 'all 0.18s ease-in-out',
                 '&:hover': {
                   color: 'primary.main',
                   borderColor: 'primary.main',
                   bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  transform: 'translateY(-1px)',
                 },
               }}
             >
-              {copied ? <CheckRoundedIcon sx={{ fontSize: 18 }} /> : <ShareRoundedIcon sx={{ fontSize: 17 }} />}
+              {copied ? (
+                <CheckRoundedIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <ShareRoundedIcon sx={{ fontSize: 17 }} />
+              )}
             </IconButton>
           </Tooltip>
 
@@ -286,11 +323,11 @@ export const CompactRoomHeader = ({
                 sx={{
                   width: 36,
                   height: 36,
-                  borderRadius: 1.5,
-                  color: 'text.secondary',
-                  bgcolor: alpha(theme.palette.action.hover, 0.05),
+                  borderRadius: 1,
+                  color: isDark ? 'text.secondary' : '#475569',
+                  bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
                   border: '1px solid',
-                  borderColor: alpha(theme.palette.divider, 0.6),
+                  borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                   transition: 'all 0.18s ease-in-out',
                   '&:hover': {
                     color: 'primary.main',
