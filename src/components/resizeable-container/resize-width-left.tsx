@@ -57,8 +57,6 @@ export const ResizeWidthLeft = ({
         display: 'flex',
         borderRadius: 1,
         bgcolor: 'background.paper',
-        border: `1px solid`,
-        borderColor: 'divider',
         boxShadow: 1,
       }}
     >

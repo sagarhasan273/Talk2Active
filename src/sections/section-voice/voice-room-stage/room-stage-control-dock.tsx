@@ -125,7 +125,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           py: { xs: 1, sm: 1.25 },
           borderRadius: 2,
           backdropFilter: 'blur(16px)',
-          bgcolor: isDark ? alpha('#1a1f2b', 0.92) : alpha('#ffffff', 0.95),
+          bgcolor: 'background.paper',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08),
           boxShadow: isDark
@@ -292,10 +292,10 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             {isMobile ? null : 'Leave'}
           </Button>
         </Box>
-      </Box>
+      </Box >
 
       {/* Floating Reaction Popover */}
-      <Popover
+      < Popover
         open={Boolean(emojiAnchor)}
         anchorEl={emojiAnchor}
         onClose={() => setEmojiAnchor(null)}
@@ -320,29 +320,31 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           },
         }}
       >
-        {REACTION_EMOJIS.map((emoji) => (
-          <IconButton
-            key={emoji}
-            size="small"
-            onClick={() => {
-              onSendReaction?.(emoji);
-              setEmojiAnchor(null);
-            }}
-            sx={{
-              fontSize: 20,
-              p: 0.75,
-              borderRadius: 1.5,
-              transition: 'transform 0.15s ease',
-              '&:hover': {
-                transform: 'scale(1.2)',
-                bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
-              },
-            }}
-          >
-            {emoji}
-          </IconButton>
-        ))}
-      </Popover>
+        {
+          REACTION_EMOJIS.map((emoji) => (
+            <IconButton
+              key={emoji}
+              size="small"
+              onClick={() => {
+                onSendReaction?.(emoji);
+                setEmojiAnchor(null);
+              }}
+              sx={{
+                fontSize: 20,
+                p: 0.75,
+                borderRadius: 1.5,
+                transition: 'transform 0.15s ease',
+                '&:hover': {
+                  transform: 'scale(1.2)',
+                  bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+                },
+              }}
+            >
+              {emoji}
+            </IconButton>
+          ))
+        }
+      </Popover >
     </>
   );
 };

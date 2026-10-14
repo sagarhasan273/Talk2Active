@@ -45,7 +45,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
       sx={{
         width: '100%',
         mt: 4,
-        mb: 2,
+        mb: 4,
         p: { xs: 2.5, sm: 3.5 },
         borderRadius: 1,
         position: 'relative',

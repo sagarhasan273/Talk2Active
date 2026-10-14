@@ -83,7 +83,7 @@ export const CompactRoomHeader = ({
         borderRadius: isMobile ? 1 : 0,
         p: 0.5,
         backdropFilter: 'blur(16px)',
-        bgcolor: isDark ? alpha('#181c26', 0.94) : alpha('#ffffff', 0.96),
+        bgcolor: 'background.paper',
         borderBottom: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
       }}

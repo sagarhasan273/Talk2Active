@@ -271,7 +271,8 @@ export const RoomChatPanel = ({
         flexDirection: 'column',
         height: '100%',
         minHeight: 0,
-        bgcolor: isDark ? '#181c26' : '#ffffff',
+        borderRadius: 1,
+        overflow: 'hidden',
       }}
     >
       {/* Header */}
@@ -284,7 +285,7 @@ export const RoomChatPanel = ({
           py: 1.5,
           borderBottom: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-          bgcolor: isDark ? 'transparent' : '#f8fafc',
+          bgcolor: 'background.paper',
           flexShrink: 0,
         }}
       >
@@ -316,6 +317,7 @@ export const RoomChatPanel = ({
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
+          bgcolor: 'background.default',
         }}
       >
         <Box
@@ -726,7 +728,6 @@ export const RoomChatPanel = ({
           p: 1.25,
           borderTop: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-          bgcolor: isDark ? '#181c26' : '#ffffff',
           flexShrink: 0,
         }}
       >

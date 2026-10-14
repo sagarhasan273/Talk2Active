@@ -233,7 +233,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           height: '100%',
           minHeight: 0,
           minWidth: 0,
-          bgcolor: isMobile ? 'transparent' : isDark ? '#12151e' : '#f8fafc',
+          bgcolor: isMobile ? 'transparent' : 'background.default',
           borderRadius: isMobile ? 0 : 1,
           border: isMobile ? 'none' : '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -992,7 +992,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         <RoomControlDock
           handRaised={handRaised}
           isScreenSharing={isLocalScreenSharing}
-          onToggleRaiseHand={onToggleRaiseHand || (() => {})}
+          onToggleRaiseHand={onToggleRaiseHand || (() => { })}
           onToggleScreenShare={onToggleScreenShare}
           onSendReaction={onSendReaction}
           onToggleChat={onToggleChat}
