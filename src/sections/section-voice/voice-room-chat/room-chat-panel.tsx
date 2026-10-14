@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-chat/room-chat-panel.tsx
+
 import { ArrowDown, Globe, Image as ImageIcon, Lock, Send, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,11 +21,11 @@ import {
 import axios from 'axios';
 import { RoomChatMessage } from './room-chat-message';
 
+import { filterVisibleMessages } from '@/_mock/_messages';
+import { useRoomChat } from '@/core/contexts/context-room-chat';
 import { useRoomTools } from '@/core/slices';
 import { ChatMessage } from '@/types/type-room';
 import { uploadImage } from '@/utils/helper';
-import { filterVisibleMessages } from '@/_mock/_messages';
-import { useRoomChat } from '@/core/contexts/context-room-chat';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -52,6 +54,7 @@ export const RoomChatPanel = ({
   title = 'Chat',
 }: RoomChatPanelProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { participants } = useRoomTools();
 
   const {
@@ -262,7 +265,15 @@ export const RoomChatPanel = ({
     (draft.trim().length > 0 || Boolean(uploadedImageUrl)) && !isUploading && !isAskingAi;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        bgcolor: isDark ? '#181c26' : '#ffffff',
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -271,16 +282,28 @@ export const RoomChatPanel = ({
           justifyContent: 'space-between',
           px: 2,
           py: 1.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          borderBottom: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? 'transparent' : '#f8fafc',
           flexShrink: 0,
         }}
       >
-        <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.primary' }}>
+        <Typography variant="subtitle2" fontWeight={800} sx={{ color: isDark ? 'text.primary' : '#0f172a' }}>
           {title}
         </Typography>
         {onClose && (
-          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
-            <X size={16} />
+          <IconButton
+            size="small"
+            onClick={onClose}
+            sx={{
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+              color: 'text.secondary',
+            }}
+          >
+            <X size={15} />
           </IconButton>
         )}
       </Box>
@@ -311,7 +334,7 @@ export const RoomChatPanel = ({
           {visibleMessages.length === 0 ? (
             <Typography
               variant="caption"
-              sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}
+              sx={{ color: isDark ? 'text.secondary' : '#64748b', textAlign: 'center', mt: 2 }}
             >
               No messages yet — say hello!
             </Typography>
@@ -343,7 +366,7 @@ export const RoomChatPanel = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 20,
-              borderRadius: 999,
+              borderRadius: 1,
               px: 1.5,
               py: 0.5,
               textTransform: 'none',
@@ -385,10 +408,11 @@ export const RoomChatPanel = ({
             gap: 1,
             px: 2,
             py: 0.75,
-            borderTop: `1px solid ${replyingTo.privateTo ? theme.palette.warning.main : theme.palette.primary.main}`,
+            borderTop: '1px solid',
+            borderColor: replyingTo.privateTo ? theme.palette.warning.main : theme.palette.primary.main,
             bgcolor: alpha(
               replyingTo.privateTo ? theme.palette.warning.main : theme.palette.primary.main,
-              0.08
+              isDark ? 0.16 : 0.08
             ),
           }}
         >
@@ -398,14 +422,14 @@ export const RoomChatPanel = ({
               <Typography
                 sx={{
                   fontSize: 11,
-                  fontWeight: 700,
+                  fontWeight: 800,
                   color: replyingTo.privateTo ? 'warning.dark' : 'primary.main',
                 }}
               >
                 Replying {replyingTo.privateTo ? 'privately ' : ''}to {replyingTo.authorName}
               </Typography>
             </Box>
-            <Typography noWrap sx={{ fontSize: 12, color: 'text.secondary', maxWidth: 260 }}>
+            <Typography noWrap sx={{ fontSize: 12, color: isDark ? 'text.secondary' : '#475569', maxWidth: 260 }}>
               {replyingTo.text}
             </Typography>
           </Box>
@@ -425,13 +449,14 @@ export const RoomChatPanel = ({
             gap: 1,
             px: 2,
             py: 0.5,
-            bgcolor: alpha(theme.palette.warning.main, 0.1),
-            borderTop: `1px dashed ${alpha(theme.palette.warning.main, 0.4)}`,
+            bgcolor: alpha(theme.palette.warning.main, isDark ? 0.14 : 0.08),
+            borderTop: '1px dashed',
+            borderColor: alpha(theme.palette.warning.main, 0.4),
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
             <Lock size={12} color={theme.palette.warning.dark} />
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'warning.dark' }} noWrap>
+            <Typography sx={{ fontSize: 11, fontWeight: 800, color: 'warning.dark' }} noWrap>
               Whispering to @{whisperTarget.name}
             </Typography>
           </Box>
@@ -451,8 +476,9 @@ export const RoomChatPanel = ({
           sx={{
             px: 2,
             py: 0.85,
-            borderTop: `1px solid ${theme.palette.divider}`,
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            borderTop: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            bgcolor: alpha(theme.palette.primary.main, 0.06),
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -466,7 +492,7 @@ export const RoomChatPanel = ({
           <LinearProgress
             variant="determinate"
             value={uploadProgress}
-            sx={{ height: 4, borderRadius: 2 }}
+            sx={{ height: 4, borderRadius: 1 }}
           />
         </Box>
       )}
@@ -480,8 +506,9 @@ export const RoomChatPanel = ({
             justifyContent: 'space-between',
             px: 2,
             py: 1,
-            borderTop: `1px solid ${theme.palette.divider}`,
-            bgcolor: alpha(theme.palette.background.paper, 0.9),
+            borderTop: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            bgcolor: isDark ? '#181c26' : '#ffffff',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
@@ -492,14 +519,15 @@ export const RoomChatPanel = ({
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 1.25,
+                borderRadius: 1,
                 objectFit: 'cover',
-                border: `1px solid ${theme.palette.divider}`,
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
                 flexShrink: 0,
               }}
             />
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="caption" fontWeight={700} sx={{ display: 'block' }} noWrap>
+              <Typography variant="caption" fontWeight={800} sx={{ display: 'block' }} noWrap>
                 Image ready to send
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>
@@ -527,9 +555,10 @@ export const RoomChatPanel = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           px: 1.5,
-          py: 0.5,
-          borderTop: `1px solid ${theme.palette.divider}`,
-          bgcolor: alpha(theme.palette.background.default, 0.6),
+          py: 0.75,
+          borderTop: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -544,14 +573,25 @@ export const RoomChatPanel = ({
               fontWeight: 700,
               py: 0.3,
               px: 1,
-              borderRadius: 1.5,
-              color: whisperTarget ? 'warning.dark' : 'text.secondary',
-              bgcolor: whisperTarget ? alpha(theme.palette.warning.main, 0.12) : 'transparent',
-              border: `1px solid ${whisperTarget ? alpha(theme.palette.warning.main, 0.4) : alpha(theme.palette.divider, 0.4)}`,
+              borderRadius: 1,
+              color: whisperTarget ? 'warning.dark' : isDark ? 'text.secondary' : '#475569',
+              bgcolor: whisperTarget
+                ? alpha(theme.palette.warning.main, 0.16)
+                : isDark
+                  ? alpha('#fff', 0.04)
+                  : '#ffffff',
+              border: '1px solid',
+              borderColor: whisperTarget
+                ? alpha(theme.palette.warning.main, 0.4)
+                : isDark
+                  ? alpha('#fff', 0.08)
+                  : '#e2e8f0',
               '&:hover': {
                 bgcolor: whisperTarget
-                  ? alpha(theme.palette.warning.main, 0.2)
-                  : alpha(theme.palette.text.primary, 0.05),
+                  ? alpha(theme.palette.warning.main, 0.22)
+                  : isDark
+                    ? alpha('#fff', 0.08)
+                    : '#f1f5f9',
               },
             }}
           >
@@ -562,6 +602,14 @@ export const RoomChatPanel = ({
             anchorEl={whisperAnchorEl}
             open={Boolean(whisperAnchorEl)}
             onClose={() => setWhisperAnchorEl(null)}
+            PaperProps={{
+              sx: {
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                bgcolor: isDark ? '#181c26' : '#ffffff',
+              },
+            }}
           >
             <Typography
               variant="caption"
@@ -606,7 +654,7 @@ export const RoomChatPanel = ({
             hidden
             onChange={handleImageFileChange}
           />
-          <Tooltip title="Attach image">
+          <Tooltip title="Attach image" arrow>
             <span>
               <IconButton
                 size="small"
@@ -614,9 +662,19 @@ export const RoomChatPanel = ({
                 onClick={() => fileInputRef.current?.click()}
                 sx={{
                   p: 0.6,
-                  color: uploadedImageUrl ? 'primary.main' : 'text.secondary',
-                  border: `1px solid ${uploadedImageUrl ? theme.palette.primary.main : alpha(theme.palette.divider, 0.4)}`,
-                  borderRadius: 1.5,
+                  borderRadius: 1,
+                  color: uploadedImageUrl ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
+                  bgcolor: uploadedImageUrl
+                    ? alpha(theme.palette.primary.main, 0.12)
+                    : isDark
+                      ? alpha('#fff', 0.04)
+                      : '#ffffff',
+                  border: '1px solid',
+                  borderColor: uploadedImageUrl
+                    ? theme.palette.primary.main
+                    : isDark
+                      ? alpha('#fff', 0.08)
+                      : '#e2e8f0',
                 }}
               >
                 <ImageIcon size={15} />
@@ -628,6 +686,7 @@ export const RoomChatPanel = ({
         {/* Ask AI Button */}
         <Tooltip
           title={draft.trim() ? 'Ask AI this question' : 'Type a question first, then ask AI'}
+          arrow
         >
           <span>
             <Button
@@ -642,9 +701,10 @@ export const RoomChatPanel = ({
                 fontWeight: 700,
                 py: 0.3,
                 px: 1,
-                borderRadius: 1.5,
-                color: isAskingAi ? 'primary.main' : 'text.secondary',
-                borderColor: alpha(theme.palette.divider, 0.4),
+                borderRadius: 1,
+                color: isAskingAi ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
+                borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                bgcolor: isDark ? alpha('#fff', 0.02) : '#ffffff',
                 '&:hover': {
                   color: 'primary.main',
                   borderColor: 'primary.main',
@@ -664,7 +724,9 @@ export const RoomChatPanel = ({
           alignItems: 'center',
           gap: 1,
           p: 1.25,
-          borderTop: `1px solid ${theme.palette.divider}`,
+          borderTop: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? '#181c26' : '#ffffff',
           flexShrink: 0,
         }}
       >
@@ -691,19 +753,24 @@ export const RoomChatPanel = ({
           sx={{
             flex: 1,
             minWidth: 0,
-            bgcolor: 'background.neutral',
-            border: `1px solid ${whisperTarget ? alpha(theme.palette.warning.main, 0.4) : theme.palette.divider}`,
-            borderRadius: 2,
+            bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
+            border: '1px solid',
+            borderColor: whisperTarget
+              ? theme.palette.warning.main
+              : isDark
+                ? alpha('#fff', 0.1)
+                : '#e2e8f0',
+            borderRadius: 1,
             px: 1.5,
             py: 1,
             fontSize: 13,
-            color: 'text.primary',
+            color: isDark ? 'text.primary' : '#0f172a',
             outline: 'none',
-            '&::placeholder': { color: 'text.disabled' },
+            '&::placeholder': { color: isDark ? 'text.disabled' : '#94a3b8' },
             '&:focus': {
               borderColor: whisperTarget
                 ? theme.palette.warning.main
-                : alpha(theme.palette.primary.main, 0.6),
+                : theme.palette.primary.main,
             },
           }}
         />
@@ -712,12 +779,20 @@ export const RoomChatPanel = ({
           onClick={send}
           disabled={!canSend}
           sx={{
+            width: 38,
+            height: 38,
+            borderRadius: 1,
             bgcolor: whisperTarget ? 'warning.main' : 'primary.main',
             color: whisperTarget ? 'common.black' : 'primary.contrastText',
+            boxShadow: 'none',
             '&:hover': {
-              bgcolor: whisperTarget ? 'warning.dark' : alpha(theme.palette.primary.main, 0.85),
+              bgcolor: whisperTarget ? 'warning.dark' : 'primary.dark',
+              boxShadow: 'none',
             },
-            '&.Mui-disabled': { bgcolor: 'background.neutral', color: 'text.disabled' },
+            '&.Mui-disabled': {
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#f1f5f9',
+              color: isDark ? 'text.disabled' : '#cbd5e1',
+            },
           }}
         >
           <Send size={16} />

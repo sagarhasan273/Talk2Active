@@ -1,4 +1,5 @@
 // src/sections/section-voice/voice-room-chat/room-chat-drawer.tsx
+
 import { Drawer } from '@mui/material';
 
 import { RoomParticipantType } from '@/types/type-room';
@@ -47,8 +48,8 @@ export const RoomChatDrawer = ({
         sx: {
           height: '75vh',
           maxHeight: 750,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          borderTopLeftRadius: 1,
+          borderTopRightRadius: 1,
           borderBottom: 'none',
         },
       }}

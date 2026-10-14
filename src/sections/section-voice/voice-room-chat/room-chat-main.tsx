@@ -21,6 +21,7 @@ export type RoomChatMainProps = {
 
 export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 
   const {
@@ -47,15 +48,19 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
         height: '100%',
         minHeight: 0,
         alignItems: 'stretch',
-        bgcolor: 'background.paper',
+        bgcolor: isDark ? '#181c26' : '#ffffff',
         borderRadius: 1,
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        border: '1px solid',
+        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
         position: 'relative',
+        boxShadow: isDark
+          ? '0 4px 20px -2px rgba(0, 0, 0, 0.4)'
+          : '0 4px 16px -2px rgba(15, 23, 42, 0.05)',
       }}
     >
       {chatCollapsedBoolean.value ? (
         /* Collapsed Icon Rail */
-        <Tooltip title="Expand chat" placement="left">
+        <Tooltip title="Expand chat" placement="left" arrow>
           <Box
             onClick={handleExpand}
             role="button"
@@ -64,11 +69,12 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
               if (e.key === 'Enter' || e.key === ' ') handleExpand();
             }}
             sx={{
-              width: 32,
+              width: 34,
               height: '100%',
               borderRadius: 1,
-              bgcolor: 'background.paper',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              bgcolor: isDark ? '#181c26' : '#ffffff',
+              borderRight: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -76,24 +82,30 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
               gap: 2,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              color: 'text.secondary',
+              color: isDark ? 'text.secondary' : '#64748b',
               '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.12),
+                bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
                 color: 'primary.main',
-                borderColor: alpha(theme.palette.primary.main, 0.3),
               },
             }}
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
             <Badge
               badgeContent={unreadCount}
               color="error"
               invisible={!isUnreadMessage}
               max={99}
+              sx={{
+                '& .MuiBadge-badge': {
+                  borderRadius: 0.75,
+                  fontSize: 9,
+                  fontWeight: 800,
+                },
+              }}
             >
-              <MessageSquare size={18} style={{ transform: 'rotate(90deg)' }} />
+              <MessageSquare size={16} style={{ transform: 'rotate(90deg)' }} />
             </Badge>
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </Box>
         </Tooltip>
       ) : (
@@ -124,7 +136,7 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
           </ResizeWidthLeft>
 
           {/* Quick Collapse Arrow Indicator */}
-          <Tooltip title="Collapse chat" placement="left">
+          <Tooltip title="Collapse chat" placement="left" arrow>
             <Box
               onClick={() => chatCollapsedBoolean.onTrue()}
               role="button"
@@ -138,19 +150,22 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
                 left: -12,
                 width: 24,
                 height: 24,
-                borderRadius: '50%',
-                bgcolor: 'background.paper',
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: theme.shadows[2],
+                borderRadius: 1,
+                bgcolor: isDark ? '#181c26' : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.5)' : '0 2px 6px rgba(15,23,42,0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 zIndex: 10,
-                color: 'text.secondary',
+                color: isDark ? 'text.secondary' : '#64748b',
+                transition: 'all 0.15s ease',
                 '&:hover': {
                   color: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  bgcolor: isDark ? alpha('#fff', 0.08) : '#f8fafc',
+                  transform: 'scale(1.05)',
                 },
               }}
             >
