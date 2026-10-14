@@ -1,14 +1,14 @@
-import { useTracks } from '@livekit/components-react';
+// src/sections/section-voice/voice-room-chat/room-chat-main.tsx
+
 import { Badge, Box, Tooltip } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
-import { Track } from 'livekit-client';
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 
-import RoomChatPanel from './room-chat-panel';
 import { useRoomChat } from '@/core/contexts/context-room-chat';
+import RoomChatPanel from './room-chat-panel';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
 const MIN_SIDEBAR_WIDTH = 300;
@@ -24,7 +24,6 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 
   const {
-    messages,
     currentUserId,
     unreadCount,
     isUnreadMessage,
@@ -34,17 +33,6 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
     handleEditMessage,
     handleReactMessage,
   } = useRoomChat();
-
-  // Detect active screen shares
-  const screenShareTracks = useTracks([Track.Source.ScreenShare]);
-  const isPresenting = Boolean(screenShareTracks[0]?.publication);
-
-  // Auto-collapse chat rail when presentation mode begins
-  useEffect(() => {
-    if (isPresenting) {
-      chatCollapsedBoolean.onTrue();
-    }
-  }, [isPresenting, chatCollapsedBoolean]);
 
   const handleExpand = () => {
     chatCollapsedBoolean.onFalse();
@@ -135,42 +123,40 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
             />
           </ResizeWidthLeft>
 
-          {/* Quick Collapse Arrow Indicator for presentations */}
-          {isPresenting && (
-            <Tooltip title="Collapse chat for presentation" placement="left">
-              <Box
-                onClick={() => chatCollapsedBoolean.onTrue()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') chatCollapsedBoolean.onTrue();
-                }}
-                sx={{
-                  position: 'absolute',
-                  top: 14,
-                  left: -12,
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  bgcolor: 'background.paper',
-                  border: `1px solid ${theme.palette.divider}`,
-                  boxShadow: theme.shadows[2],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  color: 'text.secondary',
-                  '&:hover': {
-                    color: 'primary.main',
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  },
-                }}
-              >
-                <ChevronRight size={14} />
-              </Box>
-            </Tooltip>
-          )}
+          {/* Quick Collapse Arrow Indicator */}
+          <Tooltip title="Collapse chat" placement="left">
+            <Box
+              onClick={() => chatCollapsedBoolean.onTrue()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') chatCollapsedBoolean.onTrue();
+              }}
+              sx={{
+                position: 'absolute',
+                top: 14,
+                left: -12,
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                bgcolor: 'background.paper',
+                border: `1px solid ${theme.palette.divider}`,
+                boxShadow: theme.shadows[2],
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              <ChevronRight size={14} />
+            </Box>
+          </Tooltip>
         </Box>
       )}
     </Box>

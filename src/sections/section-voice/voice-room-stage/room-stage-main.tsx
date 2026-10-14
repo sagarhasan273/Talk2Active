@@ -10,6 +10,8 @@ import {
   ChevronRight,
   ChevronUp,
   Columns,
+  Eye,
+  EyeOff,
   Grid,
   Maximize,
   Minimize,
@@ -81,7 +83,10 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const [videoFit, setVideoFit] = useState<'contain' | 'cover'>('contain');
   const [isElementFullscreen, setIsElementFullscreen] = useState(false);
 
-  // LiveKit Screen Share Subscriptions (Supports Multiple Simultaneous Presenters)
+  // User Choice State: Whether the user wants to view active screen shares
+  const [showScreenShareView, setShowScreenShareView] = useState(true);
+
+  // LiveKit Screen Share Subscriptions
   const rawScreenShareTracks = useTracks([Track.Source.ScreenShare]);
 
   const activeScreenShareTracks = useMemo(
@@ -121,7 +126,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     }
   }, [hasScreenShare, activeScreenShareTracks, selectedTrackSid, showAllScreensGrid]);
 
-  // Default to bottom strip on mobile/tablet when screen sharing starts
   const effectiveLayout: StageLayoutMode =
     isTablet && stageLayout === 'sidebar' ? 'bottom' : stageLayout;
 
@@ -214,6 +218,9 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     },
   };
 
+  // Determine if screen share is actively rendered based on user choice
+  const isDisplayingScreenShare = hasScreenShare && showScreenShareView;
+
   return (
     <>
       <RoomStageListener />
@@ -252,12 +259,12 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
             minWidth: 0,
             display: 'flex',
             flexDirection:
-              hasScreenShare && effectiveLayout === 'sidebar' ? 'row' : 'column',
+              isDisplayingScreenShare && effectiveLayout === 'sidebar' ? 'row' : 'column',
             overflow: 'hidden',
           }}
         >
           {/* ── 1. SCREEN SHARE STAGE CANVAS ── */}
-          {hasScreenShare && focusedScreenShare && (
+          {isDisplayingScreenShare && focusedScreenShare && (
             <Box
               ref={screenShareContainerRef}
               sx={{
@@ -382,7 +389,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 )}
               </Stack>
 
-              {/* TOP-RIGHT HUD: Layout & Video Controls */}
+              {/* TOP-RIGHT HUD: Layout & Video Controls + View Toggle */}
               <Stack
                 direction="row"
                 alignItems="center"
@@ -394,6 +401,18 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   zIndex: 4,
                 }}
               >
+                {/* User Choice Toggle: Hide / Show Screen Share */}
+                <Tooltip title="Hide screen share and view speaker grid" arrow>
+                  <Button
+                    size="small"
+                    onClick={() => setShowScreenShareView(false)}
+                    startIcon={<EyeOff size={13} />}
+                    sx={hudGlassButtonSx(false)}
+                  >
+                    Hide Share
+                  </Button>
+                </Tooltip>
+
                 {!isTablet && (
                   <Stack
                     direction="row"
@@ -671,11 +690,45 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
             </Box>
           )}
 
-          {/* ── 2. PARTICIPANT TILES DOCK (Sidebar / Bottom Filmstrip / Standard Grid) ── */}
-          {(!hasScreenShare || effectiveLayout !== 'cinema') && (
+          {/* ── 2. PARTICIPANT TILES DOCK / HIDDEN SCREEN SHARE BANNER ── */}
+          {(!isDisplayingScreenShare || effectiveLayout !== 'cinema') && (
             <>
-              {hasScreenShare && effectiveLayout === 'sidebar' ? (
-                /* MODE A: Right Vertical Scrollable Sidebar Dock (Google Meet Style) */
+              {/* If user hid screen share while someone is presenting, show a floating restore banner at top */}
+              {hasScreenShare && !showScreenShareView && (
+                <Box
+                  sx={{
+                    width: '100%',
+                    p: 1.25,
+                    bgcolor: alpha(theme.palette.primary.main, 0.12),
+                    borderBottom: '1px solid',
+                    borderColor: alpha(theme.palette.primary.main, 0.25),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Monitor size={16} color={theme.palette.primary.main} />
+                    <Typography variant="caption" fontWeight={700} color="text.primary">
+                      Someone is sharing their screen in this room.
+                    </Typography>
+                  </Stack>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disableElevation
+                    onClick={() => setShowScreenShareView(true)}
+                    startIcon={<Eye size={13} />}
+                    sx={{ borderRadius: 1, textTransform: 'none', fontSize: 11.5, fontWeight: 700 }}
+                  >
+                    View Screen Share
+                  </Button>
+                </Box>
+              )}
+
+              {isDisplayingScreenShare && effectiveLayout === 'sidebar' ? (
+                /* MODE A: Right Vertical Scrollable Sidebar Dock */
                 <Box
                   sx={{
                     width: { md: 200, lg: 200 },
@@ -742,7 +795,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     </Stack>
                   </Box>
 
-                  {/* Vertical Scrolling Container */}
                   <Box
                     ref={scrollContainerRef}
                     sx={{
@@ -778,8 +830,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     )}
                   </Box>
                 </Box>
-              ) : hasScreenShare && effectiveLayout === 'bottom' ? (
-                /* MODE B: Bottom Horizontal Scrollable Filmstrip (Discord Style) */
+              ) : isDisplayingScreenShare && effectiveLayout === 'bottom' ? (
+                /* MODE B: Bottom Horizontal Scrollable Filmstrip */
                 <Box
                   sx={{
                     position: 'relative',
@@ -815,7 +867,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     <ChevronLeft size={16} />
                   </IconButton>
 
-                  {/* Horizontal Scrolling Container */}
                   <Box
                     ref={scrollContainerRef}
                     sx={{
@@ -881,7 +932,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   </IconButton>
                 </Box>
               ) : (
-                /* MODE C: Standard Full-Stage Scrollable Speaker Grid (No Screen Share) */
+                /* MODE C: Standard Full-Stage Scrollable Speaker Grid */
                 <Box
                   ref={scrollContainerRef}
                   sx={{
@@ -941,7 +992,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
         <RoomControlDock
           handRaised={handRaised}
           isScreenSharing={isLocalScreenSharing}
-          onToggleRaiseHand={onToggleRaiseHand || (() => { })}
+          onToggleRaiseHand={onToggleRaiseHand || (() => {})}
           onToggleScreenShare={onToggleScreenShare}
           onSendReaction={onSendReaction}
           onToggleChat={onToggleChat}
