@@ -197,14 +197,13 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
     },
   });
 
-  // Subtle custom scrollbar so users can always drag/scroll vertically or horizontally
   const scrollableSx = {
     WebkitOverflowScrolling: 'touch',
     scrollbarWidth: 'thin',
     scrollbarColor: `${isDark ? alpha('#fff', 0.18) : '#cbd5e1'} transparent`,
     '&::-webkit-scrollbar': {
-      width: 5,
-      height: 5,
+      width: 6,
+      height: 6,
     },
     '&::-webkit-scrollbar-track': {
       background: 'transparent',
@@ -245,7 +244,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           />
         )}
 
-        {/* Main Stage Workspace (Flex Row for Sidebar Mode, Column for Bottom/Standard Mode) */}
+        {/* Main Stage Workspace */}
         <Box
           sx={{
             flex: 1,
@@ -366,7 +365,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   );
                 })}
 
-                {/* Multi-Stream Split Grid Toggle (Only shows when 2+ users share screens) */}
                 {activeScreenShareTracks.length > 1 && (
                   <Tooltip title="Watch all shared screens side-by-side" arrow>
                     <Button
@@ -396,7 +394,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   zIndex: 4,
                 }}
               >
-                {/* Layout Switcher Group (Desktop) */}
                 {!isTablet && (
                   <Stack
                     direction="row"
@@ -474,7 +471,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   </Stack>
                 )}
 
-                {/* Mobile/Tablet Cinema Toggle */}
                 {isTablet && (
                   <Button
                     size="small"
@@ -488,7 +484,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   </Button>
                 )}
 
-                {/* Distinct Zoom In / Zoom Out Toggle (Uses ZoomIn / ZoomOut icons) */}
                 {!showAllScreensGrid && (
                   <Tooltip
                     title={
@@ -514,7 +509,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                   </Tooltip>
                 )}
 
-                {/* Native Fullscreen Toggle (Uses Maximize / Minimize icons) */}
                 <Tooltip
                   title={isElementFullscreen ? 'Exit Fullscreen' : 'Fullscreen Presentation'}
                   arrow
@@ -533,7 +527,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 </Tooltip>
               </Stack>
 
-              {/* VIDEO RENDERING AREA: Single Focused Stream OR Multi-Stream Grid */}
+              {/* VIDEO RENDERING AREA */}
               {showAllScreensGrid && activeScreenShareTracks.length > 1 ? (
                 <Box
                   sx={{
@@ -629,7 +623,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     }}
                   />
 
-                  {/* Bottom-Left Active Stream Label */}
                   <Box
                     sx={{
                       position: 'absolute',
@@ -685,8 +678,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                 /* MODE A: Right Vertical Scrollable Sidebar Dock (Google Meet Style) */
                 <Box
                   sx={{
-                    width: { md: 210, lg: 228 },
-                    minWidth: { md: 210, lg: 228 },
+                    width: { md: 200, lg: 200 },
+                    minWidth: { md: 200, lg: 200 },
                     height: '100%',
                     minHeight: 0,
                     display: 'flex',
@@ -696,7 +689,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Sidebar Header with Up/Down Scroll Controls */}
                   <Box
                     sx={{
                       px: 1.5,
@@ -750,7 +742,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     </Stack>
                   </Box>
 
-                  {/* Vertical Scrolling Participant Column */}
+                  {/* Vertical Scrolling Container */}
                   <Box
                     ref={scrollContainerRef}
                     sx={{
@@ -758,11 +750,11 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       minHeight: 0,
                       overflowY: 'auto',
                       overflowX: 'hidden',
-                      p: 1.25,
+                      p: 1.5,
                       display: 'flex',
                       flexDirection: 'column',
                       flexWrap: 'nowrap',
-                      gap: 1.25,
+                      gap: 1.5,
                       ...scrollableSx,
                     }}
                   >
@@ -773,14 +765,14 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       sx={{
                         width: '100% !important',
                         minWidth: '100%',
-                        minHeight: 136,
-                        height: 136,
+                        minHeight: 148,
+                        height: 148,
                         flexShrink: 0,
                       }}
                     />
 
                     {openSlots > 0 && (
-                      <Box sx={{ width: '100%', height: 124, minHeight: 124, flexShrink: 0 }}>
+                      <Box sx={{ width: '100%', height: 136, minHeight: 136, flexShrink: 0 }}>
                         <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />
                       </Box>
                     )}
@@ -794,7 +786,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     width: '100%',
                     minWidth: 0,
                     flex: 1,
-                    minHeight: 148,
+                    minHeight: 164,
                     display: 'flex',
                     alignItems: 'center',
                     bgcolor: isDark ? '#151922' : '#f1f5f9',
@@ -823,6 +815,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     <ChevronLeft size={16} />
                   </IconButton>
 
+                  {/* Horizontal Scrolling Container */}
                   <Box
                     ref={scrollContainerRef}
                     sx={{
@@ -832,7 +825,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       alignItems: 'center',
                       gap: 1.5,
                       px: { xs: 2, md: 3 },
-                      py: 1.25,
+                      py: 1,
                       width: '100%',
                       minWidth: 0,
                       height: '100%',
@@ -846,10 +839,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       raisedHandsSet={raisedHandsSet}
                       participantReactions={participantReactions}
                       sx={{
-                        width: { xs: 128, sm: 140 },
-                        minWidth: { xs: 128, sm: 140 },
-                        height: 132,
-                        minHeight: 132,
+                        width: { xs: 138, sm: 152, md: 168 },
+                        minWidth: { xs: 138, sm: 152, md: 168 },
                         flexShrink: 0,
                       }}
                     />
@@ -857,10 +848,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                     {openSlots > 0 && (
                       <Box
                         sx={{
-                          width: { xs: 128, sm: 140 },
-                          minWidth: { xs: 128, sm: 140 },
-                          height: 132,
-                          minHeight: 132,
+                          width: { xs: 138, sm: 152, md: 168 },
+                          minWidth: { xs: 138, sm: 152, md: 168 },
                           flexShrink: 0,
                         }}
                       >
@@ -924,6 +913,8 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       raisedHandsSet={raisedHandsSet}
                       participantReactions={participantReactions}
                       sx={{
+                        width: { xs: 'calc(50% - 8px)', sm: 148, md: 168 },
+                        minHeight: 148,
                         flexShrink: 0,
                       }}
                     />
@@ -932,7 +923,7 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
                       <Box
                         sx={{
                           width: { xs: 'calc(50% - 8px)', sm: 148, md: 168 },
-                          minHeight: 168,
+                          minHeight: 148,
                           flexShrink: 0,
                         }}
                       >

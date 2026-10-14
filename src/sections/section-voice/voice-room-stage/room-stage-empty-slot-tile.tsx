@@ -17,8 +17,9 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
     <Box
       onClick={onClick}
       sx={{
-        height: 1,
-        width: 1,
+        width: { xs: 128, sm: 140, md: 168 },
+        minWidth: { xs: 128, sm: 140, md: 168 },
+        minHeight: 148,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

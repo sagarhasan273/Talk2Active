@@ -297,7 +297,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             'border-color 0.2s ease, transform 0.18s ease, background-color 0.2s ease, box-shadow 0.2s ease',
 
           '&:hover': {
-            transform: 'translateY(-2px)',
             borderColor: handRaised
               ? theme.palette.warning.main
               : isSpeaking

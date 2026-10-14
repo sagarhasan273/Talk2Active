@@ -230,7 +230,14 @@ export const RoomStageParticipants = ({
   ]);
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'contents',
+        width: 1,
+        ...sx,
+      }}
+      {...other}
+    >
       {displayParticipants.map((participant) => {
         const isGhost = Boolean(participant.isGhost);
         const isSharingScreen = sharingParticipantIds.has(String(participant.id));
@@ -239,16 +246,16 @@ export const RoomStageParticipants = ({
           <Box
             key={participant.id}
             sx={{
-              width: { xs: 'calc(50% - 8px)', sm: 148, md: 168 },
-              minHeight: 168,
+              width: { xs: 128, sm: 140, md: 168 },
+              minWidth: { xs: 128, sm: 140, md: 168 },
+              minHeight: 148,
               position: 'relative',
+              flexShrink: 0,
               transition: 'opacity 0.4s ease, filter 0.4s ease',
               opacity: isGhost ? 0.35 : 1,
               filter: isGhost ? 'grayscale(90%)' : 'none',
               pointerEvents: isGhost ? 'none' : 'auto',
-              ...sx,
             }}
-            {...other}
           >
             {/* Live Screen-Sharing Indicator Badge on Tile */}
             {isSharingScreen && !isGhost && (
@@ -323,7 +330,7 @@ export const RoomStageParticipants = ({
           </Box>
         );
       })}
-    </>
+    </Box>
   );
 };
 
