@@ -459,16 +459,10 @@ export const VoiceRoomCard = ({
                 >
                   {/* Speaker Ring */}
                   <Box
-                    className="speaker-ring"
                     sx={{
                       width: scale.size,
                       height: scale.size,
                       borderRadius: '50%',
-                      p: 0.2,
-                      background: ringGradient,
-                      transition: 'all 0.22s ease',
-                      position: 'relative',
-                      flexShrink: 0,
                     }}
                   >
                     <Avatar

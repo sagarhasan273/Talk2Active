@@ -1,3 +1,5 @@
+// src/core/contexts/context-social-chat.tsx
+
 import React, {
   createContext,
   useCallback,
@@ -7,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
   useGetHistoryQuery,
@@ -23,7 +26,7 @@ import type {
   SocialChatReaction,
   SocialChatTabKey,
 } from '@/types/type-social';
-import { useCredentials } from '../slices';
+import { updateLatestMessage, useCredentials } from '../slices';
 
 interface SocialChatContextValue {
   isChatPanelVisible: boolean;
@@ -41,12 +44,13 @@ interface SocialChatContextValue {
   replyingTo: SocialChatMessage | null;
   setReplyingTo: React.Dispatch<React.SetStateAction<SocialChatMessage | null>>;
 
-  // Unread Metrics
-  unreadCounts: Record<string, number>; // { [friendUserId]: unseenCount }
-  unreadFriendsCount: number;           // Number of unique friends with unseen messages
-  totalUnreadMessages: number;          // Total unseen messages across all friends
+  // Unread & Online Metrics
+  unreadCounts: Record<string, number>;
+  unreadFriendsCount: number;
+  totalUnreadMessages: number;
   hasUnreadMessages: boolean;
   activeChatUnreadCount: number;
+  onlineStatusMap: Record<string, boolean>; // { [userId]: isOnline }
   isFriendUnread: (friendUserId: string) => boolean;
   getFriendUnreadCount: (friendUserId: string) => number;
   setIsAtBottom: (atBottom: boolean) => void;
@@ -64,6 +68,7 @@ const SocialChatContext = createContext<SocialChatContextValue | undefined>(unde
 export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { socket } = useSocket();
   const { user } = useCredentials();
+  const dispatch = useDispatch();
 
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
@@ -76,6 +81,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [activeChatUnreadCount, setActiveChatUnreadCount] = useState<number>(0);
+  const [onlineStatusMap, setOnlineStatusMap] = useState<Record<string, boolean>>({});
 
   const unreadCountsRef = useRef<Record<string, number>>({});
   unreadCountsRef.current = unreadCounts;
@@ -102,9 +108,8 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const merged: Record<string, number> = { ...prev };
 
       Object.entries(serverMap).forEach(([senderId, count]) => {
-        // Don't overwrite if user already read this friend's chat in current session
-        if (!readFriendIdsRef.current.has(senderId) && count > 0) {
-          merged[senderId] = Math.max(merged[senderId] || 0, count);
+        if (!readFriendIdsRef.current.has(senderId) && (count as number) > 0) {
+          merged[senderId] = Math.max(merged[senderId] || 0, count as number);
         }
       });
 
@@ -148,7 +153,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [unreadCounts]);
 
-  // Helpers to check any specific user's unread state
   const isFriendUnread = useCallback(
     (targetUserId: string) => Boolean((unreadCounts[targetUserId] || 0) > 0),
     [unreadCounts]
@@ -159,7 +163,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [unreadCounts]
   );
 
-  // Mark a friend's messages as read (guarded against duplicate API calls)
   const markFriendAsRead = useCallback(
     (targetUserId: string, forceApi = false) => {
       if (!targetUserId) return;
@@ -193,14 +196,16 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [friendId, markFriendAsRead]
   );
 
-  // Load conversation history into state
+  // Load conversation history into state and sort messages chronologically
   useEffect(() => {
     if (!activeFriend) {
       setMessages([]);
       setReplyingTo(null);
       setActiveChatUnreadCount(0);
     } else if (!fetchingHistory && historyResponse?.data) {
-      const fetched = historyResponse.data as SocialChatMessage[];
+      const fetched = Array.from(historyResponse.data as SocialChatMessage[]).map((m) => ({ ...m })).sort(
+        (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+      );
       setMessages((prev) => {
         if (prev.length === 0 || prev[0]?.id !== fetched[0]?.id) return fetched;
         return prev.length > fetched.length ? prev : fetched;
@@ -208,7 +213,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [historyResponse, activeFriend, fetchingHistory]);
 
-  // Real-Time Socket.io Listeners
+  // Real-Time Socket.io Listeners (Messages, Reactions, & User Online Status)
   useEffect(() => {
     if (!socket) return;
 
@@ -219,6 +224,18 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const isFromSelf = String(senderId) === String(currentUserId);
       const activeFriendId = activeFriend?.accountDetails?.userId;
 
+      // Bubble conversation to top in Redux store
+      const otherUserId = isFromSelf ? incomingMsg.recipientId : senderId;
+      if (otherUserId) {
+        dispatch(
+          updateLatestMessage({
+            recipientId: String(otherUserId),
+            text: incomingMsg.text,
+            createdAt: incomingMsg.createdAt || new Date().toISOString(),
+          })
+        );
+      }
+
       const belongsToActiveConversation =
         Boolean(activeFriendId) &&
         (String(senderId) === String(activeFriendId) ||
@@ -227,7 +244,10 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (belongsToActiveConversation) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === incomingMsg.id)) return prev;
-          return [...prev, { ...incomingMsg, isSelf: isFromSelf }];
+          const nextList = [...prev, { ...incomingMsg, isSelf: isFromSelf }];
+          return nextList.sort(
+            (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+          );
         });
 
         if (!isFromSelf) {
@@ -275,25 +295,35 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       );
     };
 
+    const handleUserStatusChanged = (statusData: { userId: string; isOnline: boolean }) => {
+      if (statusData?.userId) {
+        setOnlineStatusMap((prev) => ({
+          ...prev,
+          [statusData.userId]: statusData.isOnline,
+        }));
+      }
+    };
+
     socket.on('receive_new_message', handleNewMessage);
     socket.on('message_edited', handleMessageEdited);
     socket.on('message_reaction', handleReactionToggled);
+    socket.on('user_status_changed', handleUserStatusChanged);
 
     return () => {
       socket.off('receive_new_message', handleNewMessage);
       socket.off('message_edited', handleMessageEdited);
       socket.off('message_reaction', handleReactionToggled);
+      socket.off('user_status_changed', handleUserStatusChanged);
     };
-  }, [socket, activeFriend, currentUserId, readMessages]);
+  }, [socket, activeFriend, currentUserId, readMessages, dispatch]);
 
   const openChat = useCallback(
     (item: AllRelationsType) => {
       setActiveFriend(item);
       const targetUserId = item.accountDetails.userId;
-      const hasUnreadFromBackend = Boolean(item.latestMessage?.isUnread);
       const hasUnreadLocal = Boolean(unreadCountsRef.current[targetUserId] > 0);
 
-      if (hasUnreadFromBackend || hasUnreadLocal) {
+      if (hasUnreadLocal) {
         markFriendAsRead(targetUserId, true);
       }
     },
@@ -312,6 +342,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!trimmed || !activeFriend || !friendId) return;
 
       const clientGeneratedId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      const timeNow = new Date().toISOString();
       const newMsg: SocialChatMessage = {
         id: clientGeneratedId,
         text: trimmed,
@@ -319,12 +350,21 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         authorId: currentUserId,
         authorName: currentUserName,
         replyToId: replyingTo?.id,
-        createdAt: new Date().toISOString(),
+        createdAt: timeNow,
       };
 
       setMessages((prev) => [...prev, newMsg]);
       setReplyingTo(null);
       setActiveChatUnreadCount(0);
+
+      // Bubble conversation to top immediately on send
+      dispatch(
+        updateLatestMessage({
+          recipientId: friendId,
+          text: trimmed,
+          createdAt: timeNow,
+        })
+      );
 
       saveMessage({
         userId: currentUserId,
@@ -333,7 +373,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         replyToId: newMsg.replyToId,
       }).catch((err) => console.error('Failed to save message:', err));
     },
-    [activeFriend, friendId, currentUserId, currentUserName, replyingTo, saveMessage]
+    [activeFriend, friendId, currentUserId, currentUserName, replyingTo, saveMessage, dispatch]
   );
 
   const editMessage = useCallback(
@@ -400,6 +440,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       totalUnreadMessages,
       hasUnreadMessages: unreadFriendsCount > 0,
       activeChatUnreadCount,
+      onlineStatusMap,
       isFriendUnread,
       getFriendUnreadCount,
       setIsAtBottom,
@@ -423,6 +464,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       unreadFriendsCount,
       totalUnreadMessages,
       activeChatUnreadCount,
+      onlineStatusMap,
       isFriendUnread,
       getFriendUnreadCount,
       setIsAtBottom,

@@ -1,3 +1,5 @@
+// src/core/slices/account.slice.ts
+
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { AllRelationsType } from 'src/types/type-social';
 import type { UserType } from 'src/types/type-user';
@@ -38,7 +40,15 @@ export const accountSlice = createSlice({
     },
 
     setFriends: (state, action: PayloadAction<UserState['friends']>) => {
-      state.friends = action.payload || [];
+      // ✅ Clone with Array.from() / .map() to bypass Redux object freezing before sorting
+      const payloadArray = action.payload || [];
+      state.friends = Array.from(payloadArray)
+        .map((item) => ({ ...item }))
+        .sort((a, b) => {
+          const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
+          const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+          return timeB - timeA;
+        });
     },
 
     setFollowing: (state, action: PayloadAction<UserState['following']>) => {
@@ -53,7 +63,37 @@ export const accountSlice = createSlice({
       state.blockedUserIds = action.payload || [];
     },
 
-    // ── Incremental Updaters (Follow / Unfollow / Block) ───────────────────
+    // ── Bubble conversation to top when a new message arrives ───────────────
+    updateLatestMessage: (
+      state,
+      action: PayloadAction<{ recipientId: string; text: string; createdAt: string }>
+    ) => {
+      const { recipientId, text, createdAt } = action.payload;
+      const index = state.friends.findIndex((f) => {
+        const id = f?.accountDetails?.userId || (f as any)?.userId;
+        return String(id) === String(recipientId);
+      });
+
+      if (index > -1) {
+        state.friends[index] = {
+          ...state.friends[index],
+          latestMessage: {
+            text,
+            createdAt,
+          },
+        };
+      }
+
+      // ✅ Clone and sort to bubble active conversation to the top
+      state.friends = Array.from(state.friends)
+        .map((item) => ({ ...item }))
+        .sort((a, b) => {
+          const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
+          const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+          return timeB - timeA;
+        });
+    },
+
     addFollowing: (state, action: PayloadAction<AllRelationsType>) => {
       const newId =
         action.payload?.accountDetails?.userId || (action.payload as any)?.userId;
@@ -85,7 +125,6 @@ export const accountSlice = createSlice({
         state.blockedUserIds.splice(index, 1);
       } else {
         state.blockedUserIds.push(targetId);
-        // If blocked, automatically strip from following/friends
         state.following = state.following.filter((item) => {
           const id = item?.accountDetails?.userId || (item as any)?.userId;
           return String(id) !== targetId;
@@ -119,6 +158,7 @@ export const {
   setFollowing,
   setFriends,
   setBlockedUserIds,
+  updateLatestMessage,
   addFollowing,
   removeFollowing,
   toggleBlockUser,
@@ -149,7 +189,6 @@ export const useCredentials = () => {
 
   const currentUserId = String(user?.userId || (user as any)?._id || '');
 
-  // O(1) Following Lookup Set (includes mutual friends)
   const followingIds = useMemo(() => {
     const set = new Set<string>();
 
@@ -166,7 +205,6 @@ export const useCredentials = () => {
     return set;
   }, [following, friends]);
 
-  // O(1) Friends Lookup Set
   const friendsIds = useMemo(() => {
     const set = new Set<string>();
     (friends || []).forEach((f) => {
@@ -176,12 +214,10 @@ export const useCredentials = () => {
     return set;
   }, [friends]);
 
-  // O(1) Blocked Lookup Set
   const blockedIds = useMemo(() => {
     return new Set<string>((blockedUserIds || []).map((id) => String(id)));
   }, [blockedUserIds]);
 
-  // Fast predicate functions
   const checkIfFollowing = useCallback(
     (targetUserId?: string | null): boolean => {
       if (!targetUserId || !currentUserId) return false;
@@ -230,6 +266,8 @@ export const useCredentials = () => {
       setFollowing: (payload: UserState['following']) => dispatch(setFollowing(payload)),
       setFriends: (payload: UserState['friends']) => dispatch(setFriends(payload)),
       setBlockedUserIds: (payload: string[]) => dispatch(setBlockedUserIds(payload)),
+      updateLatestMessage: (payload: { recipientId: string; text: string; createdAt: string }) =>
+        dispatch(updateLatestMessage(payload)),
       addFollowing: (payload: AllRelationsType) => dispatch(addFollowing(payload)),
       removeFollowing: (targetUserId: string) => dispatch(removeFollowing(targetUserId)),
       toggleBlockUser: (targetUserId: string) => dispatch(toggleBlockUser(targetUserId)),

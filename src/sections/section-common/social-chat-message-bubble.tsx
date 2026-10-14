@@ -1,3 +1,5 @@
+// src/sections/section-common/social-chat-message-bubble.tsx
+
 import {
   AlertCircle,
   AlertTriangle,
@@ -14,6 +16,7 @@ import React, { useEffect, useState } from 'react';
 
 import {
   alpha,
+  Avatar,
   Box,
   Fade,
   IconButton,
@@ -26,12 +29,14 @@ import {
 import type { SocialChatMessage } from '@/types/type-social';
 import {
   formatMessageTime,
+  getInitials,
   SOCIAL_QUICK_REACTIONS,
   systemColorMap,
 } from '@/utils/social-chat-helper';
 
 interface SocialMessageBubbleProps {
   message: SocialChatMessage;
+  friendDetails?: any;
   replyTo?: SocialChatMessage;
   onReply?: (message: SocialChatMessage) => void;
   onEdit?: (id: string, text: string) => void;
@@ -48,6 +53,7 @@ const entranceAnimationSx = {
 
 const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
   message,
+  friendDetails,
   replyTo,
   onReply,
   onEdit,
@@ -65,7 +71,6 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
     setDraft(message.text);
   }, [message.text]);
 
-  // 1. System Notification Pill
   if (message.isSystem) {
     const sysColor = systemColorMap(t)[message.systemType || 'info'];
     return (
@@ -106,6 +111,9 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
   }
 
   const isSelf = Boolean(message.isSelf);
+  const displayName = isSelf ? 'You' : friendDetails?.name || message.authorName || 'Friend';
+  const displayAvatar = isSelf ? '' : friendDetails?.profilePhoto;
+  const formattedTime = message.createdAt ? formatMessageTime(message.createdAt) : '';
 
   const handleSave = () => {
     const trimmed = draft.trim();
@@ -133,25 +141,57 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
         alignItems: isSelf ? 'flex-end' : 'flex-start',
         alignSelf: isSelf ? 'flex-end' : 'flex-start',
         maxWidth: '82%',
-        my: 0.15,
+        my: 0.35,
         ...entranceAnimationSx,
       }}
     >
-      {/* Author Label (Incoming Messages) */}
-      {!isSelf && message.authorName && (
-        <Typography
-          sx={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: 'text.secondary',
-            ml: 1,
-            mb: 0.35,
-            lineHeight: 1.1,
-          }}
-        >
-          {message.authorName}
+      {/* Sender Header (Avatar, Name, Timestamp) */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          ml: isSelf ? 'auto' : 0.5,
+          mr: isSelf ? 0.5 : 'auto',
+          mb: 0.35,
+        }}
+      >
+        {!isSelf && (
+          <>
+            <Avatar
+              src={displayAvatar}
+              alt={displayName}
+              sx={{
+                width: 22,
+                height: 22,
+                fontSize: 11,
+                fontWeight: 800,
+                bgcolor: alpha(t.palette.primary.main, 0.15),
+                color: 'primary.main',
+              }}
+            >
+              {getInitials(displayName)}
+            </Avatar>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.primary', fontWeight: 700, fontSize: 11 }}
+            >
+              {displayName}
+            </Typography>
+          </>
+        )}
+        {isSelf && (
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', fontWeight: 600, fontSize: 11 }}
+          >
+            You
+          </Typography>
+        )}
+        <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 10 }}>
+          {formattedTime}
         </Typography>
-      )}
+      </Box>
 
       <Box sx={{ position: 'relative', maxWidth: '100%' }}>
         {/* Floating Quick Actions Pill */}
@@ -168,8 +208,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
               py: 0.25,
               bgcolor: isDark ? alpha('#0F172A', 0.94) : alpha('#FFFFFF', 0.96),
               backdropFilter: 'blur(10px)',
-              border: `1px solid ${isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08)
-                }`,
+              border: `1px solid ${isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08)}`,
               borderRadius: 999,
               boxShadow: isDark
                 ? '0 6px 16px rgba(0,0,0,0.55)'
@@ -239,9 +278,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
             position: 'relative',
             px: 1.5,
             py: 0.9,
-            borderRadius: isSelf
-              ? '16px 16px 4px 16px'
-              : '16px 16px 16px 4px',
+            borderRadius: isSelf ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
             fontSize: 13,
             lineHeight: 1.45,
             wordBreak: 'break-word',
@@ -254,8 +291,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
               }
               : {
                 bgcolor: isDark ? alpha('#1E293B', 0.85) : '#FFFFFF',
-                border: `1px solid ${isDark ? alpha('#fff', 0.08) : alpha('#0F172A', 0.07)
-                  }`,
+                border: `1px solid ${isDark ? alpha('#fff', 0.08) : alpha('#0F172A', 0.07)}`,
                 color: 'text.primary',
                 boxShadow: isDark
                   ? '0 2px 8px rgba(0, 0, 0, 0.25)'
@@ -272,8 +308,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
                 mb: 0.65,
                 px: 1,
                 py: 0.45,
-                borderLeft: `3px solid ${isSelf ? alpha('#fff', 0.85) : t.palette.primary.main
-                  }`,
+                borderLeft: `3px solid ${isSelf ? alpha('#fff', 0.85) : t.palette.primary.main}`,
                 bgcolor: isSelf
                   ? alpha('#000', 0.18)
                   : isDark
@@ -299,7 +334,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
                   }}
                   noWrap
                 >
-                  {replyTo.authorName || 'Message'}
+                  {replyTo.authorName || displayName}
                 </Typography>
               </Box>
               <Typography
@@ -330,9 +365,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
                 component="input"
                 autoFocus
                 value={draft}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setDraft(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter') handleSave();
                   if (e.key === 'Escape') handleCancel();
@@ -385,30 +418,19 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
               <Box component="span" sx={{ whiteSpace: 'pre-wrap' }}>
                 {message.text}
               </Box>
-
-              {/* Inline Floating Timestamp & Edited Meta */}
-              <Box
-                component="span"
-                sx={{
-                  float: 'right',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.4,
-                  ml: 1,
-                  mt: 0.45,
-                  fontSize: 9.5,
-                  fontWeight: 600,
-                  lineHeight: 1,
-                  opacity: isSelf ? 0.78 : 0.55,
-                  userSelect: 'none',
-                  color: 'inherit',
-                }}
-              >
-                {message.editedAt && <span>edited</span>}
-                {message.createdAt && (
-                  <span>{formatMessageTime(message.createdAt)}</span>
-                )}
-              </Box>
+              {message.editedAt && (
+                <Box
+                  component="span"
+                  sx={{
+                    ml: 0.75,
+                    fontSize: 9.5,
+                    opacity: 0.7,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  (edited)
+                </Box>
+              )}
             </Box>
           )}
         </Box>
@@ -449,9 +471,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
                     : isDark
                       ? alpha('#fff', 0.1)
                       : alpha('#000', 0.08),
-                  color: r.reactedBySelf
-                    ? t.palette.primary.main
-                    : t.palette.text.secondary,
+                  color: r.reactedBySelf ? t.palette.primary.main : t.palette.text.secondary,
                   boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                   transition: 'all 0.14s ease',
                   '&:hover': {
@@ -468,7 +488,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
         )}
       </Box>
 
-      {/* Quick Reaction Popover (Elevated Z-Index for Floating Windows) */}
+      {/* Quick Reaction Popover */}
       <Popover
         open={Boolean(reactAnchor)}
         anchorEl={reactAnchor}
@@ -479,8 +499,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
         slotProps={{
           paper: {
             sx: {
-              border: `1px solid ${isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08)
-                }`,
+              border: `1px solid ${isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08)}`,
               borderRadius: 999,
               bgcolor: isDark ? alpha('#0F172A', 0.95) : alpha('#FFFFFF', 0.98),
               backdropFilter: 'blur(12px)',

@@ -39,10 +39,8 @@ export type AuthorRelationship = {
 export type AllRelationsType = {
   accountDetails: UserType;
   latestMessage: {
-    _id: string;
+    _id?: string;
     text: string;
-    time: string;
-    isUnread: boolean;
     createdAt: string;
   } | null;
   relation: 'friend' | 'following' | 'follower';

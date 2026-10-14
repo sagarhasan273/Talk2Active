@@ -1,3 +1,5 @@
+// src/sections/section-common/social-chat-conversation.tsx
+
 import {
   ArrowDown,
   ArrowLeft,
@@ -54,6 +56,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
     sendMessage,
     editMessage,
     reactMessage,
+    onlineStatusMap,
   } = useSocialChat();
 
   const [draft, setDraft] = useState('');
@@ -96,7 +99,6 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
     [friendDetails?.userId, markFriendAsRead]
   );
 
-  // Auto-scroll on new messages without firing redundant markFriendAsRead API calls
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
@@ -104,17 +106,6 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
     if (localIsAtBottomRef.current || lastMsg?.isSelf) {
       requestAnimationFrame(() => {
         scrollToBottom('smooth', false);
-      });
-    }
-  }, [messages.length, scrollToBottom]);
-
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const lastMsg = messages[messages.length - 1];
-
-    if (localIsAtBottomRef.current || lastMsg?.isSelf) {
-      requestAnimationFrame(() => {
-        scrollToBottom('smooth');
       });
     }
   }, [messages.length, scrollToBottom]);
@@ -127,10 +118,19 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
 
   if (!activeFriend || !friendDetails) return null;
 
-  const online = isOnline(friendDetails.lastActive);
+  const isSocketOnline = onlineStatusMap[friendDetails.userId];
+  const online = isSocketOnline !== undefined ? isSocketOnline : isOnline(friendDetails.lastActive);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        bgcolor: isDark ? '#181c26' : '#ffffff',
+      }}
+    >
       {/* Active Chat Header */}
       <Box
         sx={{
@@ -140,9 +140,9 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
           px: 1.5,
           py: 1.25,
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
           backdropFilter: 'blur(12px)',
-          bgcolor: isDark ? alpha(theme.palette.background.paper, 0.85) : alpha('#fff', 0.9),
+          bgcolor: isDark ? alpha('#181c26', 0.9) : alpha('#f8fafc', 0.95),
           flexShrink: 0,
           zIndex: 15,
         }}
@@ -153,7 +153,10 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             onClick={closeActiveChat}
             sx={{
               color: 'text.secondary',
-              borderRadius: 1.25,
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
             }}
           >
@@ -167,7 +170,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             sx={{
               '& .MuiBadge-badge': {
                 bgcolor: online ? '#10B981' : 'text.disabled',
-                border: `2px solid ${theme.palette.background.paper}`,
+                border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
@@ -181,8 +184,10 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                 height: 34,
                 fontSize: 12,
                 fontWeight: 800,
-                bgcolor: alpha(theme.palette.primary.main, 0.15),
+                bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
                 color: 'primary.main',
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               }}
             >
               {getInitials(friendDetails.name)}
@@ -190,13 +195,21 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
           </Badge>
 
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }} noWrap>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 800,
+                lineHeight: 1.2,
+                color: isDark ? 'text.primary' : '#0f172a',
+              }}
+              noWrap
+            >
               {friendDetails.name}
             </Typography>
             <Typography
               sx={{
                 fontSize: 10.5,
-                fontWeight: 600,
+                fontWeight: 700,
                 color: activeRoomId ? 'success.main' : online ? '#10B981' : 'text.secondary',
               }}
               noWrap
@@ -208,7 +221,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
           {activeRoomId && (
-            <Tooltip title="Join active voice room">
+            <Tooltip title="Join active voice room" arrow>
               <Button
                 size="small"
                 variant="contained"
@@ -216,7 +229,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                 startIcon={<PhoneCall size={13} />}
                 onClick={() => onJoinRoom?.(activeRoomId, activeFriend)}
                 sx={{
-                  borderRadius: 999,
+                  borderRadius: 1,
                   px: 1.25,
                   py: 0.35,
                   fontSize: 11,
@@ -236,7 +249,10 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               onClick={onClose}
               sx={{
                 color: 'text.secondary',
-                borderRadius: 1.25,
+                borderRadius: 1,
+                bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                 '&:hover': {
                   bgcolor: alpha(theme.palette.error.main, 0.08),
                   color: 'error.main',
@@ -270,7 +286,13 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1.25,
-            bgcolor: isDark ? alpha('#000', 0.15) : alpha('#F8FAFC', 0.6),
+            bgcolor: isDark ? '#181c26' : '#f8fafc',
+            scrollbarWidth: 'thin',
+            '&::-webkit-scrollbar': { width: 5 },
+            '&::-webkit-scrollbar-thumb': {
+              bgcolor: alpha(theme.palette.divider, 0.4),
+              borderRadius: 1,
+            },
           }}
         >
           {fetchingHistory && messages.length === 0 ? (
@@ -293,23 +315,24 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                 sx={{
                   width: 44,
                   height: 44,
-                  borderRadius: '50%',
+                  borderRadius: 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
                   color: 'primary.main',
                   mb: 1,
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.primary.main, 0.25),
                 }}
               >
                 <Sparkles size={20} />
               </Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.25 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 800, mb: 0.25, color: isDark ? 'text.primary' : '#0f172a' }}>
                 No messages yet
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', maxWidth: 200 }}>
-                Say hello to {friendDetails.name?.split(' ')[0] ?? 'there'} and start the
-                conversation!
+              <Typography variant="caption" sx={{ color: isDark ? 'text.secondary' : '#64748b', maxWidth: 200 }}>
+                Say hello to {friendDetails.name?.split(' ')[0] ?? 'there'} and start the conversation!
               </Typography>
             </Box>
           ) : (
@@ -317,6 +340,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               <SocialMessageBubble
                 key={m.id}
                 message={m}
+                friendDetails={friendDetails}
                 replyTo={m.replyToId ? messageMap[m.replyToId] : undefined}
                 onReply={setReplyingTo}
                 onEdit={editMessage}
@@ -327,7 +351,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
           <div ref={messagesEndRef} style={{ height: 1, width: '100%', flexShrink: 0 }} />
         </Box>
 
-        {/* Floating Unread Pill when Scrolled Up */}
+        {/* Floating Unread Pill */}
         <Fade in={activeChatUnreadCount > 0} unmountOnExit>
           <Button
             variant="contained"
@@ -340,7 +364,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 20,
-              borderRadius: 999,
+              borderRadius: 1,
               px: 1.5,
               py: 0.4,
               fontSize: 11.5,
@@ -365,20 +389,20 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             justifyContent: 'space-between',
             px: 1.5,
             py: 0.75,
-            bgcolor: alpha(theme.palette.primary.main, 0.08),
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.08),
             borderLeft: `3px solid ${theme.palette.primary.main}`,
             flexShrink: 0,
           }}
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: 'primary.main' }}>
-              Replying to {replyingTo.authorName}
+              Replying to {replyingTo.authorName || friendDetails.name}
             </Typography>
-            <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', maxWidth: 240 }}>
+            <Typography noWrap sx={{ fontSize: 11.5, color: isDark ? 'text.secondary' : '#475569', maxWidth: 240 }}>
               {replyingTo.text}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={() => setReplyingTo(null)}>
+          <IconButton size="small" onClick={() => setReplyingTo(null)} sx={{ color: 'text.secondary' }}>
             <X size={13} />
           </IconButton>
         </Box>
@@ -388,9 +412,9 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
       <Box
         sx={{
           p: 1.25,
-          borderTop: replyingTo ? 'none' : '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? '#181c26' : '#ffffff',
           flexShrink: 0,
         }}
       >
@@ -399,16 +423,15 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 0.75,
-            bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.035),
+            bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
             border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2.5,
+            borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+            borderRadius: 1,
             px: 1.25,
             py: 0.5,
             transition: 'border-color 0.18s ease',
             '&:focus-within': {
               borderColor: 'primary.main',
-              bgcolor: 'transparent',
             },
           }}
         >
@@ -420,7 +443,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               if (e.key === 'Enter') handleSend();
             }}
             placeholder={
-              replyingTo ? `Reply to ${replyingTo.authorName}...` : 'Write a message...'
+              replyingTo ? `Reply to ${replyingTo.authorName || friendDetails.name}...` : 'Write a message...'
             }
             sx={{
               flex: 1,
@@ -429,8 +452,8 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               border: 'none',
               outline: 'none',
               fontSize: 12.5,
-              color: 'text.primary',
-              '&::placeholder': { color: 'text.disabled' },
+              color: isDark ? 'text.primary' : '#0f172a',
+              '&::placeholder': { color: isDark ? 'text.disabled' : '#94a3b8' },
             }}
           />
           <IconButton
@@ -439,9 +462,10 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             size="small"
             sx={{
               bgcolor: draft.trim() ? 'primary.main' : 'transparent',
-              color: draft.trim() ? '#fff' : 'text.disabled',
-              width: 28,
-              height: 28,
+              color: draft.trim() ? '#fff' : isDark ? 'text.disabled' : '#cbd5e1',
+              borderRadius: 1,
+              width: 30,
+              height: 30,
               transition: 'all 0.18s ease',
               '&:hover': {
                 bgcolor: draft.trim() ? 'primary.dark' : 'transparent',

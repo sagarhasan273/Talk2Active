@@ -1,3 +1,5 @@
+// src/sections/section-common/social-chat-directory.tsx
+
 import {
   Lock,
   MessageCircle,
@@ -54,6 +56,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     openChat,
     unreadCounts,
     unreadFriendsCount,
+    onlineStatusMap,
   } = useSocialChat();
 
   const [unfollowedIds, setUnfollowedIds] = useState<Set<string>>(new Set());
@@ -69,11 +72,21 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     [following, unfollowedIds]
   );
 
-  const dataByTab: Record<SocialChatTabKey, AllRelationsType[]> = {
+  const rawDataByTab: Record<SocialChatTabKey, AllRelationsType[]> = {
     friends,
     followers,
     following: visibleFollowing,
   };
+
+  // Sort friends/relations by latest message timestamp or recent activity
+  const dataByTab = useMemo(() => {
+    const list = rawDataByTab[tab] || [];
+    return [...list].sort((a, b) => {
+      const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
+      const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+      return timeB - timeA; // Newest first
+    });
+  }, [rawDataByTab, tab]);
 
   const handleUnfollowClick = async (e: React.MouseEvent, item: AllRelationsType) => {
     e.stopPropagation();
@@ -92,7 +105,15 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        minHeight: 0,
+        bgcolor: isDark ? '#181c26' : '#ffffff',
+      }}
+    >
       {/* Directory Header */}
       <Box
         sx={{
@@ -102,12 +123,20 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
           px: 2,
           py: 1.5,
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+          bgcolor: isDark ? 'transparent' : '#f8fafc',
           flexShrink: 0,
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography sx={{ fontSize: 14, fontWeight: 800, letterSpacing: '-0.01em' }}>
+          <Typography
+            sx={{
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              color: isDark ? 'text.primary' : '#0f172a',
+            }}
+          >
             Social Directory
           </Typography>
 
@@ -116,7 +145,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
               sx={{
                 px: 0.85,
                 py: 0.15,
-                borderRadius: 999,
+                borderRadius: 1,
                 fontSize: 10.5,
                 fontWeight: 800,
                 bgcolor: alpha(theme.palette.error.main, 0.12),
@@ -133,8 +162,11 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
             size="small"
             onClick={onClose}
             sx={{
+              borderRadius: 1,
+              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               color: 'text.secondary',
-              borderRadius: 1.25,
               '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08), color: 'error.main' },
             }}
           >
@@ -143,20 +175,20 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
         )}
       </Box>
 
-      {/* Navigation Tabs Pill Style */}
+      {/* Navigation Tabs */}
       <Box
         sx={{
           display: 'flex',
           p: 0.75,
           gap: 0.5,
-          bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+          bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
           flexShrink: 0,
         }}
       >
         {(['friends', 'followers', 'following'] as SocialChatTabKey[]).map((key) => {
-          const count = dataByTab[key]?.length || 0;
+          const count = rawDataByTab[key]?.length || 0;
           const active = tab === key;
           const showUnreadBadge = key === 'friends' && unreadFriendsCount > 0;
 
@@ -171,13 +203,20 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                 justifyContent: 'center',
                 gap: 0.5,
                 py: 0.75,
-                borderRadius: 1.5,
+                borderRadius: 1,
                 fontSize: 11.5,
                 fontWeight: 700,
                 cursor: 'pointer',
-                bgcolor: active ? 'background.paper' : 'transparent',
-                color: active ? 'primary.main' : 'text.secondary',
-                boxShadow: active ? theme.shadows[1] : 'none',
+                bgcolor: active
+                  ? isDark
+                    ? alpha(theme.palette.primary.main, 0.16)
+                    : alpha(theme.palette.primary.main, 0.1)
+                  : 'transparent',
+                color: active ? 'primary.main' : isDark ? 'text.secondary' : '#64748b',
+                border: '1px solid',
+                borderColor: active
+                  ? alpha(theme.palette.primary.main, 0.3)
+                  : 'transparent',
                 transition: 'all 0.18s ease',
                 textTransform: 'capitalize',
               }}
@@ -188,14 +227,16 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                 sx={{
                   px: 0.5,
                   py: 0.1,
-                  borderRadius: 1,
+                  borderRadius: 0.75,
                   fontSize: 10,
                   fontWeight: 800,
                   bgcolor: showUnreadBadge
                     ? 'error.main'
                     : active
-                      ? alpha(theme.palette.primary.main, 0.12)
-                      : alpha(theme.palette.text.secondary, 0.08),
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : isDark
+                        ? alpha('#fff', 0.06)
+                        : '#e2e8f0',
                   color: showUnreadBadge ? '#fff' : 'inherit',
                 }}
               >
@@ -207,12 +248,25 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
       </Box>
 
       {/* Directory List */}
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1 }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          p: 1,
+          scrollbarWidth: 'thin',
+          '&::-webkit-scrollbar': { width: 5 },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: alpha(theme.palette.divider, 0.4),
+            borderRadius: 1,
+          },
+        }}
+      >
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress size={24} />
           </Box>
-        ) : dataByTab[tab].length === 0 ? (
+        ) : dataByTab.length === 0 ? (
           <Typography
             variant="caption"
             sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 4 }}
@@ -221,12 +275,19 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
           </Typography>
         ) : (
           <Stack spacing={0.5}>
-            {dataByTab[tab]?.map((item) => {
+            {dataByTab.map((item) => {
               const person = item.accountDetails;
               const canChat = friendIds.has(person.userId);
               const unreadCount = unreadCounts[person.userId] || 0;
               const activeRoomId = getActiveRoomId(item);
-              const online = isOnline(person.lastActive);
+
+              // Socket online status takes priority, fallback to timestamp helper
+              const isSocketOnline = onlineStatusMap[person.userId];
+              const online =
+                isSocketOnline !== undefined
+                  ? isSocketOnline
+                  : isOnline(person.lastActive);
+
               const latestText = item.latestMessage?.text;
 
               return (
@@ -239,12 +300,12 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                     gap: 1.25,
                     px: 1.25,
                     py: 0.9,
-                    borderRadius: 2,
+                    borderRadius: 1,
                     cursor: canChat ? 'pointer' : 'default',
                     transition: 'background-color 0.15s ease, transform 0.12s ease',
                     '&:hover': canChat
                       ? {
-                        bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.035),
+                        bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
                         transform: 'translateX(2px)',
                       }
                       : undefined,
@@ -265,8 +326,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           height: 38,
                           fontSize: 13,
                           fontWeight: 800,
-                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                          bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
                           color: 'primary.main',
+                          border: '1px solid',
+                          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                         }}
                       >
                         {getInitials(person.name)}
@@ -282,7 +345,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           height: 10,
                           borderRadius: '50%',
                           bgcolor: '#10B981',
-                          border: `2px solid ${theme.palette.background.paper}`,
+                          border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
                         }}
                       />
                     )}
@@ -295,21 +358,22 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         fontSize: 12.5,
                         fontWeight: unreadCount > 0 ? 800 : 700,
                         lineHeight: 1.2,
+                        color: isDark ? 'text.primary' : '#0f172a',
                       }}
                       noWrap
                     >
                       {person.name}
                     </Typography>
                     <Typography
-                      variant='caption'
+                      variant="caption"
                       sx={{
                         fontSize: 11,
                         color: activeRoomId
                           ? 'success.main'
                           : unreadCount > 0
-                            ? 'text.primary'
-                            : 'text.secondary',
-                        fontWeight: activeRoomId || unreadCount > 0 ? 700 : 400,
+                            ? isDark ? 'text.primary' : '#0f172a'
+                            : isDark ? 'text.secondary' : '#64748b',
+                        fontWeight: activeRoomId || unreadCount > 0 ? 700 : 500,
                         mt: 0.2,
                       }}
                       noWrap
@@ -324,9 +388,8 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
 
                   {/* Right Action Buttons */}
                   <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flexShrink: 0 }}>
-                    {/* 1. Call / Join Room Button if User is in a Room */}
                     {activeRoomId && (
-                      <Tooltip title={`Join ${person.name}'s room`}>
+                      <Tooltip title={`Join ${person.name}'s room`} arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -336,16 +399,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           sx={{
                             color: '#fff',
                             bgcolor: 'success.main',
-                            borderRadius: 1.5,
+                            borderRadius: 1,
                             width: 30,
                             height: 30,
                             boxShadow: `0 3px 10px ${alpha(theme.palette.success.main, 0.35)}`,
-                            '@keyframes callPulse': {
-                              '0%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0.5)}` },
-                              '70%': { boxShadow: `0 0 0 6px ${alpha(theme.palette.success.main, 0)}` },
-                              '100%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0)}` },
-                            },
-                            animation: 'callPulse 2s infinite',
                             '&:hover': { bgcolor: 'success.dark' },
                           }}
                         >
@@ -354,7 +411,6 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       </Tooltip>
                     )}
 
-                    {/* 2. Following Tab: Unfollow Button */}
                     {tab === 'following' && (
                       <Button
                         size="small"
@@ -364,7 +420,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         startIcon={<UserMinus size={12} />}
                         onClick={(e) => handleUnfollowClick(e, item)}
                         sx={{
-                          borderRadius: 1.5,
+                          borderRadius: 1,
                           px: 1,
                           py: 0.35,
                           fontSize: 11,
@@ -377,7 +433,6 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       </Button>
                     )}
 
-                    {/* 3. Chat Button (or Mutual Lock) */}
                     {canChat ? (
                       <IconButton
                         size="small"
@@ -387,11 +442,13 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         }}
                         sx={{
                           color: 'primary.main',
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          borderRadius: 1.25,
+                          bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
+                          borderRadius: 1,
                           width: 30,
                           height: 30,
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+                          border: '1px solid',
+                          borderColor: alpha(theme.palette.primary.main, 0.25),
+                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) },
                         }}
                         title={`Message ${person.name}`}
                       >
@@ -399,10 +456,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       </IconButton>
                     ) : (
                       tab !== 'following' && (
-                        <Tooltip title="Mutual follow required to chat">
+                        <Tooltip title="Mutual follow required to chat" arrow>
                           <Box
                             sx={{
-                              color: 'text.disabled',
+                              color: isDark ? 'text.disabled' : '#94a3b8',
                               display: 'flex',
                               p: 0.5,
                             }}
@@ -426,12 +483,12 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
             px: 2,
             py: 1,
             borderTop: '1px solid',
-            borderColor: 'divider',
-            bgcolor: isDark ? alpha('#fff', 0.02) : alpha('#000', 0.02),
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
             flexShrink: 0,
           }}
         >
-          <Typography sx={{ fontSize: 10.5, color: 'text.secondary', lineHeight: 1.4 }}>
+          <Typography sx={{ fontSize: 10.5, color: isDark ? 'text.secondary' : '#64748b', lineHeight: 1.4 }}>
             Direct chat is reserved for mutual friends. Follow each other back to connect.
           </Typography>
         </Box>
