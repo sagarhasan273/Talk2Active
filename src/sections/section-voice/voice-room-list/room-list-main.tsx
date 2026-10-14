@@ -5,7 +5,7 @@ import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { Box } from '@mui/material';
+import { Box, Divider } from '@mui/material';
 
 import { useCredentials } from '@/core/slices';
 
@@ -21,7 +21,7 @@ import { VoiceRoomCard } from './room-list-card-main';
 import RoomListFooter from './room-list-footer';
 
 const sxCard = {
-  height: 288,
+  height: 296,
   minHeight: 280,
   maxHeight: 296,
   width: '100%',
@@ -182,7 +182,7 @@ export function RoomlistMain({
           alignItems: 'stretch',
           justifyContent: 'flex-start',
           position: 'relative',
-          gap: 2.5,
+          gap: 1.5,
           overflowY: 'auto',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -212,6 +212,11 @@ export function RoomlistMain({
             sx={sxCard}
           />
         ))}
+
+        { /* Divider */}
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Divider sx={{ bgcolor: 'error.main' }} />
+        </Box>
 
         {/* Full-Width Footer at the Bottom */}
         <Box sx={{ gridColumn: '1 / -1' }}>

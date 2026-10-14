@@ -30,7 +30,7 @@ export const DefaultHeader = ({
         mt: 1,
         p: { xs: 2.25, sm: 3 },
         borderRadius: 1,
-        bgcolor: isDark ? '#181c26' : '#ffffff',
+        bgcolor: 'background.default',
         backgroundImage: isDark
           ? `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.14)} 0%, transparent 55%)`
           : `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 55%)`,

@@ -44,23 +44,36 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
       elevation={0}
       sx={{
         width: '100%',
-        mt: 4,
         mb: 4,
         p: { xs: 2.5, sm: 3.5 },
         borderRadius: 1,
         position: 'relative',
         overflow: 'hidden',
-        bgcolor: isDark ? '#181c26' : '#ffffff',
-        backgroundImage: isDark
-          ? `radial-gradient(circle at 0% 0%, ${alpha(theme.palette.primary.main, 0.12)} 0%, transparent 50%)`
-          : `radial-gradient(circle at 0% 0%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 50%)`,
+        bgcolor: 'background.default',
         border: '1px solid',
-        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+        borderColor: isDark
+          ? alpha(theme.palette.error.main, 0.22)
+          : alpha(theme.palette.error.main, 0.16),
         boxShadow: isDark
-          ? '0 4px 20px -2px rgba(0, 0, 0, 0.4)'
-          : '0 4px 16px -2px rgba(15, 23, 42, 0.05)',
+          ? `0 6px 24px -2px ${alpha(theme.palette.common.black, 0.5)}`
+          : `0 6px 20px -2px ${alpha(theme.palette.error.main, 0.06)}`,
       }}
     >
+      {/* Top Subtle Error Glow Ambient Accent */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: -30,
+          right: -30,
+          width: 140,
+          height: 140,
+          borderRadius: '50%',
+          bgcolor: alpha(theme.palette.error.main, isDark ? 0.09 : 0.06),
+          filter: 'blur(35px)',
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Top Main Grid: About App (Left) & Solo Developer Spotlight (Right) */}
       <Stack
         direction={{ xs: 'column', md: 'row' }}
@@ -76,11 +89,12 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                 width: 28,
                 height: 28,
                 borderRadius: 1,
-                bgcolor: 'primary.main',
+                bgcolor: 'error.main',
                 color: '#fff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.35)}`,
               }}
             >
               <MicRoundedIcon sx={{ fontSize: 16 }} />
@@ -98,14 +112,16 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
             </Typography>
             <Box
               sx={{
-                px: 0.75,
-                py: 0.2,
+                px: 0.8,
+                py: 0.25,
                 borderRadius: 1,
-                bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
-                color: 'primary.main',
+                bgcolor: alpha(theme.palette.error.main, isDark ? 0.18 : 0.1),
+                border: '1px solid',
+                borderColor: alpha(theme.palette.error.main, 0.25),
+                color: 'error.main',
                 fontSize: 10,
                 fontWeight: 800,
-                letterSpacing: 0.4,
+                letterSpacing: 0.5,
                 textTransform: 'uppercase',
               }}
             >
@@ -116,7 +132,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
           <Typography
             variant="body2"
             sx={{
-              color: isDark ? 'text.secondary' : '#475569',
+              color: isDark ? alpha(theme.palette.text.secondary, 0.9) : '#475569',
               lineHeight: 1.6,
               mb: 2,
               fontSize: '0.85rem',
@@ -127,7 +143,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
             connect with peers worldwide.
           </Typography>
 
-          {/* Feature Highlight Pills */}
+          {/* Feature Highlight Pills with Error Theme Accents */}
           <Stack direction="row" flexWrap="wrap" gap={1}>
             {featurePills.map((pill) => (
               <Box
@@ -136,18 +152,26 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 0.6,
-                  px: 1.1,
+                  px: 1.15,
                   py: 0.45,
                   borderRadius: 1,
-                  bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
+                  bgcolor: isDark
+                    ? alpha(theme.palette.error.main, 0.08)
+                    : alpha(theme.palette.error.main, 0.04),
                   border: '1px solid',
-                  borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-                  color: isDark ? 'text.secondary' : '#475569',
+                  borderColor: isDark
+                    ? alpha(theme.palette.error.main, 0.22)
+                    : alpha(theme.palette.error.main, 0.16),
+                  color: isDark ? '#fda4af' : '#9f1239',
                   fontSize: '0.72rem',
                   fontWeight: 600,
+                  transition: 'border-color 0.15s ease',
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.error.main, 0.45),
+                  },
                 }}
               >
-                <Box component="span" sx={{ color: 'primary.main', display: 'flex' }}>
+                <Box component="span" sx={{ color: 'error.main', display: 'flex' }}>
                   {pill.icon}
                 </Box>
                 {pill.label}
@@ -156,16 +180,18 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
           </Stack>
         </Box>
 
-        {/* Right Column: Solo Developer Card (Sagar Hasan) */}
+        {/* Right Column: Solo Developer Card */}
         <Box
           sx={{
             p: 2,
             borderRadius: 1,
             minWidth: { xs: '100%', md: 340 },
             maxWidth: { xs: '100%', md: 380 },
-            bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
+            bgcolor: isDark ? alpha('#000', 0.25) : '#ffffff',
             border: '1px solid',
-            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            borderColor: isDark
+              ? alpha(theme.palette.error.main, 0.2)
+              : alpha(theme.palette.error.main, 0.15),
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
@@ -173,13 +199,14 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
         >
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
             <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
-              {/* Developer Avatar with Gradient Border */}
+              {/* Developer Avatar with Crimson / Rose Gradient Border */}
               <Box
                 sx={{
-                  p: '2px',
+                  p: 0.2,
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #38bdf8 100%)',
+                  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, #f43f5e 100%)`,
                   flexShrink: 0,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.3)}`,
                 }}
               >
                 <Avatar
@@ -189,9 +216,9 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                     height: 44,
                     fontSize: 15,
                     fontWeight: 800,
-                    bgcolor: isDark ? '#181c26' : '#ffffff',
-                    color: 'primary.main',
-                    border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
+                    bgcolor: isDark ? '#1a1012' : '#ffffff',
+                    color: 'error.main',
+                    border: `2px solid ${isDark ? '#1a1012' : '#ffffff'}`,
                   }}
                 >
                   SH
@@ -208,15 +235,15 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   >
                     Sagar Hasan
                   </Typography>
-                  <VerifiedRoundedIcon sx={{ fontSize: 15, color: 'info.main' }} />
+                  <VerifiedRoundedIcon sx={{ fontSize: 15, color: 'error.main' }} />
                 </Stack>
 
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.2 }}>
-                  <CodeRoundedIcon sx={{ fontSize: 13, color: 'primary.main' }} />
+                  <CodeRoundedIcon sx={{ fontSize: 13, color: 'error.main' }} />
                   <Typography
                     variant="caption"
                     sx={{
-                      color: 'primary.main',
+                      color: isDark ? 'error.light' : 'error.dark',
                       fontWeight: 700,
                       fontSize: '0.7rem',
                     }}
@@ -227,7 +254,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               </Box>
             </Stack>
 
-            {/* Social Links (Replace hrefs with your actual profile URLs) */}
+            {/* Social Links */}
             <Stack direction="row" spacing={0.5}>
               <Tooltip title="GitHub" arrow>
                 <IconButton
@@ -240,13 +267,16 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                     width: 30,
                     height: 30,
                     borderRadius: 1,
-                    bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+                    bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
-                    borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                    borderColor: isDark
+                      ? alpha(theme.palette.error.main, 0.2)
+                      : alpha(theme.palette.error.main, 0.14),
                     color: isDark ? 'text.secondary' : '#475569',
                     '&:hover': {
-                      color: 'primary.main',
-                      borderColor: 'primary.main',
+                      color: 'error.main',
+                      borderColor: 'error.main',
+                      bgcolor: alpha(theme.palette.error.main, 0.08),
                     },
                   }}
                 >
@@ -265,13 +295,16 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                     width: 30,
                     height: 30,
                     borderRadius: 1,
-                    bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+                    bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
-                    borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                    borderColor: isDark
+                      ? alpha(theme.palette.error.main, 0.2)
+                      : alpha(theme.palette.error.main, 0.14),
                     color: isDark ? 'text.secondary' : '#475569',
                     '&:hover': {
-                      color: 'primary.main',
-                      borderColor: 'primary.main',
+                      color: 'error.main',
+                      borderColor: 'error.main',
+                      bgcolor: alpha(theme.palette.error.main, 0.08),
                     },
                   }}
                 >
@@ -284,9 +317,10 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
           <Typography
             variant="caption"
             sx={{
-              color: isDark ? 'text.secondary' : '#64748b',
+              color: isDark ? alpha(theme.palette.text.secondary, 0.85) : '#64748b',
               lineHeight: 1.45,
               display: 'block',
+              fontSize: '0.72rem',
             }}
           >
             Designed, architected, and built from scratch by Sagar Hasan to make daily speaking
@@ -298,11 +332,13 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
       <Divider
         sx={{
           my: 2.25,
-          borderColor: isDark ? alpha('#fff', 0.07) : '#e2e8f0',
+          borderColor: isDark
+            ? alpha(theme.palette.error.main, 0.18)
+            : alpha(theme.palette.error.main, 0.12),
         }}
       />
 
-      {/* Bottom Bar: Copyright + Built with Love + Optional CTA */}
+      {/* Bottom Bar: Copyright + Built with Love + CTA */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         alignItems="center"
@@ -312,7 +348,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
         <Typography
           variant="caption"
           sx={{
-            color: isDark ? 'text.disabled' : '#64748b',
+            color: isDark ? 'text.secondary' : '#64748b',
             fontWeight: 500,
           }}
         >
@@ -333,7 +369,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               sx={{ color: isDark ? 'text.secondary' : '#64748b', fontWeight: 600 }}
             >
               by{' '}
-              <Box component="span" sx={{ color: isDark ? 'text.primary' : '#0f172a', fontWeight: 800 }}>
+              <Box component="span" sx={{ color: 'error.main', fontWeight: 800 }}>
                 Sagar Hasan
               </Box>
             </Typography>
@@ -343,6 +379,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
             <Button
               size="small"
               variant="outlined"
+              color="error"
               onClick={onCreateRoom}
               sx={{
                 height: 26,
@@ -351,11 +388,11 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                 textTransform: 'none',
                 fontSize: 11,
                 fontWeight: 700,
-                borderColor: alpha(theme.palette.primary.main, 0.35),
-                color: 'primary.main',
+                borderColor: alpha(theme.palette.error.main, 0.4),
+                color: 'error.main',
                 '&:hover': {
-                  borderColor: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  borderColor: 'error.main',
+                  bgcolor: alpha(theme.palette.error.main, 0.08),
                 },
               }}
             >

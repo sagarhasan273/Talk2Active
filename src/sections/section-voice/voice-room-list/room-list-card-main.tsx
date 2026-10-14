@@ -76,61 +76,50 @@ const formatCompactCount = (num: number = 0): string =>
     maximumFractionDigits: 1,
   }).format(num);
 
-// Gradually decreases avatar size as more users join the room
+// Adjust avatar size based on count across 1 or 2 rows
 const getStageAvatarScale = (totalItemsShown: number) => {
-  if (totalItemsShown <= 2) {
+  if (totalItemsShown <= 3) {
     return {
-      size: 60,
-      fontSize: 17,
-      gap: 2.25,
+      size: 84,
+      fontSize: 16,
+      gap: 2,
       badgeSize: 18,
-      micIconSize: 10.5,
+      micIconSize: 10,
       pillFontSize: '0.65rem',
       plusIconSize: 18,
     };
   }
-  if (totalItemsShown === 3) {
+  if (totalItemsShown <= 4) {
     return {
-      size: 52,
-      fontSize: 15,
-      gap: 1.75,
-      badgeSize: 17,
-      micIconSize: 10,
-      pillFontSize: '0.62rem',
+      size: 72,
+      fontSize: 14,
+      gap: 1.5,
+      badgeSize: 16,
+      micIconSize: 9.5,
+      pillFontSize: '0.60rem',
       plusIconSize: 16,
     };
   }
-  if (totalItemsShown === 4) {
+  if (totalItemsShown <= 5) {
     return {
-      size: 46,
-      fontSize: 13.5,
-      gap: 1.35,
-      badgeSize: 15,
-      micIconSize: 9,
-      pillFontSize: '0.58rem',
-      plusIconSize: 15,
+      size: 56,
+      fontSize: 14,
+      gap: 1.5,
+      badgeSize: 16,
+      micIconSize: 9.5,
+      pillFontSize: '0.60rem',
+      plusIconSize: 16,
     };
   }
-  if (totalItemsShown === 5) {
-    return {
-      size: 40,
-      fontSize: 12,
-      gap: 1,
-      badgeSize: 14,
-      micIconSize: 8.5,
-      pillFontSize: '0.55rem',
-      plusIconSize: 14,
-    };
-  }
-  // 6+ items: compact mode so all avatars fit on one centered line
+  // 6 - 10 items (spread over 2 rows)
   return {
-    size: 34,
-    fontSize: 11,
-    gap: 0.75,
-    badgeSize: 13,
-    micIconSize: 8,
-    pillFontSize: '0.52rem',
-    plusIconSize: 12,
+    size: 36,
+    fontSize: 12.5,
+    gap: 1.15,
+    badgeSize: 14,
+    micIconSize: 8.5,
+    pillFontSize: '0.54rem',
+    plusIconSize: 14,
   };
 };
 
@@ -168,19 +157,28 @@ export const VoiceRoomCard = ({
   const isFull = allUsers.length >= max && max > 0;
   const isHost = Boolean(currentUserId && hostId && currentUserId === hostId);
 
-  // Calculate remaining available seats
+  // Available seats
   const availableSpace = Math.max(0, max - allUsers.length);
   const showAvailableSlot = availableSpace > 0;
 
-  // Show up to 5 joined speakers (or 6 if full) so they fit cleanly alongside the 1 available-space pod
-  const maxVisibleSpeakers = showAvailableSlot ? 5 : 6;
-  const visibleSpeakers = allUsers.slice(0, maxVisibleSpeakers);
-  const overflowCount = Math.max(0, allUsers.length - visibleSpeakers.length);
+  // Maximum items visible across at most 2 rows (approx. 5 per row = 10 pods max)
+  const MAX_TOTAL_PODS = 10;
+  const reservedSlotsForControls = (showAvailableSlot ? 1 : 0);
+  const maxDirectSpeakers = MAX_TOTAL_PODS - reservedSlotsForControls;
 
-  // Total items in the row determines how big or small the avatars are
-  const totalItemsInRow =
+  let visibleSpeakers = allUsers;
+  let overflowCount = 0;
+
+  if (allUsers.length > maxDirectSpeakers) {
+    // Reserve 1 pod for the "+N" overflow counter badge
+    const allowedSpeakers = maxDirectSpeakers - 1;
+    visibleSpeakers = allUsers.slice(0, allowedSpeakers);
+    overflowCount = allUsers.length - allowedSpeakers;
+  }
+
+  const totalItemsInStage =
     visibleSpeakers.length + (showAvailableSlot ? 1 : 0) + (overflowCount > 0 ? 1 : 0);
-  const scale = getStageAvatarScale(totalItemsInRow);
+  const scale = getStageAvatarScale(totalItemsInStage);
 
   const openUserProfile = (rawUser: any) => {
     const targetUser = rawUser?.user || rawUser;
@@ -221,7 +219,7 @@ export const VoiceRoomCard = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          bgcolor: isDark ? '#181c26' : '#ffffff',
+          bgcolor: 'background.default',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
           transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -343,6 +341,7 @@ export const VoiceRoomCard = ({
             alignItems: 'center',
             gap: 1.25,
             p: 1,
+            mt: 1.25,
             borderRadius: 1,
             bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
             border: '1px solid',
@@ -415,18 +414,19 @@ export const VoiceRoomCard = ({
           </Box>
         </Box>
 
-        {/* 3. Centered & Responsive Joined User Profiles + Single Available Space Pod */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          spacing={scale.gap}
+        {/* 3. Centered & Responsive Stage (Max 2 Rows) */}
+        <Box
           sx={{
             width: '100%',
-            minHeight: 72,
-            py: 0.5,
+            minHeight: 96,
+            py: 1.5,
             px: 0.5,
-            overflow: 'hidden',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: scale.gap,
+            rowGap: 1.5,
           }}
         >
           {visibleSpeakers.map((speaker, i) => {
@@ -447,8 +447,7 @@ export const VoiceRoomCard = ({
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    flexShrink: 1,
-                    minWidth: 0,
+                    flexShrink: 0,
                     cursor: 'pointer',
                     transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
@@ -458,14 +457,14 @@ export const VoiceRoomCard = ({
                     },
                   }}
                 >
-                  {/* Gradient Aura Ring around Responsive Speaker Avatar */}
+                  {/* Speaker Ring */}
                   <Box
                     className="speaker-ring"
                     sx={{
                       width: scale.size,
                       height: scale.size,
                       borderRadius: '50%',
-                      p: '2px',
+                      p: 0.2,
                       background: ringGradient,
                       transition: 'all 0.22s ease',
                       position: 'relative',
@@ -488,7 +487,7 @@ export const VoiceRoomCard = ({
                       {getInitials(speaker?.name)}
                     </Avatar>
 
-                    {/* Verified Check on Top-Left */}
+                    {/* Verified Icon */}
                     {speaker?.verified && (
                       <Box
                         sx={{
@@ -512,7 +511,7 @@ export const VoiceRoomCard = ({
                     )}
                   </Box>
 
-                  {/* Following Count Pill Anchored at Bottom (No Name) */}
+                  {/* Followers / Likes Pill */}
                   <Box
                     sx={{
                       mt: -0.85,
@@ -550,29 +549,38 @@ export const VoiceRoomCard = ({
             );
           })}
 
-          {/* Extra Speakers Overflow Badge (if room has > 5 joined speakers) */}
+          {/* Overflow Counter Slot (If > 2 rows capacity) */}
           {overflowCount > 0 && (
-            <Box
-              sx={{
-                width: scale.size - 4,
-                height: scale.size - 4,
-                borderRadius: '50%',
-                bgcolor: alpha(theme.palette.primary.main, 0.14),
-                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                color: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: 11,
-                flexShrink: 0,
-              }}
-            >
-              +{overflowCount}
-            </Box>
+            <Tooltip title={`${overflowCount} more participants`} arrow placement="top">
+              <Box
+                onClick={participantsOpen.onTrue}
+                sx={{
+                  width: scale.size,
+                  height: scale.size,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
+                  border: `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: scale.fontSize - 1,
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.06)',
+                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                  },
+                }}
+              >
+                +{overflowCount}
+              </Box>
+            </Tooltip>
           )}
 
-          {/* Single Dashed Pod Showing Available Space Count */}
+          {/* Single Pod Showing Available Space */}
           {showAvailableSlot && (
             <Tooltip
               title={`${availableSpace} ${availableSpace === 1 ? 'seat' : 'seats'} available • Click to join stage`}
@@ -595,10 +603,6 @@ export const VoiceRoomCard = ({
                     color: 'primary.main',
                     bgcolor: alpha(theme.palette.primary.main, 0.08),
                     transform: 'scale(1.06)',
-                  },
-                  '&:hover .empty-pod-label': {
-                    color: 'primary.main',
-                    borderColor: alpha(theme.palette.primary.main, 0.4),
                   },
                 }}
               >
@@ -630,39 +634,12 @@ export const VoiceRoomCard = ({
                     {availableSpace}
                   </Typography>
                 </Box>
-
-                <Box
-                  className="empty-pod-label"
-                  sx={{
-                    mt: -0.85,
-                    px: 0.65,
-                    py: 0.15,
-                    borderRadius: 0.75,
-                    bgcolor: isDark ? '#181c26' : '#ffffff',
-                    border: '1px solid',
-                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-                    zIndex: 2,
-                    transition: 'all 0.18s ease',
-                  }}
-                >
-                  <Typography
-                    noWrap
-                    sx={{
-                      fontSize: scale.pillFontSize,
-                      fontWeight: 700,
-                      color: isDark ? 'text.secondary' : '#64748b',
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {availableSpace} left
-                  </Typography>
-                </Box>
               </Box>
             </Tooltip>
           )}
-        </Stack>
+        </Box>
 
-        {/* 4. Footer Action Button (borderRadius: 1) */}
+        {/* 4. Footer Action Button */}
         <Button
           fullWidth
           size="medium"
@@ -687,6 +664,7 @@ export const VoiceRoomCard = ({
             fontWeight: 700,
             fontSize: 13,
             boxShadow: 'none',
+            mt: 1.5,
             '&:hover': {
               boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
             },
