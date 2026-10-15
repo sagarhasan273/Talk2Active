@@ -1,19 +1,14 @@
-import type { RoomType, SelectedTabType } from '@/types/type-room';
+// src/sections/section-voice/voice-main-view.tsx
 
-import { useCallback, useMemo, useState } from 'react';
-
-import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
-import { toastErrorResponse } from '@/utils/response';
+import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { RoomChatProvider } from '@/core/contexts/context-room-chat';
+import { VoiceRoomActionProvider, useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import { useCallback, useMemo } from 'react';
 import { useCredentials } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { VoiceRoomLayout } from 'src/layouts/voice-room';
-
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import useRoomSounds from '@/hooks/use-room-sounds';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
-
-import { RoomChatProvider } from '@/core/contexts/context-room-chat';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
@@ -21,22 +16,25 @@ import { RoomlistMain } from '../voice-room-list';
 import { VoiceTabPanel } from '../voice-tab-panel';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
-export function VoiceMainView() {
-  const { user, isAuthenticated } = useCredentials();
-  const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
-  const { room, setRoom, resetRoom } = useRoomTools();
-  const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
+function VoiceMainContent() {
+  const { isAuthenticated } = useCredentials();
+  const { isInRoom } = useLiveKitSession();
+  const { room } = useRoomTools();
 
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
 
-  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
-  const [livekitToken, setLivekitToken] = useState<string | null>(null);
-  const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<SelectedTabType>('room-list');
-
-  const [joinRoomMutation] = useJoinRoomMutation();
-  const [leaveRoomMutation] = useLeaveRoomMutation();
+  const {
+    selectedRoom,
+    livekitToken,
+    isJoinGateOpen,
+    selectedTab,
+    handleSelectRoom,
+    handleCancelJoin,
+    handleJoinRoom,
+    handleLeaveRoom,
+    handleBackToRooms,
+  } = useVoiceRoomAction();
 
   const participants = useMemo(() => (room?.participants || []), [room]);
 
@@ -44,68 +42,6 @@ export function VoiceMainView() {
     () => participants.find((participant) => isParticipantSpeaking(participant)) || null,
     [participants]
   );
-
-  const handleSelectRoom = useCallback(
-    (roomSelected: RoomType) => {
-      if (!isAuthenticated) {
-        isAuthOpen.onTrue();
-        return;
-      }
-      setSelectedRoom(roomSelected);
-      setIsJoinGateOpen(true);
-    },
-    [isAuthenticated, isAuthOpen]
-  );
-
-  const handleCancelJoin = useCallback(() => {
-    setIsJoinGateOpen(false);
-    setSelectedRoom(null);
-  }, []);
-
-  const handleJoinRoom = useCallback(async () => {
-    if (!selectedRoom || !user) return;
-
-    if (isInRoom) { await handleLeaveRoom() }
-
-    try {
-      const response = await joinRoomMutation({
-        roomId: selectedRoom.roomId,
-        userId: user.userId,
-      }).unwrap();
-
-      if (response.status && response.data.token) {
-        setRoom(response.data.room);
-        setLivekitToken(response.data.token);
-        setIsJoinGateOpen(false);
-        setSelectedTab('room-space');
-        await connectToRoom(response.data.token);
-        playUserJoin();
-      }
-    } catch (error) {
-      toastErrorResponse(error);
-    }
-  }, [selectedRoom, user, joinRoomMutation, setRoom, connectToRoom]);
-
-  const handleBackToRooms = useCallback(() => {
-    setSelectedTab('room-list');
-  }, []);
-
-  const handleLeaveRoom = useCallback(async () => {
-    try {
-      await disconnectRoom();
-      if (room?.roomId && user?.userId)
-        await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });
-    } catch (err) {
-      console.warn('LiveKit disconnect warning:', err);
-    }
-
-    setSelectedTab('room-list');
-    setSelectedRoom(null);
-    setLivekitToken(null);
-    setIsJoinGateOpen(false);
-    resetRoom();
-    playUserLeave();
-  }, [room?.roomId, user?.userId, disconnectRoom, setRoom, leaveRoomMutation]);
 
   const handleCreateRoom = useCallback(() => {
     if (!isAuthenticated) {
@@ -122,14 +58,13 @@ export function VoiceMainView() {
           room={room}
           participants={participants}
           currentSpeaker={currentSpeaker}
-          onEnterRoom={() => setSelectedTab('room-space')}
+          onEnterRoom={() => handleBackToRooms()} // or switch tab
           onLeaveRoom={handleLeaveRoom}
         />
       );
     }
-
     return null;
-  }, [isInRoom, room, selectedTab, participants, currentSpeaker, handleLeaveRoom]);
+  }, [isInRoom, room, selectedTab, participants, currentSpeaker, handleBackToRooms, handleLeaveRoom]);
 
   const mainContent = (
     <RoomChatProvider>
@@ -141,7 +76,6 @@ export function VoiceMainView() {
       </VoiceTabPanel>
 
       <VoiceTabPanel value={selectedTab !== 'room-list' ? 1 : 0} index={1}>
-        {/* Only mount when active token and room exist. The key forces complete destruction on switch */}
         {livekitToken && room?.roomId ? (
           <RoomContainerMain
             key={room.roomId}
@@ -181,6 +115,16 @@ export function VoiceMainView() {
         currentRoom={room}
       />
     </>
+  );
+}
+
+export function VoiceMainView() {
+  const isAuthOpen = useBoolean();
+
+  return (
+    <VoiceRoomActionProvider onOpenAuth={isAuthOpen.onTrue}>
+      <VoiceMainContent />
+    </VoiceRoomActionProvider>
   );
 }
 

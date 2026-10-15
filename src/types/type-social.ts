@@ -90,5 +90,5 @@ export interface SocialChatProps {
   isLoading?: boolean;
   onClose?: () => void;
   onUnfollow?: (targetUserId: string, person: AllRelationsType) => Promise<void> | void;
-  onJoinRoom?: (roomId: string, person: AllRelationsType) => void;
+  onJoinRoom?: (roomId: string, person?: AllRelationsType) => void;
 }

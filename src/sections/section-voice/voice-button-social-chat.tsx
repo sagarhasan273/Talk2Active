@@ -30,7 +30,7 @@ const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
-const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
+const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (roomId: string) => void }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -254,6 +254,7 @@ const VoiceButtonSocialChat = ({ sx }: { sx?: SxProps }) => {
               currentUserId={currentUserId}
               currentUserName={currentUserName}
               isLoading={false}
+              onJoinRoom={onJoinRoom}
               onClose={() => setOpen(false)}
             />
           </Box>

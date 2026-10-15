@@ -40,7 +40,6 @@ export const accountSlice = createSlice({
     },
 
     setFriends: (state, action: PayloadAction<UserState['friends']>) => {
-      // ✅ Clone with Array.from() / .map() to bypass Redux object freezing before sorting
       const payloadArray = action.payload || [];
       state.friends = Array.from(payloadArray)
         .map((item) => ({ ...item }))
@@ -61,6 +60,33 @@ export const accountSlice = createSlice({
 
     setBlockedUserIds: (state, action: PayloadAction<string[]>) => {
       state.blockedUserIds = action.payload || [];
+    },
+
+    updateRelationPresence: (
+      state,
+      action: PayloadAction<{ userId: string; lastActive?: string }>
+    ) => {
+      const { userId, lastActive } = action.payload;
+      if (!lastActive) return;
+
+      const updateList = (list: AllRelationsType[]) => {
+        const idx = list.findIndex(
+          (item) => String(item?.accountDetails?.userId) === String(userId)
+        );
+        if (idx > -1 && list[idx].accountDetails) {
+          list[idx] = {
+            ...list[idx],
+            accountDetails: {
+              ...list[idx].accountDetails,
+              lastActive: new Date(lastActive) as any,
+            },
+          };
+        }
+      };
+
+      updateList(state.friends);
+      updateList(state.following);
+      updateList(state.followers);
     },
 
     // ── Bubble conversation to top when a new message arrives ───────────────
@@ -84,7 +110,6 @@ export const accountSlice = createSlice({
         };
       }
 
-      // ✅ Clone and sort to bubble active conversation to the top
       state.friends = Array.from(state.friends)
         .map((item) => ({ ...item }))
         .sort((a, b) => {
@@ -158,6 +183,7 @@ export const {
   setFollowing,
   setFriends,
   setBlockedUserIds,
+  updateRelationPresence,
   updateLatestMessage,
   addFollowing,
   removeFollowing,

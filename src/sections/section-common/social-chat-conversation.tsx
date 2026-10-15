@@ -24,15 +24,14 @@ import {
   useTheme,
 } from '@mui/material';
 
-import type { AllRelationsType } from '@/types/type-social';
 
 import { useSocialChat } from '@/core/contexts/context-social-chat';
-import { getActiveRoomId, getInitials, isOnline } from '@/utils/social-chat-helper';
+import { getInitials, isOnline } from '@/utils/social-chat-helper';
 import { SocialMessageBubble } from './social-chat-message-bubble';
 
 interface SocialChatConversationProps {
   onClose?: () => void;
-  onJoinRoom?: (roomId: string, person: AllRelationsType) => void;
+  onJoinRoom?: (roomId: string) => void;
 }
 
 export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
@@ -66,7 +65,8 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
   const localIsAtBottomRef = useRef<boolean>(true);
 
   const friendDetails = activeFriend?.accountDetails;
-  const activeRoomId = getActiveRoomId(activeFriend);
+  const roomId = friendDetails?.userId ? onlineStatusMap[friendDetails.userId] : null;
+  const isInRoom = Boolean(roomId);
 
   useEffect(() => {
     const sentinel = messagesEndRef.current;
@@ -210,24 +210,24 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               sx={{
                 fontSize: 10.5,
                 fontWeight: 700,
-                color: activeRoomId ? 'success.main' : online ? '#10B981' : 'text.secondary',
+                color: isInRoom ? 'success.main' : online ? '#10B981' : 'text.secondary',
               }}
               noWrap
             >
-              {activeRoomId ? 'In a voice room' : online ? 'Active now' : 'Offline'}
+              {isInRoom ? 'In a voice room' : online ? 'Active now' : 'Offline'}
             </Typography>
           </Box>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-          {activeRoomId && (
+          {isInRoom && (
             <Tooltip title="Join active voice room" arrow>
               <Button
                 size="small"
                 variant="contained"
                 color="success"
                 startIcon={<PhoneCall size={13} />}
-                onClick={() => onJoinRoom?.(activeRoomId, activeFriend)}
+                onClick={() => { if (roomId) onJoinRoom?.(roomId) }}
                 sx={{
                   borderRadius: 1,
                   px: 1.25,
@@ -238,7 +238,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                   boxShadow: `0 4px 12px ${alpha(theme.palette.success.main, 0.35)}`,
                 }}
               >
-                Join Call
+                Join
               </Button>
             </Tooltip>
           )}

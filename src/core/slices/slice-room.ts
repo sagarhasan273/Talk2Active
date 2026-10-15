@@ -1,8 +1,10 @@
+// src/core/slices/room.slice.ts
+
 import type { RoomParticipantType, RoomType } from '@/types/type-room';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
 import { createSlice } from '@reduxjs/toolkit';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { cacheUserInfo } from '@/utils/user-cache';
@@ -11,6 +13,7 @@ import type { RootState } from '../types';
 interface RoomState {
   roomId: null | string;
   room: null | RoomType;
+  rooms: RoomType[];
   loading: boolean;
   participants: RoomParticipantType[];
   isUnreadRoomMessage: boolean;
@@ -20,6 +23,7 @@ interface RoomState {
 const initialState: RoomState = {
   roomId: null,
   room: null,
+  rooms: [],
   loading: false,
   participants: [],
   isUnreadRoomMessage: false,
@@ -30,31 +34,10 @@ export const roomSlice = createSlice({
   initialState,
   reducers: {
     setRoom: (state, action: PayloadAction<RoomState['room']>) => {
-      if (action.payload?.roomId) {
-        state.roomId = action.payload.roomId
-        state.room = action.payload;
-      }
-
+      state.room = action.payload;
+      state.roomId = action.payload?.roomId || null;
       if (action.payload?.participants) {
-        action.payload.participants.forEach(participant => {
-          const index = state.participants.findIndex(
-            currentParticipant => currentParticipant.userId === participant.userId,
-          );
-
-          if (index >= 0) {
-            state.participants[index] = participant;
-          } else {
-            state.participants.push(participant);
-          }
-
-          if (participant.userId) {
-            cacheUserInfo({
-              userId: participant.userId,
-              name: participant.name as string,
-              avatarUrl: participant.profilePhoto
-            })
-          }
-        });
+        state.participants = action.payload.participants;
       }
     },
 
@@ -62,101 +45,98 @@ export const roomSlice = createSlice({
       state.loading = action.payload;
     },
 
-    addParticipant: (state, action: PayloadAction<RoomParticipantType>) => {
-      const newParticipant = action.payload;
-      const newId = String(newParticipant.userId);
+    setRooms: (state, action: PayloadAction<RoomType[]>) => {
+      state.rooms = action.payload || [];
+    },
 
-      // 1. Prevent duplicates
-      const exists = state.participants.some(
-        (p) => String(p.userId) === newId
-      );
-      if (exists) return;
+    // 1. Handle New Room (Prepends to rooms array)
+    addRoom: (state, action: PayloadAction<RoomType>) => {
+      const newRoom = action.payload;
+      if (!newRoom?.roomId) return;
 
-      // 2. Update top-level array
-      state.participants.push(newParticipant);
-
-      // 3. Keep room copy in sync safely
-      if (state.room) {
-        if (!state.room.participants) {
-          state.room.participants = [];
-        }
-        state.room.participants.push(newParticipant);
-      }
-
-      if (newParticipant.userId) {
-        cacheUserInfo({
-          userId: newParticipant.userId,
-          name: newParticipant.name as string,
-          avatarUrl: newParticipant.profilePhoto
-        })
+      const exists = state.rooms.some((r) => r.roomId === newRoom.roomId);
+      if (!exists) {
+        state.rooms = [newRoom, ...state.rooms];
       }
     },
 
-    updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
-      if (!action.payload?.userId) {
-        return;
-      }
-
-      const index = state.participants.findIndex(
-        participant => participant.userId === action.payload.userId,
-      );
-
-      if (index < 0) {
-        return;
-      }
-
-      state.participants[index] = {
-        ...state.participants[index],
-        ...action.payload,
-      };
-    },
-
-    updateParticipants: (
+    // 2. Handle User Join in Room (Adds participant to target room)
+    addParticipantToRoom: (
       state,
-      action: PayloadAction<Array<Partial<RoomParticipantType>>>
+      action: PayloadAction<{ roomId: string; participant: RoomParticipantType }>
     ) => {
-      if (!Array.isArray(action.payload) || action.payload.length === 0) {
-        return;
-      }
+      const { roomId, participant } = action.payload;
+      if (!roomId || !participant) return;
 
-      // 1. Build a quick lookup map of updates by userId
-      const updatesMap = new Map<string, Partial<RoomParticipantType>>();
-      for (const update of action.payload) {
-        if (update?.userId) {
-          updatesMap.set(String(update.userId), update);
-        }
-      }
+      const participantId = participant.userId?.toString();
 
-      if (updatesMap.size === 0) {
-        return;
-      }
+      state.rooms = state.rooms.map((room) => {
+        if (room.roomId !== roomId) return room;
 
-      // 2. Update matching participants in-place (leveraging Immer)
-      state.participants.forEach((participant, index) => {
-        const update = updatesMap.get(String(participant.userId));
-        if (update) {
-          state.participants[index] = {
-            ...participant,
-            ...update,
-          };
-        }
+        const participants = room.participants || [];
+        const alreadyExists = participants.some(
+          (p) => p.userId?.toString() === participantId
+        );
+
+        if (alreadyExists) return room;
+
+        return {
+          ...room,
+          participants: [...participants, participant],
+        };
       });
-    },
 
-    removeParticipant: (state, action: PayloadAction<string>) => {
-      const targetId = String(action.payload);
+      // Also sync active room if it matches
+      if (state.room && state.room.roomId === roomId) {
+        if (!state.room.participants) state.room.participants = [];
+        const exists = state.room.participants.some(
+          (p) => p.userId?.toString() === participantId
+        );
+        if (!exists) {
+          state.room.participants.push(participant);
+          state.participants = state.room.participants;
+        }
+      }
 
-      state.participants = state.participants.filter(
-        (p) => String(p.userId) !== targetId
-      );
-
-      if (state.room && state.room.participants) {
-        state.room.participants = state.participants;
+      if (participant.userId) {
+        cacheUserInfo({
+          userId: participant.userId,
+          name: participant.name as string,
+          avatarUrl: participant.profilePhoto,
+        });
       }
     },
 
-    resetParticipants: (state) => {
-      state.participants = [];
+    // 3. Handle User Leave in Room (Removes participant from target room)
+    removeParticipantFromRoom: (
+      state,
+      action: PayloadAction<{ roomId: string; participantId: string }>
+    ) => {
+      const { roomId, participantId } = action.payload;
+      if (!roomId || !participantId) return;
+
+      const leavingUserId = participantId.toString();
+
+      state.rooms = state.rooms.map((room) => {
+        if (room.roomId !== roomId) return room;
+
+        const updatedParticipants = (room.participants || []).filter(
+          (p) => p.userId?.toString() !== leavingUserId
+        );
+
+        return {
+          ...room,
+          participants: updatedParticipants,
+        };
+      });
+
+      // Also sync active room if it matches
+      if (state.room && state.room.roomId === roomId && state.room.participants) {
+        state.room.participants = state.room.participants.filter(
+          (p) => p.userId?.toString() !== leavingUserId
+        );
+        state.participants = state.room.participants;
+      }
     },
 
     resetRoom: (state) => {
@@ -167,54 +147,71 @@ export const roomSlice = createSlice({
   },
 });
 
-const {
+export const {
   setRoom,
   setRoomLoading,
-  addParticipant,
-  updateParticipant,
-  updateParticipants,
-  removeParticipant,
-  resetParticipants,
+  setRooms,
+  addRoom,
+  addParticipantToRoom,
+  removeParticipantFromRoom,
   resetRoom,
 } = roomSlice.actions;
 
+// ── Selectors ─────────────────────────────────────────────────────────────
 export const selectRoom = (state: RootState) => state.room.room;
+export const selectRooms = (state: RootState) => state.room.rooms;
 export const selectRoomLoading = (state: RootState) => state.room.loading;
 export const selectParticipants = (state: RootState) => state.room.participants;
-export const selectisUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
+export const selectIsUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 
+// ── useRoomTools Hook ─────────────────────────────────────────────────────
 export const useRoomTools = () => {
   const dispatch = useDispatch();
 
   const roomId = useSelector((state: RootState) => state.room.roomId);
   const room = useSelector(selectRoom);
+  const rooms = useSelector(selectRooms);
   const loading = useSelector(selectRoomLoading);
   const participants = useSelector(selectParticipants);
-  const isUnreadRoomMessage = useSelector(selectisUnreadRoomMessage);
+  const isUnreadRoomMessage = useSelector(selectIsUnreadRoomMessage);
+
+  // 4. Get Room by ID Helper Function
+  const getRoomById = useCallback(
+    (targetRoomId: string): RoomType | undefined => {
+      if (!targetRoomId) return undefined;
+      return rooms.find((r) => r.roomId === targetRoomId);
+    },
+    [rooms]
+  );
 
   const memoizedRoom = useMemo(
     () => ({
       roomId,
       room,
+      rooms,
       loading,
       participants,
       isUnreadRoomMessage,
       setRoom: (roomData: RoomType | null) => dispatch(setRoom(roomData)),
+      setRooms: (roomsList: RoomType[]) => dispatch(setRooms(roomsList)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
-      addParticipant: (participant: RoomParticipantType) => dispatch(addParticipant(participant)),
-      updateParticipant: (participant: Partial<RoomParticipantType>) =>
-        dispatch(updateParticipant(participant)),
-      updateParticipants: (participants: Array<Partial<RoomParticipantType>>) => dispatch(updateParticipants(participants)),
-      removeParticipant: (userId: string) => dispatch(removeParticipant(userId)),
-      resetParticipants: () => dispatch(resetParticipants()),
+      addRoom: (roomData: RoomType) => dispatch(addRoom(roomData)),
+      addParticipantToRoom: (roomId: string, participant: RoomParticipantType) =>
+        dispatch(addParticipantToRoom({ roomId, participant })),
+      removeParticipantFromRoom: (roomId: string, participantId: string) =>
+        dispatch(removeParticipantFromRoom({ roomId, participantId })),
+      getRoomById,
       resetRoom: () => dispatch(resetRoom()),
     }),
     [
       roomId,
       room,
+      rooms,
       loading,
       participants,
       isUnreadRoomMessage,
+      getRoomById,
+      dispatch,
     ]
   );
 

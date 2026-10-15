@@ -187,6 +187,7 @@ export const VoiceRoomCard = ({
       userId: targetUser?.userId || targetUser?.id,
       name: targetUser?.name || 'User',
       username: targetUser?.username,
+      genUserId: targetUser?.genUserId,
       profilePhoto: targetUser?.profilePhoto,
       verified: targetUser?.verified,
       accountType: targetUser?.accountType,
@@ -253,11 +254,9 @@ export const VoiceRoomCard = ({
                     size="small"
                     color="primary"
                     sx={{
-                      borderRadius: 1,
-                      bgcolor: isDark
-                        ? alpha(theme.palette.primary.main, 0.14)
-                        : alpha(theme.palette.primary.main, 0.08),
-                      fontWeight: 700,
+                      height: 20,
+                      borderRadius: 0.5,
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
                     }}
                   />
                 ))}
@@ -269,8 +268,9 @@ export const VoiceRoomCard = ({
                   showEmoji
                   size="small"
                   sx={{
+                    height: 20,
                     transform: 'none !important',
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     border: '1px solid',
                     borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
                     bgcolor: isDark ? 'transparent' : '#f8fafc',
@@ -286,9 +286,8 @@ export const VoiceRoomCard = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  px: 0.85,
-                  py: 0.25,
-                  borderRadius: 1,
+                  px: 0.5,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
                   border: '1px solid',
                   borderColor: isDark ? alpha(theme.palette.success.main, 0.25) : '#a7f3d0',
@@ -685,7 +684,7 @@ export const VoiceRoomCard = ({
         open={participantsOpen.value}
         onClose={participantsOpen.onFalse}
         room={roomData}
-        allUsers={allUsers as any}
+        allUsers={allUsers}
         isFull={isFull}
         isHost={isHost}
         onJoinRoom={onJoinRoom}

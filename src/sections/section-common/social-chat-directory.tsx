@@ -3,9 +3,10 @@
 import {
   Lock,
   MessageCircle,
+  Mic,
   PhoneCall,
   UserMinus,
-  X,
+  X
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
@@ -26,7 +27,7 @@ import {
 import { useSocialChat } from '@/core/contexts/context-social-chat';
 import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
-import { getActiveRoomId, getInitials, isOnline } from '@/utils/social-chat-helper';
+import { getInitials } from '@/utils/social-chat-helper';
 
 interface SocialChatDirectoryProps {
   friends?: AllRelationsType[];
@@ -35,7 +36,7 @@ interface SocialChatDirectoryProps {
   isLoading?: boolean;
   onClose?: () => void;
   onUnfollow?: (targetUserId: string, person: AllRelationsType) => Promise<void> | void;
-  onJoinRoom?: (roomId: string, person: AllRelationsType) => void;
+  onJoinRoom?: (roomId: string) => void;
 }
 
 export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
@@ -78,13 +79,12 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     following: visibleFollowing,
   };
 
-  // Sort friends/relations by latest message timestamp or recent activity
   const dataByTab = useMemo(() => {
     const list = rawDataByTab[tab] || [];
     return [...list].sort((a, b) => {
       const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
       const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
-      return timeB - timeA; // Newest first
+      return timeB - timeA;
     });
   }, [rawDataByTab, tab]);
 
@@ -279,16 +279,11 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
               const person = item.accountDetails;
               const canChat = friendIds.has(person.userId);
               const unreadCount = unreadCounts[person.userId] || 0;
-              const activeRoomId = getActiveRoomId(item);
 
-              // Socket online status takes priority, fallback to timestamp helper
-              const isSocketOnline = onlineStatusMap[person.userId];
-              const online =
-                isSocketOnline !== undefined
-                  ? isSocketOnline
-                  : isOnline(person.lastActive);
+              const roomId = onlineStatusMap[person.userId] || false;
+              const isInRoom = Boolean(roomId);
 
-              const latestText = item.latestMessage?.text;
+              const latestText = item.latestMessage?.text || `Last seen: ${fDateTime(person.lastActive)}`;
 
               return (
                 <Box
@@ -306,12 +301,11 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                     '&:hover': canChat
                       ? {
                         bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
-                        transform: 'translateX(2px)',
                       }
                       : undefined,
                   }}
                 >
-                  {/* Avatar + Unread Badge + Online Dot */}
+                  {/* Avatar + Unread Badge + Room Indicator Dot */}
                   <Box sx={{ position: 'relative', flexShrink: 0 }}>
                     <Badge
                       color="error"
@@ -335,19 +329,32 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         {getInitials(person.name)}
                       </Avatar>
                     </Badge>
-                    {(online || activeRoomId) && (
+                    {isInRoom && (
                       <Box
                         sx={{
                           position: 'absolute',
-                          bottom: 0,
-                          right: 0,
-                          width: 10,
-                          height: 10,
+                          bottom: -2,
+                          right: -2,
+                          width: 16,
+                          height: 16,
                           borderRadius: '50%',
-                          bgcolor: '#10B981',
+                          bgcolor: 'success.main',
                           border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+                          '@keyframes voicePulse': {
+                            '0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.7)' },
+                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 6px rgba(16, 185, 129, 0)' },
+                            '100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0)' },
+                          },
+                          animation: 'voicePulse 2s infinite ease-in-out',
                         }}
-                      />
+                      >
+                        <Mic size={9} strokeWidth={3} />
+                      </Box>
                     )}
                   </Box>
 
@@ -368,33 +375,34 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       variant="caption"
                       sx={{
                         fontSize: 11,
-                        color: activeRoomId
+                        color: isInRoom && tab !== 'friends'
                           ? 'success.main'
                           : unreadCount > 0
                             ? isDark ? 'text.primary' : '#0f172a'
                             : isDark ? 'text.secondary' : '#64748b',
-                        fontWeight: activeRoomId || unreadCount > 0 ? 700 : 500,
+                        fontWeight: isInRoom || unreadCount > 0 ? 700 : 500,
                         mt: 0.2,
                       }}
                       noWrap
                     >
-                      {activeRoomId
+                      {tab === 'friends' ? unreadCount > 0
+                        ? `${unreadCount} unread messages`
+                        : latestText : isInRoom
                         ? '🎙️ In a voice room'
-                        : unreadCount > 0
-                          ? `${unreadCount} unread messages`
-                          : latestText || person.bio || `Last seen: ${fDateTime(person.lastActive)}`}
+                        : `Last seen: ${fDateTime(person.lastActive)}`}
                     </Typography>
                   </Box>
 
                   {/* Right Action Buttons */}
                   <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flexShrink: 0 }}>
-                    {activeRoomId && (
+                    {isInRoom && (
                       <Tooltip title={`Join ${person.name}'s room`} arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onJoinRoom?.(activeRoomId, item);
+                            if (roomId)
+                              onJoinRoom?.(roomId);
                           }}
                           sx={{
                             color: '#fff',
@@ -448,7 +456,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           height: 30,
                           border: '1px solid',
                           borderColor: alpha(theme.palette.primary.main, 0.25),
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) },
+                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08) },
                         }}
                         title={`Message ${person.name}`}
                       >

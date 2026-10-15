@@ -7,12 +7,13 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Box, Divider } from '@mui/material';
 
-import { useCredentials } from '@/core/slices';
+import { useCredentials, useRoomTools } from '@/core/slices';
 
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useSocket } from '@/core/contexts/context-socket';
+import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
@@ -41,11 +42,20 @@ export function RoomlistMain({
   onCreateRoom,
 }: RoomlistMainProps) {
   const { user } = useCredentials();
-
   const { socket } = useSocket();
   const { isInRoom } = useLiveKitSession();
 
-  const [rooms, setRooms] = useState<RoomType[]>([]);
+  const {
+    rooms,
+    setRooms,
+    addRoom,
+    addParticipantToRoom,
+    removeParticipantFromRoom,
+    getRoomById
+  } = useRoomTools();
+
+  const { handleSelectRoom } = useVoiceRoomAction();
+
   const [filterRooms, setFilterRooms] = useState<FilterState>({
     searchQuery: '',
     selectedLanguage: 'all',
@@ -90,12 +100,13 @@ export function RoomlistMain({
     });
   }, [rooms, filterRooms]);
 
+  // Socket handlers utilizing Redux actions
   useEffect(() => {
     if (!socket) return;
 
     const handleNewRoom = (data: { room: RoomType }) => {
-      if (data.room) {
-        setRooms((prev) => [data.room, ...prev]);
+      if (data?.room) {
+        addRoom(data.room);
       }
     };
 
@@ -105,50 +116,17 @@ export function RoomlistMain({
     }) => {
       try {
         if (data?.roomId && data?.participant) {
-          const newParticipant = data.participant;
-          const newParticipantId = newParticipant.userId?.toString();
-
-          setRooms((prev) =>
-            prev.map((room) => {
-              if (room.roomId !== data.roomId) return room;
-
-              const alreadyExists = room.participants.some(
-                (p: RoomParticipantType) => p.userId?.toString() === newParticipantId
-              );
-
-              if (alreadyExists) return room;
-
-              return {
-                ...room,
-                participants: [...room.participants, newParticipant],
-              };
-            })
-          );
+          addParticipantToRoom(data.roomId, data.participant);
         }
       } catch (e) {
-        console.error('Failed to update room participants:', e);
+        console.error('Failed to update room participants on join:', e);
       }
     };
 
     const handleUserLeave = (data: { roomId: string; participantId: string }) => {
       try {
         if (data?.roomId && data?.participantId) {
-          const leavingUserId = data.participantId.toString();
-
-          setRooms((prev) =>
-            prev.map((room) => {
-              if (room.roomId !== data.roomId) return room;
-
-              const updatedParticipants = (room.participants || []).filter(
-                (p: RoomParticipantType) => p.userId?.toString() !== leavingUserId
-              );
-
-              return {
-                ...room,
-                participants: updatedParticipants,
-              };
-            })
-          );
+          removeParticipantFromRoom(data.roomId, data.participantId);
         }
       } catch (e) {
         console.error('Failed to handle participant leave:', e);
@@ -164,11 +142,14 @@ export function RoomlistMain({
       socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
       socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
     };
-  }, [socket]);
+  }, [socket, addRoom, addParticipantToRoom, removeParticipantFromRoom]);
 
+  // Sync initial API fetch into Redux store
   useEffect(() => {
-    setRooms(getRooms?.data || []);
-  }, [getRooms]);
+    if (getRooms?.data) {
+      setRooms(getRooms.data);
+    }
+  }, [getRooms, setRooms]);
 
   return (
     <>
@@ -213,7 +194,7 @@ export function RoomlistMain({
           />
         ))}
 
-        { /* Divider */}
+        {/* Divider */}
         <Box sx={{ gridColumn: '1 / -1', my: 1 }}>
           <Divider sx={{ bgcolor: 'primary.main' }} />
         </Box>
@@ -223,7 +204,14 @@ export function RoomlistMain({
           <RoomListFooter onCreateRoom={onCreateRoom} />
         </Box>
       </Box>
-      <VoiceButtonSocialChat />
+      <VoiceButtonSocialChat onJoinRoom={(roomId: string) => {
+        const roomObj = getRoomById(roomId);
+        if (roomObj) {
+          handleSelectRoom(roomObj);
+        }
+      }} />
     </>
   );
 }
+
+export default RoomlistMain;
