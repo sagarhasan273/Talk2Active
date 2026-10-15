@@ -3,27 +3,32 @@
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
+import { Label } from '@/components/label';
 import { useCredentials } from '@/core/slices';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import {
   alpha,
   Avatar,
   Box,
-  Chip,
+  Divider,
   Fade,
   IconButton,
   Modal,
   Stack,
+  Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from '@mui/material';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import DialogReportUser from '../../components/dialogs/dialog-report-user';
 
 export type UserDisplayerProfile = {
   id?: string;
   userId?: string;
+  genUserId?: string;
   name: string;
   username?: string;
   profilePhoto?: string | null;
@@ -47,12 +52,19 @@ type UserDisplayerProps = {
   onReportUser?: (userId: string, reason: string) => void;
 };
 
+const AccountTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
+  admin: { label: 'Admin', color: '#ff1744', bg: 'rgba(255,23,68,0.12)' },
+  supporter: { label: 'Supporter', color: '#d500f9', bg: 'rgba(213,0,249,0.12)' },
+  vip: { label: 'VIP', color: '#ff8f00', bg: 'rgba(255,143,0,0.12)' },
+  moderator: { label: 'Moderator', color: '#00c853', bg: 'rgba(0,200,83,0.12)' },
+  member: { label: 'Member', color: '#78909c', bg: 'rgba(120,144,156,0.12)' },
+};
+
 export const UserDisplayer = ({
   open,
   user,
   currentUserId,
   onClose,
-  onToggleFollow,
   onBlockUser,
   onReportUser,
 }: UserDisplayerProps) => {
@@ -62,10 +74,17 @@ export const UserDisplayer = ({
   const { checkIfFollowing, checkIfBlocked } = useCredentials();
 
   const [reportOpen, setReportOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const resolvedUserId = user.userId || user.id || '';
+  const displayHandle = user.genUserId
+    ? `ID: ${user.genUserId}`
+    : `Can't see Uid`;
   const isSelf = Boolean(currentUserId && resolvedUserId === currentUserId);
   const isBlocked = checkIfBlocked(resolvedUserId);
+
+  const accountCfg =
+    AccountTypeConfig[user.accountType?.toLowerCase() ?? 'member'] ?? AccountTypeConfig.member;
 
   const getInitials = (fullName: string) => {
     if (!fullName) return '';
@@ -74,11 +93,26 @@ export const UserDisplayer = ({
     return fullName.slice(0, 2).toUpperCase();
   };
 
+  const formatStatCount = (count: number) =>
+    count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count;
+
   const statItems = [
     { label: 'Followers', count: user.follower_count ?? 0 },
-    { label: 'Following', count: user.following_count ?? 0 },
     { label: 'Friends', count: user.friend_count ?? 0 },
+    { label: 'Following', count: user.following_count ?? 0 },
   ];
+
+  const handleCopyHandle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const copyText = user.genUserId || user.username || resolvedUserId;
+      if (!copyText) return;
+      navigator.clipboard.writeText(String(copyText));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    },
+    [user.genUserId, user.username, resolvedUserId]
+  );
 
   const handleOpenReport = () => {
     onClose();
@@ -94,13 +128,13 @@ export const UserDisplayer = ({
         slotProps={{
           backdrop: {
             sx: {
-              bgcolor: 'rgba(0, 0, 0, 0.65)',
-              backdropFilter: 'blur(12px)',
+              bgcolor: 'rgba(9, 11, 16, 0.72)',
+              backdropFilter: 'blur(10px)',
             },
           },
         }}
         sx={{
-          zIndex: (theme) => Math.max(theme.zIndex.tooltip, theme.zIndex.modal),
+          zIndex: (th) => Math.max(th.zIndex.tooltip, th.zIndex.modal),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -116,28 +150,38 @@ export const UserDisplayer = ({
               width: '100%',
               maxWidth: { xs: 360, sm: 580 },
               borderRadius: 1,
-              bgcolor: isDark ? alpha(theme.palette.background.paper, 0.95) : '#ffffff',
+              bgcolor: isDark ? '#181c26' : '#ffffff',
               border: '1px solid',
-              borderColor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
+              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               boxShadow: isDark
-                ? '0 24px 72px -12px rgba(0,0,0,0.85)'
-                : '0 24px 72px -12px rgba(145, 158, 171, 0.35)',
+                ? '0 24px 64px -12px rgba(0, 0, 0, 0.85)'
+                : '0 20px 48px -12px rgba(15, 23, 42, 0.18)',
               overflow: 'hidden',
             }}
           >
-            {/* Header */}
+            {/* Top Bar */}
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                px: { xs: 2.5, sm: 3 },
-                py: 1.75,
+                px: { xs: 2.25, sm: 2.75 },
+                py: 1.5,
                 borderBottom: '1px solid',
-                borderColor: 'divider',
+                borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
+                bgcolor: isDark ? alpha('#fff', 0.015) : '#f8fafc',
               }}
             >
-              <Typography variant="subtitle1" fontWeight={800} sx={{ color: 'text.primary' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 11,
+                  letterSpacing: 0.6,
+                  textTransform: 'uppercase',
+                  color: isDark ? 'text.secondary' : '#64748b',
+                }}
+              >
                 User Profile
               </Typography>
 
@@ -146,27 +190,34 @@ export const UserDisplayer = ({
                 size="small"
                 sx={{
                   color: 'text.secondary',
-                  bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+                  borderRadius: 1,
+                  width: 26,
+                  height: 26,
+                  bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                   '&:hover': {
-                    bgcolor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08),
+                    bgcolor: alpha(theme.palette.error.main, 0.08),
+                    color: 'error.main',
+                    borderColor: alpha(theme.palette.error.main, 0.2),
                   },
                 }}
               >
-                <CloseRoundedIcon sx={{ fontSize: 18 }} />
+                <CloseRoundedIcon sx={{ fontSize: 15 }} />
               </IconButton>
             </Box>
 
             {/* Modal Body */}
             <Box
               sx={{
-                p: { xs: 2.5, sm: 3 },
+                p: { xs: 2.25, sm: 2.75 },
                 display: 'flex',
                 flexDirection: { xs: 'column-reverse', sm: 'row' },
-                gap: { xs: 2.5, sm: 3 },
+                gap: { xs: 2.25, sm: 3 },
                 alignItems: { xs: 'stretch', sm: 'center' },
               }}
             >
-              {/* LEFT Info */}
+              {/* LEFT: User Details, Stats & Actions */}
               <Box
                 sx={{
                   flex: 1,
@@ -177,62 +228,119 @@ export const UserDisplayer = ({
                 }}
               >
                 <Box>
-                  <Stack direction="row" alignItems="center" spacing={0.75} mb={0.5}>
+                  {/* Name + Verified */}
+                  <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.75 }}>
                     <Typography
                       variant="h6"
-                      fontWeight={800}
                       noWrap
                       sx={{
-                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                        fontWeight: 800,
+                        fontSize: { xs: '1.15rem', sm: '1.3rem' },
                         lineHeight: 1.2,
-                        color: 'text.primary',
+                        color: isDark ? 'text.primary' : '#0f172a',
                       }}
                     >
                       {user.name}
                     </Typography>
                     {user.verified && (
-                      <VerifiedRoundedIcon sx={{ fontSize: 18, color: 'info.main', flexShrink: 0 }} />
+                      <VerifiedRoundedIcon
+                        sx={{ fontSize: 18, color: 'primary.main', flexShrink: 0 }}
+                      />
                     )}
                   </Stack>
 
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      display: 'block',
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                      letterSpacing: 0.2,
-                      mb: 1.5,
-                    }}
+                  {/* Role Badge & Copyable Handle Pill */}
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.75}
+                    sx={{ flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}
                   >
-                    @{user.username || resolvedUserId || 'user'}
-                  </Typography>
-
-                  {user.accountType && user.accountType !== 'member' && (
-                    <Chip
-                      label={user.accountType}
+                    <Label
+                      label={accountCfg.label}
                       size="small"
                       sx={{
-                        height: 20,
-                        fontSize: 10.5,
+                        height: 21,
+                        fontSize: 10,
                         fontWeight: 800,
+                        letterSpacing: 0.4,
                         textTransform: 'uppercase',
-                        mb: 1.5,
-                        bgcolor: alpha(theme.palette.primary.main, 0.12),
-                        color: 'primary.main',
+                        bgcolor: accountCfg.bg,
+                        color: accountCfg.color,
+                        border: '1px solid',
+                        borderColor: alpha(accountCfg.color, 0.3),
+                        borderRadius: 0.75,
+                        '&:hover': {
+                          bgcolor: accountCfg.bg,
+                          color: accountCfg.color,
+                        }
                       }}
                     />
-                  )}
 
+                    <Tooltip title={copied ? 'Copied!' : 'Click to copy'} arrow placement="top">
+                      <Box
+                        onClick={handleCopyHandle}
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          height: 21,
+                          px: 0.9,
+                          cursor: 'pointer',
+                          borderRadius: 0.75,
+                          bgcolor: copied
+                            ? alpha(theme.palette.success.main, 0.12)
+                            : isDark
+                              ? alpha('#fff', 0.04)
+                              : '#f1f5f9',
+                          border: '1px solid',
+                          borderColor: copied
+                            ? alpha(theme.palette.success.main, 0.3)
+                            : isDark
+                              ? alpha('#fff', 0.08)
+                              : '#e2e8f0',
+                          transition: 'all 0.15s ease',
+                          '&:hover': {
+                            borderColor: 'primary.main',
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          noWrap
+                          sx={{
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            color: copied ? 'success.main' : 'text.secondary',
+                            maxWidth: 150,
+                          }}
+                        >
+                          {displayHandle}
+                        </Typography>
+                        {copied ? (
+                          <DoneRoundedIcon sx={{ fontSize: 11, color: 'success.main' }} />
+                        ) : (
+                          <ContentCopyRoundedIcon sx={{ fontSize: 11, color: 'text.disabled' }} />
+                        )}
+                      </Box>
+                    </Tooltip>
+                  </Stack>
+
+                  {/* Bio Box */}
                   {user.bio && (
                     <Typography
                       variant="body2"
                       sx={{
-                        color: 'text.secondary',
-                        lineHeight: 1.4,
-                        fontSize: '0.8125rem',
                         mb: 2,
+                        p: 1.25,
+                        borderRadius: 1,
+                        bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
+                        border: '1px solid',
+                        borderColor: isDark ? alpha('#fff', 0.05) : '#f1f5f9',
+                        color: isDark ? 'text.secondary' : '#475569',
+                        fontSize: 12,
+                        lineHeight: 1.45,
                         display: '-webkit-box',
                         WebkitLineClamp: 3,
                         WebkitBoxOrient: 'vertical',
@@ -244,36 +352,56 @@ export const UserDisplayer = ({
                   )}
                 </Box>
 
-                {/* Stats Counters */}
+                {/* Stats Row */}
                 <Box
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 1,
-                    p: 1.25,
-                    borderRadius: 2,
-                    bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.025),
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
                     border: '1px solid',
-                    borderColor: 'divider',
-                    textAlign: 'center',
-                    mb: { xs: 2, sm: 2.5 },
+                    borderColor: isDark ? alpha('#fff', 0.07) : '#e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    mb: !isSelf ? 2 : 0,
                   }}
                 >
-                  {statItems.map(({ label, count }) => (
-                    <Box key={label}>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight={800}
-                        sx={{ color: 'text.primary', lineHeight: 1.2 }}
-                      >
-                        {count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: 'text.secondary', fontSize: 10.5, fontWeight: 600 }}
-                      >
-                        {label}
-                      </Typography>
+                  {statItems.map(({ label, count }, index) => (
+                    <Box key={label} sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                      <Box sx={{ textAlign: 'center', flex: 1, py: 0.25 }}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: 14,
+                            color: isDark ? 'text.primary' : '#0f172a',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {formatStatCount(count)}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            letterSpacing: 0.5,
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                      </Box>
+                      {index < statItems.length - 1 && (
+                        <Divider
+                          orientation="vertical"
+                          flexItem
+                          sx={{
+                            my: 0.5,
+                            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                          }}
+                        />
+                      )}
                     </Box>
                   ))}
                 </Box>
@@ -312,19 +440,21 @@ export const UserDisplayer = ({
                 )}
               </Box>
 
-              {/* RIGHT Square Avatar */}
+              {/* RIGHT: Large Square Profile Image Showcase */}
               <Box
                 sx={{
                   position: 'relative',
-                  width: { xs: '100%', sm: 190 },
-                  height: { xs: 200, sm: 190 },
+                  width: { xs: '100%', sm: 205 },
+                  height: { xs: 220, sm: 205 },
                   flexShrink: 0,
                   borderRadius: 1,
                   overflow: 'hidden',
-                  bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
+                  bgcolor: isDark ? alpha('#fff', 0.03) : '#f1f5f9',
                   border: '1px solid',
-                  borderColor: isDark ? alpha('#fff', 0.1) : alpha('#000', 0.08),
-                  boxShadow: theme.shadows[4],
+                  borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                  boxShadow: isDark
+                    ? '0 8px 24px -4px rgba(0, 0, 0, 0.5)'
+                    : '0 8px 20px -4px rgba(15, 23, 42, 0.08)',
                 }}
               >
                 <Avatar
@@ -334,10 +464,13 @@ export const UserDisplayer = ({
                   sx={{
                     width: '100%',
                     height: '100%',
-                    fontSize: '2.5rem',
+                    fontSize: '3.25rem',
                     fontWeight: 800,
-                    bgcolor: alpha(theme.palette.primary.main, 0.12),
+                    bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
                     color: 'primary.main',
+                    '& img': {
+                      objectFit: 'cover',
+                    },
                   }}
                 >
                   {getInitials(user.name)}

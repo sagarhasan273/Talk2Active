@@ -214,8 +214,8 @@ export function RoomlistMain({
         ))}
 
         { /* Divider */}
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <Divider sx={{ bgcolor: 'error.main' }} />
+        <Box sx={{ gridColumn: '1 / -1', my: 1 }}>
+          <Divider sx={{ bgcolor: 'primary.main' }} />
         </Box>
 
         {/* Full-Width Footer at the Bottom */}

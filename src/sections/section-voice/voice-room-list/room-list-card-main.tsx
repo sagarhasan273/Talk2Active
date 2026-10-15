@@ -431,7 +431,6 @@ export const VoiceRoomCard = ({
         >
           {visibleSpeakers.map((speaker, i) => {
             const followingCount = speaker?.following_count ?? 0;
-            const ringGradient = getSpeakerGradient(speaker?.userId || speaker?.name || String(i));
 
             return (
               <Tooltip
@@ -525,7 +524,7 @@ export const VoiceRoomCard = ({
                         : '0 1px 3px rgba(15,23,42,0.08)',
                     }}
                   >
-                    <FavoriteRoundedIcon sx={{ fontSize: 8.5, color: 'primary.main' }} />
+                    <FavoriteRoundedIcon sx={{ fontSize: 10.5, color: 'primary.main' }} />
                     <Typography
                       noWrap
                       sx={{

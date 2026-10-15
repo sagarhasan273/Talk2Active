@@ -44,19 +44,14 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
       elevation={0}
       sx={{
         width: '100%',
-        mb: 4,
+        mb: 20,
         p: { xs: 2.5, sm: 3.5 },
         borderRadius: 1,
         position: 'relative',
         overflow: 'hidden',
         bgcolor: 'background.default',
         border: '1px solid',
-        borderColor: isDark
-          ? alpha(theme.palette.error.main, 0.22)
-          : alpha(theme.palette.error.main, 0.16),
-        boxShadow: isDark
-          ? `0 6px 24px -2px ${alpha(theme.palette.common.black, 0.5)}`
-          : `0 6px 20px -2px ${alpha(theme.palette.error.main, 0.06)}`,
+        borderColor: alpha(theme.palette.primary.main, 0.5),
       }}
     >
       {/* Top Subtle Error Glow Ambient Accent */}
@@ -68,7 +63,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
           width: 140,
           height: 140,
           borderRadius: '50%',
-          bgcolor: alpha(theme.palette.error.main, isDark ? 0.09 : 0.06),
+          bgcolor: alpha(theme.palette.primary.main, 0.1),
           filter: 'blur(35px)',
           pointerEvents: 'none',
         }}
@@ -89,12 +84,12 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                 width: 28,
                 height: 28,
                 borderRadius: 1,
-                bgcolor: 'error.main',
+                bgcolor: 'primary.main',
                 color: '#fff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.35)}`,
+                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.35)}`,
               }}
             >
               <MicRoundedIcon sx={{ fontSize: 16 }} />
@@ -115,10 +110,10 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                 px: 0.8,
                 py: 0.25,
                 borderRadius: 1,
-                bgcolor: alpha(theme.palette.error.main, isDark ? 0.18 : 0.1),
+                bgcolor: alpha(theme.palette.primary.main, isDark ? 0.18 : 0.1),
                 border: '1px solid',
-                borderColor: alpha(theme.palette.error.main, 0.25),
-                color: 'error.main',
+                borderColor: alpha(theme.palette.primary.main, 0.25),
+                color: 'primary.main',
                 fontSize: 10,
                 fontWeight: 800,
                 letterSpacing: 0.5,
@@ -156,22 +151,22 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   py: 0.45,
                   borderRadius: 1,
                   bgcolor: isDark
-                    ? alpha(theme.palette.error.main, 0.08)
-                    : alpha(theme.palette.error.main, 0.04),
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : alpha(theme.palette.primary.main, 0.04),
                   border: '1px solid',
                   borderColor: isDark
-                    ? alpha(theme.palette.error.main, 0.22)
-                    : alpha(theme.palette.error.main, 0.16),
-                  color: isDark ? '#fda4af' : '#9f1239',
+                    ? alpha(theme.palette.primary.main, 0.22)
+                    : alpha(theme.palette.primary.main, 0.16),
+                  color: 'primary.main',
                   fontSize: '0.72rem',
                   fontWeight: 600,
                   transition: 'border-color 0.15s ease',
                   '&:hover': {
-                    borderColor: alpha(theme.palette.error.main, 0.45),
+                    borderColor: alpha(theme.palette.primary.main, 0.45),
                   },
                 }}
               >
-                <Box component="span" sx={{ color: 'error.main', display: 'flex' }}>
+                <Box component="span" sx={{ color: 'primary.main', display: 'flex' }}>
                   {pill.icon}
                 </Box>
                 {pill.label}
@@ -190,8 +185,8 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
             bgcolor: isDark ? alpha('#000', 0.25) : '#ffffff',
             border: '1px solid',
             borderColor: isDark
-              ? alpha(theme.palette.error.main, 0.2)
-              : alpha(theme.palette.error.main, 0.15),
+              ? alpha(theme.palette.primary.main, 0.2)
+              : alpha(theme.palette.primary.main, 0.15),
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
@@ -202,22 +197,22 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               {/* Developer Avatar with Crimson / Rose Gradient Border */}
               <Box
                 sx={{
-                  p: 0.2,
+                  p: 0.4,
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, #f43f5e 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, #f43f5e 100%)`,
                   flexShrink: 0,
-                  boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.3)}`,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
                 }}
               >
                 <Avatar
                   alt="Sagar Hasan"
                   sx={{
-                    width: 44,
-                    height: 44,
+                    width: 56,
+                    height: 56,
                     fontSize: 15,
                     fontWeight: 800,
                     bgcolor: isDark ? '#1a1012' : '#ffffff',
-                    color: 'error.main',
+                    color: 'primary.main',
                     border: `2px solid ${isDark ? '#1a1012' : '#ffffff'}`,
                   }}
                 >
@@ -235,15 +230,15 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   >
                     Sagar Hasan
                   </Typography>
-                  <VerifiedRoundedIcon sx={{ fontSize: 15, color: 'error.main' }} />
+                  <VerifiedRoundedIcon sx={{ fontSize: 15, color: 'primary.main' }} />
                 </Stack>
 
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.2 }}>
-                  <CodeRoundedIcon sx={{ fontSize: 13, color: 'error.main' }} />
+                  <CodeRoundedIcon sx={{ fontSize: 13, color: 'primary.main' }} />
                   <Typography
                     variant="caption"
                     sx={{
-                      color: isDark ? 'error.light' : 'error.dark',
+                      color: isDark ? 'primary.light' : 'primary.dark',
                       fontWeight: 700,
                       fontSize: '0.7rem',
                     }}
@@ -270,13 +265,13 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                     bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
                     borderColor: isDark
-                      ? alpha(theme.palette.error.main, 0.2)
-                      : alpha(theme.palette.error.main, 0.14),
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.primary.main, 0.14),
                     color: isDark ? 'text.secondary' : '#475569',
                     '&:hover': {
-                      color: 'error.main',
-                      borderColor: 'error.main',
-                      bgcolor: alpha(theme.palette.error.main, 0.08),
+                      color: 'primary.main',
+                      borderColor: 'primary.main',
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
                     },
                   }}
                 >
@@ -298,13 +293,13 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                     bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
                     borderColor: isDark
-                      ? alpha(theme.palette.error.main, 0.2)
-                      : alpha(theme.palette.error.main, 0.14),
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.primary.main, 0.14),
                     color: isDark ? 'text.secondary' : '#475569',
                     '&:hover': {
-                      color: 'error.main',
-                      borderColor: 'error.main',
-                      bgcolor: alpha(theme.palette.error.main, 0.08),
+                      color: 'primary.main',
+                      borderColor: 'primary.main',
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
                     },
                   }}
                 >
@@ -333,8 +328,8 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
         sx={{
           my: 2.25,
           borderColor: isDark
-            ? alpha(theme.palette.error.main, 0.18)
-            : alpha(theme.palette.error.main, 0.12),
+            ? alpha(theme.palette.primary.main, 0.18)
+            : alpha(theme.palette.primary.main, 0.12),
         }}
       />
 
@@ -363,13 +358,13 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
             >
               Crafted with
             </Typography>
-            <FavoriteRoundedIcon sx={{ fontSize: 13, color: 'error.main' }} />
+            <FavoriteRoundedIcon sx={{ fontSize: 13, color: 'primary.main' }} />
             <Typography
               variant="caption"
               sx={{ color: isDark ? 'text.secondary' : '#64748b', fontWeight: 600 }}
             >
               by{' '}
-              <Box component="span" sx={{ color: 'error.main', fontWeight: 800 }}>
+              <Box component="span" sx={{ color: 'primary.main', fontWeight: 800 }}>
                 Sagar Hasan
               </Box>
             </Typography>
@@ -388,11 +383,11 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                 textTransform: 'none',
                 fontSize: 11,
                 fontWeight: 700,
-                borderColor: alpha(theme.palette.error.main, 0.4),
-                color: 'error.main',
+                borderColor: alpha(theme.palette.primary.main, 0.4),
+                color: 'primary.main',
                 '&:hover': {
-                  borderColor: 'error.main',
-                  bgcolor: alpha(theme.palette.error.main, 0.08),
+                  borderColor: 'primary.main',
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
                 },
               }}
             >

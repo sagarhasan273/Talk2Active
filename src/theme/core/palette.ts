@@ -1,7 +1,7 @@
 import type { ColorSystemOptions } from '@mui/material/styles';
 
+import { createPaletteChannel, varAlpha } from '../styles';
 import COLORS from './colors.json';
-import { varAlpha, createPaletteChannel } from '../styles';
 
 // ----------------------------------------------------------------------
 
@@ -154,7 +154,7 @@ export const text = {
 
 // Background
 export const background = {
-  light: createPaletteChannel({ paper: '#FFFFFF', default: '#f3f3f3', neutral: '#e7e7e7' }),
+  light: createPaletteChannel({ paper: '#FFFFFF', default: grey[900], neutral: '#e2e2e2' }),
   dark: createPaletteChannel({ paper: grey[800], default: grey[900], neutral: '#28323D' }),
 };
 

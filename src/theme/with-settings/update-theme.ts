@@ -1,11 +1,11 @@
+import type { Components, Theme } from '@mui/material/styles';
 import type { SettingsState } from 'src/components/settings';
-import type { Theme, Components } from '@mui/material/styles';
 
 import COLORS from '../core/colors.json';
-import PRIMARY_COLOR from './primary-color.json';
 import { components as coreComponents } from '../core/components';
-import { hexToRgbChannel, createPaletteChannel } from '../styles';
-import { primary as corePrimary, grey as coreGreyPalette } from '../core/palette';
+import { grey as coreGreyPalette, primary as corePrimary } from '../core/palette';
+import { createPaletteChannel, hexToRgbChannel } from '../styles';
+import PRIMARY_COLOR from './primary-color.json';
 
 import type { ThemeComponents, ThemeUpdateOptions } from '../types';
 
@@ -111,5 +111,5 @@ function getPalette(
 
 function getBackgroundDefault(contrast: SettingsState['contrast']) {
   /** [2] */
-  return contrast === 'default' ? '#FFFFFF' : coreGreyPalette[200];
+  return contrast === 'default' ? coreGreyPalette[50] : coreGreyPalette[900];
 }

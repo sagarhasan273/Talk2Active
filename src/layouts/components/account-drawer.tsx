@@ -454,11 +454,11 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 mt: 1.2,
                 borderRadius: 1,
                 overflow: 'hidden',
-                boxShadow: isDark
-                  ? '0 20px 40px -4px rgba(0,0,0,0.6)'
-                  : '0 12px 32px -4px rgba(15,23,42,0.12)',
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                boxShadow: isDark
+                  ? `0 6px 24px -2px ${alpha(theme.palette.common.white, 1)}`
+                  : `0 6px 20px -2px ${alpha(theme.palette.common.black, 1)}`,
               },
             },
           }}
