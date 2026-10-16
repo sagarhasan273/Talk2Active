@@ -1,33 +1,42 @@
 // src/sections/section-voice/voice-room-view/voice-room-join-gate.tsx
 
-import { ArrowRightIcon, MicIcon, UsersIcon, Volume2Icon, XIcon } from 'lucide-react';
+import { ArrowRight, Mic, Radio, X } from 'lucide-react';
 
-import { alpha, Box, Button, IconButton, Paper, Typography, useTheme } from '@mui/material';
+import type { RoomParticipantType } from '@/types/type-room';
+import { getInitials } from '@/utils/social-chat-helper';
+import { alpha, Avatar, AvatarGroup, Box, Button, IconButton, Paper, Typography, useTheme } from '@mui/material';
 
 // ----------------------------------------------------------------------
-// Join Room Gate
+// Join Room Gate (Compact & Mobile Responsive)
 // ----------------------------------------------------------------------
 
 interface VoiceRoomJoinGateProps {
+  userName?: string;
   roomTopic?: string;
   participantCount?: number;
   maxParticipants?: number;
+  participants?: RoomParticipantType[];
   onJoin: () => void;
   onCancel: () => void;
 }
 
 export function VoiceRoomJoinGate({
+  userName,
   roomTopic,
   participantCount = 0,
   maxParticipants,
+  participants = [],
   onJoin,
   onCancel,
 }: VoiceRoomJoinGateProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const hasParticipants = participantCount > 0;
-  const isFull = maxParticipants !== undefined && participantCount >= maxParticipants;
+  const totalParticipants = participantCount || participants.length;
+  const hasParticipants = totalParticipants > 0;
+  const isFull = maxParticipants !== undefined && totalParticipants >= maxParticipants;
+
+  const greetingTitle = userName ? `Hey ${userName}, ready to talk?` : 'Ready to join?';
 
   return (
     <Box
@@ -38,16 +47,13 @@ export function VoiceRoomJoinGate({
         position: 'fixed',
         inset: 0,
         zIndex: theme.zIndex.modal,
-
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-
-        p: 2,
-
-        bgcolor: alpha(theme.palette.common.black, isDark ? 0.65 : 0.45),
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        p: { xs: 2, sm: 3 },
+        bgcolor: alpha(theme.palette.common.black, isDark ? 0.7 : 0.5),
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}
     >
       <Paper
@@ -55,40 +61,27 @@ export function VoiceRoomJoinGate({
         sx={{
           position: 'relative',
           width: '100%',
-          maxWidth: 380,
+          maxWidth: { xs: '100%', sm: 360 },
           overflow: 'hidden',
-
-          p: { xs: 3, sm: 3.5 },
+          p: { xs: 2.5, sm: 3 },
           borderRadius: 1,
-
           textAlign: 'center',
-          bgcolor: isDark ? '#181c26' : '#ffffff',
+          bgcolor: isDark ? alpha('#131722', 0.95) : alpha('#ffffff', 0.98),
           backgroundImage: 'none',
           border: '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+          borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.06),
           boxShadow: isDark
-            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
-            : '0 24px 48px -12px rgba(15, 23, 42, 0.18)',
-
-          animation: 'voiceJoinGateIn 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+            ? '0 20px 40px -12px rgba(0, 0, 0, 0.8)'
+            : '0 20px 40px -12px rgba(15, 23, 42, 0.15)',
+          animation: 'voiceJoinGateIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
 
           '@keyframes voiceJoinGateIn': {
-            from: {
-              opacity: 0,
-              transform: 'translateY(10px) scale(0.97)',
-            },
-            to: {
-              opacity: 1,
-              transform: 'translateY(0) scale(1)',
-            },
-          },
-
-          '@media (prefers-reduced-motion: reduce)': {
-            animation: 'none',
+            from: { opacity: 0, transform: 'translateY(10px) scale(0.96)' },
+            to: { opacity: 1, transform: 'translateY(0) scale(1)' },
           },
         }}
       >
-        {/* Close */}
+        {/* Close Button */}
         <IconButton
           aria-label="Cancel joining room"
           onClick={onCancel}
@@ -97,234 +90,174 @@ export function VoiceRoomJoinGate({
             position: 'absolute',
             top: 12,
             right: 12,
-            zIndex: 2,
-            width: 30,
-            height: 30,
+            zIndex: 3,
+            width: 28,
+            height: 28,
             borderRadius: 1,
-            bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
-            border: '1px solid',
-            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
             color: isDark ? 'text.secondary' : '#64748b',
-
             '&:hover': {
-              bgcolor: isDark ? alpha('#fff', 0.1) : '#f1f5f9',
+              bgcolor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.08),
               color: isDark ? 'text.primary' : '#0f172a',
             },
           }}
         >
-          <XIcon size={16} />
+          <X size={14} />
         </IconButton>
 
-        {/* Ambient accent glow */}
+        {/* Top Accent Line */}
         <Box
           sx={{
             position: 'absolute',
-            top: -70,
-            left: '50%',
-            transform: 'translateX(-50%)',
-
-            width: 220,
-            height: 220,
-
-            borderRadius: '50%',
-            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
-            filter: 'blur(40px)',
-
-            pointerEvents: 'none',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 2,
+            bgcolor: 'primary.main',
           }}
         />
 
-        {/* Icon */}
+        {/* Mini Radio Icon */}
         <Box
           sx={{
-            position: 'relative',
-
-            width: 68,
-            height: 68,
-
+            width: 48,
+            height: 48,
             mx: 'auto',
-            mb: 2.25,
-
+            mb: 1.5,
+            mt: 0.5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            borderRadius: '50%',
+            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.12 : 0.08),
+            color: 'primary.main',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
           }}
         >
-          {[0, 1].map((ring) => (
-            <Box
-              key={ring}
-              sx={{
-                position: 'absolute',
-                inset: 0,
-
-                borderRadius: '50%',
-                border: `1.5px solid ${alpha(theme.palette.primary.main, isDark ? 0.38 : 0.3)}`,
-
-                animation: `voiceJoinGateRing 2.2s ease-out ${ring * 0.7}s infinite`,
-
-                '@keyframes voiceJoinGateRing': {
-                  '0%': {
-                    transform: 'scale(0.85)',
-                    opacity: 0.6,
-                  },
-                  '100%': {
-                    transform: 'scale(1.45)',
-                    opacity: 0,
-                  },
-                },
-
-                '@media (prefers-reduced-motion: reduce)': {
-                  animation: 'none',
-                  display: 'none',
-                },
-              }}
-            />
-          ))}
-
-          <Box
-            sx={{
-              position: 'relative',
-
-              width: 56,
-              height: 56,
-
-              borderRadius: '50%',
-
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-
-              bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.1),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-              color: 'primary.main',
-            }}
-          >
-            <Volume2Icon size={24} />
-          </Box>
+          <Radio size={22} strokeWidth={2.2} />
         </Box>
 
         {/* Title */}
         <Typography
           id="voice-room-join-title"
-          variant="h6"
+          variant="subtitle1"
           sx={{
             fontWeight: 800,
             letterSpacing: '-0.01em',
             color: isDark ? 'text.primary' : '#0f172a',
-            mb: 0.75,
+            mb: 0.5,
+            fontSize: '1.05rem',
           }}
         >
-          Ready to join the room?
+          {greetingTitle}
         </Typography>
 
-        {/* Room topic */}
+        {/* Room Topic */}
         <Typography
           variant="body2"
           sx={{
             color: isDark ? 'text.secondary' : '#475569',
             fontWeight: 500,
-
-            mb: hasParticipants ? 2 : 3,
-
+            fontSize: '0.85rem',
+            mb: 2,
+            lineHeight: 1.4,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            px: 1,
           }}
         >
-          {roomTopic || 'Jump in and start talking with the room.'}
+          {roomTopic || 'Jump in and start talking.'}
         </Typography>
 
-        {/* Participants */}
+        {/* Participants Row */}
         {hasParticipants && (
           <Box
             sx={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-
-              gap: 0.6,
-              mx: 'auto',
-              mb: 2.75,
-
-              px: 1.25,
-              py: 0.5,
-
-              borderRadius: 1,
-
-              bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
+              justifyContent: 'center',
+              gap: 1.25,
+              py: 1,
+              px: 1.5,
+              mb: 2,
+              borderRadius: 1.5,
+              bgcolor: isDark ? alpha(theme.palette.success.main, 0.08) : alpha(theme.palette.success.main, 0.05),
               border: '1px solid',
-              borderColor: isDark ? alpha(theme.palette.success.main, 0.25) : '#a7f3d0',
-              color: isDark ? 'success.main' : '#059669',
+              borderColor: isDark ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.success.main, 0.12),
             }}
           >
-            <UsersIcon size={13} />
-
+            {participants.length > 0 && (
+              <AvatarGroup
+                max={6}
+                sx={{
+                  '& .MuiAvatar-root': {
+                    width: 24,
+                    height: 24,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    border: `2px solid ${isDark ? '#131722' : '#ffffff'}`,
+                    bgcolor: alpha(theme.palette.success.main, 0.2),
+                    color: 'success.main',
+                  },
+                }}
+              >
+                {participants.map((p) => (
+                  <Avatar key={p.userId || p.name} src={p.profilePhoto || undefined} alt={p.name}>
+                    {getInitials(p.name)}
+                  </Avatar>
+                ))}
+              </AvatarGroup>
+            )}
             <Typography
               sx={{
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: 700,
+                color: isDark ? 'success.light' : 'success.dark',
               }}
             >
-              {participantCount} {participantCount === 1 ? 'person is' : 'people are'} already
-              talking
-              {maxParticipants ? ` · ${participantCount}/${maxParticipants}` : ''}
+              {totalParticipants} {totalParticipants === 1 ? 'person' : 'people'} in room
+              {maxParticipants ? ` · ${totalParticipants}/${maxParticipants}` : ''}
             </Typography>
           </Box>
         )}
 
-        {/* Full room warning */}
+        {/* Full Room Warning */}
         {isFull && (
           <Typography
             variant="caption"
             sx={{
               display: 'block',
-              mb: 2,
-
+              mb: 1.5,
               color: 'error.main',
               fontWeight: 700,
+              fontSize: '0.75rem',
             }}
           >
-            This room is currently full.
+            ⚠️ Room is currently full.
           </Typography>
         )}
 
-        {/* Actions */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-          }}
-        >
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button
             fullWidth
-            size="large"
+            size="medium"
             variant="contained"
             disableElevation
             disabled={isFull}
             onClick={onJoin}
-            endIcon={<ArrowRightIcon size={18} />}
+            endIcon={<ArrowRight size={16} />}
             sx={{
               borderRadius: 1,
-              py: 1.1,
-
-              fontWeight: 700,
-              fontSize: 14,
+              py: 0.9,
+              fontWeight: 800,
+              fontSize: '0.875rem',
               textTransform: 'none',
-
-              boxShadow: 'none',
-
-              transition: theme.transitions.create(['transform', 'box-shadow'], {
-                duration: 150,
-              }),
-
+              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
               '&:hover': {
-                transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
-              },
-
-              '&.Mui-disabled': {
-                boxShadow: 'none',
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.45)}`,
               },
             }}
           >
@@ -333,22 +266,18 @@ export function VoiceRoomJoinGate({
 
           <Button
             fullWidth
-            size="medium"
-            variant="outlined"
-            color="inherit"
+            size="small"
+            variant="text"
             onClick={onCancel}
             sx={{
               borderRadius: 1,
-              py: 0.9,
+              py: 0.75,
               textTransform: 'none',
               fontWeight: 600,
-              color: isDark ? 'text.secondary' : '#475569',
-              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-              bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
-
+              fontSize: '0.825rem',
+              color: isDark ? 'text.secondary' : '#64748b',
               '&:hover': {
-                bgcolor: isDark ? alpha('#fff', 0.06) : '#f1f5f9',
-                borderColor: isDark ? alpha('#fff', 0.18) : '#cbd5e1',
+                bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
               },
             }}
           >
@@ -356,23 +285,22 @@ export function VoiceRoomJoinGate({
           </Button>
         </Box>
 
-        {/* Mic information */}
+        {/* Micro Footer Note */}
         <Typography
           variant="caption"
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-
             gap: 0.5,
-            mt: 1.75,
-
+            mt: 1.5,
             color: isDark ? 'text.disabled' : '#94a3b8',
             fontWeight: 500,
+            fontSize: '0.7rem',
           }}
         >
-          <MicIcon size={12} />
-          Your mic stays muted until you unmute it
+          <Mic size={11} />
+          Mic starts muted
         </Typography>
       </Paper>
     </Box>

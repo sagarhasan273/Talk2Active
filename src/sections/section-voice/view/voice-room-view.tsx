@@ -17,7 +17,7 @@ import { VoiceTabPanel } from '../voice-tab-panel';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
 function VoiceMainContent() {
-  const { isAuthenticated } = useCredentials();
+  const { isAuthenticated, user } = useCredentials();
   const { isInRoom } = useLiveKitSession();
   const { room } = useRoomTools();
 
@@ -100,9 +100,11 @@ function VoiceMainContent() {
 
       {isJoinGateOpen && selectedRoom && (
         <VoiceRoomJoinGate
+          userName={user?.name}
           roomTopic={selectedRoom.topic}
           participantCount={selectedRoom.participants.length}
           maxParticipants={selectedRoom.max_participants}
+          participants={selectedRoom.participants}
           onJoin={handleJoinRoom}
           onCancel={handleCancelJoin}
         />

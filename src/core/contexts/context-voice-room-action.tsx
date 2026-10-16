@@ -102,19 +102,6 @@ export const VoiceRoomActionProvider: React.FC<{
         setSelectedTab('room-space');
         await connectToRoom(response.data.token);
         playUserJoin();
-
-        // Emit room join event through socket
-        if (socket) {
-          socket.emit('room_joined', {
-            roomId: selectedRoom.roomId,
-            user: {
-              userId: user.userId,
-              name: user.name,
-              profilePhoto: user.profilePhoto,
-              accountType: user.accountType,
-            },
-          });
-        }
       }
     } catch (error) {
       toastErrorResponse(error);
