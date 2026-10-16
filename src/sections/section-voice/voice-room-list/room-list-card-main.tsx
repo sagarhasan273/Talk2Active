@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
@@ -26,6 +25,7 @@ import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import { RoomType } from '@/types/type-room';
+import { UserPlus } from 'lucide-react';
 import { fgetLanguageName } from 'src/utils/helper';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
@@ -61,32 +61,34 @@ const formatCompactCount = (num: number = 0): string =>
   }).format(num);
 
 /**
- * Calculates the maximum possible avatar diameter that fits inside
+ * Calculates the largest possible avatar diameter that fits inside
  * the actual measured width & height of the stage container.
+ * Enforces max 2 rows, up to 6 items per row (12 max total pods).
  */
 const computeOptimalStageScale = (width: number, height: number, count: number) => {
   if (!width || !height || count <= 0) {
     return {
-      size: 64,
-      fontSize: 15,
-      gapPx: 12,
-      badgeSize: 16,
-      verifiedIconSize: 13,
-      pillFontSize: '0.62rem',
+      size: 56,
+      fontSize: 14,
+      gapPx: 10,
+      badgeSize: 15,
+      verifiedIconSize: 12,
+      pillFontSize: '0.58rem',
       plusIconSize: 16,
     };
   }
 
-  const pillAllowance = 12; // Extra vertical room for the bottom follower pill
-  let bestSize = 28;
-  let bestGap = 8;
+  const pillAllowance = 10; // Extra vertical room for the bottom follower pill
+  let bestSize = 42;
+  let bestGap = 4;
 
-  // Test 1 row vs 2 rows and pick whichever yields the largest avatar diameter
-  for (let rows = 1; rows <= 2; rows += 1) {
-    if (rows > count) continue;
+  // If count <= 6, we can test 1 row or 2 rows. If count > 6, we must use 2 rows (max 6 per row).
+  const minRows = count > 6 ? 2 : 1;
+  const maxRows = count === 1 ? 1 : 2;
 
-    const cols = Math.ceil(count / rows);
-    const gap = cols <= 3 ? 14 : cols <= 5 ? 10 : 8;
+  for (let rows = minRows; rows <= maxRows; rows += 1) {
+    const cols = Math.min(6, Math.ceil(count / rows));
+    const gap = cols <= 3 ? 14 : cols <= 4 ? 10 : 8;
 
     const maxW = (width - gap * (cols - 1) - 8) / cols;
     const maxH = (height - gap * (rows - 1) - rows * pillAllowance) / rows;
@@ -98,17 +100,17 @@ const computeOptimalStageScale = (width: number, height: number, count: number) 
     }
   }
 
-  // Clamp between a readable minimum (30px) and the full single-row height limit (92px)
-  const size = Math.max(30, Math.min(bestSize, 92));
+  // Clamp between a readable minimum (28px) and single-row max height (88px)
+  const size = Math.max(28, Math.min(bestSize, 92));
 
   return {
     size,
-    fontSize: Math.max(11, Math.round(size * 0.25)),
+    fontSize: Math.max(10, Math.round(size * 0.25)),
     gapPx: bestGap,
-    badgeSize: Math.max(13, Math.round(size * 0.26)),
-    verifiedIconSize: Math.max(11, Math.round(size * 0.22)),
-    pillFontSize: size >= 56 ? '0.64rem' : size >= 44 ? '0.58rem' : '0.52rem',
-    plusIconSize: Math.max(13, Math.round(size * 0.28)),
+    badgeSize: Math.max(12, Math.round(size * 0.26)),
+    verifiedIconSize: Math.max(10, Math.round(size * 0.22)),
+    pillFontSize: size >= 56 ? '0.62rem' : size >= 42 ? '0.56rem' : '0.50rem',
+    plusIconSize: Math.max(13, Math.round(size * 0.32)),
   };
 };
 
@@ -182,24 +184,19 @@ export const VoiceRoomCard = ({
 
   // Available seats
   const availableSpace = Math.max(0, max - allUsers.length);
-  const showAvailableSlot = availableSpace > 0;
 
-  // Maximum items visible across constrained container
-  const MAX_TOTAL_PODS = 10;
-  const reservedSlotsForControls = showAvailableSlot ? 1 : 0;
-  const maxDirectSpeakers = MAX_TOTAL_PODS - reservedSlotsForControls;
+  const MAX_STAGE_PODS = 12;
+  const totalSlots = allUsers.length + availableSpace;
+  const hasOverflow = totalSlots > MAX_STAGE_PODS;
+  const maxDirectSlots = hasOverflow ? MAX_STAGE_PODS - 1 : MAX_STAGE_PODS; // 11 if overflow, 12 otherwise
 
-  let visibleSpeakers = allUsers;
-  let overflowCount = 0;
+  const visibleSpeakers = allUsers.slice(0, maxDirectSlots);
+  const remainingDirectSlots = Math.max(0, maxDirectSlots - visibleSpeakers.length);
+  const visibleEmptySlotsCount = Math.min(availableSpace, remainingDirectSlots);
 
-  if (allUsers.length > maxDirectSpeakers) {
-    const allowedSpeakers = maxDirectSpeakers - 1;
-    visibleSpeakers = allUsers.slice(0, allowedSpeakers);
-    overflowCount = allUsers.length - allowedSpeakers;
-  }
-
+  const overflowCount = hasOverflow ? totalSlots - maxDirectSlots : 0;
   const totalItemsInStage =
-    visibleSpeakers.length + (showAvailableSlot ? 1 : 0) + (overflowCount > 0 ? 1 : 0);
+    visibleSpeakers.length + visibleEmptySlotsCount + (overflowCount > 0 ? 1 : 0);
 
   const scale = useMemo(
     () => computeOptimalStageScale(stageBounds.width, stageBounds.height, totalItemsInStage),
@@ -456,7 +453,7 @@ export const VoiceRoomCard = ({
           </Box>
         </Box>
 
-        {/* 3. Dynamic Stage Area: Uses remaining ~110px height and scales avatars to fit width & height */}
+        {/* 3. Dynamic Stage Area: Max 2 rows (up to 6 per row = 12 pods max) */}
         <Box
           ref={stageRef}
           sx={{
@@ -474,6 +471,7 @@ export const VoiceRoomCard = ({
             overflow: 'hidden',
           }}
         >
+          {/* Active Speakers (up to 11 if overflow, or 12 if exact fit) */}
           {visibleSpeakers.map((speaker, i) => {
             const followingCount = speaker?.following_count ?? 0;
 
@@ -499,7 +497,6 @@ export const VoiceRoomCard = ({
                     },
                   }}
                 >
-                  {/* Speaker Ring */}
                   <Box
                     sx={{
                       width: scale.size,
@@ -525,7 +522,6 @@ export const VoiceRoomCard = ({
                       {getInitials(speaker?.name)}
                     </Avatar>
 
-                    {/* Verified Icon */}
                     {speaker?.verified && (
                       <Box
                         sx={{
@@ -584,41 +580,11 @@ export const VoiceRoomCard = ({
             );
           })}
 
-          {/* Overflow Counter Slot */}
-          {overflowCount > 0 && (
-            <Tooltip title={`${overflowCount} more participants`} arrow placement="top">
-              <Box
-                onClick={participantsOpen.onTrue}
-                sx={{
-                  width: scale.size,
-                  height: scale.size,
-                  borderRadius: '50%',
-                  bgcolor: alpha(theme.palette.primary.main, 0.12),
-                  border: `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
-                  color: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: scale.fontSize - 1,
-                  flexShrink: 0,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'scale(1.06)',
-                    bgcolor: alpha(theme.palette.primary.main, 0.2),
-                  },
-                }}
-              >
-                +{overflowCount}
-              </Box>
-            </Tooltip>
-          )}
-
-          {/* Single Pod Showing Available Space */}
-          {showAvailableSlot && (
+          {/* Loop Individual Empty Seat Pods */}
+          {Array.from({ length: visibleEmptySlotsCount }).map((_, idx) => (
             <Tooltip
-              title={`${availableSpace} ${availableSpace === 1 ? 'seat' : 'seats'} available • Click to join stage`}
+              key={`empty-slot-${idx}`}
+              title="Available seat • Click to join stage"
               arrow
               placement="top"
             >
@@ -647,10 +613,10 @@ export const VoiceRoomCard = ({
                     width: scale.size,
                     height: scale.size,
                     borderRadius: '50%',
-                    border: '1.5px dashed',
-                    borderColor: isDark ? alpha('#fff', 0.22) : '#cbd5e1',
-                    bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
-                    color: isDark ? 'text.secondary' : '#64748b',
+                    border: '1.7px dashed',
+                    borderColor: theme.palette.grey[500],
+                    bgcolor: 'background.default',
+                    color: theme.palette.grey[500],
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -658,17 +624,48 @@ export const VoiceRoomCard = ({
                     flexShrink: 0,
                   }}
                 >
-                  <AddRoundedIcon sx={{ fontSize: scale.plusIconSize, mr: -0.25 }} />
-                  <Typography
-                    sx={{
-                      fontSize: scale.fontSize - 2,
-                      fontWeight: 800,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {availableSpace}
-                  </Typography>
+                  <UserPlus
+                    size={scale.plusIconSize}
+                    strokeWidth={1.75}
+                    style={{ opacity: 0.65 }}
+                  />
                 </Box>
+              </Box>
+            </Tooltip>
+          ))}
+
+          {/* 12th Pod: Overflow Counter Slot (if total participants + empty seats > 12) */}
+          {overflowCount > 0 && (
+            <Tooltip
+              title={`${overflowCount} more ${allUsers.length > maxDirectSlots ? 'participants & seats' : 'available seats'
+                }`}
+              arrow
+              placement="top"
+            >
+              <Box
+                onClick={participantsOpen.onTrue}
+                sx={{
+                  width: scale.size,
+                  height: scale.size,
+                  borderRadius: '50%',
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
+                  border: `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: scale.fontSize - 1,
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.06)',
+                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                  },
+                }}
+              >
+                +{overflowCount}
               </Box>
             </Tooltip>
           )}
