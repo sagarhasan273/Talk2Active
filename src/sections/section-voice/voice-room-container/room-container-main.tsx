@@ -198,7 +198,6 @@ export function RoomContainerMain({
           onToggleScreenShare={handleToggleScreenShare}
           onSendReaction={handleSendReaction}
           onToggleChat={onToggleChat}
-          onLeave={onLeaveRoom}
           onSettingsClick={onSettingsClick}
           onBack={onBack}
         />

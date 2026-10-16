@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
+import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Box, Button, IconButton, Popover, Tooltip, useMediaQuery, useTheme } from '@mui/material';
@@ -25,7 +26,6 @@ type RoomControlDockProps = {
   onToggleScreenShare?: () => void;
   onSendReaction?: (emoji: string) => void;
   onToggleChat?: () => void;
-  onLeave?: () => void;
 };
 
 const REACTION_EMOJIS = ['👍', '❤️', '👏', '🔥', '🎉', '😂'];
@@ -37,11 +37,12 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   onToggleScreenShare,
   onSendReaction,
   onToggleChat,
-  onLeave,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
+
+  const { handleLeaveRoom } = useVoiceRoomAction();
 
   const { playToggleMute, playToggleDeafen } = useRoomSounds();
 
@@ -261,7 +262,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           </IconButton>
 
           <Button
-            onClick={onLeave}
+            onClick={handleLeaveRoom}
             disableElevation
             startIcon={<PhoneOff size={16} />}
             sx={{

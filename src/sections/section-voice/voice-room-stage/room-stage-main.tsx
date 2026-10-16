@@ -43,7 +43,6 @@ export type RoomAudioStageProps = {
   onToggleScreenShare?: () => void;
   onSendReaction?: (emoji: string) => void;
   onToggleChat?: () => void;
-  onLeave?: () => void;
 };
 
 type StageLayoutMode = 'sidebar' | 'bottom' | 'cinema';
@@ -58,7 +57,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onToggleScreenShare,
   onSendReaction,
   onToggleChat,
-  onLeave,
   onSettingsClick,
 }) => {
   const theme = useTheme();
@@ -992,7 +990,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
           onToggleScreenShare={onToggleScreenShare}
           onSendReaction={onSendReaction}
           onToggleChat={onToggleChat}
-          onLeave={onLeave}
         />
       </Box>
     </>
