@@ -79,7 +79,7 @@ export const roomSlice = createSlice({
         );
 
         if (alreadyExists) return room;
-        console.log(participant);
+
         return {
           ...room,
           participants: [...participants, participant],
@@ -139,6 +139,73 @@ export const roomSlice = createSlice({
       }
     },
 
+    // 4. Update single participant metadata
+    updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
+      if (!action.payload?.userId) return;
+
+      const targetId = String(action.payload.userId);
+
+      // Update in active room participants list
+      state.participants = state.participants.map((p) =>
+        String(p.userId) === targetId ? { ...p, ...action.payload } : p
+      );
+
+      // Update in active room object if present
+      if (state.room && state.room.participants) {
+        state.room.participants = state.room.participants.map((p) =>
+          String(p.userId) === targetId ? { ...p, ...action.payload } : p
+        );
+      }
+
+      // Update across rooms list
+      state.rooms = state.rooms.map((room) => ({
+        ...room,
+        participants: (room.participants || []).map((p) =>
+          String(p.userId) === targetId ? { ...p, ...action.payload } : p
+        ),
+      }));
+    },
+
+    // 5. Update multiple participants metadata in-place
+    updateParticipants: (
+      state,
+      action: PayloadAction<Array<Partial<RoomParticipantType>>>
+    ) => {
+      if (!Array.isArray(action.payload) || action.payload.length === 0) return;
+
+      const updatesMap = new Map<string, Partial<RoomParticipantType>>();
+      for (const update of action.payload) {
+        if (update?.userId) {
+          updatesMap.set(String(update.userId), update);
+        }
+      }
+
+      if (updatesMap.size === 0) return;
+
+      // Update active participants
+      state.participants = state.participants.map((participant) => {
+        const update = updatesMap.get(String(participant.userId));
+        return update ? { ...participant, ...update } : participant;
+      });
+
+      // Update active room participants
+      if (state.room && state.room.participants) {
+        state.room.participants = state.room.participants.map((participant) => {
+          const update = updatesMap.get(String(participant.userId));
+          return update ? { ...participant, ...update } : participant;
+        });
+      }
+
+      // Update across rooms list
+      state.rooms = state.rooms.map((room) => ({
+        ...room,
+        participants: (room.participants || []).map((participant) => {
+          const update = updatesMap.get(String(participant.userId));
+          return update ? { ...participant, ...update } : participant;
+        }),
+      }));
+    },
+
     resetRoom: (state) => {
       state.roomId = null;
       state.room = null;
@@ -154,6 +221,8 @@ export const {
   addRoom,
   addParticipantToRoom,
   removeParticipantFromRoom,
+  updateParticipant,
+  updateParticipants,
   resetRoom,
 } = roomSlice.actions;
 
@@ -175,7 +244,6 @@ export const useRoomTools = () => {
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectIsUnreadRoomMessage);
 
-  // 4. Get Room by ID Helper Function
   const getRoomById = useCallback(
     (targetRoomId: string): RoomType | undefined => {
       if (!targetRoomId) return undefined;
@@ -200,6 +268,10 @@ export const useRoomTools = () => {
         dispatch(addParticipantToRoom({ roomId, participant })),
       removeParticipantFromRoom: (roomId: string, participantId: string) =>
         dispatch(removeParticipantFromRoom({ roomId, participantId })),
+      updateParticipant: (participant: Partial<RoomParticipantType>) =>
+        dispatch(updateParticipant(participant)),
+      updateParticipants: (participants: Array<Partial<RoomParticipantType>>) =>
+        dispatch(updateParticipants(participants)),
       getRoomById,
       resetRoom: () => dispatch(resetRoom()),
     }),
