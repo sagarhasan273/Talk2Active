@@ -13,6 +13,8 @@ interface VoiceRoomActionContextType {
   selectedRoom: RoomType | null;
   livekitToken: string | null;
   isJoinGateOpen: boolean;
+  isJoining: boolean;
+  isLeaving: boolean;
   selectedTab: 'room-list' | 'room-space';
   setSelectedTab: React.Dispatch<React.SetStateAction<'room-list' | 'room-space'>>;
   handleSelectRoom: (roomSelected: RoomType) => void;
@@ -31,7 +33,7 @@ export const VoiceRoomActionProvider: React.FC<{
   const { user, isAuthenticated } = useCredentials();
   const { socket } = useSocket();
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
-  const { room, setRoom, resetRoom } = useRoomTools();
+  const { room, setRoom, setRoomLoading, resetRoom } = useRoomTools();
   const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
 
   const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
@@ -39,8 +41,15 @@ export const VoiceRoomActionProvider: React.FC<{
   const [isJoinGateOpen, setIsJoinGateOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'room-list' | 'room-space'>('room-list');
 
-  const [joinRoomMutation] = useJoinRoomMutation();
-  const [leaveRoomMutation] = useLeaveRoomMutation();
+  // Track the full async lifecycle (API + LiveKit WebRTC)
+  const [isJoiningState, setIsJoiningState] = useState(false);
+  const [isLeavingState, setIsLeavingState] = useState(false);
+
+  const [joinRoomMutation, { isLoading: isJoinMutationLoading }] = useJoinRoomMutation();
+  const [leaveRoomMutation, { isLoading: isLeaveMutationLoading }] = useLeaveRoomMutation();
+
+  const isJoining = isJoiningState || isJoinMutationLoading;
+  const isLeaving = isLeavingState || isLeaveMutationLoading;
 
   const handleSelectRoom = useCallback(
     (roomSelected: RoomType) => {
@@ -60,31 +69,39 @@ export const VoiceRoomActionProvider: React.FC<{
   }, []);
 
   const handleLeaveRoom = useCallback(async () => {
+    setIsLeavingState(true);
     try {
       await disconnectRoom();
+      setSelectedTab('room-list');
+      setSelectedRoom(null);
+      setLivekitToken(null);
+      setIsJoinGateOpen(false);
+
       if (room?.roomId && user?.userId) {
         await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });
       }
     } catch (err) {
       console.warn('LiveKit disconnect warning:', err);
+    } finally {
+      resetRoom();
+      playUserLeave();
+      setIsLeavingState(false);
     }
-
-    setSelectedTab('room-list');
-    setSelectedRoom(null);
-    setLivekitToken(null);
-    setIsJoinGateOpen(false);
-    resetRoom();
-    playUserLeave();
-  }, [room?.roomId, user?.userId, socket, disconnectRoom, leaveRoomMutation, resetRoom, playUserLeave]);
+  }, [room?.roomId, user?.userId, disconnectRoom, leaveRoomMutation, resetRoom, playUserLeave]);
 
   const handleJoinRoom = useCallback(async () => {
     if (!selectedRoom || !user) return;
+
+    setIsJoiningState(true);
+    setRoomLoading(true);
+    setIsJoinGateOpen(false);
 
     if (isInRoom) {
       await handleLeaveRoom();
     }
 
     try {
+      setSelectedTab('room-space');
       const response = await joinRoomMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
@@ -93,18 +110,30 @@ export const VoiceRoomActionProvider: React.FC<{
       if (response.status && response.data.token) {
         setRoom(response.data.room);
         setLivekitToken(response.data.token);
-        setIsJoinGateOpen(false);
-        setSelectedTab('room-space');
         await connectToRoom(response.data.token);
         playUserJoin();
       }
     } catch (error) {
+      setSelectedTab('room-list');
       toastErrorResponse(error);
+    } finally {
+      setIsJoiningState(false);
+      setRoomLoading(false);
     }
-  }, [selectedRoom, user, isInRoom, joinRoomMutation, setRoom, connectToRoom, playUserJoin, socket, handleLeaveRoom]);
+  }, [
+    selectedRoom,
+    user,
+    isInRoom,
+    joinRoomMutation,
+    setRoom,
+    setRoomLoading,
+    connectToRoom,
+    playUserJoin,
+    handleLeaveRoom,
+  ]);
 
   const handleBackToRooms = useCallback(() => {
-    setSelectedTab(prev => prev === 'room-list' ? 'room-space' : 'room-list');
+    setSelectedTab((prev) => (prev === 'room-list' ? 'room-space' : 'room-list'));
   }, []);
 
   const value = useMemo(
@@ -112,6 +141,8 @@ export const VoiceRoomActionProvider: React.FC<{
       selectedRoom,
       livekitToken,
       isJoinGateOpen,
+      isJoining,
+      isLeaving,
       selectedTab,
       setSelectedTab,
       handleSelectRoom,
@@ -124,6 +155,8 @@ export const VoiceRoomActionProvider: React.FC<{
       selectedRoom,
       livekitToken,
       isJoinGateOpen,
+      isJoining,
+      isLeaving,
       selectedTab,
       handleSelectRoom,
       handleCancelJoin,

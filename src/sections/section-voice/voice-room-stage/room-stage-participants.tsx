@@ -13,6 +13,7 @@ import { alpha, Box, BoxProps, Typography } from '@mui/material';
 import { ConnectionState, Track, type Participant } from 'livekit-client';
 import { Monitor } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import ParticipantTile from './room-stage-participant-tile';
 
 const GHOST_DURATION_MS = 3000;
@@ -69,12 +70,16 @@ export interface RoomStageParticipantsProps extends BoxProps {
   participants: RoomParticipantType[];
   raisedHandsSet?: Set<string>;
   participantReactions?: Record<string, string>;
+  openSlots: number;
+  maxParticipants: number;
 }
 
 export const RoomStageParticipants = ({
   participants = [],
   raisedHandsSet = new Set(),
   participantReactions = {},
+  openSlots,
+  maxParticipants,
   sx,
   ...other
 }: RoomStageParticipantsProps) => {
@@ -330,6 +335,7 @@ export const RoomStageParticipants = ({
           </Box>
         );
       })}
+      {openSlots > 0 && <EmptySlotTile openSlots={openSlots} maxParticipants={maxParticipants} />}
     </Box>
   );
 };
