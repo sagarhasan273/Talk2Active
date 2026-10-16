@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
+import { getCachedUserInfo } from '@/utils/user-cache';
 import RoomStageParticipants from './room-stage-participants';
 import {
   getHudGlassButtonSx,
@@ -129,17 +130,74 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 : 'none',
           }}
         >
-          {/* Top-Left HUD: Multi-Presenter Switcher */}
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0.75}
+          {/* Top-Left HUD: Focused Screen Name Banner (Hidden in All Screens Grid) */}
+          {!showAllScreensGrid && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                zIndex: 4,
+                bgcolor: alpha('#181c26', 0.88),
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${alpha('#fff', 0.12)}`,
+                color: '#fff',
+                px: 1.25,
+                py: 0.5,
+                borderRadius: 1,
+                fontSize: 11.5,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.75,
+                pointerEvents: 'none',
+              }}
+            >
+              <Monitor size={13} color={theme.palette.primary.main} />
+              <span>{focusedScreenShare.participant.name || 'Participant'}&apos;s Screen</span>
+            </Box>
+          )}
+
+          {/* Top HUD for "All Screens": Kept cleanly between Top-Left and Top-Right buttons */}
+          {showAllScreensGrid && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: 140,
+                right: 260,
+                zIndex: 4,
+                display: 'flex',
+                flexDirection: 'row',
+                flexWrap: 'nowrap',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.75,
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+                py: 0.25,
+              }}
+            >
+              <Typography variant="caption" sx={{ fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>
+                ALL ACTIVE SHARES ({activeScreenShareTracks.length})
+              </Typography>
+            </Box>
+          )}
+
+          {/* Bottom HUD: Multi-Presenter Switcher in a Single Scrolling Row */}
+          <Box
             sx={{
               position: 'absolute',
-              top: 12,
+              bottom: 12,
               left: 12,
-              right: 320,
-              zIndex: 4,
+              right: 12,
+              zIndex: 6,
+              display: 'flex',
+              flexDirection: 'row',
+              flexWrap: 'nowrap',
+              alignItems: 'center',
+              gap: 0.75,
               overflowX: 'auto',
               scrollbarWidth: 'none',
               '&::-webkit-scrollbar': { display: 'none' },
@@ -158,6 +216,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
               const isSelected =
                 !showAllScreensGrid &&
                 focusedScreenShare?.publication?.trackSid === sid;
+              const userCache = getCachedUserInfo(trackRef.participant.identity)
 
               return (
                 <Button
@@ -176,6 +235,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                   }}
                 >
                   <Avatar
+                    src={userCache?.avatarUrl}
                     sx={{
                       width: 18,
                       height: 18,
@@ -214,14 +274,14 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 </Button>
               </Tooltip>
             )}
-          </Stack>
+          </Box>
 
           {/* Top-Right HUD: Layout & Video Controls */}
           <Stack
             direction="row"
             alignItems="center"
             spacing={0.75}
-            sx={{ position: 'absolute', top: 12, right: 12, zIndex: 4 }}
+            sx={{ position: 'absolute', top: 12, right: 12, zIndex: 7 }}
           >
             <Tooltip title="Hide screen share and view speaker grid" arrow>
               <Button
@@ -333,7 +393,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
             </Tooltip>
           </Stack>
 
-          {/* Video Rendering Area (Restored Live Thumbnails in Multi-Grid) */}
+          {/* Video Rendering Area */}
           {showAllScreensGrid && activeScreenShareTracks.length > 1 ? (
             <Box
               sx={{
@@ -342,7 +402,8 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 height: '100%',
                 minHeight: 0,
                 p: 1.5,
-                pt: 6,
+                pt: 6.5,
+                pb: 7.5, // Leaves clearance for the bottom presenter switcher HUD
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 1.5,
@@ -386,7 +447,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
 
-                    {/* Hover Floating Window / PiP Button */}
+                    {/* Pop out PiP Button */}
                     <Tooltip title="Pop out thumbnail" arrow>
                       <IconButton
                         size="small"
@@ -399,6 +460,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                           position: 'absolute',
                           top: 8,
                           right: 8,
+                          zIndex: 3,
                           ...getHudGlassButtonSx(false),
                           width: 28,
                           height: 28,
@@ -409,27 +471,38 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                       </IconButton>
                     </Tooltip>
 
+                    {/* Presenter Name Tag */}
                     <Box
                       sx={{
                         position: 'absolute',
                         bottom: 8,
                         left: 8,
+                        maxWidth: 'calc(100% - 16px)',
+                        zIndex: 3,
                         px: 1.25,
                         py: 0.5,
                         borderRadius: 1,
-                        bgcolor: alpha('#181c26', 0.88),
+                        bgcolor: alpha('#181c26', 0.9),
                         backdropFilter: 'blur(6px)',
-                        border: `1px solid ${alpha('#fff', 0.12)}`,
+                        border: `1px solid ${alpha('#fff', 0.14)}`,
                         color: '#fff',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         gap: 0.75,
                       }}
                     >
                       <Monitor size={13} color={theme.palette.primary.main} />
-                      <span>{trackRef.participant.isLocal ? 'Your Screen' : pName}</span>
+                      <Typography
+                        noWrap
+                        variant="caption"
+                        sx={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {trackRef.participant.isLocal ? 'Your Screen' : pName}
+                      </Typography>
                     </Box>
                   </Box>
                 );
@@ -441,30 +514,6 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 trackRef={focusedScreenShare}
                 style={{ width: '100%', height: '100%', objectFit: videoFit }}
               />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: 12,
-                  left: 12,
-                  bgcolor: alpha('#181c26', 0.88),
-                  backdropFilter: 'blur(8px)',
-                  border: `1px solid ${alpha('#fff', 0.12)}`,
-                  color: '#fff',
-                  px: 1.25,
-                  py: 0.5,
-                  borderRadius: 1,
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  zIndex: 3,
-                  pointerEvents: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.75,
-                }}
-              >
-                <Monitor size={13} color={theme.palette.primary.main} />
-                <span>{focusedScreenShare.participant.name || 'Participant'}&apos;s Screen</span>
-              </Box>
             </Box>
           )}
         </Box>
@@ -637,7 +686,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
               </IconButton>
             </Box>
           ) : (
-            /* MODE C: Standard Full-Stage Scrollable Speaker Grid (Fixed Alignment & Centering) */
+            /* MODE C: Standard Full-Stage Scrollable Speaker Grid */
             <Box
               ref={scrollContainerRef}
               sx={{
