@@ -9,8 +9,6 @@ import { Box, Divider } from '@mui/material';
 
 import { useCredentials, useRoomTools } from '@/core/slices';
 
-import { useGetRoomsQuery } from 'src/core/apis/api-chat';
-
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
