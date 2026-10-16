@@ -627,7 +627,7 @@ export const VoiceRoomCard = ({
                   <UserPlus
                     size={scale.plusIconSize}
                     strokeWidth={1.75}
-                    style={{ opacity: 0.65 }}
+                    style={{ opacity: 0.75 }}
                   />
                 </Box>
               </Box>
