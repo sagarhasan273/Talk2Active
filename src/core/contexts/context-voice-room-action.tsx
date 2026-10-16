@@ -61,11 +61,6 @@ export const VoiceRoomActionProvider: React.FC<{
 
   const handleLeaveRoom = useCallback(async () => {
     try {
-      // Emit socket room leave event if in a room
-      if (room?.roomId && user?.userId && socket) {
-        socket.emit('room_left', { roomId: room.roomId, userId: user.userId });
-      }
-
       await disconnectRoom();
       if (room?.roomId && user?.userId) {
         await leaveRoomMutation({ roomId: room.roomId, userId: user.userId });

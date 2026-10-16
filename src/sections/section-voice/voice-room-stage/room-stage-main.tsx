@@ -51,8 +51,6 @@ type StageLayoutMode = 'sidebar' | 'bottom' | 'cinema';
 export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   onBack,
   onShareClick,
-  topicPrompt = '',
-  onChangePrompt,
   handRaised = false,
   raisedHandsSet = new Set(),
   participantReactions = {},
