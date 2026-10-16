@@ -13,6 +13,7 @@ import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { RoomlistMain } from '../voice-room-list';
+import { VoiceRoomListener } from '../voice-room-listener';
 import { VoiceTabPanel } from '../voice-tab-panel';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
@@ -91,6 +92,7 @@ function VoiceMainContent() {
 
   return (
     <>
+      <VoiceRoomListener />
       <VoiceRoomLayout
         header={header}
         fixedHeader={Boolean(isInRoom && selectedTab === 'room-list')}

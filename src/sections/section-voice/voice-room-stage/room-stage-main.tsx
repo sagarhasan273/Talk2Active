@@ -26,7 +26,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRoomTools } from '@/core/slices';
 import { useResponsive } from '@/hooks/use-responsive';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
-import { RoomStageListener } from '../voice-room-listener-stage';
 import { RoomControlDock } from './room-stage-control-dock';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import RoomStageParticipants from './room-stage-participants';
@@ -223,7 +222,6 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
 
   return (
     <>
-      <RoomStageListener />
       <Box
         sx={{
           display: 'flex',

@@ -1,9 +1,9 @@
 // src/sections/section-voice/voice-room-card/room-list-main.tsx
 
-import type { RoomParticipantType, RoomType } from '@/types/type-room';
+import type { RoomType } from '@/types/type-room';
 import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Box, Divider } from '@mui/material';
 
@@ -12,9 +12,7 @@ import { useCredentials, useRoomTools } from '@/core/slices';
 import { useGetRoomsQuery } from 'src/core/apis/api-chat';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { useSocket } from '@/core/contexts/context-socket';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
-import { SOCKET_EVENTS } from '@/lib/socket-events';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
@@ -42,17 +40,10 @@ export function RoomlistMain({
   onCreateRoom,
 }: RoomlistMainProps) {
   const { user } = useCredentials();
-  const { socket } = useSocket();
+
   const { isInRoom } = useLiveKitSession();
 
-  const {
-    rooms,
-    setRooms,
-    addRoom,
-    addParticipantToRoom,
-    removeParticipantFromRoom,
-    getRoomById
-  } = useRoomTools();
+  const { rooms, getRoomById } = useRoomTools();
 
   const { handleSelectRoom } = useVoiceRoomAction();
 
@@ -63,8 +54,6 @@ export function RoomlistMain({
     hideFullRooms: false,
     showActiveOnly: false,
   });
-
-  const { data: getRooms } = useGetRoomsQuery(null);
 
   const filteredRooms = useMemo(() => {
     const search = filterRooms.searchQuery.trim().toLowerCase();
@@ -99,57 +88,6 @@ export function RoomlistMain({
       );
     });
   }, [rooms, filterRooms]);
-
-  // Socket handlers utilizing Redux actions
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleNewRoom = (data: { room: RoomType }) => {
-      if (data?.room) {
-        addRoom(data.room);
-      }
-    };
-
-    const handleUserJoin = (data: {
-      roomId: string;
-      participant: RoomParticipantType;
-    }) => {
-      try {
-        if (data?.roomId && data?.participant) {
-          addParticipantToRoom(data.roomId, data.participant);
-        }
-      } catch (e) {
-        console.error('Failed to update room participants on join:', e);
-      }
-    };
-
-    const handleUserLeave = (data: { roomId: string; participantId: string }) => {
-      try {
-        if (data?.roomId && data?.participantId) {
-          removeParticipantFromRoom(data.roomId, data.participantId);
-        }
-      } catch (e) {
-        console.error('Failed to handle participant leave:', e);
-      }
-    };
-
-    socket.on(SOCKET_EVENTS.BROADCAST_NEW_ROOM, handleNewRoom);
-    socket.on(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
-    socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
-
-    return () => {
-      socket.off(SOCKET_EVENTS.BROADCAST_NEW_ROOM, handleNewRoom);
-      socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
-      socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
-    };
-  }, [socket, addRoom, addParticipantToRoom, removeParticipantFromRoom]);
-
-  // Sync initial API fetch into Redux store
-  useEffect(() => {
-    if (getRooms?.data) {
-      setRooms(getRooms.data);
-    }
-  }, [getRooms, setRooms]);
 
   return (
     <>

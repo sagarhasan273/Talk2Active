@@ -79,7 +79,7 @@ export const roomSlice = createSlice({
         );
 
         if (alreadyExists) return room;
-
+        console.log(participant);
         return {
           ...room,
           participants: [...participants, participant],

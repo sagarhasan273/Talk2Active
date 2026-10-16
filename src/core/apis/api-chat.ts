@@ -5,6 +5,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
+import { setRooms } from '../slices';
 
 export const chatApi = createApi({
   reducerPath: 'chatApi',
@@ -23,6 +24,14 @@ export const chatApi = createApi({
     getRooms: builder.query<{ data: RoomType[]; status: boolean }, null>({
       query: () => `room/list`,
       providesTags: ['chat-recall'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.status && Array.isArray(data.data)) {
+            dispatch(setRooms(data.data));
+          }
+        } catch { }
+      },
     }),
 
     getRoomById: builder.query<{ data: RoomType; status: boolean }, string>({

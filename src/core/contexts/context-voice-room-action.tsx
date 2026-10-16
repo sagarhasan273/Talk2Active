@@ -109,7 +109,7 @@ export const VoiceRoomActionProvider: React.FC<{
   }, [selectedRoom, user, isInRoom, joinRoomMutation, setRoom, connectToRoom, playUserJoin, socket, handleLeaveRoom]);
 
   const handleBackToRooms = useCallback(() => {
-    setSelectedTab('room-list');
+    setSelectedTab(prev => prev === 'room-list' ? 'room-space' : 'room-list');
   }, []);
 
   const value = useMemo(
