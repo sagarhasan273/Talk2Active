@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-list-card-main.tsx
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -22,12 +22,11 @@ import {
 } from '@mui/material';
 
 import { Label, ParticipantLevel } from '@/components/label';
-import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { fgetLanguageName } from 'src/utils/helper';
-
 import { useCredentials } from '@/core/slices';
+import { useBoolean } from '@/hooks/use-boolean';
+import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import { RoomType } from '@/types/type-room';
+import { fgetLanguageName } from 'src/utils/helper';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
 
@@ -47,21 +46,6 @@ type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   sx?: SxProps;
 };
 
-const SPEAKER_GRADIENTS = [
-  'linear-gradient(135deg, #6366f1 0%, #38bdf8 100%)',
-  'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-  'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
-  'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-];
-
-const getSpeakerGradient = (seed: string) => {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return SPEAKER_GRADIENTS[Math.abs(hash) % SPEAKER_GRADIENTS.length];
-};
-
 const getInitials = (name?: string) => {
   if (!name) return 'U';
   const parts = name.trim().split(/\s+/);
@@ -76,50 +60,55 @@ const formatCompactCount = (num: number = 0): string =>
     maximumFractionDigits: 1,
   }).format(num);
 
-// Adjust avatar size based on count across 1 or 2 rows
-const getStageAvatarScale = (totalItemsShown: number) => {
-  if (totalItemsShown <= 3) {
+/**
+ * Calculates the maximum possible avatar diameter that fits inside
+ * the actual measured width & height of the stage container.
+ */
+const computeOptimalStageScale = (width: number, height: number, count: number) => {
+  if (!width || !height || count <= 0) {
     return {
-      size: 84,
-      fontSize: 16,
-      gap: 2,
-      badgeSize: 18,
-      micIconSize: 10,
-      pillFontSize: '0.65rem',
-      plusIconSize: 18,
-    };
-  }
-  if (totalItemsShown <= 4) {
-    return {
-      size: 72,
-      fontSize: 14,
-      gap: 1.5,
+      size: 64,
+      fontSize: 15,
+      gapPx: 12,
       badgeSize: 16,
-      micIconSize: 9.5,
-      pillFontSize: '0.60rem',
+      verifiedIconSize: 13,
+      pillFontSize: '0.62rem',
       plusIconSize: 16,
     };
   }
-  if (totalItemsShown <= 5) {
-    return {
-      size: 56,
-      fontSize: 14,
-      gap: 1.5,
-      badgeSize: 16,
-      micIconSize: 9.5,
-      pillFontSize: '0.60rem',
-      plusIconSize: 16,
-    };
+
+  const pillAllowance = 12; // Extra vertical room for the bottom follower pill
+  let bestSize = 28;
+  let bestGap = 8;
+
+  // Test 1 row vs 2 rows and pick whichever yields the largest avatar diameter
+  for (let rows = 1; rows <= 2; rows += 1) {
+    if (rows > count) continue;
+
+    const cols = Math.ceil(count / rows);
+    const gap = cols <= 3 ? 14 : cols <= 5 ? 10 : 8;
+
+    const maxW = (width - gap * (cols - 1) - 8) / cols;
+    const maxH = (height - gap * (rows - 1) - rows * pillAllowance) / rows;
+
+    const candidateSize = Math.floor(Math.min(maxW, maxH));
+    if (candidateSize > bestSize) {
+      bestSize = candidateSize;
+      bestGap = gap;
+    }
   }
-  // 6 - 10 items (spread over 2 rows)
+
+  // Clamp between a readable minimum (30px) and the full single-row height limit (92px)
+  const size = Math.max(30, Math.min(bestSize, 92));
+
   return {
-    size: 36,
-    fontSize: 12.5,
-    gap: 1.15,
-    badgeSize: 14,
-    micIconSize: 8.5,
-    pillFontSize: '0.54rem',
-    plusIconSize: 14,
+    size,
+    fontSize: Math.max(11, Math.round(size * 0.25)),
+    gapPx: bestGap,
+    badgeSize: Math.max(13, Math.round(size * 0.26)),
+    verifiedIconSize: Math.max(11, Math.round(size * 0.22)),
+    pillFontSize: size >= 56 ? '0.64rem' : size >= 44 ? '0.58rem' : '0.52rem',
+    plusIconSize: Math.max(13, Math.round(size * 0.28)),
   };
 };
 
@@ -146,6 +135,40 @@ export const VoiceRoomCard = ({
   const editRoomOpen = useBoolean();
   const openUserDisplayer = useBoolean();
 
+  // Measure actual available width & height of the stage area
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageBounds, setStageBounds] = useState<{ width: number; height: number }>({
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+
+    const updateBounds = () => {
+      setStageBounds({
+        width: el.clientWidth,
+        height: el.clientHeight,
+      });
+    };
+
+    updateBounds();
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setStageBounds({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const hostId = roomData?.host?.userId;
   const participants = roomData?.participants || [];
   const allUsers = participants.map((p) => ({
@@ -161,16 +184,15 @@ export const VoiceRoomCard = ({
   const availableSpace = Math.max(0, max - allUsers.length);
   const showAvailableSlot = availableSpace > 0;
 
-  // Maximum items visible across at most 2 rows (approx. 5 per row = 10 pods max)
+  // Maximum items visible across constrained container
   const MAX_TOTAL_PODS = 10;
-  const reservedSlotsForControls = (showAvailableSlot ? 1 : 0);
+  const reservedSlotsForControls = showAvailableSlot ? 1 : 0;
   const maxDirectSpeakers = MAX_TOTAL_PODS - reservedSlotsForControls;
 
   let visibleSpeakers = allUsers;
   let overflowCount = 0;
 
   if (allUsers.length > maxDirectSpeakers) {
-    // Reserve 1 pod for the "+N" overflow counter badge
     const allowedSpeakers = maxDirectSpeakers - 1;
     visibleSpeakers = allUsers.slice(0, allowedSpeakers);
     overflowCount = allUsers.length - allowedSpeakers;
@@ -178,7 +200,11 @@ export const VoiceRoomCard = ({
 
   const totalItemsInStage =
     visibleSpeakers.length + (showAvailableSlot ? 1 : 0) + (overflowCount > 0 ? 1 : 0);
-  const scale = getStageAvatarScale(totalItemsInStage);
+
+  const scale = useMemo(
+    () => computeOptimalStageScale(stageBounds.width, stageBounds.height, totalItemsInStage),
+    [stageBounds.width, stageBounds.height, totalItemsInStage]
+  );
 
   const openUserProfile = (rawUser: any) => {
     const targetUser = rawUser?.user || rawUser;
@@ -206,32 +232,46 @@ export const VoiceRoomCard = ({
     openUserProfile(rawParticipant);
   };
 
+  const sxCard = {
+    height: 296,
+    minHeight: 280,
+    maxHeight: 296,
+    width: '100%',
+    minWidth: 0,
+    maxWidth: { xs: '100%', sm: 1, md: 520 },
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+  };
+
   return (
     <>
       <Paper
         onClick={participantsOpen.onTrue}
         elevation={0}
-        sx={{
-          p: 2,
-          borderRadius: 1,
-          position: 'relative',
-          cursor: 'pointer',
-          userSelect: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          bgcolor: 'background.default',
-          border: '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-          transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            borderColor: alpha(theme.palette.primary.main, isDark ? 0.45 : 0.4),
+        sx={[
+          {
+            p: 2,
+            borderRadius: 1,
+            position: 'relative',
+            cursor: 'pointer',
+            userSelect: 'none',
+            bgcolor: 'background.default',
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+            transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              borderColor: alpha(theme.palette.primary.main, isDark ? 0.45 : 0.4),
+            },
+            ...sxCard,
           },
-          ...sx,
-        }}
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
       >
         {/* 1. Top Tag & Status Row + Room Topic */}
-        <Box>
+        <Box sx={{ flexShrink: 0, minWidth: 0 }}>
           <Stack
             direction="row"
             alignItems="center"
@@ -340,11 +380,13 @@ export const VoiceRoomCard = ({
             alignItems: 'center',
             gap: 1.25,
             p: 1,
-            mt: 1.25,
+            my: 1,
             borderRadius: 1,
             bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
+            flexShrink: 0,
+            minWidth: 0,
           }}
         >
           <Box
@@ -404,6 +446,7 @@ export const VoiceRoomCard = ({
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               color: isDark ? 'text.secondary' : '#475569',
+              flexShrink: 0,
             }}
           >
             <GroupsRoundedIcon sx={{ fontSize: 14 }} />
@@ -413,19 +456,22 @@ export const VoiceRoomCard = ({
           </Box>
         </Box>
 
-        {/* 3. Centered & Responsive Stage (Max 2 Rows) */}
+        {/* 3. Dynamic Stage Area: Uses remaining ~110px height and scales avatars to fit width & height */}
         <Box
+          ref={stageRef}
           sx={{
+            flex: 1,
+            minHeight: 0,
             width: '100%',
-            minHeight: 96,
-            py: 1.5,
+            minWidth: 0,
             px: 0.5,
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
+            alignContent: 'center',
             justifyContent: 'center',
-            gap: scale.gap,
-            rowGap: 1.5,
+            gap: `${scale.gapPx}px`,
+            overflow: 'hidden',
           }}
         >
           {visibleSpeakers.map((speaker, i) => {
@@ -449,9 +495,7 @@ export const VoiceRoomCard = ({
                     cursor: 'pointer',
                     transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      '& .speaker-ring': {
-                        boxShadow: `0 6px 16px -2px ${alpha(theme.palette.primary.main, 0.5)}`,
-                      },
+                      transform: 'scale(1.06)',
                     },
                   }}
                 >
@@ -461,6 +505,8 @@ export const VoiceRoomCard = ({
                       width: scale.size,
                       height: scale.size,
                       borderRadius: '50%',
+                      position: 'relative',
+                      transition: 'width 0.15s ease, height 0.15s ease',
                     }}
                   >
                     <Avatar
@@ -486,8 +532,8 @@ export const VoiceRoomCard = ({
                           position: 'absolute',
                           top: -1,
                           left: -1,
-                          width: scale.badgeSize - 1,
-                          height: scale.badgeSize - 1,
+                          width: scale.badgeSize,
+                          height: scale.badgeSize,
                           borderRadius: '50%',
                           bgcolor: isDark ? '#181c26' : '#ffffff',
                           display: 'flex',
@@ -497,7 +543,7 @@ export const VoiceRoomCard = ({
                         }}
                       >
                         <VerifiedRoundedIcon
-                          sx={{ fontSize: scale.micIconSize + 3, color: 'info.main' }}
+                          sx={{ fontSize: scale.verifiedIconSize, color: 'info.main' }}
                         />
                       </Box>
                     )}
@@ -506,9 +552,9 @@ export const VoiceRoomCard = ({
                   {/* Followers / Likes Pill */}
                   <Box
                     sx={{
-                      mt: -0.85,
-                      px: 0.7,
-                      py: 0.15,
+                      mt: -0.75,
+                      px: 0.6,
+                      py: 0.1,
                       borderRadius: 0.75,
                       bgcolor: isDark ? '#252b3b' : '#f1f5f9',
                       border: '1px solid',
@@ -516,21 +562,18 @@ export const VoiceRoomCard = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 0.35,
+                      gap: 0.25,
                       zIndex: 3,
-                      boxShadow: isDark
-                        ? '0 2px 6px rgba(0,0,0,0.4)'
-                        : '0 1px 3px rgba(15,23,42,0.08)',
                     }}
                   >
-                    <FavoriteRoundedIcon sx={{ fontSize: 10.5, color: 'primary.main' }} />
+                    <FavoriteRoundedIcon sx={{ fontSize: 9.5, color: 'primary.main' }} />
                     <Typography
                       noWrap
                       sx={{
                         fontSize: scale.pillFontSize,
                         fontWeight: 700,
                         color: isDark ? 'grey.100' : '#1e293b',
-                        lineHeight: 1.1,
+                        lineHeight: 1,
                       }}
                     >
                       {formatCompactCount(followingCount)}
@@ -541,7 +584,7 @@ export const VoiceRoomCard = ({
             );
           })}
 
-          {/* Overflow Counter Slot (If > 2 rows capacity) */}
+          {/* Overflow Counter Slot */}
           {overflowCount > 0 && (
             <Tooltip title={`${overflowCount} more participants`} arrow placement="top">
               <Box
@@ -651,12 +694,13 @@ export const VoiceRoomCard = ({
             )
           }
           sx={{
+            flexShrink: 0,
+            mt: 1,
             borderRadius: 1,
             textTransform: 'none',
             fontWeight: 700,
             fontSize: 13,
             boxShadow: 'none',
-            mt: 1.5,
             '&:hover': {
               boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
             },
