@@ -177,7 +177,7 @@ export default function VoiceRoomStage({
                 flexShrink: 0,
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
-                '&:hover': { transform: 'scale(1.06)' },
+                '&:hover': {},
               }}
             >
               <Box
@@ -274,7 +274,6 @@ export default function VoiceRoomStage({
                   borderColor: 'primary.main',
                   color: 'primary.main',
                   bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  transform: 'scale(1.06)',
                 },
                 '&:hover .empty-pod-icon': { opacity: 1 },
               }}
