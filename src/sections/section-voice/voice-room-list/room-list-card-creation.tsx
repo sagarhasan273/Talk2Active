@@ -25,6 +25,7 @@ export const RoomCardCreation = ({ onCreateRoom, sx }: RoomCardCreationProps) =>
         borderRadius: 1,
         cursor: 'pointer',
         userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
         bgcolor: 'background.default',
         border: '1.5px dashed',
         borderColor: isDark ? alpha('#38bdf8', 0.3) : '#cbd5e1',

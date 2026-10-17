@@ -5,7 +5,7 @@ import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
 import { Box, Divider, useTheme } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
@@ -93,20 +93,29 @@ export const RoomlistMain = memo(function RoomlistMain({
   });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(1);
+  const [scrollMargin, setScrollMargin] = useState(0);
 
-  // Dynamically calculate grid columns
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
+  // Measure columns AND the exact offset of the grid below the Header/Filters
+  useLayoutEffect(() => {
+    const scrollEl = scrollContainerRef.current;
+    const gridEl = gridContainerRef.current;
+    if (!scrollEl || !gridEl) return;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      const width = entries[0].contentRect.width;
+    const updateMeasurements = () => {
+      const width = gridEl.clientWidth;
       const calculatedCols = Math.floor((width + GRID_GAP) / (340 + GRID_GAP));
       setColumns(Math.max(1, calculatedCols));
-    });
+      setScrollMargin(gridEl.offsetTop);
+    };
 
-    resizeObserver.observe(el);
+    updateMeasurements();
+
+    const resizeObserver = new ResizeObserver(updateMeasurements);
+    resizeObserver.observe(scrollEl);
+    resizeObserver.observe(gridEl);
+
     return () => resizeObserver.disconnect();
   }, []);
 
@@ -131,13 +140,29 @@ export const RoomlistMain = memo(function RoomlistMain({
   const allCards = useMemo(() => ['creation' as const, ...filteredRooms], [filteredRooms]);
   const rowCount = Math.ceil(allCards.length / columns);
 
-  // Virtualize ONLY the card rows (strictly fixed size = 0 layout thrashing)
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => ROW_TOTAL_HEIGHT,
-    overscan: 6, // 6 rows (~1850px) buffered above and below for silky mobile scroll-up
+    scrollMargin,
+    overscan: 6, // Renders 6 rows (~1,848px) above and below viewport
   });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+
+  const paddingTop = virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? Math.max(0, totalSize - (virtualRows[virtualRows.length - 1].end - scrollMargin))
+      : 0;
+
+  const visibleSliceStart = virtualRows.length > 0 ? virtualRows[0].index * columns : 0;
+  const visibleSliceEnd =
+    virtualRows.length > 0
+      ? Math.min(allCards.length, (virtualRows[virtualRows.length - 1].index + 1) * columns)
+      : 0;
+  const visibleCards = allCards.slice(visibleSliceStart, visibleSliceEnd);
 
   // Reset scroll to top when filters change
   useEffect(() => {
@@ -146,18 +171,19 @@ export const RoomlistMain = memo(function RoomlistMain({
     }
   }, [filterRooms]);
 
+  // INSTANT JUMP TO TOP
   const handleScrollToTop = useCallback(() => {
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleScrollToBottom = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
     }
   }, []);
 
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+  // INSTANT JUMP TO BOTTOM
+  const handleScrollToBottom = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, []);
 
   return (
     <>
@@ -177,57 +203,44 @@ export const RoomlistMain = memo(function RoomlistMain({
 
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        {/* Single Virtual Track Container */}
+        {/* Flat Native CSS Grid with Virtual Top/Bottom Padding & GPU Skeletons */}
         <Box
+          ref={gridContainerRef}
           sx={{
-            width: '100%',
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            position: 'relative',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columns}, 1fr)`,
+            gap: `${GRID_GAP}px`,
             mt: 1.5,
-            backgroundSize: `100% ${ROW_TOTAL_HEIGHT}px`,
-            backgroundRepeat: 'repeat-y',
+            pt: `${paddingTop}px`,
+            pb: `${paddingBottom}px`,
+            backgroundClip: 'content-box',
+            borderRadius: 1,
           }}
         >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const startIndex = virtualRow.index * columns;
-            const rowCards = allCards.slice(startIndex, startIndex + columns);
+          {visibleCards.map((card, idx) => {
+            const actualIndex = visibleSliceStart + idx;
+
+            if (card === 'creation') {
+              return (
+                <RoomCardCreation
+                  key="creation-card"
+                  onCreateRoom={stableOnCreateRoom}
+                  sx={sxCard}
+                />
+              );
+            }
 
             return (
-              <Box
-                key={virtualRow.key}
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${CARD_HEIGHT}px`,
-                  transform: `translate3d(0, ${virtualRow.start}px, 0)`,
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                  gap: `${GRID_GAP}px`,
-                }}
-              >
-                {rowCards.map((card, idx) =>
-                  card === 'creation' ? (
-                    <RoomCardCreation
-                      key="creation-card"
-                      onCreateRoom={stableOnCreateRoom}
-                      sx={sxCard}
-                    />
-                  ) : (
-                    <VoiceRoomCard
-                      key={card.roomId}
-                      index={startIndex + idx - 1}
-                      roomData={card}
-                      currentUserId={currentUserId}
-                      onJoinRoom={stableOnSelectRoom}
-                      checkIfFollowing={checkIfFollowing}
-                      checkIfBlocked={checkIfBlocked}
-                      sx={sxCard}
-                    />
-                  )
-                )}
-              </Box>
+              <VoiceRoomCard
+                key={card.roomId}
+                index={actualIndex - 1}
+                roomData={card}
+                currentUserId={currentUserId}
+                onJoinRoom={stableOnSelectRoom}
+                checkIfFollowing={checkIfFollowing}
+                checkIfBlocked={checkIfBlocked}
+                sx={sxCard}
+              />
             );
           })}
         </Box>
