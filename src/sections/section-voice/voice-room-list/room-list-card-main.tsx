@@ -267,6 +267,7 @@ const VoiceRoomCardComponent = ({
             position: 'relative',
             cursor: 'pointer',
             userSelect: 'none',
+            WebkitTapHighlightColor: 'transparent',
             bgcolor: 'background.default',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',

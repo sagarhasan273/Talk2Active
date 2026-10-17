@@ -3,14 +3,14 @@
 import type { RoomType } from '@/types/type-room';
 import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
+import { Box, Divider, useTheme } from '@mui/material';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { Box, Divider } from '@mui/material';
-
-import { useCredentials, useRoomTools } from '@/core/slices';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import { useCredentials, useRoomTools } from '@/core/slices';
+
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
@@ -18,8 +18,6 @@ import { RoomCardCreation } from './room-list-card-creation';
 import { VoiceRoomCard } from './room-list-card-main';
 import RoomListFooter from './room-list-footer';
 
-// We will render a "window" of 16 cards max (about 3-4 rows depending on screen width)
-const WINDOW_SIZE = 16;
 const CARD_HEIGHT = 296;
 const GRID_GAP = 12; // 1.5 MUI spacing = 12px
 const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP; // 308px
@@ -41,11 +39,7 @@ const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom: () => void })
   const { isInRoom } = useLiveKitSession();
   if (isInRoom) return null;
 
-  return (
-    <Box sx={{ gridColumn: '1 / -1' }}>
-      <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />
-    </Box>
-  );
+  return <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />;
 });
 
 interface RoomlistMainProps {
@@ -57,6 +51,9 @@ export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoom,
   onCreateRoom,
 }: RoomlistMainProps) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const { user, checkIfFollowing, checkIfBlocked } = useCredentials();
   const currentUserId = user?.userId;
 
@@ -95,145 +92,149 @@ export const RoomlistMain = memo(function RoomlistMain({
     showActiveOnly: false,
   });
 
-  // --- SLIDING WINDOW VIRTUALIZATION STATE ---
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: WINDOW_SIZE });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const colsRef = useRef(1);
+  const [columns, setColumns] = useState(1);
 
-  // 1. Track how many columns fit on the screen so we can calculate row offsets accurately
+  // Dynamically calculate grid columns
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       const width = entries[0].contentRect.width;
-      // Grid logic: minmax(340px, 1fr) with 12px gap
-      colsRef.current = Math.max(1, Math.floor((width + GRID_GAP) / (340 + GRID_GAP)));
+      const calculatedCols = Math.floor((width + GRID_GAP) / (340 + GRID_GAP));
+      setColumns(Math.max(1, calculatedCols));
     });
 
     resizeObserver.observe(el);
     return () => resizeObserver.disconnect();
   }, []);
 
-  // 2. Sliding Window Scroll Handler
-  const handleScroll = useCallback(() => {
-    if (!scrollContainerRef.current) return;
-
-    const scrollTop = scrollContainerRef.current.scrollTop;
-
-    // The top headers and creation card take up roughly 420px of height.
-    // We subtract this so our math starts at the first real grid row.
-    const HEADER_OFFSET = 420;
-    const gridScrollTop = Math.max(0, scrollTop - HEADER_OFFSET);
-
-    // Calculate which row the user is currently looking at
-    const currentGridRow = Math.floor(gridScrollTop / ROW_TOTAL_HEIGHT);
-
-    // Buffer: Render 1 row above the visible area to prevent pop-in
-    const startRow = Math.max(0, currentGridRow - 1);
-
-    // Convert row index to item index based on active columns
-    const startIdx = startRow * colsRef.current;
-    const endIdx = startIdx + WINDOW_SIZE;
-
-    setVisibleRange((prev) => {
-      // Performance optimization: Only trigger a React state update 
-      // if the window has shifted by an entire row. This prevents scrolling lag.
-      if (Math.abs(prev.start - startIdx) >= colsRef.current) {
-        return { start: startIdx, end: endIdx };
-      }
-      return prev;
-    });
-  }, []);
-
-  const handleScrollToTop = useCallback(() => {
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleScrollToBottom = useCallback(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  }, []);
-
-  // Reset scroll window when filters change
-  useEffect(() => {
-    setVisibleRange({ start: 0, end: WINDOW_SIZE });
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
-  }, [filterRooms]);
-
   const filteredRooms = useMemo(() => {
     const search = filterRooms.searchQuery.trim().toLowerCase();
 
     return rooms.filter((room) => {
       const matchesSearch = !search || room.topic.toLowerCase().includes(search);
-      const matchesLanguage = filterRooms.selectedLanguage === 'all' || room.languages.includes(filterRooms.selectedLanguage);
-      const matchesLevel = filterRooms.selectedLevel === 'all' || room.level === filterRooms.selectedLevel;
-      const matchesCapacity = !filterRooms.hideFullRooms || room.participants.length < room.max_participants;
+      const matchesLanguage =
+        filterRooms.selectedLanguage === 'all' ||
+        room.languages.includes(filterRooms.selectedLanguage);
+      const matchesLevel =
+        filterRooms.selectedLevel === 'all' || room.level === filterRooms.selectedLevel;
+      const matchesCapacity =
+        !filterRooms.hideFullRooms || room.participants.length < room.max_participants;
       const matchesActive = !filterRooms.showActiveOnly || room.isActive;
 
       return matchesSearch && matchesLanguage && matchesLevel && matchesCapacity && matchesActive;
     });
   }, [rooms, filterRooms]);
 
+  const allCards = useMemo(() => ['creation' as const, ...filteredRooms], [filteredRooms]);
+  const rowCount = Math.ceil(allCards.length / columns);
+
+  // Virtualize ONLY the card rows (strictly fixed size = 0 layout thrashing)
+  const rowVirtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => ROW_TOTAL_HEIGHT,
+    overscan: 6, // 6 rows (~1850px) buffered above and below for silky mobile scroll-up
+  });
+
+  // Reset scroll to top when filters change
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [filterRooms]);
+
+  const handleScrollToTop = useCallback(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleScrollToBottom = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, []);
+
+  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)';
+
   return (
     <>
       <Box
         ref={scrollContainerRef}
-        onScroll={handleScroll}
         sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fill, minmax(340px, 1fr))' },
-          alignItems: 'stretch',
-          justifyContent: 'flex-start',
-          position: 'relative',
-          gap: 1.5,
+          height: '100%',
           overflowY: 'auto',
+          position: 'relative',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         <RoomListHeaderSlot onCreateRoom={stableOnCreateRoom} />
 
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
+        <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
+
+        {/* Single Virtual Track Container */}
+        <Box
+          sx={{
+            width: '100%',
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            position: 'relative',
+            mt: 1.5,
+            backgroundSize: `100% ${ROW_TOTAL_HEIGHT}px`,
+            backgroundRepeat: 'repeat-y',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const startIndex = virtualRow.index * columns;
+            const rowCards = allCards.slice(startIndex, startIndex + columns);
+
+            return (
+              <Box
+                key={virtualRow.key}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${CARD_HEIGHT}px`,
+                  transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                  gap: `${GRID_GAP}px`,
+                }}
+              >
+                {rowCards.map((card, idx) =>
+                  card === 'creation' ? (
+                    <RoomCardCreation
+                      key="creation-card"
+                      onCreateRoom={stableOnCreateRoom}
+                      sx={sxCard}
+                    />
+                  ) : (
+                    <VoiceRoomCard
+                      key={card.roomId}
+                      index={startIndex + idx - 1}
+                      roomData={card}
+                      currentUserId={currentUserId}
+                      onJoinRoom={stableOnSelectRoom}
+                      checkIfFollowing={checkIfFollowing}
+                      checkIfBlocked={checkIfBlocked}
+                      sx={sxCard}
+                    />
+                  )
+                )}
+              </Box>
+            );
+          })}
         </Box>
 
-        <RoomCardCreation onCreateRoom={stableOnCreateRoom} sx={sxCard} />
+        <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
 
-        {/* Sliding Window Mapping */}
-        {filteredRooms.map((room, index) => {
-          if (index < visibleRange.start || index >= visibleRange.end) {
-            return <Box key={`placeholder-${room.roomId}`} sx={{ height: CARD_HEIGHT, width: '100%', bgcolor: 'background.default' }} />;
-          }
-
-          return (
-            <VoiceRoomCard
-              key={room.roomId}
-              index={index}
-              roomData={room}
-              currentUserId={currentUserId}
-              onJoinRoom={stableOnSelectRoom}
-              checkIfFollowing={checkIfFollowing}
-              checkIfBlocked={checkIfBlocked}
-              sx={sxCard}
-            />
-          );
-        })}
-
-        <Box sx={{ gridColumn: '1 / -1', my: 1 }}>
-          <Divider sx={{ bgcolor: 'primary.main' }} />
-        </Box>
-
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          <RoomListFooter onCreateRoom={stableOnCreateRoom} />
-        </Box>
+        <RoomListFooter onCreateRoom={stableOnCreateRoom} />
       </Box>
 
       <VoiceRoomScrollButtons

@@ -114,15 +114,15 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     if (updates.showActiveOnly !== undefined) setShowActiveOnly(updates.showActiveOnly);
   }, []);
 
-  const inputSurfaceBg = isDark ? alpha('#fff', 0.035) : '#f8fafc';
-  const inputBorderColor = isDark ? alpha('#fff', 0.1) : '#e2e8f0';
+  const inputSurfaceBg = 'background.default';
+  const inputBorderColor = 'divider';
 
   const compactSelectSx = {
     height: 36,
     borderRadius: 1,
     bgcolor: inputSurfaceBg,
     fontSize: '0.8rem',
-    color: isDark ? 'text.primary' : '#0f172a',
+    color: 'text.primary',
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: inputBorderColor,
     },
@@ -150,7 +150,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       sx={{
         gridColumn: '1 / -1',
         p: { xs: 1.25, sm: 1.5 },
-        bgcolor: isDark ? '#181c26' : '#ffffff',
+        bgcolor: 'background.default',
         borderRadius: 1,
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
