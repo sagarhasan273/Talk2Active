@@ -78,7 +78,7 @@ export const accountSlice = createSlice({
             ...list[idx],
             accountDetails: {
               ...list[idx].accountDetails,
-              lastActive: new Date(lastActive) as any,
+              lastActive: new Date(lastActive).toISOString(),
             },
           };
         }

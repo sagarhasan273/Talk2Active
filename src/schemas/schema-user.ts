@@ -34,8 +34,7 @@ export const UserBaseSchema = zod.object({
       message: 'Password must be a valid Argon2 hash',
     }).optional(),
   lastActive: zod
-    .union([zod.string().datetime(), zod.date()])
-    .transform((val) => new Date(val)),
+    .union([zod.string(), zod.date()]).optional(),
   verified: zod.boolean(),
   accountType: zod
     .enum(['admin', 'supporter', 'member']),

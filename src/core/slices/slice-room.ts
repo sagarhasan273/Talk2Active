@@ -27,7 +27,7 @@ const initialState: RoomState = {
   loading: false,
   participants: [],
   isUnreadRoomMessage: false,
-};
+}
 
 export const roomSlice = createSlice({
   name: 'room',
@@ -56,11 +56,11 @@ export const roomSlice = createSlice({
 
       const exists = state.rooms.some((r) => r.roomId === newRoom.roomId);
       if (!exists) {
-        state.rooms = [newRoom, ...state.rooms];
+        state.rooms.unshift(newRoom);
       }
     },
 
-    // 2. Handle User Join in Room (Adds participant to target room)
+    // 2. Handle User Join in Room
     addParticipantToRoom: (
       state,
       action: PayloadAction<{ roomId: string; participant: RoomParticipantType }>
@@ -70,28 +70,20 @@ export const roomSlice = createSlice({
 
       const participantId = participant.userId?.toString();
 
-      state.rooms = state.rooms.map((room) => {
-        if (room.roomId !== roomId) return room;
+      // Mutate specific room in the rooms list directly
+      const targetRoom = state.rooms.find((r) => r.roomId === roomId);
+      if (targetRoom) {
+        if (!targetRoom.participants) targetRoom.participants = [];
+        const exists = targetRoom.participants.some((p) => p.userId?.toString() === participantId);
+        if (!exists) {
+          targetRoom.participants.push(participant);
+        }
+      }
 
-        const participants = room.participants || [];
-        const alreadyExists = participants.some(
-          (p) => p.userId?.toString() === participantId
-        );
-
-        if (alreadyExists) return room;
-
-        return {
-          ...room,
-          participants: [...participants, participant],
-        };
-      });
-
-      // Also sync active room if it matches
-      if (state.room && state.room.roomId === roomId) {
+      // Sync active room if it matches
+      if (state.room?.roomId === roomId) {
         if (!state.room.participants) state.room.participants = [];
-        const exists = state.room.participants.some(
-          (p) => p.userId?.toString() === participantId
-        );
+        const exists = state.room.participants.some((p) => p.userId?.toString() === participantId);
         if (!exists) {
           state.room.participants.push(participant);
           state.participants = state.room.participants;
@@ -107,7 +99,7 @@ export const roomSlice = createSlice({
       }
     },
 
-    // 3. Handle User Leave in Room (Removes participant from target room)
+    // 3. Handle User Leave in Room
     removeParticipantFromRoom: (
       state,
       action: PayloadAction<{ roomId: string; participantId: string }>
@@ -117,21 +109,16 @@ export const roomSlice = createSlice({
 
       const leavingUserId = participantId.toString();
 
-      state.rooms = state.rooms.map((room) => {
-        if (room.roomId !== roomId) return room;
-
-        const updatedParticipants = (room.participants || []).filter(
+      // Find the specific room in the array and directly filter its participants
+      const targetRoom = state.rooms.find((room) => room.roomId === roomId);
+      if (targetRoom && targetRoom.participants) {
+        targetRoom.participants = targetRoom.participants.filter(
           (p) => p.userId?.toString() !== leavingUserId
         );
+      }
 
-        return {
-          ...room,
-          participants: updatedParticipants,
-        };
-      });
-
-      // Also sync active room if it matches
-      if (state.room && state.room.roomId === roomId && state.room.participants) {
+      // Sync the active room if it matches
+      if (state.room?.roomId === roomId && state.room.participants) {
         state.room.participants = state.room.participants.filter(
           (p) => p.userId?.toString() !== leavingUserId
         );
@@ -142,28 +129,24 @@ export const roomSlice = createSlice({
     // 4. Update single participant metadata
     updateParticipant: (state, action: PayloadAction<Partial<RoomParticipantType>>) => {
       if (!action.payload?.userId) return;
-
       const targetId = String(action.payload.userId);
 
-      // Update in active room participants list
-      state.participants = state.participants.map((p) =>
-        String(p.userId) === targetId ? { ...p, ...action.payload } : p
-      );
+      // Update in standalone participants list
+      const pIndex = state.participants.findIndex((p) => String(p.userId) === targetId);
+      if (pIndex !== -1) Object.assign(state.participants[pIndex], action.payload);
 
-      // Update in active room object if present
-      if (state.room && state.room.participants) {
-        state.room.participants = state.room.participants.map((p) =>
-          String(p.userId) === targetId ? { ...p, ...action.payload } : p
-        );
+      // Update in active room
+      if (state.room?.participants) {
+        const rpIndex = state.room.participants.findIndex((p) => String(p.userId) === targetId);
+        if (rpIndex !== -1) Object.assign(state.room.participants[rpIndex], action.payload);
       }
 
       // Update across rooms list
-      state.rooms = state.rooms.map((room) => ({
-        ...room,
-        participants: (room.participants || []).map((p) =>
-          String(p.userId) === targetId ? { ...p, ...action.payload } : p
-        ),
-      }));
+      state.rooms.forEach((room) => {
+        if (!room.participants) return;
+        const idx = room.participants.findIndex((p) => String(p.userId) === targetId);
+        if (idx !== -1) Object.assign(room.participants[idx], action.payload);
+      });
     },
 
     // 5. Update multiple participants metadata in-place
@@ -182,28 +165,20 @@ export const roomSlice = createSlice({
 
       if (updatesMap.size === 0) return;
 
-      // Update active participants
-      state.participants = state.participants.map((participant) => {
-        const update = updatesMap.get(String(participant.userId));
-        return update ? { ...participant, ...update } : participant;
-      });
-
-      // Update active room participants
-      if (state.room && state.room.participants) {
-        state.room.participants = state.room.participants.map((participant) => {
+      const applyUpdates = (participantsList: RoomParticipantType[]) => {
+        participantsList.forEach((participant) => {
           const update = updatesMap.get(String(participant.userId));
-          return update ? { ...participant, ...update } : participant;
+          if (update) Object.assign(participant, update);
         });
-      }
+      };
 
-      // Update across rooms list
-      state.rooms = state.rooms.map((room) => ({
-        ...room,
-        participants: (room.participants || []).map((participant) => {
-          const update = updatesMap.get(String(participant.userId));
-          return update ? { ...participant, ...update } : participant;
-        }),
-      }));
+      // Apply to all active arrays
+      applyUpdates(state.participants);
+      if (state.room?.participants) applyUpdates(state.room.participants);
+
+      state.rooms.forEach((room) => {
+        if (room.participants) applyUpdates(room.participants);
+      });
     },
 
     resetRoom: (state) => {
@@ -270,8 +245,8 @@ export const useRoomTools = () => {
         dispatch(removeParticipantFromRoom({ roomId, participantId })),
       updateParticipant: (participant: Partial<RoomParticipantType>) =>
         dispatch(updateParticipant(participant)),
-      updateParticipants: (participants: Array<Partial<RoomParticipantType>>) =>
-        dispatch(updateParticipants(participants)),
+      updateParticipants: (participantsList: Array<Partial<RoomParticipantType>>) =>
+        dispatch(updateParticipants(participantsList)),
       getRoomById,
       resetRoom: () => dispatch(resetRoom()),
     }),

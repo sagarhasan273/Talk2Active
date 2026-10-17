@@ -198,6 +198,71 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
           host: user?.userId,
         }).unwrap();
 
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+      await createRoom({
+        ...payload,
+        host: user?.userId,
+      }).unwrap()
+
+
       if (response?.status) onClose();
     } catch (error) {
       console.error('Failed to save voice room:', error);
