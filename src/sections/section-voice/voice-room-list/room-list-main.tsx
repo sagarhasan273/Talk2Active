@@ -3,24 +3,37 @@
 import type { RoomType } from '@/types/type-room';
 import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
-import { Box, Divider, useTheme } from '@mui/material';
+import { alpha, Box, CircularProgress, Divider, Fade, Stack, Typography, useTheme } from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import { useCredentials, useRoomTools } from '@/core/slices';
 
+import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
+import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
+import { RoomParticipantsDialog } from './room-list-card-dialog';
 import { VoiceRoomCard } from './room-list-card-main';
 import RoomListFooter from './room-list-footer';
 
 const CARD_HEIGHT = 296;
-const GRID_GAP = 12; // 1.5 MUI spacing = 12px
-const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP; // 308px
+const GRID_GAP = 12;
+const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 
 const sxCard = {
   height: CARD_HEIGHT,
@@ -38,9 +51,122 @@ const NOOP = () => { };
 const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom: () => void }) => {
   const { isInRoom } = useLiveKitSession();
   if (isInRoom) return null;
-
   return <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />;
 });
+
+// ── Isolated Modal Host: Opening/closing popups NEVER re-renders the room list ──
+interface RoomListModalsRef {
+  openProfile: (rawUser: any) => void;
+  openRoomDialog: (room: RoomType) => void;
+}
+
+const RoomListModalsHost = memo(
+  forwardRef<
+    RoomListModalsRef,
+    {
+      currentUserId?: string;
+      onJoinRoom: (room: RoomType) => void;
+      checkIfFollowing: (id: string) => boolean;
+      checkIfBlocked: (id: string) => boolean;
+    }
+  >(({ currentUserId, onJoinRoom, checkIfFollowing, checkIfBlocked }, ref) => {
+    const [selectedProfile, setSelectedProfile] = useState<UserDisplayerProfile | null>(null);
+    const [dialogRoom, setDialogRoom] = useState<RoomType | null>(null);
+    const [editRoom, setEditRoom] = useState<RoomType | null>(null);
+
+    const openProfile = useCallback(
+      (rawUser: any) => {
+        const targetUser = rawUser?.user || rawUser;
+        const uid = targetUser?.userId || targetUser?.id;
+        setSelectedProfile({
+          userId: uid,
+          name: targetUser?.name || 'User',
+          username: targetUser?.username,
+          genUserId: targetUser?.genUserId,
+          profilePhoto: targetUser?.profilePhoto,
+          verified: targetUser?.verified,
+          accountType: targetUser?.accountType,
+          bio: targetUser?.bio,
+          follower_count: targetUser?.follower_count,
+          following_count: targetUser?.following_count,
+          friend_count: targetUser?.friend_count,
+          isFollowing: uid ? checkIfFollowing(uid) : false,
+          isBlocked: uid ? checkIfBlocked(uid) : false,
+        });
+      },
+      [checkIfFollowing, checkIfBlocked]
+    );
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        openProfile,
+        openRoomDialog: (room: RoomType) => setDialogRoom(room),
+      }),
+      [openProfile]
+    );
+
+    const dialogAllUsers = useMemo(() => {
+      if (!dialogRoom) return [];
+      const hostId = dialogRoom.host?.userId;
+      return (dialogRoom.participants || []).map((p) => ({
+        ...p,
+        isHost: Boolean(hostId && (p.userId === hostId || (p as any).userId === hostId)),
+      }));
+    }, [dialogRoom]);
+
+    const dialogIsFull = dialogRoom
+      ? dialogAllUsers.length >= (dialogRoom.max_participants || 5)
+      : false;
+    const dialogIsHost = Boolean(currentUserId && dialogRoom?.host?.userId === currentUserId);
+
+    return (
+      <>
+        {selectedProfile && (
+          <UserDisplayer
+            open={Boolean(selectedProfile)}
+            user={selectedProfile}
+            currentUserId={currentUserId}
+            onClose={() => setSelectedProfile(null)}
+          />
+        )}
+
+        {dialogRoom && (
+          <RoomParticipantsDialog
+            open={Boolean(dialogRoom)}
+            onClose={() => setDialogRoom(null)}
+            room={dialogRoom}
+            allUsers={dialogAllUsers}
+            isFull={dialogIsFull}
+            isHost={dialogIsHost}
+            onJoinRoom={onJoinRoom}
+            onParticipantClick={(p) => {
+              setDialogRoom(null);
+              openProfile(p);
+            }}
+            onEditRoom={
+              dialogIsHost
+                ? (r) => {
+                  setDialogRoom(null);
+                  setEditRoom(r);
+                }
+                : undefined
+            }
+          />
+        )}
+
+        {editRoom && (
+          <VoiceModalCreateRoom
+            open={Boolean(editRoom)}
+            onClose={() => setEditRoom(null)}
+            onCreateRoom={NOOP}
+            currentRoom={editRoom}
+          />
+        )}
+      </>
+    );
+  })
+);
 
 interface RoomlistMainProps {
   onSelectRoom: (room: RoomType) => void;
@@ -60,26 +186,32 @@ export const RoomlistMain = memo(function RoomlistMain({
   const { rooms, getRoomById } = useRoomTools();
   const { handleSelectRoom } = useVoiceRoomAction();
 
+  const modalsRef = useRef<RoomListModalsRef>(null);
+
   const onSelectRoomRef = useRef(onSelectRoom);
   onSelectRoomRef.current = onSelectRoom;
-
   const onCreateRoomRef = useRef(onCreateRoom);
   onCreateRoomRef.current = onCreateRoom;
 
   const stableOnSelectRoom = useCallback((room: RoomType) => {
     onSelectRoomRef.current(room);
   }, []);
-
   const stableOnCreateRoom = useCallback(() => {
     onCreateRoomRef.current();
+  }, []);
+
+  const handleAvatarClick = useCallback((rawUser: any) => {
+    modalsRef.current?.openProfile(rawUser);
+  }, []);
+
+  const handleOverflowClick = useCallback((room: RoomType) => {
+    modalsRef.current?.openRoomDialog(room);
   }, []);
 
   const handleJoinFromSocialChat = useCallback(
     (roomId: string) => {
       const roomObj = getRoomById(roomId);
-      if (roomObj) {
-        handleSelectRoom(roomObj);
-      }
+      if (roomObj) handleSelectRoom(roomObj);
     },
     [getRoomById, handleSelectRoom]
   );
@@ -94,10 +226,8 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState(1);
-  const [scrollMargin, setScrollMargin] = useState(0);
+  const [gridMetrics, setGridMetrics] = useState({ columns: 1, cardWidth: 340, scrollMargin: 0 });
 
-  // Measure columns AND the exact offset of the grid below the Header/Filters
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
     const gridEl = gridContainerRef.current;
@@ -105,23 +235,28 @@ export const RoomlistMain = memo(function RoomlistMain({
 
     const updateMeasurements = () => {
       const width = gridEl.clientWidth;
-      const calculatedCols = Math.floor((width + GRID_GAP) / (340 + GRID_GAP));
-      setColumns(Math.max(1, calculatedCols));
-      setScrollMargin(gridEl.offsetTop);
+      if (width === 0) return;
+      const cols = Math.max(1, Math.floor((width + GRID_GAP) / (340 + GRID_GAP)));
+      const computedCardWidth = Math.floor((width - GRID_GAP * (cols - 1)) / cols);
+      const nextMargin = gridEl.offsetTop;
+
+      setGridMetrics((prev) =>
+        prev.columns === cols &&
+          Math.abs(prev.cardWidth - computedCardWidth) < 2 &&
+          Math.abs(prev.scrollMargin - nextMargin) < 4
+          ? prev
+          : { columns: cols, cardWidth: computedCardWidth, scrollMargin: nextMargin }
+      );
     };
 
     updateMeasurements();
-
     const resizeObserver = new ResizeObserver(updateMeasurements);
-    resizeObserver.observe(scrollEl);
     resizeObserver.observe(gridEl);
-
     return () => resizeObserver.disconnect();
   }, []);
 
   const filteredRooms = useMemo(() => {
     const search = filterRooms.searchQuery.trim().toLowerCase();
-
     return rooms.filter((room) => {
       const matchesSearch = !search || room.topic.toLowerCase().includes(search);
       const matchesLanguage =
@@ -132,12 +267,12 @@ export const RoomlistMain = memo(function RoomlistMain({
       const matchesCapacity =
         !filterRooms.hideFullRooms || room.participants.length < room.max_participants;
       const matchesActive = !filterRooms.showActiveOnly || room.isActive;
-
       return matchesSearch && matchesLanguage && matchesLevel && matchesCapacity && matchesActive;
     });
   }, [rooms, filterRooms]);
 
   const allCards = useMemo(() => ['creation' as const, ...filteredRooms], [filteredRooms]);
+  const { columns, cardWidth, scrollMargin } = gridMetrics;
   const rowCount = Math.ceil(allCards.length / columns);
 
   const rowVirtualizer = useVirtualizer({
@@ -145,7 +280,7 @@ export const RoomlistMain = memo(function RoomlistMain({
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => ROW_TOTAL_HEIGHT,
     scrollMargin,
-    overscan: 6, // Renders 6 rows (~1,848px) above and below viewport
+    overscan: columns === 1 ? 5 : 4,
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
@@ -164,29 +299,68 @@ export const RoomlistMain = memo(function RoomlistMain({
       : 0;
   const visibleCards = allCards.slice(visibleSliceStart, visibleSliceEnd);
 
-  // Reset scroll to top when filters change
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [filterRooms]);
 
-  // INSTANT JUMP TO TOP
   const handleScrollToTop = useCallback(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
-  }, []);
+    rowVirtualizer.scrollToIndex(0, { align: 'start' });
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+  }, [rowVirtualizer]);
 
-  // INSTANT JUMP TO BOTTOM
   const handleScrollToBottom = useCallback(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    if (rowCount > 0) {
+      rowVirtualizer.scrollToIndex(rowCount - 1, { align: 'end' });
     }
-  }, []);
+  }, [rowVirtualizer, rowCount]);
+
+  // Zero-DOM CSS repeating skeleton pattern for fast-scroll spacer areas
+  const skeletonFillColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(15, 23, 42, 0.04)';
+  const spacerSkeletonSx = {
+    gridColumn: '1 / -1',
+    width: '100%',
+    pointerEvents: 'none',
+    borderRadius: 1,
+    backgroundImage: `repeating-linear-gradient(
+      to bottom,
+      ${skeletonFillColor} 0px,
+      ${skeletonFillColor} ${CARD_HEIGHT}px,
+      transparent ${CARD_HEIGHT}px,
+      transparent ${ROW_TOTAL_HEIGHT}px
+    )`,
+  };
 
   return (
     <>
+      {/* Subtle Top Floating Indicator during rapid scrolling */}
+      <Fade in={rowVirtualizer.isScrolling} timeout={{ enter: 150, exit: 250 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: theme.zIndex.appBar + 5,
+            px: 1.75,
+            py: 0.6,
+            borderRadius: 10,
+            bgcolor: isDark ? alpha('#181c26', 0.92) : alpha('#ffffff', 0.95),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
+            pointerEvents: 'none',
+          }}
+        >
+          <CircularProgress size={13} thickness={5} color="primary" />
+          <Typography variant="caption" fontWeight={700} color="text.primary">
+            Loading rooms...
+          </Typography>
+        </Stack>
+      </Fade>
+
       <Box
         ref={scrollContainerRef}
         sx={{
@@ -200,10 +374,8 @@ export const RoomlistMain = memo(function RoomlistMain({
         }}
       >
         <RoomListHeaderSlot onCreateRoom={stableOnCreateRoom} />
-
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        {/* Flat Native CSS Grid with Virtual Top/Bottom Padding & GPU Skeletons */}
         <Box
           ref={gridContainerRef}
           sx={{
@@ -211,15 +383,12 @@ export const RoomlistMain = memo(function RoomlistMain({
             gridTemplateColumns: `repeat(${columns}, 1fr)`,
             gap: `${GRID_GAP}px`,
             mt: 1.5,
-            pt: `${paddingTop}px`,
-            pb: `${paddingBottom}px`,
-            backgroundClip: 'content-box',
-            borderRadius: 1,
           }}
         >
-          {visibleCards.map((card, idx) => {
-            const actualIndex = visibleSliceStart + idx;
+          {/* Top Visual Skeleton Spacer (Never looks like a black page) */}
+          {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}
 
+          {visibleCards.map((card, idx) => {
             if (card === 'creation') {
               return (
                 <RoomCardCreation
@@ -229,32 +398,43 @@ export const RoomlistMain = memo(function RoomlistMain({
                 />
               );
             }
-
             return (
               <VoiceRoomCard
                 key={card.roomId}
-                index={actualIndex - 1}
+                index={visibleSliceStart + idx - 1}
                 roomData={card}
                 currentUserId={currentUserId}
+                cardWidth={cardWidth}
+                isScrolling={false}
                 onJoinRoom={stableOnSelectRoom}
-                checkIfFollowing={checkIfFollowing}
-                checkIfBlocked={checkIfBlocked}
+                onAvatarClick={handleAvatarClick}
+                onOverflowClick={handleOverflowClick}
                 sx={sxCard}
               />
             );
           })}
+
+          {/* Bottom Visual Skeleton Spacer (Shows card-sized loading blocks during fast flicks) */}
+          {paddingBottom > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingBottom}px` }} />}
         </Box>
 
         <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
-
         <RoomListFooter onCreateRoom={stableOnCreateRoom} />
       </Box>
+
+      {/* Isolated Modals Host */}
+      <RoomListModalsHost
+        ref={modalsRef}
+        currentUserId={currentUserId}
+        onJoinRoom={stableOnSelectRoom}
+        checkIfFollowing={checkIfFollowing}
+        checkIfBlocked={checkIfBlocked}
+      />
 
       <VoiceRoomScrollButtons
         onScrollTop={handleScrollToTop}
         onScrollBottom={handleScrollToBottom}
       />
-
       <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />
     </>
   );

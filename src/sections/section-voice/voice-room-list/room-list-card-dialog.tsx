@@ -101,8 +101,16 @@ export const RoomParticipantsDialog = ({
       open={open}
       onClose={onClose}
       TransitionComponent={Fade}
+      transitionDuration={120}
       maxWidth={size}
       fullWidth
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(15, 23, 42, 0.45)',
+          },
+        },
+      }}
       PaperProps={{
         elevation: 0,
         sx: {
@@ -110,12 +118,12 @@ export const RoomParticipantsDialog = ({
           overflow: 'hidden',
           bgcolor: isDark ? '#181c26' : '#ffffff',
           backgroundImage: 'none',
-          backdropFilter: 'blur(16px)',
+          // Removed backdropFilter: 'blur(16px)' which freezes lower-end mobile GPUs
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
           boxShadow: isDark
-            ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
-            : '0 24px 48px -12px rgba(15, 23, 42, 0.18)',
+            ? '0 16px 36px -8px rgba(0, 0, 0, 0.65)'
+            : '0 16px 36px -8px rgba(15, 23, 42, 0.18)',
         },
       }}
     >
