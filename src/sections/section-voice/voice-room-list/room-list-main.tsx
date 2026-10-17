@@ -3,7 +3,16 @@
 import type { RoomType } from '@/types/type-room';
 import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
-import { alpha, Box, CircularProgress, Divider, Fade, Stack, Typography, useTheme } from '@mui/material';
+import {
+  alpha,
+  Box,
+  CircularProgress,
+  Divider,
+  Fade,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   forwardRef,
@@ -35,6 +44,9 @@ const CARD_HEIGHT = 296;
 const GRID_GAP = 12;
 const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 
+// Velocity threshold in pixels per millisecond
+const FAST_SCROLL_VELOCITY_THRESHOLD = 2.2;
+
 const sxCard = {
   height: CARD_HEIGHT,
   minHeight: 280,
@@ -54,7 +66,71 @@ const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom: () => void })
   return <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />;
 });
 
-// ── Isolated Modal Host: Opening/closing popups NEVER re-renders the room list ──
+// ── 1. Isolated Fast-Scroll Pill (Zero parent/card re-renders when showing/hiding) ──
+interface FastScrollIndicatorRef {
+  trigger: (durationMs?: number) => void;
+}
+
+const FastScrollIndicator = memo(
+  forwardRef<FastScrollIndicatorRef, { isDark: boolean }>(({ isDark }, ref) => {
+    const theme = useTheme();
+    const [visible, setVisible] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        trigger: (durationMs = 180) => {
+          setVisible((prev) => (prev ? prev : true));
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => {
+            setVisible(false);
+          }, durationMs);
+        },
+      }),
+      []
+    );
+
+    useEffect(
+      () => () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+      },
+      []
+    );
+
+    return (
+      <Fade in={visible} timeout={{ enter: 80, exit: 180 }} unmountOnExit>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: theme.zIndex.appBar + 5,
+            px: 1.75,
+            py: 0.6,
+            borderRadius: 10,
+            bgcolor: isDark ? alpha('#181c26', 0.94) : alpha('#ffffff', 0.96),
+            border: '1px solid',
+            borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
+            pointerEvents: 'none',
+          }}
+        >
+          <CircularProgress size={13} thickness={5} color="primary" disableShrink />
+          <Typography variant="caption" fontWeight={700} color="text.primary">
+            Loading rooms...
+          </Typography>
+        </Stack>
+      </Fade>
+    );
+  })
+);
+
+// ── 2. Isolated Modal Host (Zero parent/card re-renders when opening popups) ──
 interface RoomListModalsRef {
   openProfile: (rawUser: any) => void;
   openRoomDialog: (room: RoomType) => void;
@@ -66,10 +142,11 @@ const RoomListModalsHost = memo(
     {
       currentUserId?: string;
       onJoinRoom: (room: RoomType) => void;
-      checkIfFollowing: (id: string) => boolean;
-      checkIfBlocked: (id: string) => boolean;
     }
-  >(({ currentUserId, onJoinRoom, checkIfFollowing, checkIfBlocked }, ref) => {
+  >(({ currentUserId, onJoinRoom }, ref) => {
+    // Subscribing to checkIfFollowing/checkIfBlocked here keeps presence updates out of RoomlistMain
+    const { checkIfFollowing, checkIfBlocked } = useCredentials();
+
     const [selectedProfile, setSelectedProfile] = useState<UserDisplayerProfile | null>(null);
     const [dialogRoom, setDialogRoom] = useState<RoomType | null>(null);
     const [editRoom, setEditRoom] = useState<RoomType | null>(null);
@@ -180,13 +257,14 @@ export const RoomlistMain = memo(function RoomlistMain({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { user, checkIfFollowing, checkIfBlocked } = useCredentials();
+  const { user } = useCredentials();
   const currentUserId = user?.userId;
 
   const { rooms, getRoomById } = useRoomTools();
   const { handleSelectRoom } = useVoiceRoomAction();
 
   const modalsRef = useRef<RoomListModalsRef>(null);
+  const fastScrollIndicatorRef = useRef<FastScrollIndicatorRef>(null);
 
   const onSelectRoomRef = useRef(onSelectRoom);
   onSelectRoomRef.current = onSelectRoom;
@@ -227,6 +305,28 @@ export const RoomlistMain = memo(function RoomlistMain({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const [gridMetrics, setGridMetrics] = useState({ columns: 1, cardWidth: 340, scrollMargin: 0 });
+
+  // ── Fast Scroll Velocity Detector (Zero React State Updates on RoomlistMain) ──
+  const lastScrollPosRef = useRef(0);
+  const lastScrollTimeRef = useRef(performance.now());
+
+  const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const currentTop = e.currentTarget.scrollTop;
+    const now = performance.now();
+    const dt = now - lastScrollTimeRef.current;
+
+    if (dt > 12) {
+      const dy = Math.abs(currentTop - lastScrollPosRef.current);
+      const velocity = dy / dt; // pixels per ms
+
+      if (velocity > FAST_SCROLL_VELOCITY_THRESHOLD || dy > ROW_TOTAL_HEIGHT * 2.5) {
+        fastScrollIndicatorRef.current?.trigger(180);
+      }
+
+      lastScrollPosRef.current = currentTop;
+      lastScrollTimeRef.current = now;
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
@@ -280,7 +380,7 @@ export const RoomlistMain = memo(function RoomlistMain({
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => ROW_TOTAL_HEIGHT,
     scrollMargin,
-    overscan: columns === 1 ? 5 : 4,
+    overscan: columns === 1 ? 4 : 3,
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
@@ -304,17 +404,18 @@ export const RoomlistMain = memo(function RoomlistMain({
   }, [filterRooms]);
 
   const handleScrollToTop = useCallback(() => {
+    fastScrollIndicatorRef.current?.trigger(240);
     rowVirtualizer.scrollToIndex(0, { align: 'start' });
     if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [rowVirtualizer]);
 
   const handleScrollToBottom = useCallback(() => {
     if (rowCount > 0) {
+      fastScrollIndicatorRef.current?.trigger(240);
       rowVirtualizer.scrollToIndex(rowCount - 1, { align: 'end' });
     }
   }, [rowVirtualizer, rowCount]);
 
-  // Zero-DOM CSS repeating skeleton pattern for fast-scroll spacer areas
   const skeletonFillColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(15, 23, 42, 0.04)';
   const spacerSkeletonSx = {
     gridColumn: '1 / -1',
@@ -332,37 +433,11 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   return (
     <>
-      {/* Subtle Top Floating Indicator during rapid scrolling */}
-      <Fade in={rowVirtualizer.isScrolling} timeout={{ enter: 150, exit: 250 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{
-            position: 'fixed',
-            bottom: 20,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: theme.zIndex.appBar + 5,
-            px: 1.75,
-            py: 0.6,
-            borderRadius: 10,
-            bgcolor: isDark ? alpha('#181c26', 0.92) : alpha('#ffffff', 0.95),
-            border: '1px solid',
-            borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
-            pointerEvents: 'none',
-          }}
-        >
-          <CircularProgress size={13} thickness={5} color="primary" />
-          <Typography variant="caption" fontWeight={700} color="text.primary">
-            Loading rooms...
-          </Typography>
-        </Stack>
-      </Fade>
+      <FastScrollIndicator ref={fastScrollIndicatorRef} isDark={isDark} />
 
       <Box
         ref={scrollContainerRef}
+        onScroll={handleScrollVelocity}
         sx={{
           height: '100%',
           overflowY: 'auto',
@@ -385,7 +460,6 @@ export const RoomlistMain = memo(function RoomlistMain({
             mt: 1.5,
           }}
         >
-          {/* Top Visual Skeleton Spacer (Never looks like a black page) */}
           {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}
 
           {visibleCards.map((card, idx) => {
@@ -405,7 +479,6 @@ export const RoomlistMain = memo(function RoomlistMain({
                 roomData={card}
                 currentUserId={currentUserId}
                 cardWidth={cardWidth}
-                isScrolling={false}
                 onJoinRoom={stableOnSelectRoom}
                 onAvatarClick={handleAvatarClick}
                 onOverflowClick={handleOverflowClick}
@@ -414,7 +487,6 @@ export const RoomlistMain = memo(function RoomlistMain({
             );
           })}
 
-          {/* Bottom Visual Skeleton Spacer (Shows card-sized loading blocks during fast flicks) */}
           {paddingBottom > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingBottom}px` }} />}
         </Box>
 
@@ -422,13 +494,10 @@ export const RoomlistMain = memo(function RoomlistMain({
         <RoomListFooter onCreateRoom={stableOnCreateRoom} />
       </Box>
 
-      {/* Isolated Modals Host */}
       <RoomListModalsHost
         ref={modalsRef}
         currentUserId={currentUserId}
         onJoinRoom={stableOnSelectRoom}
-        checkIfFollowing={checkIfFollowing}
-        checkIfBlocked={checkIfBlocked}
       />
 
       <VoiceRoomScrollButtons
