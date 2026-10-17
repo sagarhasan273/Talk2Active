@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-import Diversity2Icon from '@mui/icons-material/Diversity2';
+import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
 import {
   alpha,
   Badge,
@@ -153,7 +153,6 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        gap: 1.5,
         pointerEvents: 'none',
       }}
     >
@@ -165,7 +164,7 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
             position: { xs: 'fixed', sm: 'relative' },
             top: { xs: 0, sm: 'auto' },
             left: { xs: 0, sm: 'auto' },
-            right: { xs: 0, sm: 110 },
+            right: { xs: 0, sm: 60 },
             bottom: { xs: 0, sm: -45 },
             width: { xs: '100vw', sm: `${chatWidth}px` },
             height: { xs: '100dvh', sm: `${chatHeight}px` },
@@ -276,35 +275,31 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
           badgeContent={unreadFriendsCount}
           invisible={!hasUnreadMessages}
           max={99}
-          overlap="rectangular"
+          overlap="circular" // 1. Changed to 'circular' to match the round button
         >
           <IconButton
+            size="medium"
             onClick={() => setOpen((prev) => !prev)}
-            size="small"
             sx={{
-              bgcolor: 'primary.main',
-              color: '#fff',
-              borderRadius: 1,
-              px: 2,
-              py: 1,
-              fontWeight: 700,
-              fontSize: '0.825rem',
-              boxShadow: isDark
-                ? '0 8px 20px rgba(0, 0, 0, 0.5)'
-                : `0 6px 18px ${alpha(theme.palette.primary.main, 0.3)}`,
-              transition: 'all 0.18s ease',
+              pointerEvents: 'auto',
+              bgcolor: isDark ? alpha('#181c26', 0.9) : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+              boxShadow: theme.customShadows?.z8 || '0 4px 14px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s',
               '&:hover': {
-                bgcolor: 'primary.dark',
-                transform: 'translateY(-1px)',
+                bgcolor: isDark ? '#252b3b' : '#f8fafc',
+                transform: 'translateY(-2px)'
               },
               ...sx,
             }}
           >
-            <Diversity2Icon style={{ fontSize: 18, marginRight: 8 }} /> Social
+            {/* 4. Changed to a new chat/social icon */}
+            <ForumRoundedIcon fontSize="medium" />
           </IconButton>
         </Badge>
       </Box>
-    </Box>
+    </Box >
   );
 };
 

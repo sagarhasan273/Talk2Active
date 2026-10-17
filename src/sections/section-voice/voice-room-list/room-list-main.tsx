@@ -11,6 +11,7 @@ import { useCredentials, useRoomTools } from '@/core/slices';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
@@ -145,6 +146,19 @@ export const RoomlistMain = memo(function RoomlistMain({
     });
   }, []);
 
+  const handleScrollToTop = useCallback(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleScrollToBottom = useCallback(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
   // Reset scroll window when filters change
   useEffect(() => {
     setVisibleRange({ start: 0, end: WINDOW_SIZE });
@@ -195,10 +209,8 @@ export const RoomlistMain = memo(function RoomlistMain({
 
         {/* Sliding Window Mapping */}
         {filteredRooms.map((room, index) => {
-          // If the card is outside our active scroll window, unmount the heavy React 
-          // component and leave an empty dummy box of the exact same size to hold its place.
           if (index < visibleRange.start || index >= visibleRange.end) {
-            return <Box key={`placeholder-${room.roomId}`} sx={{ height: CARD_HEIGHT, width: '100%' }} />;
+            return <Box key={`placeholder-${room.roomId}`} sx={{ height: CARD_HEIGHT, width: '100%', bgcolor: 'background.default' }} />;
           }
 
           return (
@@ -223,6 +235,11 @@ export const RoomlistMain = memo(function RoomlistMain({
           <RoomListFooter onCreateRoom={stableOnCreateRoom} />
         </Box>
       </Box>
+
+      <VoiceRoomScrollButtons
+        onScrollTop={handleScrollToTop}
+        onScrollBottom={handleScrollToBottom}
+      />
 
       <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />
     </>
