@@ -5,7 +5,7 @@ import { VoiceRoomsFilter, type FilterState } from '../voice-filter-rooms';
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Box, Divider, Typography } from '@mui/material';
+import { Box, Divider } from '@mui/material';
 
 import { useCredentials, useRoomTools } from '@/core/slices';
 
@@ -17,20 +17,21 @@ import { RoomCardCreation } from './room-list-card-creation';
 import { VoiceRoomCard } from './room-list-card-main';
 import RoomListFooter from './room-list-footer';
 
-const INITIAL_BATCH_SIZE = 24;
-const LOAD_MORE_STEP = 24;
+// We will render a "window" of 16 cards max (about 3-4 rows depending on screen width)
+const WINDOW_SIZE = 16;
+const CARD_HEIGHT = 296;
+const GRID_GAP = 12; // 1.5 MUI spacing = 12px
+const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP; // 308px
 
 const sxCard = {
-  height: 296,
+  height: CARD_HEIGHT,
   minHeight: 280,
-  maxHeight: 296,
+  maxHeight: CARD_HEIGHT,
   width: '100%',
   maxWidth: { xs: '100%', sm: 1, md: 520 },
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
-  contentVisibility: 'auto',
-  containIntrinsicSize: '0 296px',
 };
 
 const NOOP = () => { };
@@ -55,7 +56,6 @@ export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoom,
   onCreateRoom,
 }: RoomlistMainProps) {
-  // Extract relationship checkers here to prevent child cards from subscribing to Redux
   const { user, checkIfFollowing, checkIfBlocked } = useCredentials();
   const currentUserId = user?.userId;
 
@@ -94,11 +94,63 @@ export const RoomlistMain = memo(function RoomlistMain({
     showActiveOnly: false,
   });
 
-  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
-  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
+  // --- SLIDING WINDOW VIRTUALIZATION STATE ---
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: WINDOW_SIZE });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const colsRef = useRef(1);
 
+  // 1. Track how many columns fit on the screen so we can calculate row offsets accurately
   useEffect(() => {
-    setVisibleCount(INITIAL_BATCH_SIZE);
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      // Grid logic: minmax(340px, 1fr) with 12px gap
+      colsRef.current = Math.max(1, Math.floor((width + GRID_GAP) / (340 + GRID_GAP)));
+    });
+
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // 2. Sliding Window Scroll Handler
+  const handleScroll = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+
+    const scrollTop = scrollContainerRef.current.scrollTop;
+
+    // The top headers and creation card take up roughly 420px of height.
+    // We subtract this so our math starts at the first real grid row.
+    const HEADER_OFFSET = 420;
+    const gridScrollTop = Math.max(0, scrollTop - HEADER_OFFSET);
+
+    // Calculate which row the user is currently looking at
+    const currentGridRow = Math.floor(gridScrollTop / ROW_TOTAL_HEIGHT);
+
+    // Buffer: Render 1 row above the visible area to prevent pop-in
+    const startRow = Math.max(0, currentGridRow - 1);
+
+    // Convert row index to item index based on active columns
+    const startIdx = startRow * colsRef.current;
+    const endIdx = startIdx + WINDOW_SIZE;
+
+    setVisibleRange((prev) => {
+      // Performance optimization: Only trigger a React state update 
+      // if the window has shifted by an entire row. This prevents scrolling lag.
+      if (Math.abs(prev.start - startIdx) >= colsRef.current) {
+        return { start: startIdx, end: endIdx };
+      }
+      return prev;
+    });
+  }, []);
+
+  // Reset scroll window when filters change
+  useEffect(() => {
+    setVisibleRange({ start: 0, end: WINDOW_SIZE });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
   }, [filterRooms]);
 
   const filteredRooms = useMemo(() => {
@@ -115,33 +167,11 @@ export const RoomlistMain = memo(function RoomlistMain({
     });
   }, [rooms, filterRooms]);
 
-  const visibleRooms = useMemo(
-    () => filteredRooms.slice(0, visibleCount),
-    [filteredRooms, visibleCount]
-  );
-
-  const hasMoreRooms = visibleCount < filteredRooms.length;
-
-  useEffect(() => {
-    const triggerEl = loadMoreTriggerRef.current;
-    if (!triggerEl || !hasMoreRooms) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredRooms.length));
-        }
-      },
-      { rootMargin: '600px 0px' }
-    );
-
-    observer.observe(triggerEl);
-    return () => observer.disconnect();
-  }, [hasMoreRooms, filteredRooms.length]);
-
   return (
     <>
       <Box
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fill, minmax(340px, 1fr))' },
@@ -163,26 +193,27 @@ export const RoomlistMain = memo(function RoomlistMain({
 
         <RoomCardCreation onCreateRoom={stableOnCreateRoom} sx={sxCard} />
 
-        {visibleRooms.map((room, index) => (
-          <VoiceRoomCard
-            key={room.roomId}
-            index={index}
-            roomData={room}
-            currentUserId={currentUserId}
-            onJoinRoom={stableOnSelectRoom}
-            checkIfFollowing={checkIfFollowing}
-            checkIfBlocked={checkIfBlocked}
-            sx={sxCard}
-          />
-        ))}
+        {/* Sliding Window Mapping */}
+        {filteredRooms.map((room, index) => {
+          // If the card is outside our active scroll window, unmount the heavy React 
+          // component and leave an empty dummy box of the exact same size to hold its place.
+          if (index < visibleRange.start || index >= visibleRange.end) {
+            return <Box key={`placeholder-${room.roomId}`} sx={{ height: CARD_HEIGHT, width: '100%' }} />;
+          }
 
-        {hasMoreRooms && (
-          <Box ref={loadMoreTriggerRef} sx={{ gridColumn: '1 / -1', py: 2, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary" fontWeight={600}>
-              Loading more rooms ({visibleRooms.length} of {filteredRooms.length})...
-            </Typography>
-          </Box>
-        )}
+          return (
+            <VoiceRoomCard
+              key={room.roomId}
+              index={index}
+              roomData={room}
+              currentUserId={currentUserId}
+              onJoinRoom={stableOnSelectRoom}
+              checkIfFollowing={checkIfFollowing}
+              checkIfBlocked={checkIfBlocked}
+              sx={sxCard}
+            />
+          );
+        })}
 
         <Box sx={{ gridColumn: '1 / -1', my: 1 }}>
           <Divider sx={{ bgcolor: 'primary.main' }} />
