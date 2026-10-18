@@ -99,8 +99,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
         minHeight: 0,
         minWidth: 0,
         display: 'flex',
-        flexDirection:
-          isDisplayingScreenShare && stageLayout === 'sidebar' ? 'row' : 'column',
+        flexDirection: isDisplayingScreenShare && stageLayout === 'sidebar' ? 'row' : 'column',
         overflow: 'hidden',
       }}
     >
@@ -110,8 +109,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
           ref={screenShareContainerRef}
           sx={{
             flex: stageLayout === 'cinema' || stageLayout === 'sidebar' ? 1 : 'none',
-            height:
-              stageLayout === 'cinema' || stageLayout === 'sidebar' ? '100%' : '62%',
+            height: stageLayout === 'cinema' || stageLayout === 'sidebar' ? '100%' : '62%',
             width: '100%',
             minHeight: 0,
             minWidth: 0,
@@ -179,7 +177,10 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 py: 0.25,
               }}
             >
-              <Typography variant="caption" sx={{ fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 800, color: '#fff', letterSpacing: 0.5 }}
+              >
                 ALL ACTIVE SHARES ({activeScreenShareTracks.length})
               </Typography>
             </Box>
@@ -210,13 +211,10 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
 
               const sid = publication.trackSid;
               const presenterName =
-                trackRef.participant.name ||
-                trackRef.participant.identity ||
-                `Screen ${idx + 1}`;
+                trackRef.participant.name || trackRef.participant.identity || `Screen ${idx + 1}`;
               const isSelected =
-                !showAllScreensGrid &&
-                focusedScreenShare?.publication?.trackSid === sid;
-              const userCache = getCachedUserInfo(trackRef.participant.identity)
+                !showAllScreensGrid && focusedScreenShare?.publication?.trackSid === sid;
+              const userCache = getCachedUserInfo(trackRef.participant.identity);
 
               return (
                 <Button
@@ -363,15 +361,10 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
             </Stack>
 
             {!showAllScreensGrid && (
-              <Tooltip
-                title={videoFit === 'contain' ? 'Zoom In (Fill)' : 'Zoom Out (Fit)'}
-                arrow
-              >
+              <Tooltip title={videoFit === 'contain' ? 'Zoom In (Fill)' : 'Zoom Out (Fit)'} arrow>
                 <IconButton
                   size="small"
-                  onClick={() =>
-                    setVideoFit((prev) => (prev === 'contain' ? 'cover' : 'contain'))
-                  }
+                  onClick={() => setVideoFit((prev) => (prev === 'contain' ? 'cover' : 'contain'))}
                   sx={{ ...getHudGlassButtonSx(videoFit === 'cover'), width: 30, px: 0 }}
                 >
                   {videoFit === 'contain' ? <ZoomIn size={14} /> : <ZoomOut size={14} />}
@@ -509,7 +502,9 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
               })}
             </Box>
           ) : (
-            <Box sx={{ flex: 1, width: '100%', height: '100%', minHeight: 0, position: 'relative' }}>
+            <Box
+              sx={{ flex: 1, width: '100%', height: '100%', minHeight: 0, position: 'relative' }}
+            >
               <VideoTrack
                 trackRef={focusedScreenShare}
                 style={{ width: '100%', height: '100%', objectFit: videoFit }}
@@ -686,40 +681,37 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
               </IconButton>
             </Box>
           ) : (
-            /* MODE C: Standard Full-Stage Scrollable Speaker Grid */
             <Box
               ref={scrollContainerRef}
               sx={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
                 minHeight: 0,
                 overflowY: 'auto',
+                overflowX: 'hidden',
                 p: { xs: 2, sm: 3 },
                 ...scrollableSx,
               }}
             >
-              <Box
+              <RoomStageParticipants
+                participants={participants}
+                raisedHandsSet={raisedHandsSet}
+                participantReactions={participantReactions}
+                openSlots={openSlots}
+                maxParticipants={maxParticipants}
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 2,
-                  maxWidth: 1000,
                   width: '100%',
-                  m: 'auto',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  alignContent: 'flex-start',
+                  gap: 1.5,
+                  my: 'auto',
                 }}
-              >
-                <RoomStageParticipants
-                  participants={participants}
-                  raisedHandsSet={raisedHandsSet}
-                  participantReactions={participantReactions}
-                  openSlots={openSlots}
-                  maxParticipants={maxParticipants}
-                  sx={{ width: '100%', minHeight: 148, flexShrink: 0 }}
-                />
-              </Box>
+              />
             </Box>
           )}
         </>

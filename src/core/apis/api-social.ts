@@ -40,23 +40,54 @@ export const socialApi = createApi({
     }),
 
     getFriends: builder.query<ResponseType, string | undefined>({
-      query: (userId) => `social/friends/${userId}`,
+      query: (userId) => `social/${userId}/friends`,
       providesTags: ['social-recall'],
     }),
 
     getFollowers: builder.query<ResponseType, string | undefined>({
-      query: (userId) => `social/followers/${userId}`,
+      query: (userId) => `social/${userId}/followers`,
       providesTags: ['social-recall'],
     }),
 
     getFollowing: builder.query<ResponseType, string | undefined>({
-      query: (userId) => `social/following/${userId}`,
+      query: (userId) => `social/${userId}/following`,
       providesTags: ['social-recall'],
     }),
 
     getAllRelations: builder.query<ResponseType, string | undefined>({
-      query: (userId) => `social/all-relations/${userId}`,
+      query: (userId) => `social/${userId}/all-relations`,
       providesTags: ['social-recall'],
+    }),
+
+    getBlockedUsers: builder.query<ResponseType, string | undefined>({
+      query: (userId) => `social/${userId}/blocked`,
+      providesTags: ['social-recall'],
+    }),
+
+    blockUser: builder.mutation<any, { requester: string; recipient: string }>({
+      query: (data) => ({
+        url: '/social/block',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['social-recall'],
+    }),
+
+    unblockUser: builder.mutation<any, { requester: string; recipient: string }>({
+      query: (data) => ({
+        url: '/social/unblock',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['social-recall'],
+    }),
+
+    reportUser: builder.mutation<any, { requester: string; recipient: string; reason: string }>({
+      query: (data) => ({
+        url: '/social/report',
+        method: 'POST',
+        body: data,
+      }),
     }),
 
     // Mutation to toggle block status
@@ -82,5 +113,9 @@ export const {
   useGetFollowersQuery,
   useGetFollowingQuery,
   useGetAllRelationsQuery,
-  useToggleBlockUserMutation
+  useGetBlockedUsersQuery,
+  useToggleBlockUserMutation,
+  useBlockUserMutation,
+  useUnblockUserMutation,
+  useReportUserMutation
 } = socialApi;

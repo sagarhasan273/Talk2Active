@@ -1,10 +1,12 @@
 import {
+  useGetBlockedUsersQuery,
   useGetFollowersQuery,
   useGetFollowingQuery,
   useGetFriendsQuery,
 } from '@/core/apis';
 import {
   selectAccount,
+  setBlockedUserIds,
   setFollowers,
   setFollowing,
   setFriends,
@@ -21,7 +23,7 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
   const { data: friendsData } = useGetFriendsQuery(currentUserId, { skip: !currentUserId });
   const { data: followersData } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
   const { data: followingData } = useGetFollowingQuery(currentUserId, { skip: !currentUserId });
-  // const { data: blockedData } = useGetBlockedUsersQuery(currentUserId, { skip: !currentUserId });
+  const { data: blockedData } = useGetBlockedUsersQuery(currentUserId, { skip: !currentUserId });
 
   // 2. Sync to Redux slice safely
   useEffect(() => {
@@ -45,14 +47,17 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
     }
   }, [followingData, dispatch]);
 
-  /*
   useEffect(() => {
     if (blockedData !== undefined) {
       const items = Array.isArray(blockedData) ? blockedData : blockedData?.data ?? [];
-      dispatch(setBlockedUserIds(items));
+
+      const blockedIds = items
+        .map((item: any) => item?.accountDetails?.userId?.toString())
+        .filter(Boolean);
+
+      dispatch(setBlockedUserIds(blockedIds));
     }
   }, [blockedData, dispatch]);
-  */
 
   // 3. Reset lists if user logs out (currentUserId becomes falsy)
   useEffect(() => {
@@ -60,7 +65,7 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
       dispatch(setFriends([]));
       dispatch(setFollowers([]));
       dispatch(setFollowing([]));
-      // dispatch(setBlockedUserIds([]));
+      dispatch(setBlockedUserIds([]));
     }
   }, [currentUserId, dispatch]);
 

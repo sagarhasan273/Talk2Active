@@ -4,6 +4,7 @@ import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import {
   alpha,
   Button,
+  CircularProgress,
   IconButton,
   Popover,
   Stack,
@@ -13,18 +14,20 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React from 'react';
+import React, { useCallback } from 'react';
 
+import { useBlockUserMutation, useUnblockUserMutation } from '@/core/apis/api-social';
+import { useCredentials } from '@/core/slices';
 import { usePopover } from 'src/components/custom-popover';
 import { Iconify } from 'src/components/iconify';
 
 export type BlockButtonVariant = 'icon' | 'soft' | 'outlined' | 'button';
 
 export type ButtonBlockUserProps = {
-  userId: string;
+  targetUserId: string;
   userName?: string;
   isBlocked?: boolean;
-  onBlockUser: (userId: string) => void;
+  onSuccess?: () => void;
   variant?: BlockButtonVariant;
   size?: 'small' | 'medium';
   fullWidth?: boolean;
@@ -33,10 +36,10 @@ export type ButtonBlockUserProps = {
 };
 
 export const ButtonBlockUser = ({
-  userId,
+  targetUserId,
   userName = 'this user',
   isBlocked = false,
-  onBlockUser,
+  onSuccess,
   variant = 'icon',
   size = 'small',
   fullWidth = false,
@@ -46,19 +49,44 @@ export const ButtonBlockUser = ({
   const theme = useTheme();
   const popover = usePopover();
 
-  const handleTriggerClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    if (!isBlocked && showConfirmPopover) {
-      popover.onOpen(event);
-    } else {
-      onBlockUser(userId);
-    }
-  };
+  const { user, checkIfBlocked } = useCredentials();
+  const currentUserId = user?.userId;
 
-  const handleConfirm = (event: React.MouseEvent) => {
+  const [blockUser, { isLoading: blockLoading }] = useBlockUserMutation();
+  const [unblockUser, { isLoading: unblockLoading }] = useUnblockUserMutation();
+
+  // Combine loading states so the UI reacts to both blocking and unblocking
+  const isLoading = blockLoading || unblockLoading;
+
+  // Use the most accurate block state (prop vs global context)
+  const isCurrentlyBlocked = isBlocked || checkIfBlocked(targetUserId);
+
+  const handleAction = useCallback(async () => {
+    if (!targetUserId || !currentUserId) return;
+
+    try {
+      if (!isCurrentlyBlocked) {
+        await blockUser({ requester: currentUserId, recipient: targetUserId }).unwrap();
+      } else {
+        await unblockUser({ requester: currentUserId, recipient: targetUserId }).unwrap();
+      }
+      onSuccess?.();
+    } catch (error) {
+      console.error('Failed to toggle block status:', error);
+    } finally {
+      popover.onClose();
+    }
+  }, [blockUser, unblockUser, currentUserId, targetUserId, isCurrentlyBlocked, onSuccess, popover]);
+
+  const handleTriggerClick = (event: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
     event.stopPropagation();
-    popover.onClose();
-    onBlockUser(userId);
+    event.preventDefault();
+
+    if (!isCurrentlyBlocked && showConfirmPopover) {
+      popover.onOpen(event as any);
+    } else {
+      handleAction();
+    }
   };
 
   const renderPopover = () => (
@@ -66,9 +94,15 @@ export const ButtonBlockUser = ({
       disableRestoreFocus
       open={popover.open}
       anchorEl={popover.anchorEl}
-      onClose={popover.onClose}
+      onClose={(e: any) => {
+        if (e?.stopPropagation) e.stopPropagation();
+        popover.onClose();
+      }}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      sx={{
+        zIndex: 3200,
+      }}
       slotProps={{
         paper: {
           sx: {
@@ -88,32 +122,38 @@ export const ButtonBlockUser = ({
         </Typography>
       </Stack>
       <Stack direction="row" gap={1} justifyContent="flex-end">
-        <Button size="small" variant="outlined" color="inherit" onClick={popover.onClose}>
+        <Button size="small" variant="outlined" color="inherit" onClick={popover.onClose} disabled={isLoading}>
           Cancel
         </Button>
-        <Button size="small" variant="contained" color="error" onClick={handleConfirm}>
-          Confirm
+        <Button size="small" variant="contained" color="error" onClick={handleAction} disabled={isLoading}>
+          {isLoading ? 'Wait...' : 'Confirm'}
         </Button>
       </Stack>
     </Popover>
+  );
+
+  const iconOrSpinner = isLoading ? (
+    <CircularProgress size={16} color="inherit" />
+  ) : (
+    <BlockRoundedIcon sx={{ fontSize: size === 'small' ? 17 : 19 }} />
   );
 
   // ── 1. Variant: ICON ──────────────────────────────────────────────
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title={isBlocked ? 'Unblock user' : 'Block user'} arrow placement="top">
+        <Tooltip title={isCurrentlyBlocked ? 'Unblock user' : 'Block user'} arrow placement="top">
           <IconButton
             size={size}
             onClick={handleTriggerClick}
+            disabled={isLoading}
             sx={{
-              width: size === 'small' ? 36 : 40,
-              height: size === 'small' ? 36 : 40,
+              px: 1,
               borderRadius: 1.25,
               border: '1px solid',
-              borderColor: isBlocked ? 'error.main' : 'divider',
-              color: isBlocked ? 'error.main' : 'text.secondary',
-              bgcolor: isBlocked ? alpha(theme.palette.error.main, 0.1) : 'transparent',
+              borderColor: isCurrentlyBlocked ? 'error.main' : 'divider',
+              color: isCurrentlyBlocked ? 'error.main' : 'text.secondary',
+              bgcolor: isCurrentlyBlocked ? alpha(theme.palette.error.main, 0.1) : 'transparent',
               transition: 'all 0.18s ease',
               '&:hover': {
                 borderColor: 'error.main',
@@ -123,9 +163,9 @@ export const ButtonBlockUser = ({
               ...sx,
             }}
           >
-            <BlockRoundedIcon sx={{ fontSize: size === 'small' ? 17 : 19 }} />
+            {iconOrSpinner}
           </IconButton>
-        </Tooltip>
+        </Tooltip >
         {renderPopover()}
       </>
     );
@@ -139,24 +179,26 @@ export const ButtonBlockUser = ({
           fullWidth={fullWidth}
           size={size}
           onClick={handleTriggerClick}
-          startIcon={<BlockRoundedIcon sx={{ fontSize: 16 }} />}
+          disabled={isLoading}
+          startIcon={iconOrSpinner}
           sx={{
-            height: size === 'small' ? 36 : 40,
-            borderRadius: 1.25,
+            px: 1,
+            borderRadius: 1,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
-            color: 'error.main',
-            bgcolor: alpha(theme.palette.error.main, 0.08),
-            border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+            color: isCurrentlyBlocked ? 'text.secondary' : 'error.main',
+            bgcolor: alpha(theme.palette.error.main, isCurrentlyBlocked ? 0 : 0.08),
+            border: isCurrentlyBlocked ? `1px solid ${alpha(theme.palette.text.secondary, 0.2)}` : `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
             '&:hover': {
               bgcolor: alpha(theme.palette.error.main, 0.16),
               borderColor: 'error.main',
+              color: 'error.main',
             },
             ...sx,
           }}
         >
-          {isBlocked ? 'Unblock' : 'Block'}
+          {isCurrentlyBlocked ? 'Unblock' : 'Block'}
         </Button>
         {renderPopover()}
       </>
@@ -171,19 +213,20 @@ export const ButtonBlockUser = ({
           fullWidth={fullWidth}
           size={size}
           variant="outlined"
-          color="error"
+          color={isCurrentlyBlocked ? 'inherit' : 'error'}
           onClick={handleTriggerClick}
-          startIcon={<BlockRoundedIcon sx={{ fontSize: 16 }} />}
+          disabled={isLoading}
+          startIcon={iconOrSpinner}
           sx={{
-            height: size === 'small' ? 36 : 40,
-            borderRadius: 1.25,
+            px: 1,
+            borderRadius: 1,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
             ...sx,
           }}
         >
-          {isBlocked ? 'Unblock' : 'Block'}
+          {isCurrentlyBlocked ? 'Unblock' : 'Block'}
         </Button>
         {renderPopover()}
       </>
@@ -196,21 +239,22 @@ export const ButtonBlockUser = ({
       <Button
         fullWidth={fullWidth}
         size={size}
-        variant="contained"
-        color="error"
+        variant={isCurrentlyBlocked ? 'outlined' : 'contained'}
+        color={isCurrentlyBlocked ? 'inherit' : 'error'}
         onClick={handleTriggerClick}
-        startIcon={<BlockRoundedIcon sx={{ fontSize: 16 }} />}
+        disabled={isLoading}
+        startIcon={iconOrSpinner}
         sx={{
-          height: size === 'small' ? 36 : 40,
-          borderRadius: 1.25,
+          px: 1,
+          borderRadius: 1,
           fontWeight: 700,
           textTransform: 'none',
           fontSize: size === 'small' ? 12 : 13,
-          boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.28)}`,
+          boxShadow: isCurrentlyBlocked ? 'none' : `0 4px 12px ${alpha(theme.palette.error.main, 0.28)}`,
           ...sx,
         }}
       >
-        {isBlocked ? 'Unblock' : 'Block'}
+        {isCurrentlyBlocked ? 'Unblock' : 'Block'}
       </Button>
       {renderPopover()}
     </>

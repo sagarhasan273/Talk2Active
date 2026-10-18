@@ -251,7 +251,7 @@ export default function VoiceRoomStage({
                     lineHeight: 1,
                   }}
                 >
-                  {formatCompactCount(speaker?.following_count ?? 0)}
+                  {formatCompactCount(speaker?.follower_count ?? 0)}
                 </Typography>
               </Box>
             </Box>

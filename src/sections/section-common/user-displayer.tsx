@@ -408,34 +408,40 @@ export const UserDisplayer = ({
 
                 {/* Action Buttons */}
                 {!isSelf && (
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {resolvedUserId && (
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    flexWrap="wrap"
+                    useFlexGap
+                    sx={{ width: '100%', mt: 1 }}
+                  >
+                    {!isBlocked && resolvedUserId && (
                       <ButtonRelationshipToggle
                         targetUser={{ id: resolvedUserId, name: user.name }}
                         isFollow={checkIfFollowing(resolvedUserId)}
                         size="small"
                         variant="soft"
-                        fullWidth
+                        // Removed fullWidth, added flex
+                        sx={{ flex: 1, minWidth: '100px' }}
                       />
                     )}
 
                     <ButtonReportUser
                       variant="soft"
+                      targetUserId={resolvedUserId}
                       size="small"
-                      onClick={handleOpenReport}
-                      fullWidth
+                      sx={{ flex: 1, minWidth: '100px' }}
                     />
 
-                    {onBlockUser && (
-                      <ButtonBlockUser
-                        userId={resolvedUserId}
-                        userName={user.name}
-                        isBlocked={isBlocked}
-                        onBlockUser={onBlockUser}
-                        variant="soft"
-                        size="small"
-                      />
-                    )}
+                    <ButtonBlockUser
+                      targetUserId={resolvedUserId}
+                      userName={user.name}
+                      isBlocked={isBlocked}
+                      variant="soft"
+                      size="small"
+                      sx={{ flex: 1, minWidth: '100px' }}
+                    />
                   </Stack>
                 )}
               </Box>

@@ -2,16 +2,14 @@
 
 import { useRoomContext } from '@livekit/components-react';
 import {
-  Block as BlockIcon,
+  Chat as ChatIcon,
   Gavel as GavelIcon,
   Headset as HeadsetIcon,
   HeadsetOff as HeadsetOffIcon,
   PersonRemoveTwoTone as KickIcon,
   MicOff as MicOffIcon,
-  Report as ReportIcon,
-  Share as ShareIcon,
   StarRounded as StarIcon,
-  VolumeUp as VolumeUpIcon,
+  VolumeUp as VolumeUpIcon
 } from '@mui/icons-material';
 import {
   alpha,
@@ -28,6 +26,8 @@ import {
 import React, { useState } from 'react';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
+import ButtonBlockUser from '@/components/buttons/button-block-user';
+import ButtonReportUser from '@/components/buttons/button-report-user';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import { UserStats } from '@/types/type-social';
@@ -51,8 +51,6 @@ interface RoomUserControllerRemoteProps {
 
 export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> = ({
   user,
-  onBlock,
-  onReport,
   onVolumeChange,
   onToggleDeafen,
   onShare,
@@ -69,12 +67,13 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const { room: roomJoined, updateParticipants } = useRoomTools();
 
   const userId = String(user.userId);
+  const isBlocked = checkIfBlocked(userId);
   const isHost = Boolean(
     currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId)
   );
 
-  const [isBlocked, setIsBlocked] = useState(() => checkIfBlocked(userId));
   const [volume, setVolume] = useState<number>(() => remoteVolumeMap.get(userId) ?? 50);
+
 
   const sectionCardSx = {
     p: 2,
@@ -308,45 +307,33 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
       {/* Follow / Block */}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mb: 1.25 }}>
-        <ButtonRelationshipToggle
+        {<ButtonRelationshipToggle
           targetUser={{ id: userId, name: user.name }}
           isFollow={Boolean(checkIfFollowing(userId))}
+          isBlocked={isBlocked}
           size="small"
           variant="soft"
           onSuccessFollow={(data: UserStats[]) => updateParticipants(data)}
           onSuccessUnfollow={(data: UserStats[]) => updateParticipants(data)}
           fullWidth
+        />}
+        <ButtonBlockUser
+          targetUserId={user.userId}
+          userName={user.name}
+          isBlocked={isBlocked}
+          variant="soft"
+          size="small"
         />
-        <Button
-          fullWidth
-          variant="outlined"
-          color={isBlocked ? 'error' : 'warning'}
-          startIcon={<BlockIcon />}
-          onClick={() => {
-            setIsBlocked(!isBlocked);
-            onBlock?.(userId);
-          }}
-          sx={{ borderRadius: 1.25, fontWeight: 600, textTransform: 'none' }}
-        >
-          {isBlocked ? 'Unblock' : 'Block'}
-        </Button>
-      </Box>
-
-      {/* Report / Share */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<ReportIcon />}
-          onClick={() => onReport?.(userId)}
-          sx={{ borderRadius: 1.25, fontWeight: 600, textTransform: 'none' }}
-        >
-          Report
-        </Button>
+        <ButtonReportUser
+          variant="soft"
+          targetUserId={userId}
+          size="small"
+          sx={{ flex: 1, minWidth: '100px' }}
+        />
         <Button
           variant="outlined"
           color="inherit"
-          startIcon={<ShareIcon />}
+          startIcon={<ChatIcon />}
           onClick={() => onShare?.(userId)}
           sx={{
             borderRadius: 1.25,
@@ -355,9 +342,12 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
             borderColor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
           }}
         >
-          Share
+          PM
         </Button>
       </Box>
+
+
+
     </>
   );
 };

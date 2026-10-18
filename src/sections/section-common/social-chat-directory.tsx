@@ -5,7 +5,6 @@ import {
   MessageCircle,
   Mic,
   PhoneCall,
-  UserMinus,
   X
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
@@ -15,15 +14,15 @@ import {
   Avatar,
   Badge,
   Box,
-  Button,
   CircularProgress,
   IconButton,
   Stack,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
+import { ButtonUnfollowIcon } from '@/components/buttons';
 import { useSocialChat } from '@/core/contexts/context-social-chat';
 import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
@@ -187,7 +186,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
           flexShrink: 0,
         }}
       >
-        {(['friends', 'followers', 'following'] as SocialChatTabKey[]).map((key) => {
+        {(['friends', 'following'] as SocialChatTabKey[]).map((key) => {
           const count = rawDataByTab[key]?.length || 0;
           const active = tab === key;
           const showUnreadBadge = key === 'friends' && unreadFriendsCount > 0;
@@ -419,26 +418,23 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       </Tooltip>
                     )}
 
+
                     {tab === 'following' && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        disabled={loadingUnfollowId === person.userId}
-                        startIcon={<UserMinus size={12} />}
-                        onClick={(e) => handleUnfollowClick(e, item)}
+                      <ButtonUnfollowIcon
+                        targetUserId={item.accountDetails.userId}
+                        onSuccess={(e) => handleUnfollowClick(e, item)}
                         sx={{
+                          height: 30,
                           borderRadius: 1,
-                          px: 1,
-                          py: 0.35,
+                          px: 1.25,
                           fontSize: 11,
                           fontWeight: 700,
                           textTransform: 'none',
                           minWidth: 'auto',
-                        }}
-                      >
-                        Unfollow
-                      </Button>
+                          border: '1px solid',
+                          borderColor: alpha(theme.palette.error.main, 0.25),
+                          '&:hover': { bgcolor: alpha(theme.palette.error.main, isDark ? 0.14 : 0.08) },
+                        }} />
                     )}
 
                     {canChat ? (
@@ -460,7 +456,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         }}
                         title={`Message ${person.name}`}
                       >
-                        <MessageCircle size={15} />
+                        <MessageCircle size={15} /> {/* Kept icon small */}
                       </IconButton>
                     ) : (
                       tab !== 'following' && (
@@ -469,7 +465,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                             sx={{
                               color: isDark ? 'text.disabled' : '#94a3b8',
                               display: 'flex',
-                              p: 0.5,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 30, // Matches button sizes
+                              height: 30, // Matches button sizes
                             }}
                           >
                             <Lock size={14} />
