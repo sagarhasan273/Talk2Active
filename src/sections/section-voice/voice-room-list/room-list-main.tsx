@@ -457,7 +457,6 @@ export const RoomlistMain = memo(function RoomlistMain({
             display: 'grid',
             gridTemplateColumns: `repeat(${columns}, 1fr)`,
             gap: `${GRID_GAP}px`,
-            mt: 1.5,
           }}
         >
           {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}

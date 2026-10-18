@@ -56,23 +56,39 @@ export function LiveKitProvider({
     setToken(newToken);
     if (customServerUrl) setServerUrl(customServerUrl);
 
-    await room.connect(targetUrl, newToken);
-
     try {
-      await room.localParticipant.setMicrophoneEnabled(true, {
-        echoCancellation: true,      // Standard Acoustic Echo Cancellation
-        noiseSuppression: true,      // Standard WebRTC noise suppression
-        autoGainControl: true,       // Normalizes volume spikes
-      });
-    } catch (err) {
-      console.warn('Could not auto-enable microphone on join:', err);
+      // 1. Attempt the connection
+      await room.connect(targetUrl, newToken);
+
+      // 2. Try enabling the microphone once connected
+      try {
+        await room.localParticipant.setMicrophoneEnabled(true, {
+          echoCancellation: true,      // Standard Acoustic Echo Cancellation
+          noiseSuppression: true,      // Standard WebRTC noise suppression
+          autoGainControl: true,       // Normalizes volume spikes
+        });
+      } catch (err) {
+        console.warn('Could not auto-enable microphone on join:', err);
+      }
+    } catch (error) {
+      // 🛑 CLEANUP ON FAILURE: If joining fails, reset everything.
+      console.error('LiveKit connection failed:', error);
+
+      setToken(null);
+      setConnectionState(ConnectionState.Disconnected);
+
+      // Force internal client cleanup and suppress any secondary disconnect errors
+      await room.disconnect().catch(() => { });
+
+      // Re-throw the error so the UI (buttons/modals) can handle it and show a toast
+      throw error;
     }
   };
 
   const disconnectRoom = async () => {
     try {
       if (room.localParticipant) {
-        await room.localParticipant.setMicrophoneEnabled(false);
+        await room.localParticipant.setMicrophoneEnabled(false).catch(() => { });
       }
       await room.disconnect();
     } finally {

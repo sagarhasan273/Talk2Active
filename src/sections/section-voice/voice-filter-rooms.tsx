@@ -150,6 +150,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
       sx={{
         gridColumn: '1 / -1',
         p: { xs: 1.25, sm: 1.5 },
+        mb: 1,
         bgcolor: 'background.default',
         borderRadius: 1,
         border: '1px solid',

@@ -2,7 +2,6 @@
 
 import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { useSocket } from '@/core/contexts/context-socket';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import type { RoomType } from '@/types/type-room';
@@ -31,7 +30,6 @@ export const VoiceRoomActionProvider: React.FC<{
   onOpenAuth: () => void;
 }> = ({ children, onOpenAuth }) => {
   const { user, isAuthenticated } = useCredentials();
-  const { socket } = useSocket();
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
   const { room, setRoom, setRoomLoading, resetRoom } = useRoomTools();
   const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
@@ -82,6 +80,7 @@ export const VoiceRoomActionProvider: React.FC<{
       }
     } catch (err) {
       console.warn('LiveKit disconnect warning:', err);
+      window.location.reload();
     } finally {
       resetRoom();
       playUserLeave();
@@ -110,12 +109,26 @@ export const VoiceRoomActionProvider: React.FC<{
       if (response.status && response.data.token) {
         setRoom(response.data.room);
         setLivekitToken(response.data.token);
+
         await connectToRoom(response.data.token);
         playUserJoin();
       }
     } catch (error) {
-      setSelectedTab('room-list');
       toastErrorResponse(error);
+
+      try {
+        await leaveRoomMutation({
+          roomId: selectedRoom.roomId,
+          userId: user.userId,
+        });
+      } catch (cleanupError) {
+        console.error('Failed to cleanup DB after WebRTC failure:', cleanupError);
+      }
+
+      // 4. Reload page to wipe broken state
+      setTimeout(() => {
+        window.location.reload();
+      }, 3500);
     } finally {
       setIsJoiningState(false);
       setRoomLoading(false);
@@ -125,6 +138,7 @@ export const VoiceRoomActionProvider: React.FC<{
     user,
     isInRoom,
     joinRoomMutation,
+    leaveRoomMutation,
     setRoom,
     setRoomLoading,
     connectToRoom,
@@ -167,9 +181,7 @@ export const VoiceRoomActionProvider: React.FC<{
   );
 
   return (
-    <VoiceRoomActionContext.Provider value={value}>
-      {children}
-    </VoiceRoomActionContext.Provider>
+    <VoiceRoomActionContext.Provider value={value}>{children}</VoiceRoomActionContext.Provider>
   );
 };
 

@@ -27,7 +27,7 @@ export const DefaultHeader = ({
         gridColumn: '1 / -1',
         position: 'relative',
         overflow: 'hidden',
-        mt: 1,
+        my: 1,
         p: { xs: 2.25, sm: 3 },
         borderRadius: 1,
         bgcolor: 'background.default',
