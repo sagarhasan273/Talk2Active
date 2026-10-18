@@ -21,7 +21,7 @@ import {
 import { Label, ParticipantLevel } from '@/components/label';
 import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
-import VoiceRoomStage, { computeStageLayout } from './room-list-card-stage';
+import VoiceRoomCardStage, { computeStageLayout } from './room-list-card-stage';
 
 type VoiceRoomCardProps = {
   roomData: RoomType;
@@ -277,7 +277,7 @@ const VoiceRoomCardComponent = ({
           </Stack>
         ) : (
           layout && (
-            <VoiceRoomStage
+            <VoiceRoomCardStage
               speakers={allUsers}
               availableSpace={availableSpace}
               layout={layout}

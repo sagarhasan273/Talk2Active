@@ -36,7 +36,7 @@ export const accountSlice = createSlice({
   reducers: {
     setAccount: (state, action: PayloadAction<UserState['user']>) => {
       state.user = action.payload;
-      state.isAuthenticated = action.payload && action.payload.userId ? true : false;
+      state.isAuthenticated = Boolean(action.payload && action.payload.userId);
     },
 
     setFriends: (state, action: PayloadAction<UserState['friends']>) => {

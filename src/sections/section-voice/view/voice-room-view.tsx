@@ -3,6 +3,7 @@
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { RoomChatProvider } from '@/core/contexts/context-room-chat';
 import { VoiceRoomActionProvider, useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import RoomLoadingFallback from '@/sections/section-common/room-loading-fallback';
 import { useCallback, useMemo } from 'react';
 import { useCredentials } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
@@ -85,7 +86,7 @@ function VoiceMainContent() {
             onSettingsClick={editRoomBoolean.onTrue}
             onBack={handleBackToRooms}
           />
-        ) : null}
+        ) : <RoomLoadingFallback />}
       </VoiceTabPanel>
     </RoomChatProvider>
   );

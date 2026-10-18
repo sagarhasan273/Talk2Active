@@ -3,7 +3,7 @@
 import type { SxProps, Theme } from '@mui/material';
 
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import {
   alpha,
@@ -18,11 +18,10 @@ import {
   useTheme,
 } from '@mui/material';
 
-import { UserStats } from '@/types/type-social';
 import { usePopover } from 'src/components/custom-popover';
 import { Iconify } from 'src/components/iconify';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
-import { selectAccount } from 'src/core/slices';
+import { selectAccount, updateParticipants } from 'src/core/slices'; // Ensure updateParticipants is exported from here
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 
 // ----------------------------------------------------------------------
@@ -43,8 +42,6 @@ export type ButtonRelationshipToggleProps = {
   sx?: SxProps<Theme>;
   followSx?: SxProps<Theme>;
   unfollowSx?: SxProps<Theme>;
-  onSuccessFollow?: (data: UserStats[]) => void;
-  onSuccessUnfollow?: (data: UserStats[]) => void;
 };
 
 export function ButtonRelationshipToggle({
@@ -58,10 +55,9 @@ export function ButtonRelationshipToggle({
   sx,
   followSx,
   unfollowSx,
-  onSuccessFollow,
-  onSuccessUnfollow
 }: ButtonRelationshipToggleProps) {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const user = useSelector(selectAccount);
   const popover = usePopover();
 
@@ -87,8 +83,9 @@ export function ButtonRelationshipToggle({
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();
-      if (response.status) {
-        onSuccessFollow?.(response.data);
+
+      if (response.status && response.data) {
+        dispatch(updateParticipants(response.data));
       }
     } catch {
       setFollowing(false);
@@ -106,8 +103,9 @@ export function ButtonRelationshipToggle({
         recipient: targetUser.id,
         type: RelationshipTypeEnum.FOLLOW,
       }).unwrap();
-      if (response.status) {
-        onSuccessUnfollow?.(response.data);
+
+      if (response.status && response.data) {
+        dispatch(updateParticipants(response.data));
       }
     } catch {
       setFollowing(true);

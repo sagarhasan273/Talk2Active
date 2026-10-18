@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 
 import { useReportUserMutation } from '@/core/apis/api-social'; // Adjust path
 import { useCredentials } from '@/core/slices';
+import { toast } from 'sonner';
 
 export type ReportButtonVariant = 'icon' | 'soft' | 'outlined' | 'button';
 
@@ -62,8 +63,11 @@ export const ButtonReportUser = ({
   const handleSubmit = async () => {
     if (!reason.trim() || !currentUserId || !targetUserId) return;
     try {
-      await reportUser({ requester: currentUserId, recipient: targetUserId, reason }).unwrap();
-      onSuccess?.();
+      const response = await reportUser({ requesterId: currentUserId, targetUserId, reason }).unwrap();
+      if (response?.status) {
+        onSuccess?.();
+        toast.success(response?.message)
+      };
       handleClose();
     } catch (error) {
       console.error('Failed to report user:', error);
@@ -78,7 +82,7 @@ export const ButtonReportUser = ({
       maxWidth="xs"
       onClick={(e) => e.stopPropagation()}
       sx={{
-        zIndex: 3200 // Explicitly higher than drawers and other UI elements
+        zIndex: 3200
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>Report User</DialogTitle>

@@ -30,7 +30,6 @@ import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
-import { UserStats } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 
 const remoteVolumeMap = new Map<string, number>();
@@ -313,8 +312,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           isBlocked={isBlocked}
           size="small"
           variant="soft"
-          onSuccessFollow={(data: UserStats[]) => updateParticipants(data)}
-          onSuccessUnfollow={(data: UserStats[]) => updateParticipants(data)}
           fullWidth
         />}
         <ButtonBlockUser

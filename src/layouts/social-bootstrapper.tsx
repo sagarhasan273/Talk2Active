@@ -1,8 +1,6 @@
 import {
-  useGetBlockedUsersQuery,
+  useGetAllRelationsQuery,
   useGetFollowersQuery,
-  useGetFollowingQuery,
-  useGetFriendsQuery,
 } from '@/core/apis';
 import {
   selectAccount,
@@ -20,19 +18,29 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
 
   const currentUserId = user?.userId;
 
-  const { data: friendsData } = useGetFriendsQuery(currentUserId, { skip: !currentUserId });
+  // 1. Fetch data: Combined endpoint + Followers
+  const { data: allRelationsData } = useGetAllRelationsQuery(currentUserId, { skip: !currentUserId });
   const { data: followersData } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
-  const { data: followingData } = useGetFollowingQuery(currentUserId, { skip: !currentUserId });
-  const { data: blockedData } = useGetBlockedUsersQuery(currentUserId, { skip: !currentUserId });
 
-  // 2. Sync to Redux slice safely
+  // 2. Sync consolidated relations (Friends, Following, Blocked)
   useEffect(() => {
-    if (friendsData !== undefined) {
-      const items = Array.isArray(friendsData) ? friendsData : friendsData?.data ?? [];
-      dispatch(setFriends(items));
-    }
-  }, [friendsData, dispatch]);
+    if (allRelationsData?.data) {
+      const { friends = [], followings = [], blockedUsers = [] } = allRelationsData.data;
 
+      // Sync Friends & Following
+      dispatch(setFriends(friends));
+      dispatch(setFollowing(followings));
+
+      // Extract blocked IDs and sync
+      const blockedIds = blockedUsers
+        .map((item: any) => item?.accountDetails?.userId?.toString())
+        .filter(Boolean);
+
+      dispatch(setBlockedUserIds(blockedIds));
+    }
+  }, [allRelationsData, dispatch]);
+
+  // 3. Sync Followers separately
   useEffect(() => {
     if (followersData !== undefined) {
       const items = Array.isArray(followersData) ? followersData : followersData?.data ?? [];
@@ -40,26 +48,7 @@ export function SocialBootstrapper({ children }: { children: React.ReactNode }) 
     }
   }, [followersData, dispatch]);
 
-  useEffect(() => {
-    if (followingData !== undefined) {
-      const items = Array.isArray(followingData) ? followingData : followingData?.data ?? [];
-      dispatch(setFollowing(items));
-    }
-  }, [followingData, dispatch]);
-
-  useEffect(() => {
-    if (blockedData !== undefined) {
-      const items = Array.isArray(blockedData) ? blockedData : blockedData?.data ?? [];
-
-      const blockedIds = items
-        .map((item: any) => item?.accountDetails?.userId?.toString())
-        .filter(Boolean);
-
-      dispatch(setBlockedUserIds(blockedIds));
-    }
-  }, [blockedData, dispatch]);
-
-  // 3. Reset lists if user logs out (currentUserId becomes falsy)
+  // 4. Reset lists if user logs out (currentUserId becomes falsy)
   useEffect(() => {
     if (!currentUserId) {
       dispatch(setFriends([]));

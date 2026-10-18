@@ -82,7 +82,7 @@ export const socialApi = createApi({
       invalidatesTags: ['social-recall'],
     }),
 
-    reportUser: builder.mutation<any, { requester: string; recipient: string; reason: string }>({
+    reportUser: builder.mutation<any, { requesterId: string; targetUserId: string; reason: string }>({
       query: (data) => ({
         url: '/social/report',
         method: 'POST',

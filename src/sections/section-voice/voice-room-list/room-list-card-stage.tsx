@@ -109,11 +109,10 @@ type PodItem =
   | { type: 'empty'; key: string }
   | { type: 'overflow'; count: number; key: string };
 
-export default function VoiceRoomStage({
+export default function VoiceRoomCardStage({
   speakers,
   availableSpace,
   layout,
-  isFull,
   isDark,
   onAvatarClick,
   onJoinClick,

@@ -158,27 +158,46 @@ export const roomSlice = createSlice({
 
       const updatesMap = new Map<string, Partial<RoomParticipantType>>();
       for (const update of action.payload) {
-        if (update?.userId) {
-          updatesMap.set(String(update.userId), update);
+        // Accept either userId or id from the payload
+        const targetId = update?.userId || (update as any)?.id;
+        if (targetId) {
+          updatesMap.set(String(targetId), update);
         }
       }
 
       if (updatesMap.size === 0) return;
 
       const applyUpdates = (participantsList: RoomParticipantType[]) => {
-        participantsList.forEach((participant) => {
-          const update = updatesMap.get(String(participant.userId));
-          if (update) Object.assign(participant, update);
+        participantsList.forEach((participant: any) => {
+          // Check both participant.userId and participant.id to match correctly
+          const participantId = participant.userId || participant.id;
+          if (!participantId) return;
+
+          const update = updatesMap.get(String(participantId));
+          if (update) {
+            Object.assign(participant, update);
+          }
         });
       };
 
-      // Apply to all active arrays
-      applyUpdates(state.participants);
-      if (state.room?.participants) applyUpdates(state.room.participants);
+      // Apply to main participants list
+      if (Array.isArray(state.participants)) {
+        applyUpdates(state.participants);
+      }
 
-      state.rooms.forEach((room) => {
-        if (room.participants) applyUpdates(room.participants);
-      });
+      // Apply to active room participants list
+      if (state.room?.participants && Array.isArray(state.room.participants)) {
+        applyUpdates(state.room.participants);
+      }
+
+      // Apply to all rooms in the rooms array
+      if (Array.isArray(state.rooms)) {
+        state.rooms.forEach((room) => {
+          if (room?.participants && Array.isArray(room.participants)) {
+            applyUpdates(room.participants);
+          }
+        });
+      }
     },
 
     resetRoom: (state) => {

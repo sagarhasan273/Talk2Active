@@ -65,7 +65,6 @@ export const UserDisplayer = ({
   user,
   currentUserId,
   onClose,
-  onBlockUser,
   onReportUser,
 }: UserDisplayerProps) => {
   const theme = useTheme();
@@ -113,11 +112,6 @@ export const UserDisplayer = ({
     },
     [user.genUserId, user.username, resolvedUserId]
   );
-
-  const handleOpenReport = () => {
-    onClose();
-    setReportOpen(true);
-  };
 
   return (
     <>
@@ -416,13 +410,13 @@ export const UserDisplayer = ({
                     useFlexGap
                     sx={{ width: '100%', mt: 1 }}
                   >
-                    {!isBlocked && resolvedUserId && (
+                    {resolvedUserId && (
                       <ButtonRelationshipToggle
                         targetUser={{ id: resolvedUserId, name: user.name }}
                         isFollow={checkIfFollowing(resolvedUserId)}
+                        isBlocked={isBlocked}
                         size="small"
                         variant="soft"
-                        // Removed fullWidth, added flex
                         sx={{ flex: 1, minWidth: '100px' }}
                       />
                     )}
