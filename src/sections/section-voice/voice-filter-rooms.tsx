@@ -155,9 +155,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         borderRadius: 1,
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-        boxShadow: isDark
-          ? '0 4px 20px -2px rgba(0, 0, 0, 0.35)'
-          : '0 2px 10px -2px rgba(15, 23, 42, 0.04)',
       }}
     >
       <Grid container spacing={1.25} alignItems="center">
