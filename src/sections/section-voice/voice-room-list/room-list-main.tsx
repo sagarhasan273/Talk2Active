@@ -30,6 +30,8 @@ import { useLiveKitSession } from '@/core/contexts/context-livekit';
 import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import { useCredentials, useRoomTools } from '@/core/slices';
 
+import { LoginPromptDialog } from '@/components/custom-dialog';
+import { useBoolean } from '@/hooks/use-boolean';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import VoiceButtonSocialChat from '../voice-button-social-chat';
@@ -255,11 +257,13 @@ export const RoomlistMain = memo(function RoomlistMain({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { user } = useCredentials();
+  const { user, isAuthenticated } = useCredentials();
   const currentUserId = user?.userId;
 
   const { rooms, getRoomById } = useRoomTools();
   const { handleSelectRoom } = useVoiceRoomAction();
+
+  const logOpen = useBoolean();
 
   const modalsRef = useRef<RoomListModalsRef>(null);
   const fastScrollIndicatorRef = useRef<FastScrollIndicatorRef>(null);
@@ -269,28 +273,6 @@ export const RoomlistMain = memo(function RoomlistMain({
   const onCreateRoomRef = useRef(onCreateRoom);
   onCreateRoomRef.current = onCreateRoom;
 
-  const stableOnSelectRoom = useCallback((room: RoomType) => {
-    onSelectRoomRef.current(room);
-  }, []);
-  const stableOnCreateRoom = useCallback(() => {
-    onCreateRoomRef.current();
-  }, []);
-
-  const handleAvatarClick = useCallback((rawUser: any) => {
-    modalsRef.current?.openProfile(rawUser);
-  }, []);
-
-  const handleOverflowClick = useCallback((room: RoomType) => {
-    modalsRef.current?.openRoomDialog(room);
-  }, []);
-
-  const handleJoinFromSocialChat = useCallback(
-    (roomId: string) => {
-      const roomObj = getRoomById(roomId);
-      if (roomObj) handleSelectRoom(roomObj);
-    },
-    [getRoomById, handleSelectRoom]
-  );
 
   const [filterRooms, setFilterRooms] = useState<FilterState>({
     searchQuery: '',
@@ -311,6 +293,48 @@ export const RoomlistMain = memo(function RoomlistMain({
   // ── Fast Scroll Velocity Detector ──
   const lastScrollPosRef = useRef(0);
   const lastScrollTimeRef = useRef(performance.now());
+
+  const stableOnSelectRoom = useCallback((room: RoomType) => {
+    if (!isAuthenticated) {
+      logOpen.onTrue();
+      return;
+    }
+    onSelectRoomRef.current(room);
+  }, []);
+  const stableOnCreateRoom = useCallback(() => {
+    if (!isAuthenticated) {
+      logOpen.onTrue();
+      return;
+    }
+    onCreateRoomRef.current();
+  }, []);
+
+  const handleAvatarClick = useCallback((rawUser: any) => {
+    if (!isAuthenticated) {
+      logOpen.onTrue();
+      return;
+    }
+    modalsRef.current?.openProfile(rawUser);
+  }, []);
+
+  const handleOverflowClick = useCallback((room: RoomType) => {
+    if (!isAuthenticated) {
+      logOpen.onTrue();
+      return;
+    }
+    modalsRef.current?.openRoomDialog(room);
+  }, []);
+
+  const handleJoinFromSocialChat = useCallback(
+    (roomId: string) => {
+      if (!isAuthenticated) {
+        return;
+      }
+      const roomObj = getRoomById(roomId);
+      if (roomObj) handleSelectRoom(roomObj);
+    },
+    [getRoomById, handleSelectRoom]
+  );
 
   const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     // SECURITY: Browsers sometimes fire a fake "scroll to 0" event when a tab is hidden.
@@ -534,7 +558,10 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollTop={handleScrollToTop}
         onScrollBottom={handleScrollToBottom}
       />
+
       <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />
+
+      <LoginPromptDialog openBoolean={logOpen} />
     </>
   );
 });

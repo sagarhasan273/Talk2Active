@@ -1,6 +1,5 @@
 // src/sections/section-voice/voice-room-card/voice-room-scroll-buttons.tsx
 
-
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import { Box, IconButton, alpha, useTheme } from '@mui/material';
@@ -25,18 +24,17 @@ export const VoiceRoomScrollButtons = ({
     <Box
       sx={{
         position: 'fixed',
-        bottom: { xs: 68, sm: 68 },
+        bottom: { xs: 68, md: 76 },
         right: { xs: 16, sm: 20 },
         zIndex: theme.zIndex.appBar + 9,
         display: 'flex',
         flexDirection: 'column',
-        gap: 0.75,
-        pointerEvents: 'none', // Lets clicks pass through the invisible container box
+        gap: { xs: 0.75, md: 1 },
+        pointerEvents: 'none',
       }}
     >
       {showUp && (
         <IconButton
-          size="medium"
           onClick={onScrollTop}
           sx={{
             pointerEvents: 'auto',
@@ -49,15 +47,18 @@ export const VoiceRoomScrollButtons = ({
               bgcolor: isDark ? '#252b3b' : '#f8fafc',
               transform: 'translateY(-2px)'
             },
+            width: { xs: 40, md: 48 },
+            height: { xs: 40, md: 48 },
           }}
         >
-          <KeyboardArrowUpRoundedIcon fontSize="medium" />
+          <KeyboardArrowUpRoundedIcon
+            sx={{ fontSize: { xs: 24, md: 28 } }}
+          />
         </IconButton>
       )}
 
       {showDown && (
         <IconButton
-          size="medium"
           onClick={onScrollBottom}
           sx={{
             pointerEvents: 'auto',
@@ -70,9 +71,13 @@ export const VoiceRoomScrollButtons = ({
               bgcolor: isDark ? '#252b3b' : '#f8fafc',
               transform: 'translateY(-2px)'
             },
+            width: { xs: 40, md: 48 },
+            height: { xs: 40, md: 48 },
           }}
         >
-          <KeyboardArrowDownRoundedIcon fontSize="medium" />
+          <KeyboardArrowDownRoundedIcon
+            sx={{ fontSize: { xs: 24, md: 28 } }}
+          />
         </IconButton>
       )}
     </Box>

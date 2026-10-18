@@ -34,7 +34,7 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { user, followers, following, friends } = useCredentials();
+  const { user, followers, following, friends, isAuthenticated } = useCredentials();
 
   // Pull live unread metrics from SocialChatContext
   const { unreadFriendsCount, hasUnreadMessages } = useSocialChat();
@@ -275,12 +275,16 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
           badgeContent={unreadFriendsCount}
           invisible={!hasUnreadMessages}
           max={99}
-          overlap="circular" // 1. Changed to 'circular' to match the round button
+          overlap="circular"
         >
           <IconButton
-            size="medium"
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={() => {
+              setOpen((prev) => !prev);
+            }}
+            disabled={!isAuthenticated}
             sx={{
+              width: { xs: 40, md: 48 },
+              height: { xs: 40, md: 48 },
               pointerEvents: 'auto',
               bgcolor: isDark ? alpha('#181c26', 0.9) : '#ffffff',
               border: '1px solid',
@@ -294,8 +298,11 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
               ...sx,
             }}
           >
-            {/* 4. Changed to a new chat/social icon */}
-            <ForumRoundedIcon fontSize="medium" />
+            <ForumRoundedIcon
+              sx={{
+                fontSize: { xs: 24, md: 28 }
+              }}
+            />
           </IconButton>
         </Badge>
       </Box>

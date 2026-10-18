@@ -37,7 +37,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
 
   const { isAuthenticated } = useCredentials();
 
-  const layoutQuery: Breakpoint = 'lg';
+  const layoutQuery: Breakpoint = 'sm';
 
   return (
     <LayoutSection

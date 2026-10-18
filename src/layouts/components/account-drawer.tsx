@@ -391,7 +391,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
         height: '100%',
         maxHeight: isMobile ? '100vh' : '82vh',
         overflow: 'hidden',
-        bgcolor: isDark ? '#181c26' : '#ffffff',
+        bgcolor: 'background.default',
       }}
     >
       <Scrollbar sx={{ flex: 1 }}>
@@ -405,7 +405,6 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           p: 1.5,
           borderTop: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
-          bgcolor: isDark ? '#181c26' : '#ffffff',
         }}
       >
         <SignOutButton onClose={handleClose} />
@@ -450,6 +449,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           slotProps={{
             paper: {
               sx: {
+                p: 0,
                 width: 320,
                 mt: 1.2,
                 borderRadius: 1,
@@ -457,8 +457,8 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                 boxShadow: isDark
-                  ? `0 6px 24px -2px ${alpha(theme.palette.common.white, 1)}`
-                  : `0 6px 20px -2px ${alpha(theme.palette.common.black, 1)}`,
+                  ? `0 6px 14px -2px ${alpha(theme.palette.common.white, 0.5)}`
+                  : `0 6px 14px -2px ${alpha(theme.palette.common.black, 1)}`,
               },
             },
           }}
