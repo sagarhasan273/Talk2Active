@@ -44,7 +44,6 @@ const CARD_HEIGHT = 296;
 const GRID_GAP = 12;
 const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 
-// Velocity threshold in pixels per millisecond
 const FAST_SCROLL_VELOCITY_THRESHOLD = 2.2;
 
 const sxCard = {
@@ -66,7 +65,7 @@ const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom: () => void })
   return <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />;
 });
 
-// ── 1. Isolated Fast-Scroll Pill (Zero parent/card re-renders when showing/hiding) ──
+// ── 1. Isolated Fast-Scroll Pill ──
 interface FastScrollIndicatorRef {
   trigger: (durationMs?: number) => void;
 }
@@ -130,7 +129,7 @@ const FastScrollIndicator = memo(
   })
 );
 
-// ── 2. Isolated Modal Host (Zero parent/card re-renders when opening popups) ──
+// ── 2. Isolated Modal Host ──
 interface RoomListModalsRef {
   openProfile: (rawUser: any) => void;
   openRoomDialog: (room: RoomType) => void;
@@ -144,7 +143,6 @@ const RoomListModalsHost = memo(
       onJoinRoom: (room: RoomType) => void;
     }
   >(({ currentUserId, onJoinRoom }, ref) => {
-    // Subscribing to checkIfFollowing/checkIfBlocked here keeps presence updates out of RoomlistMain
     const { checkIfFollowing, checkIfBlocked } = useCredentials();
 
     const [selectedProfile, setSelectedProfile] = useState<UserDisplayerProfile | null>(null);
@@ -306,12 +304,22 @@ export const RoomlistMain = memo(function RoomlistMain({
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const [gridMetrics, setGridMetrics] = useState({ columns: 1, cardWidth: 340, scrollMargin: 0 });
 
-  // ── Fast Scroll Velocity Detector (Zero React State Updates on RoomlistMain) ──
+  // ── Tab Switch Scroll Restoration State ──
+  const savedScrollTopRef = useRef(0);
+  const isVisibleRef = useRef(true);
+
+  // ── Fast Scroll Velocity Detector ──
   const lastScrollPosRef = useRef(0);
   const lastScrollTimeRef = useRef(performance.now());
 
   const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // SECURITY: Browsers sometimes fire a fake "scroll to 0" event when a tab is hidden.
+    // If the tab is hidden, ignore the event so we don't overwrite our saved scroll position!
+    if (!isVisibleRef.current) return;
+
     const currentTop = e.currentTarget.scrollTop;
+    savedScrollTopRef.current = currentTop; // Continuously save valid scroll positions
+
     const now = performance.now();
     const dt = now - lastScrollTimeRef.current;
 
@@ -335,7 +343,19 @@ export const RoomlistMain = memo(function RoomlistMain({
 
     const updateMeasurements = () => {
       const width = gridEl.clientWidth;
-      if (width === 0) return;
+
+      // If width is 0, the Tab is currently Hidden via `display: none`
+      if (width === 0) {
+        isVisibleRef.current = false;
+        return;
+      }
+
+      // If it WAS hidden and just became Visible, restore the scroll position instantly!
+      if (!isVisibleRef.current) {
+        scrollEl.scrollTop = savedScrollTopRef.current;
+        isVisibleRef.current = true;
+      }
+
       const cols = Math.max(1, Math.floor((width + GRID_GAP) / (340 + GRID_GAP)));
       const computedCardWidth = Math.floor((width - GRID_GAP * (cols - 1)) / cols);
       const nextMargin = gridEl.offsetTop;
@@ -351,7 +371,11 @@ export const RoomlistMain = memo(function RoomlistMain({
 
     updateMeasurements();
     const resizeObserver = new ResizeObserver(updateMeasurements);
+
+    // Observe BOTH the grid (for columns) and the scroll container (for Tab visibility changes)
     resizeObserver.observe(gridEl);
+    resizeObserver.observe(scrollEl);
+
     return () => resizeObserver.disconnect();
   }, []);
 
@@ -399,14 +423,21 @@ export const RoomlistMain = memo(function RoomlistMain({
       : 0;
   const visibleCards = allCards.slice(visibleSliceStart, visibleSliceEnd);
 
+  // Reset scroll to top when filters change
   useEffect(() => {
-    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+      savedScrollTopRef.current = 0; // Wipe the saved state so it stays at the top
+    }
   }, [filterRooms]);
 
   const handleScrollToTop = useCallback(() => {
     fastScrollIndicatorRef.current?.trigger(240);
     rowVirtualizer.scrollToIndex(0, { align: 'start' });
-    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+      savedScrollTopRef.current = 0;
+    }
   }, [rowVirtualizer]);
 
   const handleScrollToBottom = useCallback(() => {
