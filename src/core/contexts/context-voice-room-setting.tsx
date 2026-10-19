@@ -121,11 +121,11 @@ export const VoiceRoomSettingProvider: React.FC<{
       await disconnectRoom();
       setSelectedTab('room-list');
       setIsJoinGateOpen(false);
-      handleCleanup(); // Triggers Storage cleanup (messages, tokens, etc)
+      handleCleanup();
     } catch (err) {
       window.location.reload();
     } finally {
-      resetRoom(); // Triggers Redux cleanup
+      resetRoom();
       playUserLeave();
       setIsLeavingState(false);
     }
@@ -148,7 +148,7 @@ export const VoiceRoomSettingProvider: React.FC<{
 
       if (response.status && response.data.token) {
         setRoom(response.data.room);
-        setLivekitToken(response.data.token); // Store token in data layer
+        setLivekitToken(response.data.token);
         await connectToRoom(response.data.token);
         playUserJoin();
       }
@@ -157,6 +157,7 @@ export const VoiceRoomSettingProvider: React.FC<{
       try {
         await leaveRoomMutation({ roomId: selectedRoom.roomId, userId: user.userId });
       } catch (cleanupError) {
+        window.location.reload();
       } finally {
         setTimeout(() => window.location.reload(), 3500);
       }

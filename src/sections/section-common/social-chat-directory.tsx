@@ -1,12 +1,6 @@
 // src/sections/section-common/social-chat-directory.tsx
 
-import {
-  Lock,
-  MessageCircle,
-  Mic,
-  PhoneCall,
-  X
-} from 'lucide-react';
+import { Lock, MessageCircle, Mic, PhoneCall, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -19,11 +13,11 @@ import {
   Stack,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
 import { ButtonUnfollowIcon } from '@/components/buttons';
-import { useSocialChat } from '@/core/contexts/context-social-chat';
+import { useSocialSetting, useSocialStorage } from '@/core/contexts';
 import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
 import { fDateTime } from '@/utils/format-time';
 import { getInitials } from '@/utils/social-chat-helper';
@@ -50,22 +44,13 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const {
-    tab,
-    setTab,
-    openChat,
-    unreadCounts,
-    unreadFriendsCount,
-    onlineStatusMap,
-  } = useSocialChat();
+  const { unreadCounts, unreadFriendsCount, onlineStatusMap } = useSocialStorage();
+  const { tab, setTab, openChat } = useSocialSetting();
 
   const [unfollowedIds, setUnfollowedIds] = useState<Set<string>>(new Set());
   const [loadingUnfollowId, setLoadingUnfollowId] = useState<string | null>(null);
 
-  const friendIds = useMemo(
-    () => new Set(friends.map((f) => f.accountDetails.userId)),
-    [friends]
-  );
+  const friendIds = useMemo(() => new Set(friends.map((f) => f.accountDetails.userId)), [friends]);
 
   const visibleFollowing = useMemo(
     () => following.filter((item) => !unfollowedIds.has(item.accountDetails.userId)),
@@ -81,8 +66,12 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   const dataByTab = useMemo(() => {
     const list = rawDataByTab[tab] || [];
     return [...list].sort((a, b) => {
-      const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
-      const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+      const timeA = new Date(
+        a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0
+      ).getTime();
+      const timeB = new Date(
+        b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0
+      ).getTime();
       return timeB - timeA;
     });
   }, [rawDataByTab, tab]);
@@ -213,9 +202,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                   : 'transparent',
                 color: active ? 'primary.main' : isDark ? 'text.secondary' : '#64748b',
                 border: '1px solid',
-                borderColor: active
-                  ? alpha(theme.palette.primary.main, 0.3)
-                  : 'transparent',
+                borderColor: active ? alpha(theme.palette.primary.main, 0.3) : 'transparent',
                 transition: 'all 0.18s ease',
                 textTransform: 'capitalize',
               }}
@@ -282,7 +269,8 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
               const roomId = onlineStatusMap[person.userId] || false;
               const isInRoom = Boolean(roomId);
 
-              const latestText = item.latestMessage?.text || `Last seen: ${fDateTime(person.lastActive)}`;
+              const latestText =
+                item.latestMessage?.text || `Last seen: ${fDateTime(person.lastActive)}`;
 
               return (
                 <Box
@@ -345,9 +333,18 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           color: '#fff',
                           boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
                           '@keyframes voicePulse': {
-                            '0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.7)' },
-                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 6px rgba(16, 185, 129, 0)' },
-                            '100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0)' },
+                            '0%': {
+                              transform: 'scale(0.95)',
+                              boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.7)',
+                            },
+                            '70%': {
+                              transform: 'scale(1)',
+                              boxShadow: '0 0 0 6px rgba(16, 185, 129, 0)',
+                            },
+                            '100%': {
+                              transform: 'scale(0.95)',
+                              boxShadow: '0 0 0 0 rgba(16, 185, 129, 0)',
+                            },
                           },
                           animation: 'voicePulse 2s infinite ease-in-out',
                         }}
@@ -374,21 +371,28 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       variant="caption"
                       sx={{
                         fontSize: 11,
-                        color: isInRoom && tab !== 'friends'
-                          ? 'success.main'
-                          : unreadCount > 0
-                            ? isDark ? 'text.primary' : '#0f172a'
-                            : isDark ? 'text.secondary' : '#64748b',
+                        color:
+                          isInRoom && tab !== 'friends'
+                            ? 'success.main'
+                            : unreadCount > 0
+                              ? isDark
+                                ? 'text.primary'
+                                : '#0f172a'
+                              : isDark
+                                ? 'text.secondary'
+                                : '#64748b',
                         fontWeight: isInRoom || unreadCount > 0 ? 700 : 500,
                         mt: 0.2,
                       }}
                       noWrap
                     >
-                      {tab === 'friends' ? unreadCount > 0
-                        ? `${unreadCount} unread messages`
-                        : latestText : isInRoom
-                        ? '🎙️ In a voice room'
-                        : `Last seen: ${fDateTime(person.lastActive)}`}
+                      {tab === 'friends'
+                        ? unreadCount > 0
+                          ? `${unreadCount} unread messages`
+                          : latestText
+                        : isInRoom
+                          ? '🎙️ In a voice room'
+                          : `Last seen: ${fDateTime(person.lastActive)}`}
                     </Typography>
                   </Box>
 
@@ -400,8 +404,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           size="small"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (roomId)
-                              onJoinRoom?.(roomId);
+                            if (roomId) onJoinRoom?.(roomId);
                           }}
                           sx={{
                             color: '#fff',
@@ -418,7 +421,6 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                       </Tooltip>
                     )}
 
-
                     {tab === 'following' && (
                       <ButtonUnfollowIcon
                         targetUserId={item.accountDetails.userId}
@@ -433,8 +435,11 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           minWidth: 'auto',
                           border: '1px solid',
                           borderColor: alpha(theme.palette.error.main, 0.25),
-                          '&:hover': { bgcolor: alpha(theme.palette.error.main, isDark ? 0.14 : 0.08) },
-                        }} />
+                          '&:hover': {
+                            bgcolor: alpha(theme.palette.error.main, isDark ? 0.14 : 0.08),
+                          },
+                        }}
+                      />
                     )}
 
                     {canChat ? (
@@ -452,7 +457,9 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                           height: 30,
                           border: '1px solid',
                           borderColor: alpha(theme.palette.primary.main, 0.25),
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08) },
+                          '&:hover': {
+                            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
+                          },
                         }}
                         title={`Message ${person.name}`}
                       >
@@ -495,7 +502,9 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
             flexShrink: 0,
           }}
         >
-          <Typography sx={{ fontSize: 10.5, color: isDark ? 'text.secondary' : '#64748b', lineHeight: 1.4 }}>
+          <Typography
+            sx={{ fontSize: 10.5, color: isDark ? 'text.secondary' : '#64748b', lineHeight: 1.4 }}
+          >
             Direct chat is reserved for mutual friends. Follow each other back to connect.
           </Typography>
         </Box>

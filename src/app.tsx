@@ -18,8 +18,8 @@ import { Snackbar } from 'src/components/snackbar';
 import { AuthProvider } from 'src/auth/context/jwt';
 
 import { CONFIG } from './config-global';
+import { SocialSettingProvider, SocialStorageProvider } from './core/contexts';
 import { LiveKitProvider } from './core/contexts/context-livekit';
-import { SocialChatProvider } from './core/contexts/context-social-chat';
 import { SocketProvider } from './core/contexts/context-socket';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
@@ -37,16 +37,18 @@ export default function App() {
             <AuthProvider>
               <LiveKitProvider>
                 <SettingsProvider settings={defaultSettings}>
-                  <SocialChatProvider>
-                    <ThemeProvider>
-                      <MotionLazy>
-                        <Snackbar />
-                        <ProgressBar />
-                        <SettingsDrawer />
-                        <Router />
-                      </MotionLazy>
-                    </ThemeProvider>
-                  </SocialChatProvider>
+                  <SocialStorageProvider>
+                    <SocialSettingProvider>
+                      <ThemeProvider>
+                        <MotionLazy>
+                          <Snackbar />
+                          <ProgressBar />
+                          <SettingsDrawer />
+                          <Router />
+                        </MotionLazy>
+                      </ThemeProvider>
+                    </SocialSettingProvider>
+                  </SocialStorageProvider>
                 </SettingsProvider>
               </LiveKitProvider>
             </AuthProvider>

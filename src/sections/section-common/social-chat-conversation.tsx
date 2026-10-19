@@ -24,8 +24,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-
-import { useSocialChat } from '@/core/contexts/context-social-chat';
+import { useSocialSetting, useSocialStorage } from '@/core/contexts';
 import { getInitials, isOnline } from '@/utils/social-chat-helper';
 import { SocialMessageBubble } from './social-chat-message-bubble';
 
@@ -43,7 +42,6 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
 
   const {
     activeFriend,
-    closeActiveChat,
     messages,
     messageMap,
     fetchingHistory,
@@ -56,7 +54,8 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
     editMessage,
     reactMessage,
     onlineStatusMap,
-  } = useSocialChat();
+  } = useSocialStorage();
+  const { closeActiveChat } = useSocialSetting();
 
   const [draft, setDraft] = useState('');
 

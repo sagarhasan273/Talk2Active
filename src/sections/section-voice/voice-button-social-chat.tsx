@@ -14,7 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-import { useSocialChat } from '@/core/contexts/context-social-chat';
+import { useSocialStorage } from '@/core/contexts';
 import { useCredentials } from '@/core/slices';
 import { SocialChatMain } from '../section-common/social-chat-main';
 
@@ -38,7 +38,7 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
   const { user, followers, following, friends, isAuthenticated } = useCredentials();
 
   // Pull live unread metrics from SocialChatContext
-  const { unreadFriendsCount, hasUnreadMessages } = useSocialChat();
+  const { unreadFriendsCount, hasUnreadMessages } = useSocialStorage();
 
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';

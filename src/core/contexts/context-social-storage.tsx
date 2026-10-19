@@ -1,4 +1,4 @@
-// src/core/contexts/context-social-chat.tsx
+// src/core/contexts/context-social-storage.tsx
 
 import React, {
   createContext,
@@ -20,23 +20,12 @@ import {
   useUpdateMessageMutation,
 } from '@/core/apis';
 import { useSocket } from '@/core/contexts/context-socket';
-import type {
-  AllRelationsType,
-  SocialChatMessage,
-  SocialChatReaction,
-  SocialChatTabKey,
-} from '@/types/type-social';
+import type { AllRelationsType, SocialChatMessage, SocialChatReaction } from '@/types/type-social';
 import { updateLatestMessage, updateRelationPresence, useCredentials } from '../slices';
 
-interface SocialChatContextValue {
-  isChatPanelVisible: boolean;
-  setIsChatPanelVisible: React.Dispatch<React.SetStateAction<boolean>>;
-
-  tab: SocialChatTabKey;
-  setTab: React.Dispatch<React.SetStateAction<SocialChatTabKey>>;
+interface SocialStorageContextValue {
   activeFriend: AllRelationsType | null;
-  openChat: (friend: AllRelationsType) => void;
-  closeActiveChat: () => void;
+  setActiveFriend: React.Dispatch<React.SetStateAction<AllRelationsType | null>>;
 
   messages: SocialChatMessage[];
   messageMap: Record<string, SocialChatMessage>;
@@ -44,28 +33,29 @@ interface SocialChatContextValue {
   replyingTo: SocialChatMessage | null;
   setReplyingTo: React.Dispatch<React.SetStateAction<SocialChatMessage | null>>;
 
-  // Unread & Room Presence Metrics
   unreadCounts: Record<string, number>;
   unreadFriendsCount: number;
   totalUnreadMessages: number;
   hasUnreadMessages: boolean;
   activeChatUnreadCount: number;
-  onlineStatusMap: Record<string, string | null>; // { [userId]: isInRoom }
+  onlineStatusMap: Record<string, string | null>;
+
   isFriendUnread: (friendUserId: string) => boolean;
   getFriendUnreadCount: (friendUserId: string) => number;
-  setIsAtBottom: (atBottom: boolean) => void;
   markFriendAsRead: (friendUserId: string, forceApi?: boolean) => void;
   refetchUnread: () => void;
 
-  // Actions
+  setIsAtBottom: (atBottom: boolean) => void;
+  setPanelVisibleRef: (isVisible: boolean) => void; // Used to sync UI state to Socket listener
+
   sendMessage: (text: string) => Promise<void>;
   editMessage: (id: string, text: string) => void;
   reactMessage: (id: string, emoji: string) => void;
 }
 
-const SocialChatContext = createContext<SocialChatContextValue | undefined>(undefined);
+const SocialStorageContext = createContext<SocialStorageContextValue | undefined>(undefined);
 
-export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { socket } = useSocket();
   const { user, friends, following, followers } = useCredentials();
   const dispatch = useDispatch();
@@ -73,8 +63,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
 
-  const [isChatPanelVisible, setIsChatPanelVisible] = useState<boolean>(false);
-  const [tab, setTab] = useState<SocialChatTabKey>('friends');
   const [activeFriend, setActiveFriend] = useState<AllRelationsType | null>(null);
   const [messages, setMessages] = useState<SocialChatMessage[]>([]);
   const [replyingTo, setReplyingTo] = useState<SocialChatMessage | null>(null);
@@ -87,13 +75,11 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   unreadCountsRef.current = unreadCounts;
 
   const isAtBottomRef = useRef<boolean>(true);
-  const isPanelVisibleRef = useRef<boolean>(isChatPanelVisible);
-  isPanelVisibleRef.current = isChatPanelVisible;
+  const isPanelVisibleRef = useRef<boolean>(false);
   const readFriendIdsRef = useRef<Set<string>>(new Set());
 
   const friendId = activeFriend?.accountDetails?.userId || '';
 
-  // Gather all unique relation IDs for active room presence tracking
   const allRelationUserIds = useMemo(() => {
     const ids = new Set<string>();
     [...(friends || []), ...(following || []), ...(followers || [])].forEach((item) => {
@@ -103,7 +89,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return Array.from(ids);
   }, [friends, following, followers]);
 
-  // 1. Fetch initial unread summary from backend API
   const { data: unreadResponse, refetch: refetchUnread } = useGetUnreadMessagesQuery(undefined, {
     skip: !currentUserId,
     refetchOnMountOrArgChange: true,
@@ -112,33 +97,25 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     const serverMap = unreadResponse?.data?.unreadBySender;
     if (!serverMap) return;
-
     setUnreadCounts((prev) => {
-      const merged: Record<string, number> = { ...prev };
-
+      const merged = { ...prev };
       Object.entries(serverMap).forEach(([senderId, count]) => {
         if (!readFriendIdsRef.current.has(senderId) && (count as number) > 0) {
           merged[senderId] = Math.max(merged[senderId] || 0, count as number);
         }
       });
-
       unreadCountsRef.current = merged;
       return merged;
     });
   }, [unreadResponse]);
 
-  // Request initial active room status snapshot
-  // Request initial active room status snapshot ({ [userId]: roomId })
   useEffect(() => {
     if (!socket || allRelationUserIds.length === 0) return;
-
     socket.emit('check_online_users', allRelationUserIds, (activeMap: Record<string, string>) => {
       if (!activeMap || typeof activeMap !== 'object') return;
-
       setOnlineStatusMap((prev) => {
         const next = { ...prev };
         allRelationUserIds.forEach((id) => {
-          // Store the roomId if active, or false/undefined if not in a room
           next[id] = activeMap[id];
         });
         return next;
@@ -146,7 +123,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, [socket, allRelationUserIds]);
 
-  // 2. Conversation History & Mutations
   const { data: historyResponse, isFetching: fetchingHistory } = useGetHistoryQuery(friendId, {
     skip: !friendId,
   });
@@ -157,34 +133,26 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const messageMap = useMemo(() => {
     const map: Record<string, SocialChatMessage> = {};
-    for (let i = 0; i < messages.length; i += 1) {
-      map[messages[i].id] = messages[i];
-    }
+    for (let i = 0; i < messages.length; i++) map[messages[i].id] = messages[i];
     return map;
   }, [messages]);
 
   const { unreadFriendsCount, totalUnreadMessages } = useMemo(() => {
     let uniqueFriends = 0;
     let totalMessages = 0;
-
     Object.values(unreadCounts).forEach((count) => {
       if (count > 0) {
-        uniqueFriends += 1;
+        uniqueFriends++;
         totalMessages += count;
       }
     });
-
-    return {
-      unreadFriendsCount: uniqueFriends,
-      totalUnreadMessages: totalMessages,
-    };
+    return { unreadFriendsCount: uniqueFriends, totalUnreadMessages: totalMessages };
   }, [unreadCounts]);
 
   const isFriendUnread = useCallback(
     (targetUserId: string) => Boolean((unreadCounts[targetUserId] || 0) > 0),
     [unreadCounts]
   );
-
   const getFriendUnreadCount = useCallback(
     (targetUserId: string) => unreadCounts[targetUserId] || 0,
     [unreadCounts]
@@ -193,7 +161,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const markFriendAsRead = useCallback(
     (targetUserId: string, forceApi = false) => {
       if (!targetUserId) return;
-
       const hadUnreadInMap = Boolean(unreadCountsRef.current[targetUserId] > 0);
       readFriendIdsRef.current.add(targetUserId);
 
@@ -203,15 +170,17 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         unreadCountsRef.current = next;
         setUnreadCounts(next);
       }
-
       setActiveChatUnreadCount(0);
-
       if (currentUserId && (hadUnreadInMap || forceApi)) {
         readMessages({ userId1: currentUserId, userId2: targetUserId }).catch(console.error);
       }
     },
     [currentUserId, readMessages]
   );
+
+  const setPanelVisibleRef = useCallback((isVisible: boolean) => {
+    isPanelVisibleRef.current = isVisible;
+  }, []);
 
   const setIsAtBottom = useCallback(
     (atBottom: boolean) => {
@@ -231,7 +200,9 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } else if (!fetchingHistory && historyResponse?.data) {
       const fetched = Array.from(historyResponse.data as SocialChatMessage[])
         .map((m) => ({ ...m }))
-        .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+        .sort(
+          (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+        );
       setMessages((prev) => {
         if (prev.length === 0 || prev[0]?.id !== fetched[0]?.id) return fetched;
         return prev.length > fetched.length ? prev : fetched;
@@ -239,7 +210,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [historyResponse, activeFriend, fetchingHistory]);
 
-  // Real-Time Socket.io Listeners
   useEffect(() => {
     if (!socket) return;
 
@@ -249,8 +219,8 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       const isFromSelf = String(senderId) === String(currentUserId);
       const activeFriendId = activeFriend?.accountDetails?.userId;
-
       const otherUserId = isFromSelf ? incomingMsg.recipientId : senderId;
+
       if (otherUserId) {
         dispatch(
           updateLatestMessage({
@@ -302,9 +272,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const handleMessageEdited = (editedMsg: SocialChatMessage) => {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === editedMsg.id
-            ? { ...m, text: editedMsg.text, editedAt: editedMsg.editedAt }
-            : m
+          m.id === editedMsg.id ? { ...m, text: editedMsg.text, editedAt: editedMsg.editedAt } : m
         )
       );
     };
@@ -328,22 +296,12 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       roomId?: string;
     }) => {
       if (!statusData?.userId) return;
-
       const resolvedOnline = statusData.status === 'online' ? statusData.roomId : null;
-
-      if (resolvedOnline) {
-        setOnlineStatusMap((prev) => ({
-          ...prev,
-          [statusData.userId]: resolvedOnline,
-        }));
-      }
-
+      if (resolvedOnline)
+        setOnlineStatusMap((prev) => ({ ...prev, [statusData.userId]: resolvedOnline }));
       if (!resolvedOnline && statusData.lastActive) {
         dispatch(
-          updateRelationPresence({
-            userId: statusData.userId,
-            lastActive: statusData.lastActive,
-          })
+          updateRelationPresence({ userId: statusData.userId, lastActive: statusData.lastActive })
         );
       }
     };
@@ -360,25 +318,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       socket.off('user_status_changed', handleUserStatusChanged);
     };
   }, [socket, activeFriend, currentUserId, readMessages, dispatch]);
-
-  const openChat = useCallback(
-    (item: AllRelationsType) => {
-      setActiveFriend(item);
-      const targetUserId = item.accountDetails.userId;
-      const hasUnreadLocal = Boolean(unreadCountsRef.current[targetUserId] > 0);
-
-      if (hasUnreadLocal) {
-        markFriendAsRead(targetUserId, true);
-      }
-    },
-    [markFriendAsRead]
-  );
-
-  const closeActiveChat = useCallback(() => {
-    setActiveFriend(null);
-    setReplyingTo(null);
-    setActiveChatUnreadCount(0);
-  }, []);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -400,21 +339,13 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setMessages((prev) => [...prev, newMsg]);
       setReplyingTo(null);
       setActiveChatUnreadCount(0);
-
-      dispatch(
-        updateLatestMessage({
-          recipientId: friendId,
-          text: trimmed,
-          createdAt: timeNow,
-        })
-      );
-
+      dispatch(updateLatestMessage({ recipientId: friendId, text: trimmed, createdAt: timeNow }));
       saveMessage({
         userId: currentUserId,
         recipientId: friendId,
         text: newMsg.text,
         replyToId: newMsg.replyToId,
-      }).catch((err) => console.error('Failed to save message:', err));
+      }).catch(console.error);
     },
     [activeFriend, friendId, currentUserId, currentUserName, replyingTo, saveMessage, dispatch]
   );
@@ -423,10 +354,7 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     (id: string, text: string) => {
       const editedAt = Date.now();
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text, editedAt } : m)));
-
-      updateMessage({ messageId: id, text }).catch((err) =>
-        console.error('Failed to update message:', err)
-      );
+      updateMessage({ messageId: id, text }).catch(console.error);
     },
     [updateMessage]
   );
@@ -438,7 +366,6 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (m.id !== id) return m;
           const current = m.reactions || [];
           const existing = current.find((r) => r.emoji === emoji);
-
           const updatedReactions = existing
             ? current
               .map((r) =>
@@ -452,27 +379,18 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               )
               .filter((r) => r.count > 0)
             : [...current, { emoji, count: 1, reactedBySelf: true }];
-
           return { ...m, reactions: updatedReactions };
         })
       );
-
-      toggleReaction({ messageId: id, emoji }).catch((err) =>
-        console.error('Failed to toggle reaction:', err)
-      );
+      toggleReaction({ messageId: id, emoji }).catch(console.error);
     },
     [toggleReaction]
   );
 
   const value = useMemo(
     () => ({
-      isChatPanelVisible,
-      setIsChatPanelVisible,
-      tab,
-      setTab,
       activeFriend,
-      openChat,
-      closeActiveChat,
+      setActiveFriend,
       messages,
       messageMap,
       fetchingHistory,
@@ -489,16 +407,13 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setIsAtBottom,
       markFriendAsRead,
       refetchUnread,
+      setPanelVisibleRef,
       sendMessage,
       editMessage,
       reactMessage,
     }),
     [
-      isChatPanelVisible,
-      tab,
       activeFriend,
-      openChat,
-      closeActiveChat,
       messages,
       messageMap,
       fetchingHistory,
@@ -513,19 +428,18 @@ export const SocialChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setIsAtBottom,
       markFriendAsRead,
       refetchUnread,
+      setPanelVisibleRef,
       sendMessage,
       editMessage,
       reactMessage,
     ]
   );
 
-  return <SocialChatContext.Provider value={value}>{children}</SocialChatContext.Provider>;
+  return <SocialStorageContext.Provider value={value}>{children}</SocialStorageContext.Provider>;
 };
 
-export const useSocialChat = (): SocialChatContextValue => {
-  const context = useContext(SocialChatContext);
-  if (!context) {
-    throw new Error('useSocialChat must be used within a SocialChatProvider');
-  }
+export const useSocialStorage = () => {
+  const context = useContext(SocialStorageContext);
+  if (!context) throw new Error('useSocialStorage must be used within a SocialStorageProvider');
   return context;
 };
