@@ -16,7 +16,7 @@ import {
 
 import { useSocialStorage } from '@/core/contexts';
 import { useCredentials } from '@/core/slices';
-import { SocialChatMain } from '../section-common/social-chat-main';
+import { SocialChatMain } from '../social-chat-main';
 
 /* ------------------------------------------------------------------ */
 /* Resize limits                                                       */
@@ -31,7 +31,7 @@ const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
-const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (roomId: string) => void }) => {
+export const SocialChatView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (roomId: string) => void }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -311,5 +311,3 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
     </Portal>
   );
 };
-
-export default VoiceButtonSocialChat;

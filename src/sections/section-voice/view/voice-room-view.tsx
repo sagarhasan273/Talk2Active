@@ -14,8 +14,8 @@ import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { RoomlistMain } from '../voice-room-list';
-import { VoiceRoomListener } from '../voice-room-listener';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
+import VoiceRoomEventListener from './voice-room-event-listener';
 
 export function VoiceMainView() {
   const { isAuthenticated, user } = useCredentials();
@@ -124,7 +124,7 @@ export function VoiceMainView() {
 
   return (
     <>
-      <VoiceRoomListener />
+      <VoiceRoomEventListener />
       <VoiceRoomLayout
         header={header}
         fixedHeader={Boolean(isInRoom && selectedTab === 'room-list')}

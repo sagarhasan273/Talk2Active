@@ -1,34 +1,27 @@
-// src/hooks/use-voice-room-listener.ts
+// src/components/voice-room-event-listener.tsx
 
+import { useGetRoomsQuery } from '@/core/apis';
+import { useSocket } from '@/core/contexts/app-context/context-socket';
+import { useRoomTools } from '@/core/slices';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
-import type { RoomParticipantType, RoomType } from '@/types/type-room';
-import { useEffect } from 'react';
-import type { Socket } from 'socket.io-client';
+import { RoomParticipantType, RoomType } from '@/types/type-room';
+import React, { useEffect } from 'react';
 
-interface UseVoiceRoomListenerProps {
-  socket: Socket | null | undefined;
-  addRoom: (room: RoomType) => void;
-  addParticipantToRoom: (roomId: string, participant: RoomParticipantType) => void;
-  removeParticipantFromRoom: (roomId: string, participantId: string) => void;
-}
+export const VoiceRoomEventListener: React.FC = () => {
+  const { socket } = useSocket();
+  const { addRoom, addParticipantToRoom, removeParticipantFromRoom } = useRoomTools();
 
-export const useVoiceRoomListener = ({
-  socket,
-  addRoom,
-  addParticipantToRoom,
-  removeParticipantFromRoom,
-}: UseVoiceRoomListenerProps) => {
+  useGetRoomsQuery(null);
+
   useEffect(() => {
     if (!socket) return;
 
-    // 1. Handle New Room Broadcast
     const handleNewRoom = (data: { room: RoomType }) => {
       if (data?.room) {
         addRoom(data.room);
       }
     };
 
-    // 2. Handle User Join Broadcast (for any room in the list)
     const handleUserJoin = (data: {
       roomId: string;
       participant: RoomParticipantType;
@@ -42,7 +35,6 @@ export const useVoiceRoomListener = ({
       }
     };
 
-    // 3. Handle User Leave Broadcast (for any room in the list)
     const handleUserLeave = (data: { roomId: string; participantId: string }) => {
       try {
         if (data?.roomId && data?.participantId) {
@@ -63,6 +55,9 @@ export const useVoiceRoomListener = ({
       socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
     };
   }, [socket, addRoom, addParticipantToRoom, removeParticipantFromRoom]);
+
+  // This component acts purely as a background logic container, so it renders nothing
+  return null;
 };
 
-export default useVoiceRoomListener;
+export default VoiceRoomEventListener;

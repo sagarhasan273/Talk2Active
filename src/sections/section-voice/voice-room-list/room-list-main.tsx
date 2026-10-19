@@ -33,8 +33,9 @@ import { LoginPromptDialog } from '@/components/custom-dialog';
 import { useVoiceRoomSetting } from '@/core/contexts';
 import { useBoolean } from '@/hooks/use-boolean';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
+
+import { SocialChatView } from '@/sections/section-social-chat';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
-import VoiceButtonSocialChat from '../voice-button-social-chat';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
@@ -339,8 +340,6 @@ export const RoomlistMain = memo(function RoomlistMain({
   );
 
   const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    // SECURITY: Browsers sometimes fire a fake "scroll to 0" event when a tab is hidden.
-    // If the tab is hidden, ignore the event so we don't overwrite our saved scroll position!
     if (!isVisibleRef.current) return;
 
     const currentTop = e.currentTarget.scrollTop;
@@ -370,7 +369,6 @@ export const RoomlistMain = memo(function RoomlistMain({
     const updateMeasurements = () => {
       const width = gridEl.clientWidth;
 
-      // If width is 0, the Tab is currently Hidden via `display: none`
       if (width === 0) {
         isVisibleRef.current = false;
         return;
@@ -398,7 +396,6 @@ export const RoomlistMain = memo(function RoomlistMain({
     updateMeasurements();
     const resizeObserver = new ResizeObserver(updateMeasurements);
 
-    // Observe BOTH the grid (for columns) and the scroll container (for Tab visibility changes)
     resizeObserver.observe(gridEl);
     resizeObserver.observe(scrollEl);
 
@@ -576,7 +573,7 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollBottom={handleScrollToBottom}
       />
 
-      {isVisible && <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />}
+      {isVisible && <SocialChatView onJoinRoom={handleJoinFromSocialChat} />}
 
       {isVisible && <LoginPromptDialog openBoolean={logOpen} />}
     </>
