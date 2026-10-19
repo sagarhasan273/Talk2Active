@@ -34,7 +34,7 @@ import { useVoiceRoomSetting } from '@/core/contexts';
 import { useBoolean } from '@/hooks/use-boolean';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 
-import { SocialChatView } from '@/sections/section-social-chat';
+import { SocialView } from '@/sections/section-social-chat';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
@@ -573,7 +573,7 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollBottom={handleScrollToBottom}
       />
 
-      {isVisible && <SocialChatView onJoinRoom={handleJoinFromSocialChat} />}
+      {isVisible && <SocialView onJoinRoom={handleJoinFromSocialChat} />}
 
       {isVisible && <LoginPromptDialog openBoolean={logOpen} />}
     </>

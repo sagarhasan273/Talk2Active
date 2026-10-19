@@ -1,1 +1,1 @@
-export * from './view/social-chat-view';
+export * from './view/social-view';

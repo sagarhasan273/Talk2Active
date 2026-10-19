@@ -3,10 +3,10 @@ import React from 'react';
 
 import { useSocialStorage } from '@/core/contexts';
 import type { SocialChatProps } from '@/types/type-social';
-import { SocialChatConversation } from './social-chat-conversation';
-import { SocialChatDirectory } from './social-chat-directory';
+import { SocialChatConversation } from './social-conversation';
+import { SocialChatDirectory } from './social-directory';
 
-export const SocialChatMain: React.FC<SocialChatProps> = ({
+export const SocialMain: React.FC<SocialChatProps> = ({
   friends = [],
   followers = [],
   following = [],

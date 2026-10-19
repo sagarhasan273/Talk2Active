@@ -16,7 +16,8 @@ import {
 
 import { useSocialStorage } from '@/core/contexts';
 import { useCredentials } from '@/core/slices';
-import { SocialChatMain } from '../social-chat-main';
+import { SocialMain } from '../social-main';
+import { SocialEventListener } from './social-event-listener';
 
 /* ------------------------------------------------------------------ */
 /* Resize limits                                                       */
@@ -31,14 +32,13 @@ const DEFAULT_HEIGHT = 550;
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
-export const SocialChatView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (roomId: string) => void }) => {
+export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (roomId: string) => void }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const { user, followers, following, friends, isAuthenticated } = useCredentials();
 
-  // Pull live unread metrics from SocialChatContext
-  const { unreadFriendsCount, hasUnreadMessages } = useSocialStorage();
+  const { unreadFriendsCount, hasUnreadMessages, checkOnlineUsers } = useSocialStorage();
 
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
@@ -145,6 +145,7 @@ export const SocialChatView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
 
   return (
     <Portal>
+      <SocialEventListener />
       <Box
         sx={{
           position: 'fixed',
@@ -247,7 +248,7 @@ export const SocialChatView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
                 ...(isResizing && { transition: 'none !important' }),
               }}
             >
-              <SocialChatMain
+              <SocialMain
                 friends={friends}
                 followers={followers}
                 following={following}
@@ -281,6 +282,9 @@ export const SocialChatView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
             <IconButton
               onClick={() => {
                 setOpen((prev) => !prev);
+                if (!open) {
+                  checkOnlineUsers();
+                }
               }}
               disabled={!isAuthenticated}
               sx={{

@@ -18,7 +18,6 @@ import { AccountDrawer } from '../components/account-drawer';
 import { _user_account } from '../config-nav-account';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { SocialBootstrapper } from '../social-bootstrapper';
 import { UserMain } from './main';
 
 export type UserLayoutProps = {
@@ -95,9 +94,7 @@ export function UserLayout({ sx, children, header, data }: UserLayoutProps) {
         ...sx,
       }}
     >
-      <SocialBootstrapper>
-        <UserMain>{children}</UserMain>
-      </SocialBootstrapper>
+      <UserMain>{children}</UserMain>
     </LayoutSection>
   );
 }

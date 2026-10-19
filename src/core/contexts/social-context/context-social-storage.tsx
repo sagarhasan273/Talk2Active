@@ -51,6 +51,7 @@ interface SocialStorageContextValue {
   sendMessage: (text: string) => Promise<void>;
   editMessage: (id: string, text: string) => void;
   reactMessage: (id: string, emoji: string) => void;
+  checkOnlineUsers: () => void;
 }
 
 const SocialStorageContext = createContext<SocialStorageContextValue | undefined>(undefined);
@@ -94,34 +95,7 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
     refetchOnMountOrArgChange: true,
   });
 
-  useEffect(() => {
-    const serverMap = unreadResponse?.data?.unreadBySender;
-    if (!serverMap) return;
-    setUnreadCounts((prev) => {
-      const merged = { ...prev };
-      Object.entries(serverMap).forEach(([senderId, count]) => {
-        if (!readFriendIdsRef.current.has(senderId) && (count as number) > 0) {
-          merged[senderId] = Math.max(merged[senderId] || 0, count as number);
-        }
-      });
-      unreadCountsRef.current = merged;
-      return merged;
-    });
-  }, [unreadResponse]);
 
-  useEffect(() => {
-    if (!socket || allRelationUserIds.length === 0) return;
-    socket.emit('check_online_users', allRelationUserIds, (activeMap: Record<string, string>) => {
-      if (!activeMap || typeof activeMap !== 'object') return;
-      setOnlineStatusMap((prev) => {
-        const next = { ...prev };
-        allRelationUserIds.forEach((id) => {
-          next[id] = activeMap[id];
-        });
-        return next;
-      });
-    });
-  }, [socket, allRelationUserIds]);
 
   const { data: historyResponse, isFetching: fetchingHistory } = useGetHistoryQuery(friendId, {
     skip: !friendId,
@@ -191,6 +165,35 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [friendId, markFriendAsRead]
   );
+
+  const checkOnlineUsers = useCallback(() => {
+    if (!socket || allRelationUserIds.length === 0) return;
+    socket.emit('check_online_users', allRelationUserIds, (activeMap: Record<string, string>) => {
+      if (!activeMap || typeof activeMap !== 'object') return;
+      setOnlineStatusMap((prev) => {
+        const next = { ...prev };
+        allRelationUserIds.forEach((id) => {
+          next[id] = activeMap[id];
+        });
+        return next;
+      });
+    });
+  }, [socket, allRelationUserIds]);
+
+  useEffect(() => {
+    const serverMap = unreadResponse?.data?.unreadBySender;
+    if (!serverMap) return;
+    setUnreadCounts((prev) => {
+      const merged = { ...prev };
+      Object.entries(serverMap).forEach(([senderId, count]) => {
+        if (!readFriendIdsRef.current.has(senderId) && (count as number) > 0) {
+          merged[senderId] = Math.max(merged[senderId] || 0, count as number);
+        }
+      });
+      unreadCountsRef.current = merged;
+      return merged;
+    });
+  }, [unreadResponse]);
 
   useEffect(() => {
     if (!activeFriend) {
@@ -297,8 +300,7 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
     }) => {
       if (!statusData?.userId) return;
       const resolvedOnline = statusData.status === 'online' ? statusData.roomId : null;
-      if (resolvedOnline)
-        setOnlineStatusMap((prev) => ({ ...prev, [statusData.userId]: resolvedOnline }));
+      setOnlineStatusMap((prev) => ({ ...prev, [statusData.userId]: resolvedOnline ?? null }));
       if (!resolvedOnline && statusData.lastActive) {
         dispatch(
           updateRelationPresence({ userId: statusData.userId, lastActive: statusData.lastActive })
@@ -411,6 +413,7 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
       sendMessage,
       editMessage,
       reactMessage,
+      checkOnlineUsers
     }),
     [
       activeFriend,
@@ -432,6 +435,7 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
       sendMessage,
       editMessage,
       reactMessage,
+      checkOnlineUsers,
     ]
   );
 

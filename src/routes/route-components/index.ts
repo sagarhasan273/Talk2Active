@@ -1,3 +1,3 @@
 export * from './router-link';
 
-export * from '../../layouts/social-bootstrapper';
+export * from '../../sections/section-social-chat/view/social-event-listener';
