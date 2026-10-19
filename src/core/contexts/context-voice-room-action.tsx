@@ -9,6 +9,7 @@ import { toastErrorResponse } from '@/utils/response';
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 interface VoiceRoomActionContextType {
+  isInRoom: boolean;
   selectedRoom: RoomType | null;
   livekitToken: string | null;
   isJoinGateOpen: boolean;
@@ -123,12 +124,12 @@ export const VoiceRoomActionProvider: React.FC<{
         });
       } catch (cleanupError) {
         console.error('Failed to cleanup DB after WebRTC failure:', cleanupError);
+      } finally {
+        setTimeout(() => {
+          window.location.reload();
+        }, 3500);
       }
 
-      // 4. Reload page to wipe broken state
-      setTimeout(() => {
-        window.location.reload();
-      }, 3500);
     } finally {
       setIsJoiningState(false);
       setRoomLoading(false);
@@ -152,6 +153,7 @@ export const VoiceRoomActionProvider: React.FC<{
 
   const value = useMemo(
     () => ({
+      isInRoom,
       selectedRoom,
       livekitToken,
       isJoinGateOpen,
@@ -166,6 +168,7 @@ export const VoiceRoomActionProvider: React.FC<{
       handleBackToRooms,
     }),
     [
+      isInRoom,
       selectedRoom,
       livekitToken,
       isJoinGateOpen,

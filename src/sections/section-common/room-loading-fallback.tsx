@@ -8,6 +8,7 @@ import {
   Button,
   CircularProgress,
   Container,
+  SxProps,
   Typography,
   alpha,
   useTheme,
@@ -20,9 +21,10 @@ import { useRoomTools } from '@/core/slices';
 interface RoomLoadingFallbackProps {
   error?: Error | string | boolean | null;
   onRetry?: () => void;
+  sx?: SxProps
 }
 
-export function RoomLoadingFallback({ error: propError, onRetry }: RoomLoadingFallbackProps) {
+export function RoomLoadingFallback({ error: propError, onRetry, sx }: RoomLoadingFallbackProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -69,6 +71,7 @@ export function RoomLoadingFallback({ error: propError, onRetry }: RoomLoadingFa
         borderRadius: 2,
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
+        ...sx
       }}
     >
       {/* Top Status Icon: Spinner while connecting, Warning icon on error */}

@@ -35,7 +35,7 @@ export function RoomContainerMain({
   const { localParticipant } = useLocalParticipant();
   const { playHandRaise } = useRoomSounds();
 
-  const { isJoining, isLeaving, selectedRoom } = useVoiceRoomAction();
+  const { isJoining, isLeaving, isInRoom, selectedRoom } = useVoiceRoomAction();
 
   const { onToggleChat } = useRoomChat();
 
@@ -192,7 +192,7 @@ export function RoomContainerMain({
           py: 1,
         }}
       >
-        {isJoining || isLeaving ? (
+        {isJoining || isLeaving || !isInRoom ? (
           <>
             <RoomStageSkeleton
               tileCount={(selectedRoom?.participants?.length || 0) + 1}

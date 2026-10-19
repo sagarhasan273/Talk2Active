@@ -5,6 +5,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { useResponsive } from '@/hooks/use-responsive';
+import RoomLoadingFallback from '@/sections/section-common/room-loading-fallback';
 
 interface RoomStageSkeletonProps {
   tileCount?: number;
@@ -18,7 +19,6 @@ export const RoomStageSkeleton: React.FC<RoomStageSkeletonProps> = ({
   const isMobile = useResponsive('down', 'sm');
 
   const borderColor = isDark ? alpha('#fff', 0.08) : '#e2e8f0';
-  const tileBg = isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02);
 
   return (
     <Box
@@ -69,70 +69,7 @@ export const RoomStageSkeleton: React.FC<RoomStageSkeletonProps> = ({
       </Box>
 
       {/* ── 2. Main Stage Speaker Grid Skeleton ── */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          minWidth: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          p: { xs: 2, sm: 3 },
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignItems: 'stretch',
-            gap: 2,
-            maxWidth: 1200,
-            width: '100%',
-            m: 'auto',
-          }}
-        >
-          {Array.from({ length: tileCount }).map((_, index) => (
-            <Box
-              key={index}
-              sx={{
-                width: { xs: 'calc(50% - 8px)', sm: 148, md: 168 },
-                minHeight: 148,
-                flexShrink: 0,
-                p: 2,
-                borderRadius: 1.5,
-                bgcolor: tileBg,
-                border: '1px solid',
-                borderColor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.06),
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1.25,
-                position: 'relative',
-              }}
-            >
-              {/* Top-right mic / role badge placeholder */}
-              <Skeleton
-                variant="circular"
-                width={20}
-                height={20}
-                sx={{ position: 'absolute', top: 10, right: 10 }}
-              />
-
-              {/* Participant Avatar */}
-              <Skeleton variant="circular" width={60} height={60} />
-
-              {/* Participant Name & Status */}
-              <Stack alignItems="center" spacing={0.5} sx={{ width: '100%' }}>
-                <Skeleton variant="text" width="70%" height={18} />
-                <Skeleton variant="rounded" width="45%" height={14} sx={{ borderRadius: 0.5 }} />
-              </Stack>
-            </Box>
-          ))}
-        </Box>
-      </Box>
+      <RoomLoadingFallback sx={{ bgcolor: 'transparent', border: 'none' }} />
 
       {/* ── 3. Persistent Bottom RoomControlDock Skeleton ── */}
       <Box
