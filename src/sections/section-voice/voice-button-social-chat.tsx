@@ -8,6 +8,7 @@ import {
   Badge,
   Box,
   IconButton,
+  Portal,
   type SxProps,
   useMediaQuery,
   useTheme,
@@ -143,170 +144,171 @@ const VoiceButtonSocialChat = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (
   }, [open, isResizing]);
 
   return (
-    <Box
-      sx={{
-        position: 'fixed',
-        zIndex: (muiTheme) =>
-          open ? muiTheme.zIndex.modal : muiTheme.zIndex.appBar + 10,
-        bottom: { xs: 16, sm: 20 },
-        right: { xs: 16, sm: 20 },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        pointerEvents: 'none',
-      }}
-    >
-      {/* ── Chat Window (Renders above the Button, anchored on the right) ── */}
-      {open && (
-        <Box
-          ref={chatContainerRef}
-          sx={{
-            position: { xs: 'fixed', sm: 'relative' },
-            top: { xs: 0, sm: 'auto' },
-            left: { xs: 0, sm: 'auto' },
-            right: { xs: 0, sm: 60 },
-            bottom: { xs: 0, sm: -45 },
-            width: { xs: '100vw', sm: `${chatWidth}px` },
-            height: { xs: '100dvh', sm: `${chatHeight}px` },
-            zIndex: 2,
-            pointerEvents: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-            minHeight: 0,
-          }}
-        >
-          {/* Top Resize Handle */}
-          <Box
-            onMouseDown={(e) => startResize('top', e)}
-            sx={{
-              display: { xs: 'none', sm: 'flex' },
-              position: 'absolute',
-              top: -5,
-              left: 0,
-              right: 0,
-              height: 10,
-              zIndex: 3,
-              cursor: 'ns-resize',
-              justifyContent: 'center',
-              alignItems: 'center',
-              '&::after': {
-                content: '""',
-                width: 48,
-                height: 3,
-                borderRadius: 1,
-                backgroundColor: 'transparent',
-                transition: 'background-color 0.15s ease',
-              },
-              '&:hover::after': { backgroundColor: 'primary.main' },
-            }}
-          />
-
-          {/* Left Resize Handle */}
-          <Box
-            onMouseDown={(e) => startResize('left', e)}
-            sx={{
-              display: { xs: 'none', sm: 'flex' },
-              position: 'absolute',
-              left: -5,
-              top: 0,
-              bottom: 0,
-              width: 10,
-              zIndex: 3,
-              cursor: 'ew-resize',
-              justifyContent: 'center',
-              alignItems: 'center',
-              '&::after': {
-                content: '""',
-                width: 3,
-                height: 48,
-                borderRadius: 1,
-                backgroundColor: 'transparent',
-                transition: 'background-color 0.15s ease',
-              },
-              '&:hover::after': { backgroundColor: 'primary.main' },
-            }}
-          />
-
-          {/* Inner Chat Box */}
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              minWidth: 0,
-              minHeight: 0,
-              overflow: 'hidden',
-              bgcolor: isDark ? '#181c26' : '#ffffff',
-              borderRadius: { xs: 0, sm: 1 },
-              border: '1px solid',
-              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-              boxShadow: isDark
-                ? '0 24px 56px -8px rgba(0, 0, 0, 0.75)'
-                : '0 20px 48px -8px rgba(15, 23, 42, 0.18)',
-              ...(isResizing && { transition: 'none !important' }),
-            }}
-          >
-            <SocialChatMain
-              friends={friends}
-              followers={followers}
-              following={following}
-              currentUserId={currentUserId}
-              currentUserName={currentUserName}
-              isLoading={false}
-              onJoinRoom={onJoinRoom}
-              onClose={() => setOpen(false)}
-            />
-          </Box>
-        </Box>
-      )}
-
-      {/* ── Fixed Bottom-Right Trigger Button ── */}
+    <Portal>
       <Box
-        ref={buttonContainerRef}
         sx={{
-          display: { xs: open ? 'none' : 'inline-flex', sm: 'inline-flex' },
-          pointerEvents: 'auto',
-          position: 'relative',
-          zIndex: 1,
+          position: 'fixed',
+          zIndex: (muiTheme) => muiTheme.zIndex.modal + muiTheme.zIndex.appBar + 10,
+          bottom: { xs: 16, sm: 20 },
+          right: { xs: 16, sm: 20 },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          pointerEvents: 'none',
         }}
       >
-        <Badge
-          color="error"
-          badgeContent={unreadFriendsCount}
-          invisible={!hasUnreadMessages}
-          max={99}
-          overlap="circular"
-        >
-          <IconButton
-            onClick={() => {
-              setOpen((prev) => !prev);
-            }}
-            disabled={!isAuthenticated}
+        {/* ── Chat Window (Renders above the Button, anchored on the right) ── */}
+        {open && (
+          <Box
+            ref={chatContainerRef}
             sx={{
-              width: { xs: 40, md: 48 },
-              height: { xs: 40, md: 48 },
+              position: { xs: 'fixed', sm: 'relative' },
+              top: { xs: 0, sm: 'auto' },
+              left: { xs: 0, sm: 'auto' },
+              right: { xs: 0, sm: 60 },
+              bottom: { xs: 0, sm: -45 },
+              width: { xs: '100vw', sm: `${chatWidth}px` },
+              height: { xs: '100dvh', sm: `${chatHeight}px` },
+              zIndex: 2,
               pointerEvents: 'auto',
-              bgcolor: isDark ? alpha('#181c26', 0.9) : '#ffffff',
-              border: '1px solid',
-              borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
-              boxShadow: theme.customShadows?.z8 || '0 4px 14px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s',
-              '&:hover': {
-                bgcolor: isDark ? '#252b3b' : '#f8fafc',
-                transform: 'translateY(-2px)'
-              },
-              ...sx,
+              display: 'flex',
+              flexDirection: 'column',
+              minWidth: 0,
+              minHeight: 0,
             }}
           >
-            <ForumRoundedIcon
+            {/* Top Resize Handle */}
+            <Box
+              onMouseDown={(e) => startResize('top', e)}
               sx={{
-                fontSize: { xs: 24, md: 28 }
+                display: { xs: 'none', sm: 'flex' },
+                position: 'absolute',
+                top: -5,
+                left: 0,
+                right: 0,
+                height: 10,
+                zIndex: 3,
+                cursor: 'ns-resize',
+                justifyContent: 'center',
+                alignItems: 'center',
+                '&::after': {
+                  content: '""',
+                  width: 48,
+                  height: 3,
+                  borderRadius: 1,
+                  backgroundColor: 'transparent',
+                  transition: 'background-color 0.15s ease',
+                },
+                '&:hover::after': { backgroundColor: 'primary.main' },
               }}
             />
-          </IconButton>
-        </Badge>
-      </Box>
-    </Box >
+
+            {/* Left Resize Handle */}
+            <Box
+              onMouseDown={(e) => startResize('left', e)}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                position: 'absolute',
+                left: -5,
+                top: 0,
+                bottom: 0,
+                width: 10,
+                zIndex: 3,
+                cursor: 'ew-resize',
+                justifyContent: 'center',
+                alignItems: 'center',
+                '&::after': {
+                  content: '""',
+                  width: 3,
+                  height: 48,
+                  borderRadius: 1,
+                  backgroundColor: 'transparent',
+                  transition: 'background-color 0.15s ease',
+                },
+                '&:hover::after': { backgroundColor: 'primary.main' },
+              }}
+            />
+
+            {/* Inner Chat Box */}
+            <Box
+              sx={{
+                width: '100%',
+                height: '100%',
+                minWidth: 0,
+                minHeight: 0,
+                overflow: 'hidden',
+                bgcolor: isDark ? '#181c26' : '#ffffff',
+                borderRadius: { xs: 0, sm: 1 },
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                boxShadow: isDark
+                  ? '0 24px 56px -8px rgba(0, 0, 0, 0.75)'
+                  : '0 20px 48px -8px rgba(15, 23, 42, 0.18)',
+                ...(isResizing && { transition: 'none !important' }),
+              }}
+            >
+              <SocialChatMain
+                friends={friends}
+                followers={followers}
+                following={following}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                isLoading={false}
+                onJoinRoom={onJoinRoom}
+                onClose={() => setOpen(false)}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* ── Fixed Bottom-Right Trigger Button ── */}
+        <Box
+          ref={buttonContainerRef}
+          sx={{
+            display: { xs: open ? 'none' : 'inline-flex', sm: 'inline-flex' },
+            pointerEvents: 'auto',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <Badge
+            color="error"
+            badgeContent={unreadFriendsCount}
+            invisible={!hasUnreadMessages}
+            max={99}
+            overlap="circular"
+          >
+            <IconButton
+              onClick={() => {
+                setOpen((prev) => !prev);
+              }}
+              disabled={!isAuthenticated}
+              sx={{
+                width: { xs: 40, md: 48 },
+                height: { xs: 40, md: 48 },
+                pointerEvents: 'auto',
+                bgcolor: isDark ? alpha('#181c26', 0.9) : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+                boxShadow: theme.customShadows?.z8 || '0 4px 14px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  bgcolor: isDark ? '#252b3b' : '#f8fafc',
+                  transform: 'translateY(-2px)'
+                },
+                ...sx,
+              }}
+            >
+              <ForumRoundedIcon
+                sx={{
+                  fontSize: { xs: 24, md: 28 }
+                }}
+              />
+            </IconButton>
+          </Badge>
+        </Box>
+      </Box >
+    </Portal>
   );
 };
 
