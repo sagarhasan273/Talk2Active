@@ -447,11 +447,10 @@ export const RoomlistMain = memo(function RoomlistMain({
       : 0;
   const visibleCards = allCards.slice(visibleSliceStart, visibleSliceEnd);
 
-  // Reset scroll to top when filters change
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
-      savedScrollTopRef.current = 0; // Wipe the saved state so it stays at the top
+      savedScrollTopRef.current = 0;
     }
   }, [filterRooms]);
 
