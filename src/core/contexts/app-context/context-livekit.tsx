@@ -2,7 +2,7 @@
 
 import { RoomContext } from '@livekit/components-react';
 import { ConnectionState, Room, RoomEvent, RoomOptions } from 'livekit-client';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 interface LiveKitSessionContextType {
   room: Room;
@@ -44,11 +44,10 @@ export function LiveKitProvider({
     };
   }, [room]);
 
-  const connectToRoom = async (newToken: string, customServerUrl?: string) => {
+  const connectToRoom = useCallback(async (newToken: string, customServerUrl?: string) => {
     const targetUrl = customServerUrl || serverUrl;
     if (!targetUrl) throw new Error('LiveKit Server URL is required');
 
-    // Ensure clean state before connecting
     if (room.state !== ConnectionState.Disconnected) {
       await room.disconnect();
     }
@@ -57,25 +56,18 @@ export function LiveKitProvider({
     if (customServerUrl) setServerUrl(customServerUrl);
 
     try {
-      // 1. Attempt the connection ONLY. Do not request microphone yet.
       await room.connect(targetUrl, newToken);
-
     } catch (error) {
-      // 🛑 CLEANUP ON FAILURE: If joining fails, reset everything.
       console.error('LiveKit connection failed:', error);
-
       setToken(null);
       setConnectionState(ConnectionState.Disconnected);
-
-      // Force internal client cleanup and suppress any secondary disconnect errors
       await room.disconnect().catch(() => { });
-
-      // Re-throw the error so the UI (buttons/modals) can handle it and show a toast
       throw error;
     }
-  };
+  }, [room, serverUrl]);
 
-  const disconnectRoom = async () => {
+  // ARCHITECTURE FIX: Wrap in useCallback
+  const disconnectRoom = useCallback(async () => {
     try {
       if (room.localParticipant) {
         await room.localParticipant.setMicrophoneEnabled(false).catch(() => { });
@@ -85,7 +77,7 @@ export function LiveKitProvider({
       setToken(null);
       setConnectionState(ConnectionState.Disconnected);
     }
-  };
+  }, [room]);
 
   const isInRoom = connectionState === ConnectionState.Connected;
 
@@ -99,7 +91,7 @@ export function LiveKitProvider({
       connectToRoom,
       disconnectRoom,
     }),
-    [room, token, serverUrl, isInRoom, connectionState]
+    [room, token, serverUrl, isInRoom, connectionState, connectToRoom, disconnectRoom]
   );
 
   return (

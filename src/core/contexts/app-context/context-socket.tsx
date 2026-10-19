@@ -1,6 +1,7 @@
-import { useCredentials } from '@/core/slices';
+// src/core/contexts/context-socket.tsx
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useCredentials } from '@/core/slices';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { connectSocket } from '../../socket';
 
@@ -30,7 +31,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // 1. Establish ONE singleton socket connection for the user
     const s = connectSocket(currentUserId);
     setSocket(s);
 
@@ -46,12 +46,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     s.on('connect', handleConnect);
     s.on('disconnect', handleDisconnect);
 
-    // If already connected when effect runs
     if (s.connected) {
       handleConnect();
     }
 
-    // 2. Clean up connection when user logs out or provider unmounts
     return () => {
       s.off('connect', handleConnect);
       s.off('disconnect', handleDisconnect);
@@ -59,14 +57,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [currentUserId]);
 
+  const value = useMemo(() => ({ socket, isConnected }), [socket, isConnected]);
+
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={value}>
       {children}
     </SocketContext.Provider>
   );
 };
 
-// Custom Hook to consume the socket anywhere
 export const useSocket = () => {
   return useContext(SocketContext);
 };
