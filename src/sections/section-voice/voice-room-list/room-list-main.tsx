@@ -26,7 +26,7 @@ import {
   useState,
 } from 'react';
 
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 import { useCredentials, useRoomTools } from '@/core/slices';
 
 import { LoginPromptDialog } from '@/components/custom-dialog';

@@ -2,7 +2,7 @@
 
 import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
 import { useVoiceRoomStorage } from '@/core/contexts';
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { useBoolean, UseBooleanReturn } from '@/hooks/use-boolean';
 import useRoomSounds from '@/hooks/use-room-sounds';

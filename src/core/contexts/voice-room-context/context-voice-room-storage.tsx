@@ -1,7 +1,7 @@
 // src/core/contexts/context-room-storage.tsx
 
 import { filterVisibleMessages } from '@/_mock/_messages';
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ChatMessage, RoomType } from '@/types/type-room';
 import { RoomEvent } from 'livekit-client';

@@ -19,9 +19,9 @@ import {
   useToggleReactionMutation,
   useUpdateMessageMutation,
 } from '@/core/apis';
-import { useSocket } from '@/core/contexts/context-socket';
+import { useSocket } from '@/core/contexts/app-context/context-socket';
 import type { AllRelationsType, SocialChatMessage, SocialChatReaction } from '@/types/type-social';
-import { updateLatestMessage, updateRelationPresence, useCredentials } from '../slices';
+import { updateLatestMessage, updateRelationPresence, useCredentials } from '../../slices';
 
 interface SocialStorageContextValue {
   activeFriend: AllRelationsType | null;

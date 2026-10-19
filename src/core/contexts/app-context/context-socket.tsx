@@ -2,7 +2,7 @@ import { useCredentials } from '@/core/slices';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { connectSocket } from '../socket';
+import { connectSocket } from '../../socket';
 
 interface SocketContextValue {
   socket: Socket | null;

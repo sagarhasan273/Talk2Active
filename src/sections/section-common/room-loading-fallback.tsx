@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 
 import { useVoiceRoomStorage } from '@/core/contexts';
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 import { useRoomTools } from '@/core/slices';
 
 interface RoomLoadingFallbackProps {

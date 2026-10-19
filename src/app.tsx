@@ -19,8 +19,8 @@ import { AuthProvider } from 'src/auth/context/jwt';
 
 import { CONFIG } from './config-global';
 import { SocialSettingProvider, SocialStorageProvider } from './core/contexts';
-import { LiveKitProvider } from './core/contexts/context-livekit';
-import { SocketProvider } from './core/contexts/context-socket';
+import { LiveKitProvider } from './core/contexts/app-context/context-livekit';
+import { SocketProvider } from './core/contexts/app-context/context-socket';
 import { store } from './core/store';
 import { LocalizationProvider } from './locales';
 

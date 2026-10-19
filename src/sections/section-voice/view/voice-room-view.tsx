@@ -1,5 +1,5 @@
 // src/sections/section-voice/voice-main-view.tsx
-import { useLiveKitSession } from '@/core/contexts/context-livekit';
+import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 
 import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
 import RoomLoadingFallback from '@/sections/section-common/room-loading-fallback';
