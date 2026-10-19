@@ -249,11 +249,13 @@ const RoomListModalsHost = memo(
 interface RoomlistMainProps {
   onSelectRoom: (room: RoomType) => void;
   onCreateRoom: () => void;
+  isVisible?: boolean;
 }
 
 export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoom,
   onCreateRoom,
+  isVisible
 }: RoomlistMainProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -574,9 +576,9 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollBottom={handleScrollToBottom}
       />
 
-      <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />
+      {isVisible && <VoiceButtonSocialChat onJoinRoom={handleJoinFromSocialChat} />}
 
-      <LoginPromptDialog openBoolean={logOpen} />
+      {isVisible && <LoginPromptDialog openBoolean={logOpen} />}
     </>
   );
 });

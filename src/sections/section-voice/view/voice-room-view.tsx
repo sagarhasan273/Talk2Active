@@ -86,6 +86,7 @@ function VoiceMainContent() {
           <RoomlistMain
             onSelectRoom={handleSelectRoom}
             onCreateRoom={handleCreateRoom}
+            isVisible={selectedTab === 'room-list'}
           />
         </Box>
 
