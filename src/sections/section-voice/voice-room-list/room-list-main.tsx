@@ -27,10 +27,10 @@ import {
 } from 'react';
 
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import { useCredentials, useRoomTools } from '@/core/slices';
 
 import { LoginPromptDialog } from '@/components/custom-dialog';
+import { useVoiceRoomSetting } from '@/core/contexts';
 import { useBoolean } from '@/hooks/use-boolean';
 import UserDisplayer, { type UserDisplayerProfile } from '@/sections/section-common/user-displayer';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
@@ -264,7 +264,7 @@ export const RoomlistMain = memo(function RoomlistMain({
   const currentUserId = user?.userId;
 
   const { rooms, isRoomsLoading, getRoomById } = useRoomTools();
-  const { handleSelectRoom } = useVoiceRoomAction();
+  const { handleSelectRoom } = useVoiceRoomSetting();
 
   const logOpen = useBoolean();
 

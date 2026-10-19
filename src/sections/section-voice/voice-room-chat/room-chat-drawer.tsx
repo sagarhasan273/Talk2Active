@@ -4,13 +4,14 @@ import { Drawer } from '@mui/material';
 
 import { RoomParticipantType } from '@/types/type-room';
 
-import { useRoomChat } from '@/core/contexts/context-room-chat';
+
+import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
+import { useCredentials } from '@/core/slices';
 import { RoomChatPanel } from './room-chat-panel';
 
 type ChatDrawerProps = {
   open?: boolean;
   onClose?: () => void;
-  currentUserId?: string;
   participants?: RoomParticipantType[];
   onSendMessage?: (
     text: string,
@@ -25,12 +26,14 @@ type ChatDrawerProps = {
 export const RoomChatDrawer = ({
   open,
   onClose,
-  currentUserId,
   onSendMessage,
   onEditMessage,
   onReactMessage,
 }: ChatDrawerProps) => {
-  const chatContext = useRoomChat();
+  const { currentUserId } = useCredentials();
+
+  const chatContext = useVoiceRoomSetting();
+  const chatStorage = useVoiceRoomStorage();
 
   const isOpen = open ?? chatContext.chatOpen;
   const handleClose = onClose ?? (() => chatContext.setChatOpen(false));
@@ -55,10 +58,10 @@ export const RoomChatDrawer = ({
       }}
     >
       <RoomChatPanel
-        currentUserId={currentUserId ?? chatContext.currentUserId}
-        onSendMessage={onSendMessage ?? chatContext.handleSendMessage}
-        onEditMessage={onEditMessage ?? chatContext.handleEditMessage}
-        onReactMessage={onReactMessage ?? chatContext.handleReactMessage}
+        currentUserId={currentUserId as string}
+        onSendMessage={onSendMessage ?? chatStorage.handleSendMessage}
+        onEditMessage={onEditMessage ?? chatStorage.handleEditMessage}
+        onReactMessage={onReactMessage ?? chatStorage.handleReactMessage}
         onClose={handleClose}
       />
     </Drawer>

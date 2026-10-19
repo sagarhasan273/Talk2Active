@@ -14,8 +14,8 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { useVoiceRoomStorage } from '@/core/contexts';
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
 import { useRoomTools } from '@/core/slices';
 
 interface RoomLoadingFallbackProps {
@@ -28,7 +28,7 @@ export function RoomLoadingFallback({ error: propError, onRetry, sx }: RoomLoadi
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { selectedRoom } = useVoiceRoomAction();
+  const { selectedRoom } = useVoiceRoomStorage();
   const { room } = useRoomTools();
   const liveKitSession = useLiveKitSession() as any;
 

@@ -1,7 +1,7 @@
 // src/sections/section-voice/voice-main-view.tsx
 import { useLiveKitSession } from '@/core/contexts/context-livekit';
-import { RoomChatProvider } from '@/core/contexts/context-room-chat';
-import { VoiceRoomActionProvider, useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+
+import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
 import RoomLoadingFallback from '@/sections/section-common/room-loading-fallback';
 import { Box } from '@mui/material'; // <-- Ensure Box is imported
 import { useCallback, useMemo } from 'react';
@@ -17,7 +17,7 @@ import { RoomlistMain } from '../voice-room-list';
 import { VoiceRoomListener } from '../voice-room-listener';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
-function VoiceMainContent() {
+export function VoiceMainView() {
   const { isAuthenticated, user } = useCredentials();
   const { isInRoom } = useLiveKitSession();
   const { room } = useRoomTools();
@@ -25,9 +25,8 @@ function VoiceMainContent() {
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
 
+  const { selectedRoom, livekitToken } = useVoiceRoomStorage();
   const {
-    selectedRoom,
-    livekitToken,
     isJoinGateOpen,
     selectedTab,
     handleSelectRoom,
@@ -35,9 +34,9 @@ function VoiceMainContent() {
     handleJoinRoom,
     handleLeaveRoom,
     handleBackToRooms,
-  } = useVoiceRoomAction();
+  } = useVoiceRoomSetting();
 
-  const participants = useMemo(() => (room?.participants || []), [room]);
+  const participants = useMemo(() => room?.participants || [], [room]);
 
   const currentSpeaker = useMemo(
     () => participants.find((participant) => isParticipantSpeaking(participant)) || null,
@@ -65,58 +64,62 @@ function VoiceMainContent() {
       );
     }
     return null;
-  }, [isInRoom, room, selectedTab, participants, currentSpeaker, handleBackToRooms, handleLeaveRoom]);
+  }, [
+    isInRoom,
+    room,
+    selectedTab,
+    participants,
+    currentSpeaker,
+    handleBackToRooms,
+    handleLeaveRoom,
+  ]);
 
   const mainContent = (
-    <RoomChatProvider>
-      <Box sx={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
-
-        {/* ── Room List Tab (Stacked via absolute positioning to preserve scroll DOM) ── */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            opacity: selectedTab === 'room-list' ? 1 : 0,
-            pointerEvents: selectedTab === 'room-list' ? 'auto' : 'none',
-            zIndex: selectedTab === 'room-list' ? 2 : 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <RoomlistMain
-            onSelectRoom={handleSelectRoom}
-            onCreateRoom={handleCreateRoom}
-            isVisible={selectedTab === 'room-list'}
-          />
-        </Box>
-
-        {/* ── Room Stage Tab ── */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            opacity: selectedTab !== 'room-list' ? 1 : 0,
-            pointerEvents: selectedTab !== 'room-list' ? 'auto' : 'none',
-            zIndex: selectedTab !== 'room-list' ? 2 : 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {livekitToken && room?.roomId ? (
-            <RoomContainerMain
-              key={room.roomId}
-              token={livekitToken}
-              onLeaveRoom={handleLeaveRoom}
-              onSettingsClick={editRoomBoolean.onTrue}
-              onBack={handleBackToRooms}
-            />
-          ) : (
-            selectedTab !== 'room-list' && <RoomLoadingFallback />
-          )}
-        </Box>
-
+    <Box sx={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
+      {/* ── Room List Tab (Stacked via absolute positioning to preserve scroll DOM) ── */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          opacity: selectedTab === 'room-list' ? 1 : 0,
+          pointerEvents: selectedTab === 'room-list' ? 'auto' : 'none',
+          zIndex: selectedTab === 'room-list' ? 2 : 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <RoomlistMain
+          onSelectRoom={handleSelectRoom}
+          onCreateRoom={handleCreateRoom}
+          isVisible={selectedTab === 'room-list'}
+        />
       </Box>
-    </RoomChatProvider>
+
+      {/* ── Room Stage Tab ── */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          opacity: selectedTab !== 'room-list' ? 1 : 0,
+          pointerEvents: selectedTab !== 'room-list' ? 'auto' : 'none',
+          zIndex: selectedTab !== 'room-list' ? 2 : 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {livekitToken && room?.roomId ? (
+          <RoomContainerMain
+            key={room.roomId}
+            token={livekitToken}
+            onLeaveRoom={handleLeaveRoom}
+            onSettingsClick={editRoomBoolean.onTrue}
+            onBack={handleBackToRooms}
+          />
+        ) : (
+          selectedTab !== 'room-list' && <RoomLoadingFallback />
+        )}
+      </Box>
+    </Box>
   );
 
   return (
@@ -150,15 +153,3 @@ function VoiceMainContent() {
     </>
   );
 }
-
-export function VoiceMainView() {
-  const isAuthOpen = useBoolean();
-
-  return (
-    <VoiceRoomActionProvider onOpenAuth={isAuthOpen.onTrue}>
-      <VoiceMainContent />
-    </VoiceRoomActionProvider>
-  );
-}
-
-export default VoiceMainView;

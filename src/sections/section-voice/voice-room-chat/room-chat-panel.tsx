@@ -22,7 +22,7 @@ import axios from 'axios';
 import { RoomChatMessage } from './room-chat-message';
 
 import { filterVisibleMessages } from '@/_mock/_messages';
-import { useRoomChat } from '@/core/contexts/context-room-chat';
+import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
 import { useRoomTools } from '@/core/slices';
 import { ChatMessage } from '@/types/type-room';
 import { uploadImage } from '@/utils/helper';
@@ -61,10 +61,10 @@ export const RoomChatPanel = ({
     messages,
     unreadCount,
     latestUnreadSender,
-    isChatVisible,
-    setIsAtBottom,
     markAllAsRead,
-  } = useRoomChat();
+  } = useVoiceRoomStorage();
+  const { isChatVisible,
+    setIsAtBottom, } = useVoiceRoomSetting();
 
   const [draft, setDraft] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);

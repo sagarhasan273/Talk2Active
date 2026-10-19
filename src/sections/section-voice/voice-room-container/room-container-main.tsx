@@ -10,8 +10,7 @@ import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useRoomChat } from '@/core/contexts/context-room-chat';
-import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
@@ -35,9 +34,9 @@ export function RoomContainerMain({
   const { localParticipant } = useLocalParticipant();
   const { playHandRaise } = useRoomSounds();
 
-  const { isJoining, isLeaving, isInRoom, selectedRoom } = useVoiceRoomAction();
+  const { isJoining, isLeaving, isInRoom, onToggleChat } = useVoiceRoomSetting();
 
-  const { onToggleChat } = useRoomChat();
+  const { selectedRoom } = useVoiceRoomStorage();
 
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});

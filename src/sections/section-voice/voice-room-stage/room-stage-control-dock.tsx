@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
-import { useVoiceRoomAction } from '@/core/contexts/context-voice-room-action';
+import { useVoiceRoomSetting } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Box, Button, IconButton, Popover, Tooltip, useMediaQuery, useTheme } from '@mui/material';
@@ -42,7 +42,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
 
-  const { handleLeaveRoom } = useVoiceRoomAction();
+  const { handleLeaveRoom } = useVoiceRoomSetting();
 
   const { playToggleMute, playToggleDeafen } = useRoomSounds();
 

@@ -7,7 +7,8 @@ import { useState } from 'react';
 
 import { ResizeWidthLeft } from '@/components/resizeable-container';
 
-import { useRoomChat } from '@/core/contexts/context-room-chat';
+import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
+import { useCredentials } from '@/core/slices';
 import RoomChatPanel from './room-chat-panel';
 
 const DEFAULT_SIDEBAR_WIDTH = 340;
@@ -24,16 +25,18 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
   const isDark = theme.palette.mode === 'dark';
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 
+  const { user } = useCredentials();
+  const currentUserId = user?.userId || '';
+
   const {
-    currentUserId,
     unreadCount,
     isUnreadMessage,
-    chatCollapsedBoolean,
     markAllAsRead,
     handleSendMessage,
     handleEditMessage,
     handleReactMessage,
-  } = useRoomChat();
+  } = useVoiceRoomStorage();
+  const { chatCollapsedBoolean } = useVoiceRoomSetting();
 
   const handleExpand = () => {
     chatCollapsedBoolean.onFalse();
