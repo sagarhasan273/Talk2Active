@@ -40,6 +40,7 @@ import { DefaultHeader } from '../voice-room-header/room-header-default';
 import { RoomCardCreation } from './room-list-card-creation';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
 import { VoiceRoomCard } from './room-list-card-main';
+import VoiceRoomCardSkeleton from './room-list-card-skeleton';
 import RoomListFooter from './room-list-footer';
 
 const CARD_HEIGHT = 296;
@@ -260,7 +261,7 @@ export const RoomlistMain = memo(function RoomlistMain({
   const { user, isAuthenticated } = useCredentials();
   const currentUserId = user?.userId;
 
-  const { rooms, getRoomById } = useRoomTools();
+  const { rooms, isRoomsLoading, getRoomById } = useRoomTools();
   const { handleSelectRoom } = useVoiceRoomAction();
 
   const logOpen = useBoolean();
@@ -272,7 +273,6 @@ export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoomRef.current = onSelectRoom;
   const onCreateRoomRef = useRef(onCreateRoom);
   onCreateRoomRef.current = onCreateRoom;
-
 
   const [filterRooms, setFilterRooms] = useState<FilterState>({
     searchQuery: '',
@@ -505,43 +505,59 @@ export const RoomlistMain = memo(function RoomlistMain({
         <RoomListHeaderSlot onCreateRoom={stableOnCreateRoom} />
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        <Box
-          ref={gridContainerRef}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${columns}, 1fr)`,
-            gap: `${GRID_GAP}px`,
-          }}
-        >
-          {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}
+        {isRoomsLoading ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columns}, 1fr)`,
+              gap: `${GRID_GAP}px`,
+            }}
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <VoiceRoomCardSkeleton key={`loading-skeleton-${i}`} sx={sxCard} />
+            ))}
+          </Box>
+        ) : (
+          <Box
+            ref={gridContainerRef}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columns}, 1fr)`,
+              gap: `${GRID_GAP}px`,
+            }}
+          >
+            {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}
 
-          {visibleCards.map((card, idx) => {
-            if (card === 'creation') {
+            {visibleCards.map((card, idx) => {
+              if (card === 'creation') {
+                return (
+                  <RoomCardCreation
+                    key="creation-card"
+                    onCreateRoom={stableOnCreateRoom}
+                    sx={sxCard}
+                  />
+                );
+              }
               return (
-                <RoomCardCreation
-                  key="creation-card"
-                  onCreateRoom={stableOnCreateRoom}
+                <VoiceRoomCard
+                  key={card.roomId}
+                  index={visibleSliceStart + idx - 1}
+                  roomData={card}
+                  currentUserId={currentUserId}
+                  cardWidth={cardWidth}
+                  onJoinRoom={stableOnSelectRoom}
+                  onAvatarClick={handleAvatarClick}
+                  onOverflowClick={handleOverflowClick}
                   sx={sxCard}
                 />
               );
-            }
-            return (
-              <VoiceRoomCard
-                key={card.roomId}
-                index={visibleSliceStart + idx - 1}
-                roomData={card}
-                currentUserId={currentUserId}
-                cardWidth={cardWidth}
-                onJoinRoom={stableOnSelectRoom}
-                onAvatarClick={handleAvatarClick}
-                onOverflowClick={handleOverflowClick}
-                sx={sxCard}
-              />
-            );
-          })}
+            })}
 
-          {paddingBottom > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingBottom}px` }} />}
-        </Box>
+            {paddingBottom > 0 && (
+              <Box sx={{ ...spacerSkeletonSx, height: `${paddingBottom}px` }} />
+            )}
+          </Box>
+        )}
 
         <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
         <RoomListFooter onCreateRoom={stableOnCreateRoom} />

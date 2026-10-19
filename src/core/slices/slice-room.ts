@@ -24,6 +24,7 @@ interface RoomState {
   room: null | RoomType;
   rooms: RoomType[];
   loading: boolean;
+  isRoomsLoading: boolean; // Added state for the global rooms list loading
   participants: RoomParticipantType[];
   isUnreadRoomMessage: boolean;
   // O(1) Cache map for storing user follower/following stats globally
@@ -35,6 +36,7 @@ const initialState: RoomState = {
   room: null,
   rooms: [],
   loading: false,
+  isRoomsLoading: false, // Initialized
   participants: [],
   isUnreadRoomMessage: false,
   userStatsMap: {},
@@ -74,6 +76,11 @@ export const roomSlice = createSlice({
 
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
+    },
+
+    // Reducer for the global rooms list loading state
+    setRoomsLoading: (state, action: PayloadAction<boolean>) => {
+      state.isRoomsLoading = action.payload;
     },
 
     setRooms: (state, action: PayloadAction<RoomType[]>) => {
@@ -236,6 +243,7 @@ export const roomSlice = createSlice({
 export const {
   setRoom,
   setRoomLoading,
+  setRoomsLoading,
   setRooms,
   addRoom,
   addParticipantToRoom,
@@ -250,6 +258,7 @@ export const selectRoomId = (state: RootState) => state.room.roomId;
 export const selectRoom = (state: RootState) => state.room.room;
 export const selectRooms = (state: RootState) => state.room.rooms;
 export const selectRoomLoading = (state: RootState) => state.room.loading;
+export const selectIsRoomsLoading = (state: RootState) => state.room.isRoomsLoading;
 export const selectParticipants = (state: RootState) => state.room.participants;
 export const selectIsUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 export const selectUserStatsMap = (state: RootState) => state.room.userStatsMap;
@@ -262,6 +271,7 @@ export const useRoomTools = () => {
   const room = useSelector(selectRoom);
   const rooms = useSelector(selectRooms);
   const loading = useSelector(selectRoomLoading);
+  const isRoomsLoading = useSelector(selectIsRoomsLoading);
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectIsUnreadRoomMessage);
 
@@ -278,6 +288,7 @@ export const useRoomTools = () => {
       setRoom: (roomData: RoomType | null) => dispatch(setRoom(roomData)),
       setRooms: (roomsList: RoomType[]) => dispatch(setRooms(roomsList)),
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
+      setRoomsLoading: (isLoading: boolean) => dispatch(setRoomsLoading(isLoading)),
       addRoom: (roomData: RoomType) => dispatch(addRoom(roomData)),
       addParticipantToRoom: (rId: string, participant: RoomParticipantType) =>
         dispatch(addParticipantToRoom({ roomId: rId, participant })),
@@ -298,11 +309,12 @@ export const useRoomTools = () => {
       room,
       rooms,
       loading,
+      isRoomsLoading,
       participants,
       isUnreadRoomMessage,
       getRoomById,
       ...actions,
     }),
-    [roomId, room, rooms, loading, participants, isUnreadRoomMessage, getRoomById, actions]
+    [roomId, room, rooms, loading, isRoomsLoading, participants, isUnreadRoomMessage, getRoomById, actions]
   );
 };
