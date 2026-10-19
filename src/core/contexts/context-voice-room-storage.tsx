@@ -60,17 +60,7 @@ export const VoiceRoomStorageProvider: React.FC<{ children: React.ReactNode }> =
   const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'm1',
-      authorId: 'system',
-      authorName: 'System',
-      text: globalRoom?.welcome_message || 'Welcome to the chat room!',
-      timestamp: '10:00 AM',
-      isSystem: true,
-      systemType: 'info',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [latestUnreadSender, setLatestUnreadSender] = useState<UnreadSender | null>(null);
@@ -340,6 +330,25 @@ export const VoiceRoomStorageProvider: React.FC<{ children: React.ReactNode }> =
     setLivekitToken(null);
     setUnreadCount(0);
   }, []);
+
+  // Inject the welcome message when the user joins, clear it when they leave
+  useEffect(() => {
+    if (globalRoom?.roomId) {
+      setMessages([
+        {
+          id: `sys-${Date.now()}`,
+          authorId: 'system',
+          authorName: 'System',
+          text: globalRoom.welcome_message || 'Welcome to the chat room!',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isSystem: true,
+          systemType: 'info',
+        },
+      ]);
+    } else {
+      setMessages([]);
+    }
+  }, [globalRoom?.roomId, globalRoom?.welcome_message]);
 
   const value = useMemo(
     () => ({
