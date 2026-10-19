@@ -5,6 +5,8 @@ import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
 import { Label } from '@/components/label';
 import { useCredentials } from '@/core/slices';
+import type { RootState } from '@/core/types'; // Import RootState for typed selector
+import type { UserStats } from '@/types/type-social';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
@@ -20,9 +22,10 @@ import {
   Stack,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux'; // Import useSelector
 import DialogReportUser from '../../components/dialogs/dialog-report-user';
 
 export type UserDisplayerProfile = {
@@ -75,12 +78,46 @@ export const UserDisplayer = ({
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const resolvedUserId = user.userId || user.id || '';
-  const displayHandle = user.genUserId
-    ? `ID: ${user.genUserId}`
-    : `Can't see Uid`;
+  const resolvedUserId = user.userId || '';
+  const displayHandle = user.genUserId ? `ID: ${user.genUserId}` : `Can't see Uid`;
   const isSelf = Boolean(currentUserId && resolvedUserId === currentUserId);
   const isBlocked = checkIfBlocked(resolvedUserId);
+
+  // O(1) Instant lookup from Redux userStatsMap (persists across closes and reopens)
+  const cachedStats = useSelector((state: RootState) => state.room?.userStatsMap?.[resolvedUserId]);
+
+  // Local state for instant optimistic updates while the modal is open
+  const [liveStats, setLiveStats] = useState({
+    follower_count: cachedStats?.follower_count ?? user.follower_count ?? 0,
+    friend_count: cachedStats?.friend_count ?? user.friend_count ?? 0,
+    following_count: cachedStats?.following_count ?? user.following_count ?? 0,
+  });
+
+  // Sync with Redux cache or props whenever modal opens or switches to another user
+  useEffect(() => {
+    setLiveStats({
+      follower_count: cachedStats?.follower_count ?? user.follower_count ?? 0,
+      friend_count: cachedStats?.friend_count ?? user.friend_count ?? 0,
+      following_count: cachedStats?.following_count ?? user.following_count ?? 0,
+    });
+  }, [resolvedUserId, cachedStats, user.follower_count, user.friend_count, user.following_count, open]);
+
+  const handleStatsUpdate = useCallback(
+    (updatedStatsList: UserStats[]) => {
+      if (!Array.isArray(updatedStatsList)) return;
+      const targetStats = updatedStatsList.find(
+        (s) => String(s.userId) === String(resolvedUserId)
+      );
+      if (targetStats) {
+        setLiveStats({
+          follower_count: targetStats.follower_count ?? 0,
+          friend_count: targetStats.friend_count ?? 0,
+          following_count: targetStats.following_count ?? 0,
+        });
+      }
+    },
+    [resolvedUserId]
+  );
 
   const accountCfg =
     AccountTypeConfig[user.accountType?.toLowerCase() ?? 'member'] ?? AccountTypeConfig.member;
@@ -96,9 +133,9 @@ export const UserDisplayer = ({
     count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count;
 
   const statItems = [
-    { label: 'Followers', count: user.follower_count ?? 0 },
-    { label: 'Friends', count: user.friend_count ?? 0 },
-    { label: 'Following', count: user.following_count ?? 0 },
+    { label: 'Followers', count: liveStats.follower_count },
+    { label: 'Friends', count: liveStats.friend_count },
+    { label: 'Following', count: liveStats.following_count },
   ];
 
   const handleCopyHandle = useCallback(
@@ -267,7 +304,7 @@ export const UserDisplayer = ({
                         '&:hover': {
                           bgcolor: accountCfg.bg,
                           color: accountCfg.color,
-                        }
+                        },
                       }}
                     />
 
@@ -418,6 +455,7 @@ export const UserDisplayer = ({
                         size="small"
                         variant="soft"
                         sx={{ flex: 1, minWidth: '100px' }}
+                        onStatsUpdate={handleStatsUpdate}
                       />
                     )}
 

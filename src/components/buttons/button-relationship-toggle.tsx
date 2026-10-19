@@ -18,6 +18,7 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { UserStats } from '@/types/type-social';
 import { usePopover } from 'src/components/custom-popover';
 import { Iconify } from 'src/components/iconify';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
@@ -42,6 +43,7 @@ export type ButtonRelationshipToggleProps = {
   sx?: SxProps<Theme>;
   followSx?: SxProps<Theme>;
   unfollowSx?: SxProps<Theme>;
+  onStatsUpdate?: (data: UserStats[]) => void;
 };
 
 export function ButtonRelationshipToggle({
@@ -55,6 +57,7 @@ export function ButtonRelationshipToggle({
   sx,
   followSx,
   unfollowSx,
+  onStatsUpdate
 }: ButtonRelationshipToggleProps) {
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -86,6 +89,7 @@ export function ButtonRelationshipToggle({
 
       if (response.status && response.data) {
         dispatch(updateParticipants(response.data));
+        onStatsUpdate?.(response.data);
       }
     } catch {
       setFollowing(false);
@@ -106,6 +110,7 @@ export function ButtonRelationshipToggle({
 
       if (response.status && response.data) {
         dispatch(updateParticipants(response.data));
+        onStatsUpdate?.(response.data);
       }
     } catch {
       setFollowing(true);
