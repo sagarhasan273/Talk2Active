@@ -48,7 +48,7 @@ export function RoomContainerMain({
     if (!localParticipant || micInitializedRef.current) return;
 
     localParticipant
-      .setMicrophoneEnabled(true, {
+      .setMicrophoneEnabled(false, {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,

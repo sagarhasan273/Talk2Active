@@ -57,19 +57,9 @@ export function LiveKitProvider({
     if (customServerUrl) setServerUrl(customServerUrl);
 
     try {
-      // 1. Attempt the connection
+      // 1. Attempt the connection ONLY. Do not request microphone yet.
       await room.connect(targetUrl, newToken);
 
-      // 2. Try enabling the microphone once connected
-      try {
-        await room.localParticipant.setMicrophoneEnabled(true, {
-          echoCancellation: true,      // Standard Acoustic Echo Cancellation
-          noiseSuppression: true,      // Standard WebRTC noise suppression
-          autoGainControl: true,       // Normalizes volume spikes
-        });
-      } catch (err) {
-        console.warn('Could not auto-enable microphone on join:', err);
-      }
     } catch (error) {
       // 🛑 CLEANUP ON FAILURE: If joining fails, reset everything.
       console.error('LiveKit connection failed:', error);
