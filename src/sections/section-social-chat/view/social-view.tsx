@@ -149,7 +149,7 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
       <Box
         sx={{
           position: 'fixed',
-          zIndex: (muiTheme) => muiTheme.zIndex.modal + muiTheme.zIndex.appBar + 10,
+          zIndex: (muiTheme) => muiTheme.zIndex.appBar,
           bottom: { xs: 16, sm: 20 },
           right: { xs: 16, sm: 20 },
           display: 'flex',
