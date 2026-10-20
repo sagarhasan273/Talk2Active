@@ -144,7 +144,6 @@ export const VoiceRoomSettingProvider: React.FC<{
       setIsJoinGateOpen(false);
       setSelectedTab('room-space');
 
-      // 1. Fetch token and room data
       const response = await joinRoomMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
@@ -154,8 +153,19 @@ export const VoiceRoomSettingProvider: React.FC<{
         setRoom(response.data.room);
         setLivekitToken(response.data.token);
 
-        await connectToRoom(response.data.token);
-        playUserJoin();
+        try {
+          await connectToRoom(response.data.token);
+          playUserJoin();
+        } catch (connectionError) {
+          console.error('[RoomContainer] LiveKit connection failed. Cleaning up backend state...', connectionError);
+
+          await leaveRoomMutation({
+            roomId: selectedRoom.roomId,
+            userId: user.userId,
+          }).unwrap();
+
+          throw connectionError;
+        }
       }
     } catch (error) {
       setSelectedTab('room-list');
