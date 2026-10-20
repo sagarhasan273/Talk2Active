@@ -51,14 +51,11 @@ export function RoomChatMain({ topicContext = '', title }: RoomChatMainProps) {
         height: '100%',
         minHeight: 0,
         alignItems: 'stretch',
-        bgcolor: isDark ? '#181c26' : '#ffffff',
+        bgcolor: 'background.default',
         borderRadius: 1,
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
         position: 'relative',
-        boxShadow: isDark
-          ? '0 4px 20px -2px rgba(0, 0, 0, 0.4)'
-          : '0 4px 16px -2px rgba(15, 23, 42, 0.05)',
       }}
     >
       {chatCollapsedBoolean.value ? (

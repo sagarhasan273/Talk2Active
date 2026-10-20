@@ -58,7 +58,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   const [remoteVolume, setRemoteVolume] = useState<number>(50);
 
   const isSelf = Boolean(user?.isSelf);
-  const userId = String(user?.userId || user?.id || '');
+  const userId = String(user?.userId || '');
 
   // 1. Determine Muted State
   const isMuted = isSelf

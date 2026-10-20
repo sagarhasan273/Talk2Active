@@ -303,14 +303,15 @@ export const RoomlistMain = memo(function RoomlistMain({
       return;
     }
     onSelectRoomRef.current(room);
-  }, []);
+  }, [isAuthenticated]);
+
   const stableOnCreateRoom = useCallback(() => {
     if (!isAuthenticated) {
       logOpen.onTrue();
       return;
     }
     onCreateRoomRef.current();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleAvatarClick = useCallback((rawUser: any) => {
     if (!isAuthenticated) {
@@ -318,7 +319,7 @@ export const RoomlistMain = memo(function RoomlistMain({
       return;
     }
     modalsRef.current?.openProfile(rawUser);
-  }, []);
+  }, [isAuthenticated]);
 
   const handleOverflowClick = useCallback((room: RoomType) => {
     if (!isAuthenticated) {
@@ -326,7 +327,7 @@ export const RoomlistMain = memo(function RoomlistMain({
       return;
     }
     modalsRef.current?.openRoomDialog(room);
-  }, []);
+  }, [isAuthenticated]);
 
   const handleJoinFromSocialChat = useCallback(
     (roomId: string) => {
@@ -336,7 +337,7 @@ export const RoomlistMain = memo(function RoomlistMain({
       const roomObj = getRoomById(roomId);
       if (roomObj) handleSelectRoom(roomObj);
     },
-    [getRoomById, handleSelectRoom]
+    [isAuthenticated, getRoomById, handleSelectRoom]
   );
 
   const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {

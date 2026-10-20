@@ -9,7 +9,6 @@ import { Box, Container } from '@mui/material';
 export type DashboardLayoutProps = {
   sx?: SxProps<Theme>;
   header?: React.ReactNode;
-  filter?: React.ReactNode;
   mainContent?: React.ReactNode;
   footer?: React.ReactNode;
   fixedHeader?: boolean;
@@ -19,7 +18,6 @@ export type DashboardLayoutProps = {
 export function VoiceRoomLayout({
   sx,
   header,
-  filter,
   mainContent,
   footer,
   fixedHeader = false,

@@ -35,8 +35,14 @@ export const accountSlice = createSlice({
   initialState,
   reducers: {
     setAccount: (state, action: PayloadAction<UserState['user']>) => {
-      state.user = action.payload;
-      state.isAuthenticated = Boolean(action.payload && action.payload.userId);
+      const hasValidId = action.payload && (
+        action.payload.userId ||
+        action.payload.genUserId
+      );
+      if (hasValidId) {
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      }
     },
 
     setFriends: (state, action: PayloadAction<UserState['friends']>) => {
@@ -213,7 +219,7 @@ export const useCredentials = () => {
   const blockedUserIds = useSelector(selectBlockedUserIds);
   const authLoading = useSelector(selectAuthLoading);
 
-  const currentUserId = String(user?.userId || (user as any)?._id || '');
+  const currentUserId = String(user?.userId || '');
 
   const followingIds = useMemo(() => {
     const set = new Set<string>();

@@ -24,7 +24,7 @@ export function VoiceMainView() {
   const editRoomBoolean = useBoolean();
   const isAuthOpen = useBoolean();
 
-  const { selectedRoom, livekitToken } = useVoiceRoomStorage();
+  const { selectedRoom } = useVoiceRoomStorage();
   const {
     isJoinGateOpen,
     selectedTab,
