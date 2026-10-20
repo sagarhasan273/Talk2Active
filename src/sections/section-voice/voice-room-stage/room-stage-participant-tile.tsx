@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-stage/room-stage-participant-tile.tsx
 
-import { useIsSpeaking } from '@livekit/components-react';
+import { useConnectionState, useIsSpeaking } from '@livekit/components-react';
 import {
   alpha,
   Avatar,
@@ -11,7 +11,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { Participant, Track } from 'livekit-client';
+import { ConnectionQuality, ConnectionState, Participant, ParticipantEvent, Track } from 'livekit-client';
 import {
   BadgeCheck,
   CheckCircle,
@@ -32,7 +32,6 @@ import { RoomUserControllerMain } from '../voice-room-user-controller';
 import DialogRateSpeakingLevel from '../voice-room-user-controller/dialog-rate-speaking-level';
 import { VoiceSpeakingIndicator } from '../voice-speaking-indicator';
 
-// --- ANIMATIONS ---
 const handWiggle = keyframes`
   0%, 100% { transform: scale(1) rotate(0deg); }
   25% { transform: scale(1.1) rotate(12deg); }
@@ -46,7 +45,6 @@ const popReaction = keyframes`
   100% { transform: scale(0.8) translateY(-10px); opacity: 0; }
 `;
 
-// --- STATUS DOT CONFIGURATION ---
 const STATUS_OPTIONS: ChatUserStatus[] = [
   { name: 'online', label: 'Online', icon: CheckCircle, color: 'success.main', bgColor: 'success', bgColorChannel: 'mainChannel' },
   { name: 'busy', label: 'Busy', icon: Clock, color: 'error.light', bgColor: 'error', bgColorChannel: 'lightChannel' },
@@ -57,6 +55,13 @@ const STATUS_OPTIONS: ChatUserStatus[] = [
 ];
 
 const STATUS_MAP = Object.fromEntries(STATUS_OPTIONS.map((s) => [s.name, s]));
+
+const OVERLAY_LABELS: Record<string, { label: string; showSpinner?: boolean }> = {
+  [ConnectionState.Connecting]: { label: 'Connecting...', showSpinner: true },
+  [ConnectionState.Reconnecting]: { label: 'Reconnecting...' },
+  [ConnectionState.Disconnected]: { label: 'Left Room' },
+  poor: { label: 'Poor Connection' },
+};
 
 const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
   const statusOption = STATUS_MAP[status || 'online'];
@@ -87,10 +92,11 @@ const StatusDot = styled(Box)<{ status?: string }>(({ theme, status }) => {
 });
 
 const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) => {
-  const colors = {
+  const colors: Record<string, string> = {
     connecting: theme.palette.warning.main,
     disconnected: theme.palette.error.main,
     reconnecting: theme.palette.error.light,
+    poor: theme.palette.warning.main,
     closed: theme.palette.grey[600],
   };
 
@@ -99,7 +105,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    backgroundColor: alpha(colors[status as keyof typeof colors] || colors.closed, 0.9),
+    backgroundColor: alpha(colors[status] || colors.closed, 0.9),
     backdropFilter: 'blur(6px)',
     color: 'white',
     padding: theme.spacing(0.5, 1.25),
@@ -110,6 +116,7 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
     gap: theme.spacing(0.75),
     border: `1px solid ${alpha(theme.palette.common.white, 0.2)}`,
     zIndex: 10,
+    whiteSpace: 'nowrap',
     animation: 'fadeIn 0.3s ease',
     '@keyframes fadeIn': {
       '0%': { opacity: 0, transform: 'translate(-50%, -40%)' },
@@ -118,13 +125,6 @@ const ConnectionOverlay = styled(Box)<{ status: string }>(({ theme, status }) =>
   };
 });
 
-type ParticipantTileProps = {
-  participant: ParticipantStageType;
-};
-
-// --------------------------------------------------------------------------
-// Subcomponent: LiveKit Audio Monitor (Only mounts when rawParticipant is valid)
-// --------------------------------------------------------------------------
 interface LiveParticipantAudioProps {
   rawParticipant: Participant;
   participantId: string;
@@ -163,27 +163,56 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
   );
 };
 
+type ParticipantTileProps = {
+  participant: ParticipantStageType;
+};
+
 export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps) => {
   const theme = useTheme();
   const openDrawer = useBoolean();
+  const onRateOpen = useBoolean();
   const isDark = theme.palette.mode === 'dark';
 
-  const onRateOpen = useBoolean();
-
   const {
+    id,
+    userId,
+    name,
+    profilePhoto,
+    verified,
+    isHost,
     isSelf,
     handRaised,
     activeReactionEmoji,
     status,
     rawParticipant,
-    connectionStatus,
+    isGhost,
   } = participant;
 
-  // 2. Safe speaking state (never calls useIsSpeaking at top level)
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const roomState = useConnectionState();
+  const [quality, setQuality] = useState<ConnectionQuality | undefined>(
+    rawParticipant?.connectionQuality
+  );
 
-  // 3. Transient reaction animation
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [showReaction, setShowReaction] = useState(false);
+
+  useEffect(() => {
+    if (!rawParticipant) {
+      setQuality(undefined);
+      return undefined;
+    }
+
+    setQuality(rawParticipant.connectionQuality);
+
+    const handleQualityChange = (newQuality: ConnectionQuality) => {
+      setQuality(newQuality);
+    };
+
+    rawParticipant.on(ParticipantEvent.ConnectionQualityChanged, handleQualityChange);
+    return () => {
+      rawParticipant.off(ParticipantEvent.ConnectionQualityChanged, handleQualityChange);
+    };
+  }, [rawParticipant]);
 
   useEffect(() => {
     if (activeReactionEmoji) {
@@ -194,67 +223,65 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
     return undefined;
   }, [activeReactionEmoji]);
 
-  // 4. Initials fallback
   const initials = useMemo(
     () =>
-      participant?.name
+      name
         ?.split(' ')
         .filter(Boolean)
-        .map((p: string) => p[0])
+        .map((p) => p[0])
         .slice(0, 2)
         .join('')
         .toUpperCase() || '?',
-    [participant?.name]
+    [name]
   );
 
-  // 5. Connection Overlay
   const connectionOverlayElement = useMemo(() => {
-    switch (connectionStatus) {
-      case 'connecting':
-        return (
-          <ConnectionOverlay status="connecting">
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                border: '2px solid rgba(255,255,255,0.3)',
-                borderTopColor: 'white',
-                animation: 'spin 0.8s linear infinite',
-                '@keyframes spin': {
-                  '0%': { transform: 'rotate(0deg)' },
-                  '100%': { transform: 'rotate(360deg)' },
-                },
-              }}
-            />
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-              Connecting...
-            </Typography>
-          </ConnectionOverlay>
-        );
+    let effectiveStatus: string | undefined;
 
-      case 'reconnecting':
-        return (
-          <ConnectionOverlay status="reconnecting">
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-              Re-connecting
-            </Typography>
-          </ConnectionOverlay>
-        );
-
-      case 'disconnected':
-        return (
-          <ConnectionOverlay status="disconnected">
-            <Typography variant="caption" sx={{ fontWeight: 700 }}>
-              Disconnected
-            </Typography>
-          </ConnectionOverlay>
-        );
-
-      default:
-        return null;
+    if (isGhost) {
+      effectiveStatus = ConnectionState.Disconnected;
+    } else if (isSelf) {
+      if (roomState !== ConnectionState.Connected) {
+        effectiveStatus = roomState;
+      }
+    } else if (!rawParticipant) {
+      effectiveStatus = ConnectionState.Connecting;
+    } else if (quality === ConnectionQuality.Lost) {
+      effectiveStatus = ConnectionState.Reconnecting;
+    } else if (quality === ConnectionQuality.Poor) {
+      effectiveStatus = 'poor';
     }
-  }, [connectionStatus]);
+
+    const config = effectiveStatus ? OVERLAY_LABELS[effectiveStatus] : undefined;
+    if (!config || !effectiveStatus) return null;
+
+    return (
+      <ConnectionOverlay status={effectiveStatus}>
+        {config.showSpinner && (
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              border: '2px solid rgba(255,255,255,0.3)',
+              borderTopColor: 'white',
+              animation: 'spin 0.8s linear infinite',
+              '@keyframes spin': {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' },
+              },
+            }}
+          />
+        )}
+        <Typography variant="caption" sx={{ fontWeight: 700 }}>
+          {config.label}
+        </Typography>
+      </ConnectionOverlay>
+    );
+  }, [isGhost, isSelf, roomState, rawParticipant, quality]);
+
+  const statusConfig = status ? STATUS_MAP[status] : undefined;
+  const StatusIcon = statusConfig?.icon;
 
   return (
     <>
@@ -295,7 +322,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
               : '0 4px 14px -2px rgba(15, 23, 42, 0.05)',
           transition:
             'border-color 0.2s ease, transform 0.18s ease, background-color 0.2s ease, box-shadow 0.2s ease',
-
           '&:hover': {
             borderColor: handRaised
               ? theme.palette.warning.main
@@ -306,28 +332,22 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
               ? '0 10px 24px -4px rgba(0, 0, 0, 0.5)'
               : '0 10px 24px -4px rgba(15, 23, 42, 0.09)',
           },
-
           '&:focus-visible': {
             boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
           },
         }}
       >
-        {/* 1. AFK / Busy Status Dot */}
-        {status && !['online', 'offline'].includes(status) && (
-          <Tooltip title={STATUS_MAP[status]?.label} arrow placement="top">
+        {status && !['online', 'offline'].includes(status) && statusConfig && (
+          <Tooltip title={statusConfig.label} arrow placement="top">
             <StatusDot status={status}>
-              {(() => {
-                const IconComponent = STATUS_MAP[status]?.icon;
-                return IconComponent ? <IconComponent /> : null;
-              })()}
+              {StatusIcon && <StatusIcon />}
               <Typography variant="caption" sx={{ ml: 0.5, fontSize: 10, fontWeight: 700 }}>
-                {STATUS_MAP[status]?.label}
+                {statusConfig.label}
               </Typography>
             </StatusDot>
           </Tooltip>
         )}
 
-        {/* 2. Dynamic Reaction Pop */}
         {showReaction && activeReactionEmoji && (
           <Box
             sx={{
@@ -346,7 +366,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           </Box>
         )}
 
-        {/* 3. Full-Fill Avatar Block */}
         <Box
           sx={{
             position: 'relative',
@@ -358,8 +377,8 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
           }}
         >
           <Avatar
-            src={participant?.profilePhoto}
-            alt={participant?.name}
+            src={profilePhoto}
+            alt={name}
             sx={{
               width: '100%',
               maxWidth: { xs: 72, sm: 88, md: 96 },
@@ -377,7 +396,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
               filter: connectionOverlayElement ? 'blur(2px) grayscale(50%)' : 'none',
               borderColor: isSpeaking
                 ? theme.palette.success.main
-                : participant?.isHost
+                : isHost
                   ? alpha(theme.palette.primary.main, 0.55)
                   : isDark
                     ? alpha(theme.palette.common.white, 0.12)
@@ -390,8 +409,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
 
           {connectionOverlayElement}
 
-          {/* 4. Floating Host Crown */}
-          {participant?.isHost && !connectionOverlayElement && (
+          {isHost && !connectionOverlayElement && (
             <Box
               sx={{
                 position: 'absolute',
@@ -428,7 +446,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Box>
           )}
 
-          {/* 5. Hand Raised Badge */}
           {handRaised && !connectionOverlayElement && (
             <Tooltip title="Hand Raised" arrow placement="top">
               <Box
@@ -454,17 +471,15 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Tooltip>
           )}
 
-          {/* 6. Isolated Audio Indicator - strictly guarded */}
           {!connectionOverlayElement && rawParticipant && (
             <LiveParticipantAudio
               rawParticipant={rawParticipant}
-              participantId={String(participant.id)}
+              participantId={id}
               onSpeakingChange={setIsSpeaking}
             />
           )}
         </Box>
 
-        {/* 7. Bottom Meta Row */}
         <Box
           sx={{
             width: '100%',
@@ -489,7 +504,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
               opacity: connectionOverlayElement ? 0.6 : 1,
             }}
           >
-            {participant?.name}
+            {name}
           </Typography>
 
           {isSelf && (
@@ -513,7 +528,7 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
             </Box>
           )}
 
-          {participant?.verified && (
+          {verified && (
             <Box
               component="span"
               sx={{
@@ -530,7 +545,6 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
         </Box>
       </Box>
 
-      {/* Profile Modal Drawer */}
       <RoomUserControllerMain
         open={openDrawer.value}
         onClose={openDrawer.onFalse}
@@ -538,15 +552,14 @@ export const ParticipantTile = React.memo(({ participant }: ParticipantTileProps
         onRateOpen={onRateOpen}
       />
 
-      {/* Standalone Rating Dialog */}
       <DialogRateSpeakingLevel
         open={onRateOpen.value}
-        onClose={() => onRateOpen.onFalse()}
-        userId={participant?.userId}
-        userName={participant?.name}
+        onClose={onRateOpen.onFalse}
+        userId={userId}
+        userName={name}
       />
     </>
   );
 });
 
-export default React.memo(ParticipantTile);
+export default ParticipantTile;

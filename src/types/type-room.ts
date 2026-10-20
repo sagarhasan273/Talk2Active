@@ -1,4 +1,4 @@
-import type { ConnectionState, LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
+import type { LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
 import type { LucideIcon } from 'lucide-react';
 import type {
   RoomCreateSchema,
@@ -98,42 +98,21 @@ export type ParticipantRoomRole = 'host' | 'co-host' | 'speaker' | 'listener';
 
 export type ParticipantAudioState = 'speaking' | 'unmuted' | 'muted' | 'listening';
 
-export type ParticipantStageType = {
-  // Identifiers
+export type ParticipantStageType = Omit<
+  RoomParticipantType,
+  'name' | 'username' | 'joinedAt'
+> & {
   id: string;
-  userId: string;
-  genUserId?: string;
-
-  // Profile & Details
   name: string;
   username: string;
-  profilePhoto: string;
-  verified: boolean;
-  accountType?: UserType['accountType'];
+  joinedAt: string;
   status?: string;
-  joinedAt: string,
-  bio?: string,
-
-  // Room State & Permissions
   role: ParticipantRoomRole;
-  isHost: boolean;
-  isSelf: boolean;
   handRaised: boolean;
   activeReactionEmoji: string | null;
-
-  audioState?: ParticipantAudioState;
-  isSpeaking?: boolean;
-  connectionStatus?: ConnectionState;
-  hasJoin?: boolean;
-
-  isFollowing: boolean;
-  isBlocked: boolean;
-  follower_count: number,
-  following_count: number,
-  friend_count: number,
-
   rawParticipant?: Participant | RemoteParticipant | LocalParticipant;
-}
+  isGhost?: boolean;
+};
 
 export interface ChatReaction {
   emoji: string;

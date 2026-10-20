@@ -38,7 +38,7 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
 
   const { user, followers, following, friends, isAuthenticated } = useCredentials();
 
-  const { unreadFriendsCount, hasUnreadMessages, checkOnlineUsers } = useSocialStorage();
+  const { unreadFriendsCount, hasUnreadMessages, checkOnlineUsers, setActiveFriend } = useSocialStorage();
 
   const currentUserId = user?.userId || '';
   const currentUserName = user?.name || user?.username || 'You';
@@ -130,6 +130,7 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
       if (target.closest('.MuiPopover-root') || target.closest('.MuiPopper-root')) return;
 
       setOpen(false);
+      setActiveFriend(null)
     };
 
     if (open) {
@@ -150,7 +151,7 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
         sx={{
           position: 'fixed',
           zIndex: (muiTheme) => muiTheme.zIndex.appBar,
-          bottom: { xs: 16, sm: 20 },
+          bottom: { xs: 20, sm: 20 },
           right: { xs: 16, sm: 20 },
           display: 'flex',
           flexDirection: 'column',

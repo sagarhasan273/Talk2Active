@@ -19,16 +19,17 @@ import ParticipantTile from './room-stage-participant-tile';
 const GHOST_DURATION_MS = 3000;
 
 function parseParticipant(
-  data: RoomParticipantType,
+  data: Partial<RoomParticipantType> & { userId: string },
   livekitP?: Participant,
   roomState?: ConnectionState,
   localIdentity?: string,
-  isHandRaised: boolean = false,
+  isHandRaised = false,
   activeReactionEmoji: string | null = null,
-  isGhost: boolean = false
-): ParticipantStageType & { isGhost?: boolean } {
+  isGhost = false
+): ParticipantStageType {
   const id = String(data.userId);
   const isSelf = Boolean(data.isSelf || (localIdentity && localIdentity === id));
+  const isHost = Boolean(data.isHost);
 
   const connectionStatus = isGhost
     ? ConnectionState.Disconnected
@@ -39,31 +40,30 @@ function parseParticipant(
         : ConnectionState.Connecting;
 
   return {
-    ...data,
-    id,
     userId: id,
+    id,
+    genUserId: data.genUserId ?? '',
     name: livekitP?.name || data.name || (isSelf ? 'You' : 'Anonymous'),
-    username: data.username || '',
-    profilePhoto: data.profilePhoto || '',
-    genUserId: data.genUserId || '',
-    accountType: data.accountType || 'member',
-    status: isGhost ? 'offline' : 'online',
-    isHost: Boolean(data.isHost),
-    handRaised: isGhost ? false : isHandRaised,
-    activeReactionEmoji: isGhost ? null : activeReactionEmoji,
-    role: data.isHost ? 'host' : 'listener',
-    isSelf,
-    isFollowing: Boolean(data.isFollowing),
-    isBlocked: Boolean(data.isBlocked),
+    username: data.username ?? '',
+    profilePhoto: data.profilePhoto ?? '',
+    bio: data.bio ?? '',
     verified: Boolean(data.verified),
+    accountType: data.accountType ?? 'member',
     follower_count: data.follower_count ?? 0,
     following_count: data.following_count ?? 0,
     friend_count: data.friend_count ?? 0,
-    joinedAt: new Date(data.joinedAt).toISOString(),
+    isFollowing: Boolean(data.isFollowing),
+    isBlocked: Boolean(data.isBlocked),
+    isHost,
+    isSelf,
+    joinedAt: data.joinedAt ? new Date(data.joinedAt).toISOString() : new Date().toISOString(),
+    status: isGhost ? 'offline' : 'online',
+    role: isHost ? 'host' : 'listener',
+    handRaised: isGhost ? false : isHandRaised,
+    activeReactionEmoji: isGhost ? null : activeReactionEmoji,
     rawParticipant: isGhost ? undefined : livekitP,
-    connectionStatus,
     isGhost,
-  } as ParticipantStageType & { isGhost?: boolean };
+  };
 }
 
 export interface RoomStageParticipantsProps extends BoxProps {
@@ -88,7 +88,6 @@ export const RoomStageParticipants = ({
   const { localParticipant } = useLocalParticipant();
   const { playUserLeave } = useRoomSounds();
 
-  // Track which participants are actively sharing their screen
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const sharingParticipantIds = useMemo(
     () =>
@@ -106,12 +105,10 @@ export const RoomStageParticipants = ({
   const ghostTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const playUserLeaveRef = useRef(playUserLeave);
 
-  // Keep play sound reference fresh without triggering effect re-runs
   useEffect(() => {
     playUserLeaveRef.current = playUserLeave;
   }, [playUserLeave]);
 
-  // Clean up timers on unmount
   useEffect(() => {
     return () => {
       Object.values(ghostTimersRef.current).forEach(clearTimeout);
@@ -119,11 +116,9 @@ export const RoomStageParticipants = ({
     };
   }, []);
 
-  // Sync incoming participants: keep slots stable, update data, ghost dropouts
   useEffect(() => {
     const propsMap = new Map(participants.map((p) => [String(p.userId), p]));
 
-    // 1. Cancel ghost status for any user that returned
     setGhostIds((prevGhosts) => {
       let modified = false;
       const nextGhosts = new Set(prevGhosts);
@@ -146,37 +141,28 @@ export const RoomStageParticipants = ({
     setOrderedParticipants((prevOrdered) => {
       const existingIds = new Set<string>();
 
-      // 2. Update existing entries in-place so props changes reflect immediately
       const updatedList = prevOrdered.map((old) => {
         const id = String(old.userId);
         existingIds.add(id);
 
         const freshData = propsMap.get(id);
+        if (freshData) return freshData;
 
-        if (freshData) {
-          return freshData; // Data updated, position preserved
-        }
-
-        // 3. User missing from props -> start 3s ghost timer if not already active
         if (!ghostTimersRef.current[id]) {
           setGhostIds((g) => new Set(g).add(id));
 
           ghostTimersRef.current[id] = setTimeout(() => {
-            // Remove ghost state
             setGhostIds((g) => {
               const next = new Set(g);
               next.delete(id);
               return next;
             });
 
-            // Remove participant completely from stage
             setOrderedParticipants((current) =>
               current.filter((item) => String(item.userId) !== id)
             );
 
-            // 🔊 Trigger user leave sound once ghost is pruned
             playUserLeaveRef.current?.();
-
             delete ghostTimersRef.current[id];
           }, GHOST_DURATION_MS);
         }
@@ -184,14 +170,11 @@ export const RoomStageParticipants = ({
         return old;
       });
 
-      // 4. Append actual newcomers to the bottom without shuffling
       const newcomers = participants.filter((p) => !existingIds.has(String(p.userId)));
-
       return newcomers.length > 0 ? [...updatedList, ...newcomers] : updatedList;
     });
   }, [participants]);
 
-  // Map to LiveKit participant details and pin self to the end
   const displayParticipants = useMemo(() => {
     const livekitMap = new Map<string, Participant>();
 
@@ -202,24 +185,41 @@ export const RoomStageParticipants = ({
       if (p?.identity) livekitMap.set(String(p.identity), p);
     });
 
+    const processedIds = new Set<string>();
+
     const parsed = orderedParticipants.map((p) => {
       const id = String(p.userId);
-      const isGhost = ghostIds.has(id);
-      const isHandRaised = raisedHandsSet.has(id);
-      const activeReactionEmoji = participantReactions[id] || null;
+      processedIds.add(id);
+
+      const isGhost = ghostIds.has(id) && !livekitMap.has(id);
 
       return parseParticipant(
         p,
         livekitMap.get(id),
         room?.state,
         localParticipant?.identity,
-        isHandRaised,
-        activeReactionEmoji,
+        raisedHandsSet.has(id),
+        participantReactions[id] || null,
         isGhost
       );
     });
 
-    // 🔒 Always keep self at the end of the list
+    livekitMap.forEach((lkParticipant, id) => {
+      if (!processedIds.has(id)) {
+        parsed.push(
+          parseParticipant(
+            { userId: id, name: lkParticipant.name },
+            lkParticipant,
+            room?.state,
+            localParticipant?.identity,
+            raisedHandsSet.has(id),
+            participantReactions[id] || null,
+            false
+          )
+        );
+      }
+    });
+
     const others = parsed.filter((p) => !p.isSelf);
     const self = parsed.filter((p) => p.isSelf);
 
@@ -234,18 +234,13 @@ export const RoomStageParticipants = ({
     participantReactions,
   ]);
 
+  console.log(remoteLiveKitParticipants);
+
   return (
-    <Box
-      sx={{
-        display: 'contents',
-        width: 1,
-        ...sx,
-      }}
-      {...other}
-    >
+    <Box sx={{ display: 'contents', width: 1, ...sx }} {...other}>
       {displayParticipants.map((participant) => {
         const isGhost = Boolean(participant.isGhost);
-        const isSharingScreen = sharingParticipantIds.has(String(participant.id));
+        const isSharingScreen = sharingParticipantIds.has(participant.id);
 
         return (
           <Box
@@ -262,7 +257,6 @@ export const RoomStageParticipants = ({
               pointerEvents: isGhost ? 'none' : 'auto',
             }}
           >
-            {/* Live Screen-Sharing Indicator Badge on Tile */}
             {isSharingScreen && !isGhost && (
               <Box
                 sx={{

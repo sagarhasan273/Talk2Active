@@ -1,82 +1,69 @@
-import { z as zod } from 'zod';
+import { z } from 'zod';
+import { DatePreprocessor } from './schema-chat';
+
+const passwordRule = z.string().min(8, { message: 'Password must be at least 8 characters' });
 
 // Main User Schema
-export const UserBaseSchema = zod.object({
-  userId: zod.string(),
-  genUserId: zod.string().regex(/^USR[A-F0-9]{10}$/, {
+export const UserBaseSchema = z.object({
+  userId: z.string(),
+  genUserId: z.string().regex(/^USR[A-F0-9]{10}$/, {
     message: 'User ID must follow the format USRXXXXXXXXXX',
   }),
-  googleId: zod.string(),
-  username: zod
+  googleId: z.string(),
+  username: z
     .string()
     .min(3, { message: 'Username must be at least 3 characters' })
     .max(30, { message: 'Username cannot exceed 30 characters' })
     .regex(/^[a-zA-Z0-9_]+$/, {
       message: 'Username can only contain letters, numbers, and underscores',
-    }).optional(),
-  email: zod
+    })
+    .optional(),
+  email: z
     .string()
     .email({ message: 'Invalid email address' })
     .min(1, { message: 'Email is required' }),
-  profilePhoto: zod
-    .string()
-    .url({ message: 'Invalid URL for profile photo' }),
-  bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }),
-  name: zod
+  profilePhoto: z.string().url({ message: 'Invalid URL for profile photo' }),
+  bio: z.string().max(500, { message: 'Bio cannot exceed 500 characters' }),
+  name: z
     .string()
     .min(2, { message: 'Full name must be at least 2 characters' })
     .max(100, { message: 'Full name cannot exceed 100 characters' })
     .optional(),
-  password: zod
+  password: z
     .string()
     .min(1, { message: 'Password is required' })
     .regex(/^\$argon2[id]?d?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[a-zA-Z0-9+/]+\$[a-zA-Z0-9+/]+/, {
       message: 'Password must be a valid Argon2 hash',
-    }).optional(),
-  lastActive: zod
-    .union([zod.string(), zod.date()]).optional(),
-  verified: zod.boolean(),
-  accountType: zod
-    .enum(['admin', 'supporter', 'member']),
-  follower_count: zod.number().int().nonnegative(),
-  following_count: zod.number().int().nonnegative(),
-  friend_count: zod.number().int().nonnegative(),
-
-  createdAt: zod.date().optional(),
-  updatedAt: zod.date().optional(),
+    })
+    .optional(),
+  lastActive: z.union([z.string(), z.date()]).optional(),
+  verified: z.boolean(),
+  accountType: z.enum(['admin', 'supporter', 'member']),
+  follower_count: z.number().int().nonnegative(),
+  following_count: z.number().int().nonnegative(),
+  friend_count: z.number().int().nonnegative(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 }).strict();
 
-export const UserSchema = UserBaseSchema.pick({
-  userId: true,
-  genUserId: true,
-  name: true,
-  username: true,
-  email: true,
-  profilePhoto: true,
-  bio: true,
-  lastActive: true,
-  verified: true,
-  accountType: true,
-  follower_count: true,
-  following_count: true,
-  friend_count: true,
-  createdAt: true,
-  updatedAt: true,
-})
+export const UserSchema = UserBaseSchema.omit({
+  googleId: true,
+  password: true,
+});
 
-// Derived Schemas
+// Derived Auth & Update Schemas
 export const CreateUserSchema = UserBaseSchema.pick({
   username: true,
   email: true,
   name: true,
 }).extend({
-  password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
+  password: passwordRule,
 });
 
 export const LogInUserSchema = UserBaseSchema.pick({
   email: true,
 }).extend({
-  password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
+  password: passwordRule,
 });
 
 export const UpdateUserSchema = UserBaseSchema.pick({
@@ -86,51 +73,37 @@ export const UpdateUserSchema = UserBaseSchema.pick({
   name: true,
   profilePhoto: true,
   bio: true,
-}).partial().extend({
-  userId: zod.string(),
-});
-
+})
+  .partial()
+  .extend({
+    userId: z.string(),
+  });
 
 export const UserAccountUpdateSchema = UserBaseSchema.pick({
   username: true,
-  genUserId: true
+  genUserId: true,
 }).extend({
-  userId: zod.string(),
-  password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
-  newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
+  userId: z.string(),
+  password: passwordRule,
+  newPassword: z.string().min(8, { message: 'New password must be at least 8 characters' }),
 });
 
-export const HostSchema = UserBaseSchema.pick({
-  userId: true,
-  genUserId: true,
-  name: true,
-  username: true,
-  profilePhoto: true,
-  bio: true,
-  verified: true,
-  accountType: true,
-  follower_count: true,
-  following_count: true,
-  friend_count: true,
+// Room & Participant Schemas
+export const HostSchema = UserSchema.omit({
+  email: true,
+  lastActive: true,
+  createdAt: true,
+  updatedAt: true,
 }).extend({
-  isFollowing: zod.boolean().default(false),
-  isBlocked: zod.boolean().default(false),
+  isFollowing: z.boolean().default(false),
+  isBlocked: z.boolean().default(false),
 });
 
-export const ParticipantSchema = UserBaseSchema.pick({
-  userId: true,
-  genUserId: true,
-  name: true,
-  username: true,
-  profilePhoto: true,
-  bio: true,
-  verified: true,
-  accountType: true,
-  follower_count: true,
-  following_count: true,
-  friend_count: true,
-}).extend({
-  isHost: zod.boolean().default(false),
-  isFollowing: zod.boolean().default(false),
-  isBlocked: zod.boolean().default(false),
+export const ParticipantSchema = HostSchema.extend({
+  isHost: z.boolean().default(false),
+});
+
+export const RoomParticipantSchema = ParticipantSchema.extend({
+  joinedAt: DatePreprocessor,
+  isSelf: z.boolean().optional().default(false),
 });
