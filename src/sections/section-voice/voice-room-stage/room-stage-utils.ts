@@ -4,30 +4,6 @@ import type { RoomParticipantType } from '@/types/type-room';
 import type { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { alpha } from '@mui/material/styles';
 
-export type StageLayoutMode = 'sidebar' | 'bottom' | 'cinema';
-
-export interface SharedStageViewProps {
-  participants: RoomParticipantType[];
-  openSlots: number;
-  maxParticipants: number;
-  raisedHandsSet: Set<string>;
-  participantReactions: Record<string, string>;
-  hasScreenShare: boolean;
-  isDisplayingScreenShare: boolean;
-  showScreenShareView: boolean;
-  setShowScreenShareView: React.Dispatch<React.SetStateAction<boolean>>;
-  activeScreenShareTracks: TrackReferenceOrPlaceholder[];
-  focusedScreenShare?: TrackReferenceOrPlaceholder;
-  selectedTrackSid: string | null;
-  setSelectedTrackSid: React.Dispatch<React.SetStateAction<string | null>>;
-  showAllScreensGrid: boolean;
-  setShowAllScreensGrid: React.Dispatch<React.SetStateAction<boolean>>;
-  videoFit: 'contain' | 'cover';
-  setVideoFit: React.Dispatch<React.SetStateAction<'contain' | 'cover'>>;
-  isElementFullscreen: boolean;
-  onToggleFullscreen: () => void;
-  screenShareContainerRef: React.RefObject<HTMLDivElement | null>;
-}
 
 export const getHudGlassButtonSx = (active = false, isCompact = false) => ({
   minWidth: 0,

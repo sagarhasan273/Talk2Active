@@ -11,6 +11,7 @@ import type {
 import type { z } from 'zod';
 
 
+import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import type { UserType } from './type-user';
 
 export type RoomType = z.infer<typeof RoomSchema>;
@@ -113,6 +114,32 @@ export type ParticipantStageType = Omit<
   rawParticipant?: Participant | RemoteParticipant | LocalParticipant;
   isGhost?: boolean;
 };
+
+export type StageLayoutMode = 'sidebar' | 'bottom' | 'cinema';
+
+export interface SharedStageViewProps {
+  participants: RoomParticipantType[];
+  openSlots: number;
+  maxParticipants: number;
+  raisedHandsSet: Set<string>;
+  participantReactions: Record<string, string>;
+  hasScreenShare: boolean;
+  isDisplayingScreenShare: boolean;
+  showScreenShareView: boolean;
+  setShowScreenShareView: React.Dispatch<React.SetStateAction<boolean>>;
+  activeScreenShareTracks: TrackReferenceOrPlaceholder[];
+  focusedScreenShare?: TrackReferenceOrPlaceholder;
+  selectedTrackSid: string | null;
+  setSelectedTrackSid: React.Dispatch<React.SetStateAction<string | null>>;
+  showAllScreensGrid: boolean;
+  setShowAllScreensGrid: React.Dispatch<React.SetStateAction<boolean>>;
+  videoFit: 'contain' | 'cover';
+  setVideoFit: React.Dispatch<React.SetStateAction<'contain' | 'cover'>>;
+  isElementFullscreen: boolean;
+  onToggleFullscreen: () => void;
+  screenShareContainerRef: React.RefObject<HTMLDivElement | null>;
+}
+
 
 export interface ChatReaction {
   emoji: string;

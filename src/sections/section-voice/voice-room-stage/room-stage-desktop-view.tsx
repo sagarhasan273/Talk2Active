@@ -23,14 +23,13 @@ import {
 } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
+import { SharedStageViewProps, StageLayoutMode } from '@/types/type-room';
 import { getCachedUserInfo } from '@/utils/user-cache';
 import RoomStageParticipants from './room-stage-participants';
 import {
   getHudGlassButtonSx,
   getScrollableSx,
-  type SharedStageViewProps,
-  type StageLayoutMode,
-} from './room-stage-type';
+} from './room-stage-utils';
 
 export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
   participants,

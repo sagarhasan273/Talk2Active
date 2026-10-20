@@ -22,7 +22,7 @@ import {
   getHudGlassButtonSx,
   getScrollableSx,
   type SharedStageViewProps,
-} from './room-stage-type';
+} from './room-stage-utils';
 
 export const RoomStageMobileView: React.FC<SharedStageViewProps> = ({
   participants,
