@@ -2,7 +2,6 @@
 import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 
 import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
-import RoomLoadingFallback from '@/sections/section-common/room-loading-fallback';
 import { Box } from '@mui/material'; // <-- Ensure Box is imported
 import { useCallback, useMemo } from 'react';
 import { useCredentials } from 'src/core/slices';
@@ -14,8 +13,8 @@ import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
 import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { RoomlistMain } from '../voice-room-list';
-import { VoiceRoomJoinGate } from './voice-room-join-gate';
 import VoiceRoomEventListener from './voice-room-event-listener';
+import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
 export function VoiceMainView() {
   const { isAuthenticated, user } = useCredentials();
@@ -107,17 +106,11 @@ export function VoiceMainView() {
           flexDirection: 'column',
         }}
       >
-        {livekitToken && room?.roomId ? (
-          <RoomContainerMain
-            key={room.roomId}
-            token={livekitToken}
-            onLeaveRoom={handleLeaveRoom}
-            onSettingsClick={editRoomBoolean.onTrue}
-            onBack={handleBackToRooms}
-          />
-        ) : (
-          selectedTab !== 'room-list' && <RoomLoadingFallback />
-        )}
+        <RoomContainerMain
+          onLeaveRoom={handleLeaveRoom}
+          onSettingsClick={editRoomBoolean.onTrue}
+          onBack={handleBackToRooms}
+        />
       </Box>
     </Box>
   );

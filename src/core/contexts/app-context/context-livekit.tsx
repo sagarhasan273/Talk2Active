@@ -1,5 +1,3 @@
-// src/providers/livekit-provider.tsx
-
 import { RoomContext } from '@livekit/components-react';
 import { ConnectionState, Room, RoomEvent, RoomOptions } from 'livekit-client';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -25,7 +23,16 @@ export function LiveKitProvider({
   defaultServerUrl?: string;
   roomOptions?: RoomOptions;
 }) {
-  const room = useMemo(() => new Room(roomOptions), [roomOptions]);
+
+  const safeRoomOptions: RoomOptions = useMemo(() => ({
+    ...roomOptions,
+    adaptiveStream: true,
+    dynacast: true,
+    audioCaptureDefaults: undefined,
+    videoCaptureDefaults: undefined,
+  }), [roomOptions]);
+
+  const room = useMemo(() => new Room(safeRoomOptions), [safeRoomOptions]);
 
   const [token, setToken] = useState<string | null>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(defaultServerUrl || null);
@@ -51,14 +58,18 @@ export function LiveKitProvider({
     if (room.state !== ConnectionState.Disconnected) {
       await room.disconnect();
     }
-
     setToken(newToken);
     if (customServerUrl) setServerUrl(customServerUrl);
 
     try {
-      await room.connect(targetUrl, newToken);
-    } catch (error) {
-      console.error('LiveKit connection failed:', error);
+      await room.connect(targetUrl, newToken, {
+        autoSubscribe: true,
+      });
+    } catch (error: any) {
+      console.error('--- LIVEKIT CONNECTION FAILED ---');
+      console.error('Error Name:', error?.name);
+      console.error('Error Message:', error?.message);
+
       setToken(null);
       setConnectionState(ConnectionState.Disconnected);
       await room.disconnect().catch(() => { });
@@ -66,7 +77,6 @@ export function LiveKitProvider({
     }
   }, [room, serverUrl]);
 
-  // ARCHITECTURE FIX: Wrap in useCallback
   const disconnectRoom = useCallback(async () => {
     try {
       if (room.localParticipant) {

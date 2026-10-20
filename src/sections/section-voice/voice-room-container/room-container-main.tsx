@@ -8,18 +8,16 @@ import {
 } from '@livekit/components-react';
 import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
+import { useVoiceRoomSetting } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { RoomChatDrawer } from '../voice-room-chat';
 import { RoomChatMain } from '../voice-room-chat/room-chat-main';
-import RoomChatSkeleton from '../voice-room-chat/room-chat-skeleton';
 import { RoomAudioStage } from '../voice-room-stage';
-import RoomStageSkeleton from '../voice-room-stage/room-stage-skeleton';
+import RoomContainerSkeleton from './room-container-skeleton';
 
 interface RoomContainerMainProps {
-  token?: string | null;
   onLeaveRoom?: () => void;
   onSettingsClick?: () => void;
   onBack?: () => void;
@@ -36,29 +34,8 @@ export function RoomContainerMain({
 
   const { isJoining, isLeaving, isInRoom, onToggleChat } = useVoiceRoomSetting();
 
-  const { selectedRoom } = useVoiceRoomStorage();
-
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
-  const micInitializedRef = useRef(false);
-
-  // --- Auto-enable mic once connected if requested ---
-  useEffect(() => {
-    if (!localParticipant || micInitializedRef.current) return;
-
-    localParticipant
-      .setMicrophoneEnabled(false, {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      })
-      .then(() => {
-        micInitializedRef.current = true;
-      })
-      .catch((err) => {
-        console.warn('[RoomContainer] Microphone permission denied or initialization error:', err);
-      });
-  }, [localParticipant]);
 
   // --- Stage Interaction Handlers ---
   const handleToggleRaiseHand = useCallback(async () => {
@@ -181,42 +158,36 @@ export function RoomContainerMain({
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          gap: 1,
-          width: 1,
-          height: '100%',
-          py: 1,
-        }}
-      >
-        {isJoining || isLeaving || !isInRoom ? (
-          <>
-            <RoomStageSkeleton
-              tileCount={(selectedRoom?.participants?.length || 0) + 1}
-            />
-            <RoomChatSkeleton />
-          </>
-        ) :
-          <>
-            <RoomAudioStage
-              topicPrompt=""
-              handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
-              raisedHandsSet={raisedHandsSet}
-              participantReactions={participantReactions}
-              onChangePrompt={() => { }}
-              onToggleRaiseHand={handleToggleRaiseHand}
-              onToggleScreenShare={handleToggleScreenShare}
-              onSendReaction={handleSendReaction}
-              onToggleChat={onToggleChat}
-              onSettingsClick={onSettingsClick}
-              onBack={onBack}
-            />
-            <RoomChatMain topicContext="" />
-          </>
-        }
-      </Box>
+      {isJoining || isLeaving || !isInRoom ? (
+        <RoomContainerSkeleton />
+      ) :
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 1,
+            width: 1,
+            height: '100%',
+            py: 1,
+          }}
+        >
+          <RoomAudioStage
+            topicPrompt=""
+            handRaised={Boolean(localParticipant && raisedHandsSet.has(localParticipant.identity))}
+            raisedHandsSet={raisedHandsSet}
+            participantReactions={participantReactions}
+            onChangePrompt={() => { }}
+            onToggleRaiseHand={handleToggleRaiseHand}
+            onToggleScreenShare={handleToggleScreenShare}
+            onSendReaction={handleSendReaction}
+            onToggleChat={onToggleChat}
+            onSettingsClick={onSettingsClick}
+            onBack={onBack}
+          />
+          <RoomChatMain topicContext="" />
+        </Box>
+
+      }
 
       <RoomChatDrawer />
     </>

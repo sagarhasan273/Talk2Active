@@ -53,7 +53,9 @@ export const VoiceRoomSettingProvider: React.FC<{
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const { user, isAuthenticated } = useCredentials();
+
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
+
   const { setRoom, setRoomLoading, resetRoom } = useRoomTools();
   const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
 
@@ -133,14 +135,16 @@ export const VoiceRoomSettingProvider: React.FC<{
 
   const handleJoinRoom = useCallback(async () => {
     if (!selectedRoom || !user) return;
-    setIsJoiningState(true);
-    setRoomLoading(true);
-    setIsJoinGateOpen(false);
 
     try {
       if (isInRoom) await disconnectRoom();
 
+      setIsJoiningState(true);
+      setRoomLoading(true);
+      setIsJoinGateOpen(false);
       setSelectedTab('room-space');
+
+      // 1. Fetch token and room data
       const response = await joinRoomMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
@@ -149,18 +153,14 @@ export const VoiceRoomSettingProvider: React.FC<{
       if (response.status && response.data.token) {
         setRoom(response.data.room);
         setLivekitToken(response.data.token);
+
         await connectToRoom(response.data.token);
         playUserJoin();
       }
     } catch (error) {
-      toastErrorResponse(error);
-      try {
-        await leaveRoomMutation({ roomId: selectedRoom.roomId, userId: user.userId });
-      } catch (cleanupError) {
-        window.location.reload();
-      } finally {
-        setTimeout(() => window.location.reload(), 3500);
-      }
+      setSelectedTab('room-list');
+      toastErrorResponse("Unable to join room.");
+      console.error(error);
     } finally {
       setIsJoiningState(false);
       setRoomLoading(false);
@@ -170,7 +170,6 @@ export const VoiceRoomSettingProvider: React.FC<{
     user,
     isInRoom,
     joinRoomMutation,
-    leaveRoomMutation,
     setRoom,
     setRoomLoading,
     setLivekitToken,

@@ -35,7 +35,15 @@ export default function App() {
         <Provider store={store}>
           <SocketProvider>
             <AuthProvider>
-              <LiveKitProvider>
+              <LiveKitProvider
+                roomOptions={{
+                  audioCaptureDefaults: {
+                    autoGainControl: true,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                  },
+                }}
+              >
                 <SettingsProvider settings={defaultSettings}>
                   <SocialStorageProvider>
                     <SocialSettingProvider>
