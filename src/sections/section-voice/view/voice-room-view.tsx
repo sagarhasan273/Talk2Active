@@ -75,7 +75,6 @@ export function VoiceMainView() {
 
   const mainContent = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
-      {/* ── Room List Tab (Stacked via absolute positioning to preserve scroll DOM) ── */}
       <Box
         sx={{
           position: 'absolute',

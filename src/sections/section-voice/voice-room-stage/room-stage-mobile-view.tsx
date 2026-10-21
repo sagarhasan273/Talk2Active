@@ -16,12 +16,12 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { SharedStageViewProps } from '@/types/type-room';
 import { getCachedUserInfo } from '@/utils/user-cache';
 import RoomStageParticipants from './room-stage-participants';
 import {
   getHudGlassButtonSx,
   getScrollableSx,
-  type SharedStageViewProps,
 } from './room-stage-utils';
 
 export const RoomStageMobileView: React.FC<SharedStageViewProps> = ({

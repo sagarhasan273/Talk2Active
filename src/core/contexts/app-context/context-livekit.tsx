@@ -1,5 +1,5 @@
 import { RoomContext } from '@livekit/components-react';
-import { ConnectionState, Room, RoomEvent, RoomOptions } from 'livekit-client';
+import { ConnectionState, DisconnectReason, Room, RoomEvent, RoomOptions } from 'livekit-client';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 interface LiveKitSessionContextType {
@@ -43,10 +43,25 @@ export function LiveKitProvider({
       setConnectionState(state);
     };
 
+    const handleDisconnected = (reason?: DisconnectReason) => {
+      setToken(null);
+      setConnectionState(ConnectionState.Disconnected);
+
+      if (
+        reason === DisconnectReason.DUPLICATE_IDENTITY ||
+        reason === DisconnectReason.PARTICIPANT_REMOVED
+      ) {
+        window.location.reload();
+        console.info('Disconnected: You joined from another device.');
+      }
+    };
+
     room.on(RoomEvent.ConnectionStateChanged, handleStateChange);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
 
     return () => {
       room.off(RoomEvent.ConnectionStateChanged, handleStateChange);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
       room.disconnect();
     };
   }, [room]);

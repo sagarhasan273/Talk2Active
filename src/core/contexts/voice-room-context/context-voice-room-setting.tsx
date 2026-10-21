@@ -1,6 +1,6 @@
 // src/core/contexts/context-room-setting.tsx
 
-import { useJoinRoomMutation, useLeaveRoomMutation } from '@/core/apis';
+import { useJoinRoomRequestMutation } from '@/core/apis';
 import { useVoiceRoomStorage } from '@/core/contexts';
 import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 import { useCredentials, useRoomTools } from '@/core/slices';
@@ -26,7 +26,6 @@ interface RoomSettingContextType {
 
   isJoinGateOpen: boolean;
   isJoining: boolean;
-  isLeaving: boolean;
 
   chatOpen: boolean;
   setChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -74,13 +73,11 @@ export const VoiceRoomSettingProvider: React.FC<{
   const isAtBottomRef = useRef<boolean>(true);
 
   const [isJoiningState, setIsJoiningState] = useState(false);
-  const [isLeavingState, setIsLeavingState] = useState(false);
 
-  const [joinRoomMutation, { isLoading: isJoinMutationLoading }] = useJoinRoomMutation();
-  const [leaveRoomMutation, { isLoading: isLeaveMutationLoading }] = useLeaveRoomMutation();
+  const [joinRoomRequestMutation, { isLoading: isJoinMutationLoading }] = useJoinRoomRequestMutation();
+
 
   const isJoining = isJoiningState || isJoinMutationLoading;
-  const isLeaving = isLeavingState || isLeaveMutationLoading;
 
   // Sync Chat Visibility to Storage Context so Unread Badges update
   useEffect(() => {
@@ -118,7 +115,6 @@ export const VoiceRoomSettingProvider: React.FC<{
   }, [setSelectedRoom]);
 
   const handleLeaveRoom = useCallback(async () => {
-    setIsLeavingState(true);
     try {
       await disconnectRoom();
       setSelectedTab('room-list');
@@ -129,7 +125,6 @@ export const VoiceRoomSettingProvider: React.FC<{
     } finally {
       resetRoom();
       playUserLeave();
-      setIsLeavingState(false);
     }
   }, [disconnectRoom, handleCleanup, resetRoom, playUserLeave]);
 
@@ -144,7 +139,7 @@ export const VoiceRoomSettingProvider: React.FC<{
       setIsJoinGateOpen(false);
       setSelectedTab('room-space');
 
-      const response = await joinRoomMutation({
+      const response = await joinRoomRequestMutation({
         roomId: selectedRoom.roomId,
         userId: user.userId,
       }).unwrap();
@@ -158,12 +153,6 @@ export const VoiceRoomSettingProvider: React.FC<{
           playUserJoin();
         } catch (connectionError) {
           console.error('[RoomContainer] LiveKit connection failed. Cleaning up backend state...', connectionError);
-
-          await leaveRoomMutation({
-            roomId: selectedRoom.roomId,
-            userId: user.userId,
-          }).unwrap();
-
           throw connectionError;
         }
       }
@@ -179,7 +168,6 @@ export const VoiceRoomSettingProvider: React.FC<{
     selectedRoom,
     user,
     isInRoom,
-    joinRoomMutation,
     setRoom,
     setRoomLoading,
     setLivekitToken,
@@ -199,7 +187,6 @@ export const VoiceRoomSettingProvider: React.FC<{
       setSelectedTab,
       isJoinGateOpen,
       isJoining,
-      isLeaving,
       chatOpen,
       setChatOpen,
       chatCollapsedBoolean,
@@ -217,7 +204,6 @@ export const VoiceRoomSettingProvider: React.FC<{
       selectedTab,
       isJoinGateOpen,
       isJoining,
-      isLeaving,
       chatOpen,
       chatCollapsedBoolean,
       isChatVisible,

@@ -118,7 +118,10 @@ export const RoomStageParticipants = ({
 
     const handleUserLeave = (payload: any) => {
       const targetId = extractParticipantId(payload);
-      if (!targetId) return;
+
+      const joinedRoomId = localParticipant?.attributes?.roomId;
+
+      if (!targetId || joinedRoomId !== payload.roomId) return;
 
       setGhostIds((prev) => {
         if (prev.has(targetId)) return prev;
@@ -130,6 +133,8 @@ export const RoomStageParticipants = ({
     };
 
     const handleUserJoin = (payload: any) => {
+      const joinedRoomId = localParticipant?.attributes?.roomId;
+      if (joinedRoomId !== payload.roomId) return;
       clearGhostId(extractParticipantId(payload));
     };
 
@@ -140,7 +145,7 @@ export const RoomStageParticipants = ({
       socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
       socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
     };
-  }, [socket, playUserLeave, clearGhostId]);
+  }, [socket, localParticipant?.attributes?.roomId, playUserLeave, clearGhostId]);
 
   useEffect(() => {
     if (!room) return undefined;

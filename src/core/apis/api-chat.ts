@@ -5,7 +5,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-import { setRooms, setRoomsLoading } from '../slices';
+import { setRoom, setRooms, setRoomsLoading } from '../slices';
 
 export const chatApi = createApi({
   reducerPath: 'chatApi',
@@ -19,7 +19,7 @@ export const chatApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['chat-recall'],
+  tagTypes: ['chat-recall', 'room-by-id-recall'],
   endpoints: (builder) => ({
     getRooms: builder.query<{ data: RoomType[]; status: boolean }, null>({
       query: () => `room/list`,
@@ -41,7 +41,19 @@ export const chatApi = createApi({
     }),
     getRoomById: builder.query<{ data: RoomType; status: boolean }, string>({
       query: (roomId) => `room/${roomId}`,
-      providesTags: ['chat-recall'],
+      providesTags: ['room-by-id-recall'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.status) {
+            dispatch(setRoom(data.data));
+          }
+        } catch (error) {
+          // Handle or ignore network errors
+        } finally {
+          // Handle finally
+        }
+      },
     }),
 
     createRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
@@ -52,6 +64,7 @@ export const chatApi = createApi({
       }),
       invalidatesTags: ['chat-recall'],
     }),
+
     updateRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
       query: (body) => ({
         url: `room/update`,
@@ -59,6 +72,20 @@ export const chatApi = createApi({
         body,
       }),
       invalidatesTags: ['chat-recall'],
+    }),
+
+    joinRoomRequest: builder.mutation<{
+      message: string; status: boolean, data: {
+        roomId: string,
+        token: string,
+        room: RoomType
+      }
+    }, RoomJoinInput>({
+      query: (input) => ({
+        url: `livekit/${input.roomId}/join-request`,
+        method: 'POST',
+        body: input,
+      }),
     }),
 
     joinRoom: builder.mutation<{
@@ -92,6 +119,7 @@ export const {
   useGetRoomByIdQuery,
   useCreateRoomMutation,
   useUpdateRoomMutation,
+  useJoinRoomRequestMutation,
   useJoinRoomMutation,
   useLeaveRoomMutation,
 } = chatApi;
