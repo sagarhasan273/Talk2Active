@@ -32,7 +32,7 @@ export function RoomContainerMain({
   const { localParticipant } = useLocalParticipant();
   const { playHandRaise } = useRoomSounds();
 
-  const { isJoining, isLeaving, isInRoom, onToggleChat } = useVoiceRoomSetting();
+  const { isJoining, isInRoom, onToggleChat } = useVoiceRoomSetting();
 
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
@@ -158,7 +158,7 @@ export function RoomContainerMain({
       <RoomAudioRenderer />
       <StartAudio label="Click to allow audio playback" />
 
-      {isJoining || isLeaving || !isInRoom ? (
+      {isJoining || !isInRoom ? (
         <RoomContainerSkeleton />
       ) :
         <Box
