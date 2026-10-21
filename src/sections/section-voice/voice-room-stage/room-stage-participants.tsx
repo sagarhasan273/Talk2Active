@@ -1,7 +1,10 @@
 // src/sections/section-voice/voice-room-stage/room-stage-participants.tsx
 
+import { useSocket } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
+import { SOCKET_EVENTS } from '@/lib/socket-events';
 import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
+import { getCachedUserInfo } from '@/utils/user-cache';
 import {
   ParticipantContext,
   useLocalParticipant,
@@ -9,19 +12,24 @@ import {
   useRoomContext,
   useTracks,
 } from '@livekit/components-react';
-import { alpha, Box, BoxProps, Typography } from '@mui/material';
-import { ConnectionState, Track, type Participant } from 'livekit-client';
-import { Monitor } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Box, BoxProps } from '@mui/material';
+import { RoomEvent, Track, type Participant } from 'livekit-client';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import ParticipantTile from './room-stage-participant-tile';
 
-const GHOST_DURATION_MS = 3000;
+const extractParticipantId = (payload: any): string =>
+  String(
+    payload?.participantId ||
+    payload?.userId ||
+    payload?.participant?.userId ||
+    payload?.user?.userId ||
+    ''
+  );
 
 function parseParticipant(
   data: Partial<RoomParticipantType> & { userId: string },
   livekitP?: Participant,
-  roomState?: ConnectionState,
   localIdentity?: string,
   isHandRaised = false,
   activeReactionEmoji: string | null = null,
@@ -30,14 +38,6 @@ function parseParticipant(
   const id = String(data.userId);
   const isSelf = Boolean(data.isSelf || (localIdentity && localIdentity === id));
   const isHost = Boolean(data.isHost);
-
-  const connectionStatus = isGhost
-    ? ConnectionState.Disconnected
-    : isSelf
-      ? roomState || ConnectionState.Connected
-      : livekitP
-        ? ConnectionState.Connected
-        : ConnectionState.Connecting;
 
   return {
     userId: id,
@@ -61,7 +61,7 @@ function parseParticipant(
     role: isHost ? 'host' : 'listener',
     handRaised: isGhost ? false : isHandRaised,
     activeReactionEmoji: isGhost ? null : activeReactionEmoji,
-    rawParticipant: isGhost ? undefined : livekitP,
+    rawParticipant: livekitP,
     isGhost,
   };
 }
@@ -86,7 +86,10 @@ export const RoomStageParticipants = ({
   const room = useRoomContext();
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
+  const { socket } = useSocket();
   const { playUserLeave } = useRoomSounds();
+
+  const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
 
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const sharingParticipantIds = useMemo(
@@ -99,81 +102,108 @@ export const RoomStageParticipants = ({
     [screenShareTracks]
   );
 
-  const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
-  const [orderedParticipants, setOrderedParticipants] = useState<RoomParticipantType[]>(participants);
-
-  const ghostTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const playUserLeaveRef = useRef(playUserLeave);
-
-  useEffect(() => {
-    playUserLeaveRef.current = playUserLeave;
-  }, [playUserLeave]);
-
-  useEffect(() => {
-    return () => {
-      Object.values(ghostTimersRef.current).forEach(clearTimeout);
-      ghostTimersRef.current = {};
-    };
+  const clearGhostId = useCallback((id: string) => {
+    if (!id) return;
+    setGhostIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }, []);
 
+  // 1. Socket listener for leave & join
   useEffect(() => {
-    const propsMap = new Map(participants.map((p) => [String(p.userId), p]));
+    if (!socket) return undefined;
 
-    setGhostIds((prevGhosts) => {
-      let modified = false;
-      const nextGhosts = new Set(prevGhosts);
+    const handleUserLeave = (payload: any) => {
+      const targetId = extractParticipantId(payload);
+      if (!targetId) return;
 
-      participants.forEach((p) => {
-        const id = String(p.userId);
-        if (nextGhosts.has(id)) {
-          nextGhosts.delete(id);
-          modified = true;
-          if (ghostTimersRef.current[id]) {
-            clearTimeout(ghostTimersRef.current[id]);
-            delete ghostTimersRef.current[id];
-          }
+      setGhostIds((prev) => {
+        if (prev.has(targetId)) return prev;
+        const next = new Set(prev);
+        next.add(targetId);
+        return next;
+      });
+      playUserLeave?.();
+    };
+
+    const handleUserJoin = (payload: any) => {
+      clearGhostId(extractParticipantId(payload));
+    };
+
+    socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
+    socket.on(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
+      socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
+    };
+  }, [socket, playUserLeave, clearGhostId]);
+
+  useEffect(() => {
+    if (!room) return undefined;
+
+    const handleParticipantConnected = (lkParticipant: Participant) => {
+      clearGhostId(String(lkParticipant.identity));
+    };
+
+    const handleTrackPubOrUnmute = (_pub: unknown, lkParticipant: Participant) => {
+      if (lkParticipant?.identity) {
+        clearGhostId(String(lkParticipant.identity));
+      }
+    };
+
+    const handleTrackSubscribed = (
+      _track: unknown,
+      _pub: unknown,
+      lkParticipant: Participant
+    ) => {
+      if (lkParticipant?.identity) {
+        clearGhostId(String(lkParticipant.identity));
+      }
+    };
+
+    const handleActiveSpeakers = (speakers: Participant[]) => {
+      speakers.forEach((s) => clearGhostId(String(s.identity)));
+    };
+
+    room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
+    room.on(RoomEvent.TrackPublished, handleTrackPubOrUnmute);
+    room.on(RoomEvent.TrackUnmuted, handleTrackPubOrUnmute);
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers);
+
+    return () => {
+      room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+      room.off(RoomEvent.TrackPublished, handleTrackPubOrUnmute);
+      room.off(RoomEvent.TrackUnmuted, handleTrackPubOrUnmute);
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers);
+    };
+  }, [room, clearGhostId]);
+
+  useEffect(() => {
+    setGhostIds((prev) => {
+      if (prev.size === 0) return prev;
+
+      const apiIds = new Set(participants.map((p) => String(p.userId)));
+      const lkIds = new Set(remoteLiveKitParticipants.map((p) => String(p.identity)));
+
+      let changed = false;
+      const next = new Set(prev);
+
+      prev.forEach((id) => {
+        if (!apiIds.has(id) && !lkIds.has(id)) {
+          next.delete(id);
+          changed = true;
         }
       });
 
-      return modified ? nextGhosts : prevGhosts;
+      return changed ? next : prev;
     });
-
-    setOrderedParticipants((prevOrdered) => {
-      const existingIds = new Set<string>();
-
-      const updatedList = prevOrdered.map((old) => {
-        const id = String(old.userId);
-        existingIds.add(id);
-
-        const freshData = propsMap.get(id);
-        if (freshData) return freshData;
-
-        if (!ghostTimersRef.current[id]) {
-          setGhostIds((g) => new Set(g).add(id));
-
-          ghostTimersRef.current[id] = setTimeout(() => {
-            setGhostIds((g) => {
-              const next = new Set(g);
-              next.delete(id);
-              return next;
-            });
-
-            setOrderedParticipants((current) =>
-              current.filter((item) => String(item.userId) !== id)
-            );
-
-            playUserLeaveRef.current?.();
-            delete ghostTimersRef.current[id];
-          }, GHOST_DURATION_MS);
-        }
-
-        return old;
-      });
-
-      const newcomers = participants.filter((p) => !existingIds.has(String(p.userId)));
-      return newcomers.length > 0 ? [...updatedList, ...newcomers] : updatedList;
-    });
-  }, [participants]);
+  }, [participants, remoteLiveKitParticipants]);
 
   const displayParticipants = useMemo(() => {
     const livekitMap = new Map<string, Participant>();
@@ -187,34 +217,32 @@ export const RoomStageParticipants = ({
 
     const processedIds = new Set<string>();
 
-    const parsed = orderedParticipants.map((p) => {
+    const parsed = participants.map((p) => {
       const id = String(p.userId);
       processedIds.add(id);
-
-      const isGhost = ghostIds.has(id) && !livekitMap.has(id);
 
       return parseParticipant(
         p,
         livekitMap.get(id),
-        room?.state,
         localParticipant?.identity,
         raisedHandsSet.has(id),
         participantReactions[id] || null,
-        isGhost
+        ghostIds.has(id)
       );
     });
 
     livekitMap.forEach((lkParticipant, id) => {
       if (!processedIds.has(id)) {
+        const lkCachedP = getCachedUserInfo(id);
+
         parsed.push(
           parseParticipant(
-            { userId: id, name: lkParticipant.name },
+            { userId: id, name: lkParticipant.name, profilePhoto: lkCachedP?.avatarUrl },
             lkParticipant,
-            room?.state,
             localParticipant?.identity,
             raisedHandsSet.has(id),
             participantReactions[id] || null,
-            false
+            ghostIds.has(id)
           )
         );
       }
@@ -225,106 +253,33 @@ export const RoomStageParticipants = ({
 
     return [...others, ...self];
   }, [
-    orderedParticipants,
+    participants,
     ghostIds,
     remoteLiveKitParticipants,
     localParticipant,
-    room?.state,
     raisedHandsSet,
     participantReactions,
   ]);
 
-  console.log(remoteLiveKitParticipants);
-
   return (
     <Box sx={{ display: 'contents', width: 1, ...sx }} {...other}>
       {displayParticipants.map((participant) => {
-        const isGhost = Boolean(participant.isGhost);
         const isSharingScreen = sharingParticipantIds.has(participant.id);
 
         return (
-          <Box
-            key={participant.id}
-            sx={{
-              width: { xs: 128, sm: 140, md: 168 },
-              minWidth: { xs: 128, sm: 140, md: 168 },
-              minHeight: 148,
-              position: 'relative',
-              flexShrink: 0,
-              transition: 'opacity 0.4s ease, filter 0.4s ease',
-              opacity: isGhost ? 0.35 : 1,
-              filter: isGhost ? 'grayscale(90%)' : 'none',
-              pointerEvents: isGhost ? 'none' : 'auto',
-            }}
-          >
-            {isSharingScreen && !isGhost && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  zIndex: 6,
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 0.75,
-                  bgcolor: 'info.main',
-                  color: '#fff',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.4,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  pointerEvents: 'none',
-                }}
-              >
-                <Monitor size={10} />
-                <Typography
-                  sx={{
-                    fontSize: '0.55rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    lineHeight: 1,
-                  }}
-                >
-                  Live
-                </Typography>
-              </Box>
-            )}
-
-            {isGhost && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  bgcolor: alpha('#000', 0.78),
-                  backdropFilter: 'blur(6px)',
-                  color: '#fff',
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1,
-                  zIndex: 4,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '0.625rem',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  Left
-                </Typography>
-              </Box>
-            )}
-
-            {participant.rawParticipant && !isGhost ? (
+          <Box key={participant.id} sx={{ display: 'contents' }}>
+            {participant.rawParticipant && !participant.isGhost ? (
               <ParticipantContext.Provider value={participant.rawParticipant}>
-                <ParticipantTile participant={participant} />
+                <ParticipantTile
+                  participant={participant}
+                  isSharingScreen={isSharingScreen}
+                />
               </ParticipantContext.Provider>
             ) : (
-              <ParticipantTile participant={participant} />
+              <ParticipantTile
+                participant={participant}
+                isSharingScreen={isSharingScreen}
+              />
             )}
           </Box>
         );
