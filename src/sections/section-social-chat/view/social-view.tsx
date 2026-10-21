@@ -242,10 +242,10 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
                 bgcolor: isDark ? '#181c26' : '#ffffff',
                 borderRadius: { xs: 0, sm: 1 },
                 border: '1px solid',
-                borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                borderColor: isDark ? alpha('#fff', 0.1) : '#b3b5b8',
                 boxShadow: isDark
-                  ? '0 24px 56px -8px rgba(0, 0, 0, 0.75)'
-                  : '0 20px 48px -8px rgba(15, 23, 42, 0.18)',
+                  ? '-4px -12px 16px -2px rgba(85, 85, 85, 0.36)'
+                  : '-4px -12px 16px -2px rgba(15, 23, 42, 0.33)',
                 ...(isResizing && { transition: 'none !important' }),
               }}
             >

@@ -62,7 +62,7 @@ export const chatApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['chat-recall'],
+      // invalidatesTags: ['chat-recall'],
     }),
 
     updateRoom: builder.mutation<{ message: string; status: boolean }, Partial<any>>({
@@ -71,7 +71,7 @@ export const chatApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['chat-recall'],
+      // invalidatesTags: ['chat-recall'],
     }),
 
     joinRoomRequest: builder.mutation<{

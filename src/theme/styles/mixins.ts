@@ -1,13 +1,13 @@
-import type { Theme, CSSObject } from '@mui/material/styles';
+import type { CSSObject, Theme } from '@mui/material/styles';
 
-import { dividerClasses } from '@mui/material/Divider';
-import { checkboxClasses } from '@mui/material/Checkbox';
-import { menuItemClasses } from '@mui/material/MenuItem';
 import { autocompleteClasses } from '@mui/material/Autocomplete';
+import { checkboxClasses } from '@mui/material/Checkbox';
+import { dividerClasses } from '@mui/material/Divider';
+import { menuItemClasses } from '@mui/material/MenuItem';
 
 import { CONFIG } from 'src/config-global';
 
-import { remToPx, varAlpha, mediaQueries } from './utils';
+import { mediaQueries, remToPx, varAlpha } from './utils';
 
 // ----------------------------------------------------------------------
 

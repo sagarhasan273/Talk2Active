@@ -20,30 +20,8 @@ export function SocialEventListener() {
 
   const currentUserId = user?.userId;
 
-  const { data: allRelationsData, refetch: refetchAllRelations } = useGetAllRelationsQuery(currentUserId, { skip: !currentUserId });
-  const { data: followersData, refetch: refetchFollowers } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
-
-  useEffect(() => {
-    if (allRelationsData?.data) {
-      const { friends = [], followings = [], blockedUsers = [] } = allRelationsData.data;
-
-      dispatch(setFriends(friends));
-      dispatch(setFollowing(followings));
-
-      const blockedIds = blockedUsers
-        .map((item: any) => item?.accountDetails?.userId?.toString())
-        .filter(Boolean);
-
-      dispatch(setBlockedUserIds(blockedIds));
-    }
-  }, [allRelationsData, dispatch]);
-
-  useEffect(() => {
-    if (followersData !== undefined) {
-      const items = Array.isArray(followersData) ? followersData : followersData?.data ?? [];
-      dispatch(setFollowers(items));
-    }
-  }, [followersData, dispatch]);
+  const { refetch: refetchAllRelations } = useGetAllRelationsQuery(currentUserId, { skip: !currentUserId });
+  const { refetch: refetchFollowers } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
 
   useEffect(() => {
     if (!currentUserId) {

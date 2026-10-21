@@ -6,6 +6,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
+import { setBlockedUserIds, setFollowers, setFollowing, setFriends } from '../slices';
 
 export const socialApi = createApi({
   reducerPath: 'socialApi',
@@ -47,6 +48,19 @@ export const socialApi = createApi({
     getFollowers: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/${userId}/followers`,
       providesTags: ['social-recall'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          if (data !== undefined) {
+            const items = Array.isArray(data) ? data : data?.data ?? [];
+            dispatch(setFollowers(items));
+          }
+
+        } catch (err) {
+          // Do nothing on error, or add error handling logic here
+        }
+      },
     }),
 
     getFollowing: builder.query<ResponseType, string | undefined>({
@@ -57,6 +71,26 @@ export const socialApi = createApi({
     getAllRelations: builder.query<ResponseType, string | undefined>({
       query: (userId) => `social/${userId}/all-relations`,
       providesTags: ['social-recall'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          if (data?.data) {
+            const { friends = [], followings = [], blockedUsers = [] } = data.data;
+
+            dispatch(setFollowing(followings));
+            dispatch(setFriends(friends));
+
+            const blockedIds = blockedUsers
+              .map((item: any) => item?.accountDetails?.userId?.toString())
+              .filter(Boolean);
+
+            dispatch(setBlockedUserIds(blockedIds));
+          }
+        } catch (err) {
+          // Do nothing on error, or add error handling logic here
+        }
+      },
     }),
 
     getBlockedUsers: builder.query<ResponseType, string | undefined>({

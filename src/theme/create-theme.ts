@@ -3,10 +3,10 @@ import type { SettingsState } from 'src/components/settings';
 
 import { extendTheme } from '@mui/material';
 
-import { setFont } from './styles/utils';
+import { colorSchemes, components, customShadows, shadows, typography } from './core';
 import { overridesTheme } from './overrides-theme';
-import { shadows, typography, components, colorSchemes, customShadows } from './core';
-import { updateCoreWithSettings, updateComponentsWithSettings } from './with-settings/update-theme';
+import { setFont } from './styles/utils';
+import { updateComponentsWithSettings, updateCoreWithSettings } from './with-settings/update-theme';
 
 // ----------------------------------------------------------------------
 

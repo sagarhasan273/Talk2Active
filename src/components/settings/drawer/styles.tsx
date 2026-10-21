@@ -1,11 +1,11 @@
-import type { Theme, SxProps } from '@mui/material/styles';
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
-import Tooltip from '@mui/material/Tooltip';
 import ButtonBase from '@mui/material/ButtonBase';
+import Tooltip from '@mui/material/Tooltip';
 
-import { varAlpha, stylesMode } from 'src/theme/styles';
+import { stylesMode, varAlpha } from 'src/theme/styles';
 
 import { Iconify } from '../../iconify';
 import { svgColorClasses } from '../../svg-color';

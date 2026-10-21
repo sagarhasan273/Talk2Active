@@ -48,7 +48,6 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   const { tab, setTab, openChat } = useSocialSetting();
 
   const [unfollowedIds, setUnfollowedIds] = useState<Set<string>>(new Set());
-  const [loadingUnfollowId, setLoadingUnfollowId] = useState<string | null>(null);
 
   const friendIds = useMemo(() => new Set(friends.map((f) => f.accountDetails.userId)), [friends]);
 
@@ -82,13 +81,10 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     if (!targetId) return;
 
     try {
-      setLoadingUnfollowId(targetId);
       await onUnfollow?.(targetId, item);
       setUnfollowedIds((prev) => new Set(prev).add(targetId));
     } catch (err) {
       console.error('Failed to unfollow user:', err);
-    } finally {
-      setLoadingUnfollowId(null);
     }
   };
 
@@ -355,44 +351,40 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                   </Box>
 
                   {/* Name & Latest Message / Bio */}
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                     <Typography
                       sx={{
                         fontSize: 12.5,
                         fontWeight: unreadCount > 0 ? 800 : 700,
                         lineHeight: 1.2,
-                        color: isDark ? 'text.primary' : '#0f172a',
+                        color: canChat ? 'primary.main' : 'text.primary',
                       }}
                       noWrap
                     >
                       {person.name}
                     </Typography>
                     <Typography
-                      variant="caption"
+                      variant="subtitle2"
                       sx={{
                         fontSize: 11,
                         color:
-                          isInRoom && tab !== 'friends'
-                            ? 'success.main'
-                            : unreadCount > 0
-                              ? isDark
-                                ? 'text.primary'
-                                : '#0f172a'
+                          unreadCount > 0
+                            ? 'text.primary'
+                            : isInRoom
+                              ? 'success.main'
                               : isDark
                                 ? 'text.secondary'
                                 : '#64748b',
-                        fontWeight: isInRoom || unreadCount > 0 ? 700 : 500,
+                        fontWeight: unreadCount > 0 ? 700 : 500,
                         mt: 0.2,
                       }}
                       noWrap
                     >
-                      {tab === 'friends'
-                        ? unreadCount > 0
-                          ? `${unreadCount} unread messages`
-                          : latestText
+                      {unreadCount > 0
+                        ? `${unreadCount} unread messages`
                         : isInRoom
                           ? '🎙️ In a voice room'
-                          : `Last seen: ${fDateTime(person.lastActive)}`}
+                          : latestText}
                     </Typography>
                   </Box>
 
