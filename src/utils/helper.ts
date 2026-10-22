@@ -4,8 +4,7 @@
  */
 
 
-
-import { languages } from '@/lib/filter-data';
+import { ROOM_LANGUAGE_OPTIONS } from '@/lib/filter-data';
 import axiosInstance, { endpoints } from './axios';
 
 // ----------------------------------------------------------------------
@@ -219,10 +218,10 @@ export function fUsername(fullName?: string): string {
 }
 
 export const fgetLanguageName = (code: string) => {
-  const language = languages.find(
-    (lang: { code: string; flag: string; name: string }) => lang.code === code
+  const language = ROOM_LANGUAGE_OPTIONS.find(
+    (lang: { code: string; label: string, }) => lang.code === code
   );
-  return language ? `${language.flag} ${language.name}` : code;
+  return language ? `${language.label}` : code;
 };
 
 export function fmicGainRange(value: number) {

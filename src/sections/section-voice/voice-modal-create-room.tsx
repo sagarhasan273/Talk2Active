@@ -29,7 +29,7 @@ import { useCreateRoomMutation, useUpdateRoomMutation } from 'src/core/apis/api-
 import { selectAccount } from 'src/core/slices';
 
 import { Label, LEVEL_OPTIONS, ParticipantLevel } from '@/components/label';
-import { languages } from '@/lib/filter-data';
+import { ROOM_LANGUAGE_OPTIONS } from '@/lib/filter-data';
 
 // ----------------------------------------------------------------------
 
@@ -151,8 +151,8 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
     const value = inputValue.toLowerCase().trim();
 
     const language =
-      languages.find((item) => item.name.toLowerCase() === value) ||
-      languages.find((item) => item.name.toLowerCase().includes(value));
+      ROOM_LANGUAGE_OPTIONS.find((item) => item.label.toLowerCase() === value) ||
+      ROOM_LANGUAGE_OPTIONS.find((item) => item.label.toLowerCase().includes(value));
 
     if (language) addLanguage(language.code);
   };
@@ -397,13 +397,13 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.25 }}>
               {formData.languages.map((code) => {
-                const lang = languages.find((item) => item.code === code);
+                const lang = ROOM_LANGUAGE_OPTIONS.find((item) => item.code === code);
 
                 return (
                   <Label
                     key={code}
                     size="small"
-                    label={lang ? `${lang.flag} ${lang.name}` : `${code}`}
+                    label={lang ? `${lang.label}` : `${code}`}
                     onDelete={() => removeLanguage(code)}
                     sx={{
                       height: 26,
@@ -425,9 +425,9 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
               freeSolo
               size="small"
               disabled={formData.languages.length >= 2}
-              options={languages.map((lang) => ({
+              options={ROOM_LANGUAGE_OPTIONS.map((lang) => ({
                 code: lang.code,
-                label: `${lang.flag} ${lang.name}`,
+                label: `${lang.label}`,
               }))}
               inputValue={inputValue}
               onInputChange={(_, value) => setInputValue(value)}

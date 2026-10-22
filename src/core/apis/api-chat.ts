@@ -5,7 +5,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-import { setRoom, setRooms, setRoomsLoading } from '../slices';
+import { setRoom, setRooms, setRoomsLoading, updateRoomLanguageCounts } from '../slices';
 
 export const chatApi = createApi({
   reducerPath: 'chatApi',
@@ -29,8 +29,23 @@ export const chatApi = createApi({
 
         try {
           const { data } = await queryFulfilled;
+
           if (data?.status && Array.isArray(data.data)) {
+
             dispatch(setRooms(data.data));
+
+            const languageCounts = data.data.reduce((acc: Record<string, number>, room) => {
+              if (Array.isArray(room.languages)) {
+                room.languages.forEach((langCode) => {
+                  acc[langCode] = (acc[langCode] || 0) + 1;
+                });
+              }
+              return acc;
+            }, {});
+
+            languageCounts['all'] = data.data.length;
+
+            dispatch(updateRoomLanguageCounts(languageCounts));
           }
         } catch (error) {
           // Handle or ignore network errors

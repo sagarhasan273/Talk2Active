@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Label } from '@/components/label';
-import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
+import { useRoomTools } from '@/core/slices';
+import { LEVEL_OPTIONS } from '@/lib/filter-data';
 import {
   Check as CheckIcon,
   Clear as ClearIcon,
@@ -17,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import {
   alpha,
+  Autocomplete,
   Badge,
   Box,
   Button,
@@ -50,15 +52,6 @@ export interface FilterState {
   showActiveOnly: boolean;
 }
 
-const LANGUAGE_OPTIONS = [
-  { value: 'all', label: 'All Languages', emoji: '🌐' },
-  ...languages.map(({ code, name, flag }) => ({
-    value: code,
-    label: name,
-    emoji: flag,
-  })),
-];
-
 export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   onFilterChange,
   initialFilters = {},
@@ -67,8 +60,12 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const { roomLanguageOptions } = useRoomTools();
+
   const [searchQuery, setSearchQuery] = useState(initialFilters.searchQuery || '');
-  const [selectedLanguage, setSelectedLanguage] = useState(initialFilters.selectedLanguage || 'all');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(
+    typeof initialFilters.selectedLanguage === 'string' ? initialFilters.selectedLanguage : 'all'
+  );
   const [selectedLevel, setSelectedLevel] = useState(initialFilters.selectedLevel || 'all');
   const [hideFullRooms, setHideFullRooms] = useState(initialFilters.hideFullRooms || false);
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
@@ -123,9 +120,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     bgcolor: inputSurfaceBg,
     fontSize: '0.8rem',
     color: 'text.primary',
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: inputBorderColor,
-    },
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: inputBorderColor },
     '&:hover .MuiOutlinedInput-notchedOutline': {
       borderColor: alpha(theme.palette.primary.main, 0.5),
     },
@@ -196,82 +191,99 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 bgcolor: inputSurfaceBg,
                 fontSize: '0.8rem',
                 color: isDark ? 'text.primary' : '#0f172a',
-                '& fieldset': {
-                  borderColor: inputBorderColor,
-                },
-                '&:hover fieldset': {
-                  borderColor: alpha(theme.palette.primary.main, 0.5),
-                },
+                '& fieldset': { borderColor: inputBorderColor },
+                '&:hover fieldset': { borderColor: alpha(theme.palette.primary.main, 0.5) },
                 '&.Mui-focused fieldset': {
                   borderColor: theme.palette.primary.main,
                   borderWidth: 1.5,
                 },
               },
-              '& .MuiOutlinedInput-input': {
-                py: 0,
-                fontSize: '0.8rem',
-                fontWeight: 500,
-              },
+              '& .MuiOutlinedInput-input': { py: 0, fontSize: '0.8rem', fontWeight: 500 },
             }}
           />
         </Grid>
 
-        {/* Language Filter */}
+        {/* Language Filter (Single-Select Autocomplete) */}
         <Grid size={{ xs: 6, sm: 6, md: 2.5 }}>
-          <FormControl fullWidth size="small">
-            <Select
-              value={selectedLanguage}
-              onChange={(e) => handleFilterUpdate({ selectedLanguage: e.target.value })}
-              displayEmpty
-              renderValue={(selected) => {
-                if (!selected || selected === 'all') {
-                  return (
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <LanguageIcon
-                        sx={{ fontSize: 16, color: isDark ? 'text.secondary' : '#64748b' }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color={isDark ? 'text.secondary' : '#475569'}
-                        fontSize="0.8rem"
-                        fontWeight={600}
-                      >
-                        Language
-                      </Typography>
-                    </Stack>
-                  );
-                }
-                const opt = LANGUAGE_OPTIONS.find((item) => item.value === selected);
-                return `${opt?.emoji || ''} ${opt?.label || selected}`;
-              }}
-              sx={compactSelectSx}
-              MenuProps={{
-                PaperProps: {
-                  sx: {
-                    maxHeight: 280,
-                    borderRadius: 1,
-                    mt: 0.5,
-                    bgcolor: isDark ? '#181c26' : '#ffffff',
-                    border: '1px solid',
-                    borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-                  },
-                },
-              }}
-            >
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <MenuItem
-                  key={opt.value}
-                  value={opt.value}
-                  sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
-                >
-                  <Typography component="span" sx={{ fontSize: 14 }}>
-                    {opt.emoji}
+          <Autocomplete
+            size="small"
+            options={roomLanguageOptions}
+            getOptionLabel={(option) => (option.value === 'all' ? 'All Language' : option.label)}
+            value={
+              roomLanguageOptions.find((opt) => opt.value === selectedLanguage) || roomLanguageOptions[0]
+            }
+            onChange={(_, newValue) => {
+              handleFilterUpdate({ selectedLanguage: newValue ? newValue.value : 'all' });
+            }}
+            disableClearable
+            renderOption={(props, option) => (
+              <Box
+                component="li"
+                {...props}
+                sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
+              >
+                <Box sx={{ flex: 1 }}>{option.label}</Box>
+                {option.count > 0 && (
+                  <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', fontWeight: 700 }}>
+                    {option.count}
                   </Typography>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                )}
+              </Box>
+            )}
+            renderInput={(params) => {
+              const isAll = selectedLanguage === 'all';
+              return (
+                <TextField
+                  {...params}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <InputAdornment position="start" sx={{ pl: 1.25, mr: -0.5 }}>
+                        {isAll ? (
+                          <LanguageIcon
+                            sx={{ fontSize: 16, color: isDark ? 'text.secondary' : '#64748b' }}
+                          />
+                        ) : (
+                          <Typography component="span" sx={{ fontSize: 14 }}>
+                            {roomLanguageOptions.find((opt) => opt.value === selectedLanguage)?.count}
+                          </Typography>
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: 36,
+                      borderRadius: 1,
+                      bgcolor: inputSurfaceBg,
+                      fontSize: '0.8rem',
+                      color: isAll ? (isDark ? 'text.secondary' : '#475569') : 'text.primary',
+                      padding: '0 8px 0 0 !important',
+                      '& fieldset': { borderColor: inputBorderColor },
+                      '&:hover fieldset': { borderColor: alpha(theme.palette.primary.main, 0.5) },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.primary.main,
+                        borderWidth: 1.5,
+                      },
+                    },
+                    '& .MuiAutocomplete-input': { fontWeight: 600, padding: '0 8px !important' },
+                  }}
+                />
+              );
+            }}
+            slotProps={{
+              paper: {
+                sx: {
+                  maxHeight: 280,
+                  borderRadius: 1,
+                  mt: 0.5,
+                  bgcolor: isDark ? '#181c26' : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+                },
+              },
+            }}
+          />
         </Grid>
 
         {/* Level Filter */}
@@ -342,7 +354,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             gap: 0.75,
           }}
         >
-          {/* Quick Pill: Available Seats */}
           <Chip
             icon={<PeopleIcon sx={{ fontSize: '15px !important' }} />}
             label="Available Seats"
@@ -355,11 +366,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               px: 0.5,
               fontWeight: 700,
               fontSize: '0.76rem',
-              color: hideFullRooms
-                ? 'primary.main'
-                : isDark
-                  ? 'text.secondary'
-                  : '#475569',
+              color: hideFullRooms ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
               bgcolor: hideFullRooms
                 ? alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1)
                 : inputSurfaceBg,
@@ -376,7 +383,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             }}
           />
 
-          {/* Filter Toggle Button */}
           <Tooltip title={isExpanded ? 'Hide options' : 'More filters'} arrow>
             <Badge
               badgeContent={activeFilterCount}
@@ -402,11 +408,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   bgcolor: isExpanded
                     ? alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1)
                     : inputSurfaceBg,
-                  color: isExpanded
-                    ? 'primary.main'
-                    : isDark
-                      ? 'text.primary'
-                      : '#475569',
+                  color: isExpanded ? 'primary.main' : isDark ? 'text.primary' : '#475569',
                   border: '1px solid',
                   borderColor: isExpanded
                     ? alpha(theme.palette.primary.main, 0.4)
@@ -479,7 +481,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               />
             </Grid>
 
-            {/* Popular Languages */}
+            {/* Popular Languages (Sorted by live count) */}
             <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
                 <Typography
@@ -491,41 +493,65 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 >
                   Popular:
                 </Typography>
-                {LANGUAGE_OPTIONS.slice(1, 5).map((lang) => {
-                  const isSelected = selectedLanguage === lang.value;
-                  return (
-                    <Chip
-                      key={lang.value}
-                      label={`${lang.emoji} ${lang.label}`}
-                      size="small"
-                      clickable
-                      onClick={() =>
-                        handleFilterUpdate({
-                          selectedLanguage: isSelected ? 'all' : lang.value,
-                        })
-                      }
-                      icon={
-                        isSelected ? (
-                          <CheckIcon sx={{ fontSize: '11px !important' }} />
-                        ) : undefined
-                      }
-                      sx={{
-                        borderRadius: 1,
-                        fontSize: '0.7rem',
-                        fontWeight: isSelected ? 700 : 600,
-                        height: 26,
-                        bgcolor: isSelected ? theme.palette.primary.main : inputSurfaceBg,
-                        color: isSelected
-                          ? 'primary.contrastText'
-                          : isDark
-                            ? 'text.primary'
-                            : '#334155',
-                        border: '1px solid',
-                        borderColor: isSelected ? theme.palette.primary.main : inputBorderColor,
-                      }}
-                    />
-                  );
-                })}
+                {[...roomLanguageOptions]
+                  .sort((a, b) => (b.count || 0) - (a.count || 0))
+                  .slice(0, 5)
+                  .map((lang) => {
+                    const isSelected = selectedLanguage === lang.value;
+                    return (
+                      <Chip
+                        key={lang.value}
+                        size="small"
+                        clickable
+                        onClick={() =>
+                          handleFilterUpdate({ selectedLanguage: isSelected ? 'all' : lang.value })
+                        }
+                        icon={
+                          isSelected ? (
+                            <CheckIcon sx={{ fontSize: '11px !important' }} />
+                          ) : undefined
+                        }
+                        label={
+                          <Box
+                            component="span"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                          >
+                            <Box component="span">
+                              {lang.label}
+                            </Box>
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontSize: '0.65rem',
+                                fontWeight: 600,
+                                opacity: isSelected ? 0.9 : 0.6,
+                              }}
+                            >
+                              ({lang.count || 0})
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{
+                          borderRadius: 1,
+                          fontSize: '0.7rem',
+                          fontWeight: isSelected ? 700 : 600,
+                          height: 26,
+                          bgcolor: isSelected ? theme.palette.primary.main : inputSurfaceBg,
+                          color: isSelected
+                            ? 'primary.contrastText'
+                            : isDark
+                              ? 'text.primary'
+                              : '#334155',
+                          border: '1px solid',
+                          borderColor: isSelected ? theme.palette.primary.main : inputBorderColor,
+                          '&:hover': {
+                            bgcolor: theme.palette.primary.main,
+                            color: "common.white",
+                          }
+                        }}
+                      />
+                    );
+                  })}
               </Stack>
             </Grid>
 

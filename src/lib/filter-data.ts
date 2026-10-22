@@ -1,157 +1,184 @@
-export interface Language {
-  /** ISO 639-1 (2-letter) or ISO 639-3 (3-letter, e.g., sign languages) code */
+export interface RoomLanguageOptionType {
   code: string;
-  /** Display name of the language in English */
-  name: string;
-  /** Emoji flag representing the primary country/region */
-  flag: string;
-  /** Estimated count of native speakers */
-  nativeSpeakers: number;
+  value: string;
+  label: string;
+  count: number;
 }
 
-export const languages: Language[] = [
-  // Most Spoken Languages (1B+ speakers)
-  { code: 'en', name: 'English', flag: '🇬🇧', nativeSpeakers: 379000000 },
-  { code: 'zh', name: 'Chinese', flag: '🇨🇳', nativeSpeakers: 918000000 },
-  { code: 'hi', name: 'Hindi', flag: '🇮🇳', nativeSpeakers: 602000000 },
-  { code: 'es', name: 'Spanish', flag: '🇪🇸', nativeSpeakers: 460000000 },
-  { code: 'fr', name: 'French', flag: '🇫🇷', nativeSpeakers: 280000000 },
-  { code: 'ar', name: 'Arabic', flag: '🇸🇦', nativeSpeakers: 422000000 },
-  { code: 'bn', name: 'Bengali', flag: '🇧🇩', nativeSpeakers: 265000000 },
-  { code: 'ru', name: 'Russian', flag: '🇷🇺', nativeSpeakers: 154000000 },
-  { code: 'pt', name: 'Portuguese', flag: '🇵🇹', nativeSpeakers: 260000000 },
-  { code: 'ur', name: 'Urdu', flag: '🇵🇰', nativeSpeakers: 231000000 },
+export const ROOM_LANGUAGE_OPTIONS: RoomLanguageOptionType[] = [
+  { code: 'all', value: "all", label: "All Language", count: 0 },
+  // Top Global
+  { code: 'en', value: 'en', label: 'English', count: 0 },
+  { code: 'zh', value: 'zh', label: 'Chinese', count: 0 },
+  { code: 'es', value: 'es', label: 'Spanish', count: 0 },
+  { code: 'hi', value: 'hi', label: 'Hindi', count: 0 },
+  { code: 'ur', value: 'ur', label: 'Urdu', count: 0 },
+  { code: 'ar', value: 'ar', label: 'Arabic', count: 0 },
+  { code: 'fr', value: 'fr', label: 'French', count: 0 },
 
-  // European Languages
-  { code: 'de', name: 'German', flag: '🇩🇪', nativeSpeakers: 95000000 },
-  { code: 'it', name: 'Italian', flag: '🇮🇹', nativeSpeakers: 65000000 },
-  { code: 'nl', name: 'Dutch', flag: '🇳🇱', nativeSpeakers: 24000000 },
-  { code: 'pl', name: 'Polish', flag: '🇵🇱', nativeSpeakers: 40000000 },
-  { code: 'uk', name: 'Ukrainian', flag: '🇺🇦', nativeSpeakers: 33000000 },
-  { code: 'ro', name: 'Romanian', flag: '🇷🇴', nativeSpeakers: 24000000 },
-  { code: 'el', name: 'Greek', flag: '🇬🇷', nativeSpeakers: 13000000 },
-  { code: 'hu', name: 'Hungarian', flag: '🇭🇺', nativeSpeakers: 13000000 },
-  { code: 'cs', name: 'Czech', flag: '🇨🇿', nativeSpeakers: 10700000 },
-  { code: 'sv', name: 'Swedish', flag: '🇸🇪', nativeSpeakers: 10200000 },
-  { code: 'bg', name: 'Bulgarian', flag: '🇧🇬', nativeSpeakers: 8000000 },
-  { code: 'da', name: 'Danish', flag: '🇩🇰', nativeSpeakers: 5600000 },
-  { code: 'fi', name: 'Finnish', flag: '🇫🇮', nativeSpeakers: 5400000 },
-  { code: 'sk', name: 'Slovak', flag: '🇸🇰', nativeSpeakers: 5200000 },
-  { code: 'no', name: 'Norwegian', flag: '🇳🇴', nativeSpeakers: 5000000 },
-  { code: 'hr', name: 'Croatian', flag: '🇭🇷', nativeSpeakers: 5600000 },
-  { code: 'lt', name: 'Lithuanian', flag: '🇱🇹', nativeSpeakers: 3000000 },
-  { code: 'sl', name: 'Slovenian', flag: '🇸🇮', nativeSpeakers: 2100000 },
-  { code: 'lv', name: 'Latvian', flag: '🇱🇻', nativeSpeakers: 1500000 },
-  { code: 'et', name: 'Estonian', flag: '🇪🇪', nativeSpeakers: 1100000 },
+  // A
+  { code: 'af', value: 'af', label: 'Afrikaans', count: 0 },
+  { code: 'sq', value: 'sq', label: 'Albanian', count: 0 },
+  { code: 'am', value: 'am', label: 'Amharic', count: 0 },
+  { code: 'hy', value: 'hy', label: 'Armenian', count: 0 },
+  { code: 'as', value: 'as', label: 'Assamese', count: 0 },
+  { code: 'ay', value: 'ay', label: 'Aymara', count: 0 },
+  { code: 'az', value: 'az', label: 'Azerbaijani', count: 0 },
 
-  // Asian Languages
-  { code: 'ja', name: 'Japanese', flag: '🇯🇵', nativeSpeakers: 125000000 },
-  { code: 'ko', name: 'Korean', flag: '🇰🇷', nativeSpeakers: 77000000 },
-  { code: 'vi', name: 'Vietnamese', flag: '🇻🇳', nativeSpeakers: 76000000 },
-  { code: 'th', name: 'Thai', flag: '🇹🇭', nativeSpeakers: 60000000 },
-  { code: 'id', name: 'Indonesian', flag: '🇮🇩', nativeSpeakers: 43000000 },
-  { code: 'ms', name: 'Malay', flag: '🇲🇾', nativeSpeakers: 29000000 },
-  { code: 'tl', name: 'Tagalog (Filipino)', flag: '🇵🇭', nativeSpeakers: 28000000 },
-  { code: 'my', name: 'Burmese', flag: '🇲🇲', nativeSpeakers: 33000000 },
-  { code: 'km', name: 'Khmer (Cambodian)', flag: '🇰🇭', nativeSpeakers: 16000000 },
-  { code: 'lo', name: 'Lao', flag: '🇱🇦', nativeSpeakers: 7000000 },
-  { code: 'ne', name: 'Nepali', flag: '🇳🇵', nativeSpeakers: 16000000 },
-  { code: 'si', name: 'Sinhala', flag: '🇱🇰', nativeSpeakers: 16000000 },
-  { code: 'mn', name: 'Mongolian', flag: '🇲🇳', nativeSpeakers: 5600000 },
+  // B
+  { code: 'bm', value: 'bm', label: 'Bambara', count: 0 },
+  { code: 'eu', value: 'eu', label: 'Basque', count: 0 },
+  { code: 'be', value: 'be', label: 'Belarusian', count: 0 },
+  { code: 'bn', value: 'bn', label: 'Bengali', count: 0 },
+  { code: 'bs', value: 'bs', label: 'Bosnian', count: 0 },
+  { code: 'bg', value: 'bg', label: 'Bulgarian', count: 0 },
+  { code: 'my', value: 'my', label: 'Burmese', count: 0 },
 
-  // Middle Eastern Languages
-  { code: 'fa', name: 'Persian (Farsi)', flag: '🇮🇷', nativeSpeakers: 62000000 },
-  { code: 'he', name: 'Hebrew', flag: '🇮🇱', nativeSpeakers: 5000000 },
-  { code: 'ku', name: 'Kurdish', flag: '🇹🇷', nativeSpeakers: 26000000 },
-  { code: 'ps', name: 'Pashto', flag: '🇦🇫', nativeSpeakers: 21000000 },
-  { code: 'az', name: 'Azerbaijani', flag: '🇦🇿', nativeSpeakers: 24000000 },
+  // C
+  { code: 'ca', value: 'ca', label: 'Catalan', count: 0 },
+  { code: 'ceb', value: 'ceb', label: 'Cebuano', count: 0 },
+  { code: 'ny', value: 'ny', label: 'Chichewa', count: 0 },
+  { code: 'co', value: 'co', label: 'Corsican', count: 0 },
+  { code: 'hr', value: 'hr', label: 'Croatian', count: 0 },
+  { code: 'cs', value: 'cs', label: 'Czech', count: 0 },
 
-  // South Asian Languages
-  { code: 'pa', name: 'Punjabi', flag: '🇮🇳', nativeSpeakers: 113000000 },
-  { code: 'mr', name: 'Marathi', flag: '🇮🇳', nativeSpeakers: 83000000 },
-  { code: 'te', name: 'Telugu', flag: '🇮🇳', nativeSpeakers: 82000000 },
-  { code: 'ta', name: 'Tamil', flag: '🇮🇳', nativeSpeakers: 78000000 },
-  { code: 'gu', name: 'Gujarati', flag: '🇮🇳', nativeSpeakers: 55000000 },
-  { code: 'kn', name: 'Kannada', flag: '🇮🇳', nativeSpeakers: 44000000 },
-  { code: 'ml', name: 'Malayalam', flag: '🇮🇳', nativeSpeakers: 37000000 },
-  { code: 'or', name: 'Odia (Oriya)', flag: '🇮🇳', nativeSpeakers: 35000000 },
-  { code: 'as', name: 'Assamese', flag: '🇮🇳', nativeSpeakers: 15000000 },
+  // D
+  { code: 'da', value: 'da', label: 'Danish', count: 0 },
+  { code: 'nl', value: 'nl', label: 'Dutch', count: 0 },
+  { code: 'dv', value: 'dv', label: 'Divehi', count: 0 },
 
-  // African Languages
-  { code: 'sw', name: 'Swahili', flag: '🇹🇿', nativeSpeakers: 15000000 },
-  { code: 'ha', name: 'Hausa', flag: '🇳🇬', nativeSpeakers: 43000000 },
-  { code: 'yo', name: 'Yoruba', flag: '🇳🇬', nativeSpeakers: 38000000 },
-  { code: 'ig', name: 'Igbo', flag: '🇳🇬', nativeSpeakers: 27000000 },
-  { code: 'am', name: 'Amharic', flag: '🇪🇹', nativeSpeakers: 32000000 },
-  { code: 'so', name: 'Somali', flag: '🇸🇴', nativeSpeakers: 15000000 },
-  { code: 'zu', name: 'Zulu', flag: '🇿🇦', nativeSpeakers: 12000000 },
-  { code: 'xh', name: 'Xhosa', flag: '🇿🇦', nativeSpeakers: 8200000 },
-  { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼', nativeSpeakers: 12000000 },
-  { code: 'sn', name: 'Shona', flag: '🇿🇼', nativeSpeakers: 11000000 },
-  { code: 'st', name: 'Sesotho', flag: '🇱🇸', nativeSpeakers: 5600000 },
-  { code: 'tn', name: 'Setswana', flag: '🇧🇼', nativeSpeakers: 5300000 },
+  // E
+  { code: 'eo', value: 'eo', label: 'Esperanto', count: 0 },
+  { code: 'et', value: 'et', label: 'Estonian', count: 0 },
+  { code: 'ee', value: 'ee', label: 'Ewe', count: 0 },
 
-  // Turkic Languages
-  { code: 'tr', name: 'Turkish', flag: '🇹🇷', nativeSpeakers: 75000000 },
-  { code: 'uz', name: 'Uzbek', flag: '🇺🇿', nativeSpeakers: 27000000 },
-  { code: 'kk', name: 'Kazakh', flag: '🇰🇿', nativeSpeakers: 13000000 },
-  { code: 'tk', name: 'Turkmen', flag: '🇹🇲', nativeSpeakers: 7000000 },
-  { code: 'ky', name: 'Kyrgyz', flag: '🇰🇬', nativeSpeakers: 4600000 },
+  // F
+  { code: 'fo', value: 'fo', label: 'Faroese', count: 0 },
+  { code: 'fj', value: 'fj', label: 'Fijian', count: 0 },
+  { code: 'fi', value: 'fi', label: 'Finnish', count: 0 },
+  { code: 'fy', value: 'fy', label: 'Frisian', count: 0 },
 
-  // Austronesian Languages
-  { code: 'ceb', name: 'Cebuano', flag: '🇵🇭', nativeSpeakers: 21000000 },
-  { code: 'ilo', name: 'Ilocano', flag: '🇵🇭', nativeSpeakers: 8000000 },
-  { code: 'hmn', name: 'Hmong', flag: '🇨🇳', nativeSpeakers: 3800000 },
-  { code: 'war', name: 'Waray', flag: '🇵🇭', nativeSpeakers: 3100000 },
+  // G
+  { code: 'gl', value: 'gl', label: 'Galician', count: 0 },
+  { code: 'ka', value: 'ka', label: 'Georgian', count: 0 },
+  { code: 'de', value: 'de', label: 'German', count: 0 },
+  { code: 'el', value: 'el', label: 'Greek', count: 0 },
+  { code: 'gn', value: 'gn', label: 'Guarani', count: 0 },
+  { code: 'gu', value: 'gu', label: 'Gujarati', count: 0 },
 
-  // Native American Languages
-  { code: 'qu', name: 'Quechua', flag: '🇵🇪', nativeSpeakers: 8000000 },
-  { code: 'ay', name: 'Aymara', flag: '🇧🇴', nativeSpeakers: 2000000 },
-  { code: 'gn', name: 'Guarani', flag: '🇵🇾', nativeSpeakers: 6500000 },
-  { code: 'nah', name: 'Nahuatl', flag: '🇲🇽', nativeSpeakers: 1500000 },
+  // H
+  { code: 'ht', value: 'ht', label: 'Haitian Creole', count: 0 },
+  { code: 'ha', value: 'ha', label: 'Hausa', count: 0 },
+  { code: 'he', value: 'he', label: 'Hebrew', count: 0 },
+  { code: 'hu', value: 'hu', label: 'Hungarian', count: 0 },
 
-  // Baltic Languages
-  { code: 'lv', name: 'Latvian', flag: '🇱🇻', nativeSpeakers: 1500000 },
-  { code: 'lt', name: 'Lithuanian', flag: '🇱🇹', nativeSpeakers: 3000000 },
+  // I
+  { code: 'is', value: 'is', label: 'Icelandic', count: 0 },
+  { code: 'ig', value: 'ig', label: 'Igbo', count: 0 },
+  { code: 'id', value: 'id', label: 'Indonesian', count: 0 },
+  { code: 'ga', value: 'ga', label: 'Irish', count: 0 },
+  { code: 'it', value: 'it', label: 'Italian', count: 0 },
 
-  // Celtic Languages
-  { code: 'ga', name: 'Irish', flag: '🇮🇪', nativeSpeakers: 170000 },
-  { code: 'cy', name: 'Welsh', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', nativeSpeakers: 500000 },
-  { code: 'gd', name: 'Scottish Gaelic', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', nativeSpeakers: 57000 },
-  { code: 'br', name: 'Breton', flag: '🇫🇷', nativeSpeakers: 210000 },
+  // J
+  { code: 'ja', value: 'ja', label: 'Japanese', count: 0 },
+  { code: 'jv', value: 'jv', label: 'Javanese', count: 0 },
 
-  // Other European Languages
-  { code: 'sq', name: 'Albanian', flag: '🇦🇱', nativeSpeakers: 6000000 },
-  { code: 'hy', name: 'Armenian', flag: '🇦🇲', nativeSpeakers: 5300000 },
-  { code: 'ka', name: 'Georgian', flag: '🇬🇪', nativeSpeakers: 3700000 },
-  { code: 'mt', name: 'Maltese', flag: '🇲🇹', nativeSpeakers: 520000 },
-  { code: 'is', name: 'Icelandic', flag: '🇮🇸', nativeSpeakers: 360000 },
+  // K
+  { code: 'kn', value: 'kn', label: 'Kannada', count: 0 },
+  { code: 'kk', value: 'kk', label: 'Kazakh', count: 0 },
+  { code: 'km', value: 'km', label: 'Khmer', count: 0 },
+  { code: 'rw', value: 'rw', label: 'Kinyarwanda', count: 0 },
+  { code: 'ko', value: 'ko', label: 'Korean', count: 0 },
+  { code: 'ku', value: 'ku', label: 'Kurdish', count: 0 },
+  { code: 'ky', value: 'ky', label: 'Kyrgyz', count: 0 },
 
-  // Constructed Languages
-  { code: 'eo', name: 'Esperanto', flag: '🏴', nativeSpeakers: 1000 },
-  { code: 'ia', name: 'Interlingua', flag: '🏴', nativeSpeakers: 1500 },
+  // L
+  { code: 'lo', value: 'lo', label: 'Lao', count: 0 },
+  { code: 'la', value: 'la', label: 'Latin', count: 0 },
+  { code: 'lv', value: 'lv', label: 'Latvian', count: 0 },
+  { code: 'lt', value: 'lt', label: 'Lithuanian', count: 0 },
+  { code: 'lb', value: 'lb', label: 'Luxembourgish', count: 0 },
 
-  // Sign Languages (using ISO 639-3 codes)
-  { code: 'ase', name: 'American Sign Language', flag: '🇺🇸', nativeSpeakers: 250000 },
-  { code: 'bfi', name: 'British Sign Language', flag: '🇬🇧', nativeSpeakers: 77000 },
-  { code: 'bzs', name: 'Brazilian Sign Language', flag: '🇧🇷', nativeSpeakers: 3000000 },
-  { code: 'csq', name: 'Chinese Sign Language', flag: '🇨🇳', nativeSpeakers: 20000000 },
-  { code: 'fsl', name: 'French Sign Language', flag: '🇫🇷', nativeSpeakers: 100000 },
-  { code: 'gsg', name: 'German Sign Language', flag: '🇩🇪', nativeSpeakers: 200000 },
-  { code: 'inl', name: 'Indonesian Sign Language', flag: '🇮🇩', nativeSpeakers: 800000 },
-  { code: 'jsl', name: 'Japanese Sign Language', flag: '🇯🇵', nativeSpeakers: 300000 },
-  { code: 'kvk', name: 'Korean Sign Language', flag: '🇰🇷', nativeSpeakers: 180000 },
-  { code: 'mzg', name: 'Mexican Sign Language', flag: '🇲🇽', nativeSpeakers: 130000 },
-  { code: 'rsl', name: 'Russian Sign Language', flag: '🇷🇺', nativeSpeakers: 120000 },
-  { code: 'spa', name: 'Spanish Sign Language', flag: '🇪🇸', nativeSpeakers: 100000 },
+  // M
+  { code: 'mk', value: 'mk', label: 'Macedonian', count: 0 },
+  { code: 'mg', value: 'mg', label: 'Malagasy', count: 0 },
+  { code: 'ms', value: 'ms', label: 'Malay', count: 0 },
+  { code: 'ml', value: 'ml', label: 'Malayalam', count: 0 },
+  { code: 'mt', value: 'mt', label: 'Maltese', count: 0 },
+  { code: 'mi', value: 'mi', label: 'Maori', count: 0 },
+  { code: 'mr', value: 'mr', label: 'Marathi', count: 0 },
+  { code: 'mn', value: 'mn', label: 'Mongolian', count: 0 },
+
+  // N
+  { code: 'ne', value: 'ne', label: 'Nepali', count: 0 },
+  { code: 'no', value: 'no', label: 'Norwegian', count: 0 },
+
+  // O
+  { code: 'or', value: 'or', label: 'Odia (Oriya)', count: 0 },
+  { code: 'om', value: 'om', label: 'Oromo', count: 0 },
+
+  // P
+  { code: 'ps', value: 'ps', label: 'Pashto', count: 0 },
+  { code: 'fa', value: 'fa', label: 'Persian', count: 0 },
+  { code: 'pl', value: 'pl', label: 'Polish', count: 0 },
+  { code: 'pt', value: 'pt', label: 'Portuguese', count: 0 },
+  { code: 'pa', value: 'pa', label: 'Punjabi', count: 0 },
+
+  // Q
+  { code: 'qu', value: 'qu', label: 'Quechua', count: 0 },
+
+  // R
+  { code: 'ro', value: 'ro', label: 'Romanian', count: 0 },
+  { code: 'ru', value: 'ru', label: 'Russian', count: 0 },
+
+  // S
+  { code: 'sm', value: 'sm', label: 'Samoan', count: 0 },
+  { code: 'gd', value: 'gd', label: 'Scots Gaelic', count: 0 },
+  { code: 'sr', value: 'sr', label: 'Serbian', count: 0 },
+  { code: 'st', value: 'st', label: 'Sesotho', count: 0 },
+  { code: 'sn', value: 'sn', label: 'Shona', count: 0 },
+  { code: 'sd', value: 'sd', label: 'Sindhi', count: 0 },
+  { code: 'si', value: 'si', label: 'Sinhala', count: 0 },
+  { code: 'sk', value: 'sk', label: 'Slovak', count: 0 },
+  { code: 'sl', value: 'sl', label: 'Slovenian', count: 0 },
+  { code: 'so', value: 'so', label: 'Somali', count: 0 },
+  { code: 'su', value: 'su', label: 'Sundanese', count: 0 },
+  { code: 'sw', value: 'sw', label: 'Swahili', count: 0 },
+  { code: 'sv', value: 'sv', label: 'Swedish', count: 0 },
+
+  // T
+  { code: 'tg', value: 'tg', label: 'Tajik', count: 0 },
+  { code: 'ta', value: 'ta', label: 'Tamil', count: 0 },
+  { code: 'tt', value: 'tt', label: 'Tatar', count: 0 },
+  { code: 'te', value: 'te', label: 'Telugu', count: 0 },
+  { code: 'th', value: 'th', label: 'Thai', count: 0 },
+  { code: 'tr', value: 'tr', label: 'Turkish', count: 0 },
+  { code: 'tk', value: 'tk', label: 'Turkmen', count: 0 },
+
+  // U
+  { code: 'uk', value: 'uk', label: 'Ukrainian', count: 0 },
+  { code: 'ug', value: 'ug', label: 'Uyghur', count: 0 },
+  { code: 'uz', value: 'uz', label: 'Uzbek', count: 0 },
+
+  // V
+  { code: 'vi', value: 'vi', label: 'Vietnamese', count: 0 },
+
+  // W
+  { code: 'cy', value: 'cy', label: 'Welsh', count: 0 },
+
+  // X
+  { code: 'xh', value: 'xh', label: 'Xhosa', count: 0 },
+
+  // Y
+  { code: 'yi', value: 'yi', label: 'Yiddish', count: 0 },
+  { code: 'yo', value: 'yo', label: 'Yoruba', count: 0 },
+
+  // Z
+  { code: 'zu', value: 'zu', label: 'Zulu', count: 0 }
 ];
-export const getLanguageByCode = (code: string): Language | undefined =>
-  languages.find((lang) => lang.code === code);
 
-export const getLanguageFlag = (code: string): string => {
-  const language = getLanguageByCode(code);
-  return language?.flag || '🌐';
-};
+export const getLanguageByCode = (code: string): RoomLanguageOptionType | undefined =>
+  ROOM_LANGUAGE_OPTIONS.find((lang) => lang.code === code);
 
 export const LEVEL_OPTIONS = [
   { value: 'all', label: 'Any Levels', emoji: '🎯' },

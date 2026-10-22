@@ -1,5 +1,6 @@
-import { languages, LEVEL_OPTIONS } from '@/lib/filter-data';
+import { LEVEL_OPTIONS, ROOM_LANGUAGE_OPTIONS } from '@/lib/filter-data';
 import { RoomParticipantType } from '@/types/type-room';
+
 
 
 export function getParticipantId(p?: RoomParticipantType | null): string {
@@ -41,15 +42,15 @@ export function formatLanguages(languages?: string[] | string): string {
 export function getLanguageDetails(languageCodes?: string[] | string) {
   if (!languageCodes) {
     // Default to English if nothing is provided
-    return [languages.find(l => l.code === 'en') || { code: 'en', name: 'English', flag: '🇬🇧' }];
+    return [ROOM_LANGUAGE_OPTIONS.find(l => l.code === 'en') || { code: 'en', name: 'English', flag: '🇬🇧' }];
   }
 
   const codesArray = Array.isArray(languageCodes) ? languageCodes : [languageCodes];
 
   // Map codes to details, filter out any undefined results if a code isn't found
   return codesArray
-    .map(code => languages.find(l => l.code === code))
-    .filter(Boolean) as typeof languages;
+    .map(code => ROOM_LANGUAGE_OPTIONS.find(l => l.code === code))
+    .filter(Boolean) as typeof ROOM_LANGUAGE_OPTIONS;
 }
 
 export function getLevelLabel(value: string | undefined | null, includeEmoji: boolean = false): string {

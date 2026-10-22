@@ -7,6 +7,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { ROOM_LANGUAGE_OPTIONS, RoomLanguageOptionType } from '@/lib/filter-data';
 import { cacheUserInfo } from '@/utils/user-cache';
 import type { RootState } from '../types';
 
@@ -24,11 +25,11 @@ interface RoomState {
   room: null | RoomType;
   rooms: RoomType[];
   loading: boolean;
-  isRoomsLoading: boolean; // Added state for the global rooms list loading
+  isRoomsLoading: boolean;
   participants: RoomParticipantType[];
   isUnreadRoomMessage: boolean;
-  // O(1) Cache map for storing user follower/following stats globally
   userStatsMap: Record<string, { follower_count?: number; following_count?: number; friend_count?: number }>;
+  roomLanguageOptions: RoomLanguageOptionType[];
 }
 
 const initialState: RoomState = {
@@ -40,6 +41,7 @@ const initialState: RoomState = {
   participants: [],
   isUnreadRoomMessage: false,
   userStatsMap: {},
+  roomLanguageOptions: ROOM_LANGUAGE_OPTIONS
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -72,6 +74,14 @@ export const roomSlice = createSlice({
       if (action.payload?.participants) {
         state.participants = action.payload.participants;
       }
+    },
+
+    updateRoomLanguageCounts: (state, action: PayloadAction<Record<string, number>>) => {
+      const countsMap = action.payload;
+      state.roomLanguageOptions = state.roomLanguageOptions.map((lang) => ({
+        ...lang,
+        count: countsMap[lang.code] || 0,
+      }));
     },
 
     setRoomLoading: (state, action: PayloadAction<boolean>) => {
@@ -251,6 +261,7 @@ export const {
   updateParticipant,
   updateParticipants,
   resetRoom,
+  updateRoomLanguageCounts
 } = roomSlice.actions;
 
 // ── Selectors ─────────────────────────────────────────────────────────────
@@ -262,6 +273,7 @@ export const selectIsRoomsLoading = (state: RootState) => state.room.isRoomsLoad
 export const selectParticipants = (state: RootState) => state.room.participants;
 export const selectIsUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 export const selectUserStatsMap = (state: RootState) => state.room.userStatsMap;
+export const selectRoomLanguageOptions = (state: RootState) => state.room.roomLanguageOptions;
 
 // ── useRoomTools Hook ─────────────────────────────────────────────────────
 export const useRoomTools = () => {
@@ -274,6 +286,7 @@ export const useRoomTools = () => {
   const isRoomsLoading = useSelector(selectIsRoomsLoading);
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectIsUnreadRoomMessage);
+  const roomLanguageOptions = useSelector(selectRoomLanguageOptions);
 
   const getRoomById = useCallback(
     (targetRoomId: string): RoomType | undefined => {
@@ -299,6 +312,7 @@ export const useRoomTools = () => {
       updateParticipants: (participantsList: Array<UserStatsUpdate>) =>
         dispatch(updateParticipants(participantsList)),
       resetRoom: () => dispatch(resetRoom()),
+      updateRoomLanguageCounts: (counts: Record<string, number>) => dispatch(updateRoomLanguageCounts(counts)),
     }),
     [dispatch]
   );
@@ -313,8 +327,9 @@ export const useRoomTools = () => {
       participants,
       isUnreadRoomMessage,
       getRoomById,
+      roomLanguageOptions,
       ...actions,
     }),
-    [roomId, room, rooms, loading, isRoomsLoading, participants, isUnreadRoomMessage, getRoomById, actions]
+    [roomId, room, rooms, loading, isRoomsLoading, participants, isUnreadRoomMessage, getRoomById, roomLanguageOptions, actions]
   );
 };
