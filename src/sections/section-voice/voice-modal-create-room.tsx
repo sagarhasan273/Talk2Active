@@ -342,6 +342,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
+            pt: 1.5,
           }}
         >
           {/* Basic Info */}
