@@ -64,8 +64,7 @@ type FormData = {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreateRoom: (data: FormData) => void;
-  currentRoom: RoomType | null;
+  currentRoom?: RoomType | null;
 }
 
 // ----------------------------------------------------------------------
@@ -94,7 +93,6 @@ const getInitialForm = (room: Props['currentRoom']): FormData => {
 export const VoiceModalCreateRoom: React.FC<Props> = ({
   open,
   onClose,
-  onCreateRoom,
   currentRoom,
 }) => {
   const theme = useTheme();
@@ -183,8 +181,6 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
         level: formData.level,
         max_participants: formData.max_participants,
       };
-
-    onCreateRoom(payload);
 
     try {
       const response = currentRoom

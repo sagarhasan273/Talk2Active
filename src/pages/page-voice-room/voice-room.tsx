@@ -8,7 +8,7 @@ import { VoiceMainView } from 'src/sections/section-voice';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Voice Channel - ${CONFIG.appName}` };
+const metadata = { title: `Talk2Active - ${CONFIG.appName}` };
 
 function DynamicHelmet() {
   const { hasUnreadMessages, totalUnreadMessages } = useSocialStorage();
@@ -35,7 +35,6 @@ function DynamicHelmet() {
       return;
     }
 
-    // Use a 128x128 HiDPI canvas for razor-sharp downscaling
     const SIZE = 128;
     const canvas = document.createElement('canvas');
     canvas.width = SIZE;
@@ -53,11 +52,8 @@ function DynamicHelmet() {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // 1. Draw the base favicon slightly inset in the bottom-left (112x112)
-      // so the top-right badge has room to pop without clipping
       ctx.drawImage(img, 0, 16, 112, 112);
 
-      // 2. Badge Geometry (Fully inside 128x128 bounds: center 88, 40, radius 34 + 6px border = max 128)
       const badgeX = 88;
       const badgeY = 40;
       const badgeRadius = 34;
@@ -71,7 +67,7 @@ function DynamicHelmet() {
       // 4. Draw vibrant red notification circle
       ctx.beginPath();
       ctx.arc(badgeX, badgeY, badgeRadius, 0, 2 * Math.PI);
-      ctx.fillStyle = '#FF1E1E'; // High-visibility vibrant red
+      ctx.fillStyle = '#FF1E1E';
       ctx.fill();
 
       // 5. Draw large, bold, readable count text

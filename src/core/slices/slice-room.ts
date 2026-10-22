@@ -119,6 +119,86 @@ export const roomSlice = createSlice({
       }
     },
 
+    updateRoom: (state, action: PayloadAction<Partial<RoomType> & { roomId: string }>) => {
+      const roomUpdate = action.payload;
+      if (!roomUpdate?.roomId) return;
+
+      const roomIndex = state.rooms.findIndex((r) => r.roomId === roomUpdate.roomId);
+
+      if (roomIndex !== -1) {
+        const existingRoom = state.rooms[roomIndex];
+
+        // 1. Handle Language Count Adjustments (if languages were modified)
+        if (roomUpdate.languages && Array.isArray(roomUpdate.languages)) {
+          const oldLanguages = Array.isArray(existingRoom.languages) ? existingRoom.languages : [];
+          const newLanguages = roomUpdate.languages;
+
+          // Find which languages were removed and which were newly added
+          const languagesToRemove = oldLanguages.filter(lang => !newLanguages.includes(lang));
+          const languagesToAdd = newLanguages.filter(lang => !oldLanguages.includes(lang));
+
+          // Decrement removed languages
+          languagesToRemove.forEach((langCode) => {
+            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            if (langOption && langOption.count > 0) {
+              langOption.count -= 1;
+            }
+          });
+
+          // Increment added languages
+          languagesToAdd.forEach((langCode) => {
+            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            if (langOption) {
+              langOption.count += 1;
+            }
+          });
+          // Note: We do NOT touch the 'all' option count here because the total number of rooms hasn't changed.
+        }
+
+        // 2. Apply the update to the room in the list
+        state.rooms[roomIndex] = { ...existingRoom, ...roomUpdate };
+
+        // 3. Keep the active/current room in sync if the user is inside it
+        if (state.room?.roomId === roomUpdate.roomId) {
+          state.room = { ...state.room, ...roomUpdate };
+        }
+      }
+    },
+
+    removeRoom: (state, action: PayloadAction<string>) => {
+      const roomIdToRemove = action.payload;
+      if (!roomIdToRemove) return;
+
+      const roomIndex = state.rooms.findIndex((r) => r.roomId === roomIdToRemove);
+
+      if (roomIndex !== -1) {
+        const roomToRemove = state.rooms[roomIndex];
+
+        if (Array.isArray(roomToRemove.languages)) {
+          roomToRemove.languages.forEach((langCode) => {
+            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            if (langOption && langOption.count > 0) {
+              langOption.count -= 1;
+            }
+          });
+
+          // Decrement the global 'all' counter
+          const allOption = state.roomLanguageOptions.find(l => l.code === 'all');
+          if (allOption && allOption.count > 0) {
+            allOption.count -= 1;
+          }
+        }
+
+        state.rooms.splice(roomIndex, 1);
+
+        if (state.roomId === roomIdToRemove) {
+          state.roomId = null;
+          state.room = null;
+          state.participants = [];
+        }
+      }
+    },
+
     addParticipantToRoom: (
       state,
       action: PayloadAction<{ roomId: string; participant: RoomParticipantType }>
@@ -268,6 +348,8 @@ export const {
   setRoomsLoading,
   setRooms,
   addRoom,
+  updateRoom,
+  removeRoom,
   addParticipantToRoom,
   removeParticipantFromRoom,
   updateParticipant,
@@ -315,6 +397,8 @@ export const useRoomTools = () => {
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       setRoomsLoading: (isLoading: boolean) => dispatch(setRoomsLoading(isLoading)),
       addRoom: (roomData: RoomType) => dispatch(addRoom(roomData)),
+      updateRoom: (roomUpdate: Partial<RoomType> & { roomId: string }) => dispatch(updateRoom(roomUpdate)),
+      removeRoom: (roomId: string) => dispatch(removeRoom(roomId)),
       addParticipantToRoom: (rId: string, participant: RoomParticipantType) =>
         dispatch(addParticipantToRoom({ roomId: rId, participant })),
       removeParticipantFromRoom: (rId: string, participantId: string) =>

@@ -63,10 +63,13 @@ const sxCard = {
 
 const NOOP = () => { };
 
-const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom: () => void }) => {
+const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom?: () => void }) => {
   const { isInRoom } = useLiveKitSession();
-  if (isInRoom) return null;
-  return <DefaultHeader onQuickJoin={NOOP} onCreateRoom={onCreateRoom} />;
+  // if (isInRoom) return null;
+  return <DefaultHeader onQuickJoin={NOOP} sx={{
+    mt: isInRoom ? 0 : 1,
+    mb: 1
+  }} />;
 });
 
 // ── 1. Isolated Fast-Scroll Pill ──
@@ -238,7 +241,6 @@ const RoomListModalsHost = memo(
           <VoiceModalCreateRoom
             open={Boolean(editRoom)}
             onClose={() => setEditRoom(null)}
-            onCreateRoom={NOOP}
             currentRoom={editRoom}
           />
         )}
@@ -249,13 +251,11 @@ const RoomListModalsHost = memo(
 
 interface RoomlistMainProps {
   onSelectRoom: (room: RoomType) => void;
-  onCreateRoom: () => void;
   isVisible?: boolean;
 }
 
 export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoom,
-  onCreateRoom,
   isVisible
 }: RoomlistMainProps) {
   const theme = useTheme();
@@ -264,8 +264,8 @@ export const RoomlistMain = memo(function RoomlistMain({
   const { user, isAuthenticated } = useCredentials();
   const currentUserId = user?.userId;
 
-  const { rooms, isRoomsLoading, getRoomById } = useRoomTools();
-  const { handleSelectRoom } = useVoiceRoomSetting();
+  const { room: joinRoom, rooms, isRoomsLoading, getRoomById } = useRoomTools();
+  const { isInRoom, handleSelectRoom } = useVoiceRoomSetting();
 
   const logOpen = useBoolean();
 
@@ -274,8 +274,6 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   const onSelectRoomRef = useRef(onSelectRoom);
   onSelectRoomRef.current = onSelectRoom;
-  const onCreateRoomRef = useRef(onCreateRoom);
-  onCreateRoomRef.current = onCreateRoom;
 
   const [filterRooms, setFilterRooms] = useState<FilterState>({
     searchQuery: '',
@@ -303,14 +301,6 @@ export const RoomlistMain = memo(function RoomlistMain({
       return;
     }
     onSelectRoomRef.current(room);
-  }, [isAuthenticated]);
-
-  const stableOnCreateRoom = useCallback(() => {
-    if (!isAuthenticated) {
-      logOpen.onTrue();
-      return;
-    }
-    onCreateRoomRef.current();
   }, [isAuthenticated]);
 
   const handleAvatarClick = useCallback((rawUser: any) => {
@@ -502,7 +492,7 @@ export const RoomlistMain = memo(function RoomlistMain({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <RoomListHeaderSlot onCreateRoom={stableOnCreateRoom} />
+        <RoomListHeaderSlot />
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
         {isRoomsLoading ? (
@@ -530,14 +520,37 @@ export const RoomlistMain = memo(function RoomlistMain({
 
             {visibleCards.map((card, idx) => {
               if (card === 'creation') {
+                if (!isAuthenticated) {
+                  return null;
+                }
+
+                if (isInRoom && joinRoom?.roomId) {
+                  return (
+                    <VoiceRoomCard
+                      key={joinRoom?.roomId}
+                      roomData={joinRoom}
+                      currentUserId={currentUserId}
+                      cardWidth={cardWidth}
+                      onJoinRoom={stableOnSelectRoom}
+                      onAvatarClick={handleAvatarClick}
+                      onOverflowClick={handleOverflowClick}
+                      sx={sxCard}
+                    />
+                  )
+                }
+
                 return (
                   <RoomCardCreation
                     key="creation-card"
-                    onCreateRoom={stableOnCreateRoom}
                     sx={sxCard}
                   />
                 );
               }
+
+              if (isInRoom && joinRoom?.roomId === card?.roomId) {
+                return null
+              }
+
               return (
                 <VoiceRoomCard
                   key={card.roomId}
@@ -560,7 +573,7 @@ export const RoomlistMain = memo(function RoomlistMain({
         )}
 
         <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
-        <RoomListFooter onCreateRoom={stableOnCreateRoom} />
+        <RoomListFooter onCreateRoom={() => { }} />
       </Box>
 
       <RoomListModalsHost

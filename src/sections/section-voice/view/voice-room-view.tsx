@@ -1,9 +1,8 @@
 // src/sections/section-voice/voice-main-view.tsx
-import { useLiveKitSession } from '@/core/contexts/app-context/context-livekit';
 
 import { useVoiceRoomSetting, useVoiceRoomStorage } from '@/core/contexts';
 import { Box } from '@mui/material'; // <-- Ensure Box is imported
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCredentials } from 'src/core/slices';
 import { useRoomTools } from 'src/core/slices/slice-room';
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -17,15 +16,14 @@ import VoiceRoomEventListener from './voice-room-event-listener';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
 
 export function VoiceMainView() {
-  const { isAuthenticated, user } = useCredentials();
-  const { isInRoom } = useLiveKitSession();
+  const { user } = useCredentials();
   const { room } = useRoomTools();
 
   const editRoomBoolean = useBoolean();
-  const isAuthOpen = useBoolean();
 
   const { selectedRoom } = useVoiceRoomStorage();
   const {
+    isInRoom,
     isJoinGateOpen,
     selectedTab,
     handleSelectRoom,
@@ -41,14 +39,6 @@ export function VoiceMainView() {
     () => participants.find((participant) => isParticipantSpeaking(participant)) || null,
     [participants]
   );
-
-  const handleCreateRoom = useCallback(() => {
-    if (!isAuthenticated) {
-      isAuthOpen.onTrue();
-      return;
-    }
-    editRoomBoolean.onTrue();
-  }, [isAuthenticated, isAuthOpen, editRoomBoolean]);
 
   const header = useMemo(() => {
     if (isInRoom && room && selectedTab === 'room-list') {
@@ -88,7 +78,6 @@ export function VoiceMainView() {
       >
         <RoomlistMain
           onSelectRoom={handleSelectRoom}
-          onCreateRoom={handleCreateRoom}
           isVisible={selectedTab === 'room-list'}
         />
       </Box>
@@ -139,8 +128,7 @@ export function VoiceMainView() {
       <VoiceModalCreateRoom
         open={editRoomBoolean.value}
         onClose={editRoomBoolean.onFalse}
-        onCreateRoom={() => { }}
-        currentRoom={room}
+        currentRoom={selectedRoom}
       />
     </>
   );

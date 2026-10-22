@@ -9,7 +9,7 @@ import React, { useEffect } from 'react';
 
 export const VoiceRoomEventListener: React.FC = () => {
   const { socket } = useSocket();
-  const { addRoom, addParticipantToRoom, removeParticipantFromRoom } = useRoomTools();
+  const { addRoom, updateRoom, addParticipantToRoom, removeParticipantFromRoom } = useRoomTools();
 
   useGetRoomsQuery(null);
 
@@ -19,6 +19,12 @@ export const VoiceRoomEventListener: React.FC = () => {
     const handleNewRoom = (data: { room: RoomType }) => {
       if (data?.room) {
         addRoom(data.room);
+      }
+    };
+
+    const handleRoomUpdate = (data: { room: RoomType }) => {
+      if (data?.room) {
+        updateRoom(data.room);
       }
     };
 
@@ -46,11 +52,13 @@ export const VoiceRoomEventListener: React.FC = () => {
     };
 
     socket.on(SOCKET_EVENTS.BROADCAST_NEW_ROOM, handleNewRoom);
+    socket.on(SOCKET_EVENTS.BROADCAST_ROOM_UPDATE, handleRoomUpdate);
     socket.on(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
     socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
 
     return () => {
       socket.off(SOCKET_EVENTS.BROADCAST_NEW_ROOM, handleNewRoom);
+      socket.off(SOCKET_EVENTS.BROADCAST_ROOM_UPDATE, handleRoomUpdate);
       socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
       socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
     };
