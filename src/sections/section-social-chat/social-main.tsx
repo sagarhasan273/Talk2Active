@@ -3,12 +3,11 @@ import React from 'react';
 
 import { useSocialStorage } from '@/core/contexts';
 import type { SocialChatProps } from '@/types/type-social';
+import { SocialChatDirectory } from './social-chat-directory';
 import { SocialChatConversation } from './social-conversation';
-import { SocialChatDirectory } from './social-directory';
 
 export const SocialMain: React.FC<SocialChatProps> = ({
   friends = [],
-  followers = [],
   following = [],
   isLoading = false,
   onClose,
@@ -40,7 +39,6 @@ export const SocialMain: React.FC<SocialChatProps> = ({
       ) : (
         <SocialChatDirectory
           friends={friends}
-          followers={followers}
           following={following}
           isLoading={isLoading}
           onClose={onClose}

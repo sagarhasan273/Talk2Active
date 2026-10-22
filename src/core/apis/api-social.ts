@@ -6,7 +6,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { CONFIG } from 'src/config-global';
 
 import { STORAGE_KEY } from 'src/auth/context/jwt';
-import { setBlockedUserIds, setFollowers, setFollowing, setFriends } from '../slices';
+import { setBlockedUserIds, setFollowing, setFriends } from '../slices';
 
 export const socialApi = createApi({
   reducerPath: 'socialApi',
@@ -45,21 +45,37 @@ export const socialApi = createApi({
       providesTags: ['social-recall'],
     }),
 
-    getFollowers: builder.query<ResponseType, string | undefined>({
-      query: (userId) => `social/${userId}/followers`,
+    getFollowers: builder.query<ResponseType, { userId: string; page: number; search: string }>({
+      query: ({ userId, page, search }) => ({
+        url: `social/${userId}/followers`,
+        params: {
+          page,
+          limit: 20,
+          ...(search ? { search } : {})
+        },
+      }),
       providesTags: ['social-recall'],
-      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
 
-          if (data !== undefined) {
-            const items = Array.isArray(data) ? data : data?.data ?? [];
-            dispatch(setFollowers(items));
-          }
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        return `${endpointName}-${queryArgs.userId}-${queryArgs.search || ''}`;
+      },
 
-        } catch (err) {
-          // Do nothing on error, or add error handling logic here
+      merge: (currentCache, newItems, { arg }) => {
+        if (arg.page === 1) {
+          return newItems;
         }
+
+        const newData = Array.isArray(newItems) ? newItems : newItems?.data ?? [];
+
+        if (Array.isArray(currentCache)) {
+          currentCache.push(...newData);
+        } else if (currentCache?.data && Array.isArray(currentCache.data)) {
+          currentCache.data.push(...newData);
+        }
+      },
+
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.page !== previousArg?.page;
       },
     }),
 

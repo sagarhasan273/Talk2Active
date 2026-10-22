@@ -1,14 +1,10 @@
-import {
-  useGetAllRelationsQuery,
-  useGetFollowersQuery,
-} from '@/core/apis';
+import { useGetAllRelationsQuery } from '@/core/apis';
 import { useSocket } from '@/core/contexts/app-context/context-socket';
 import {
   selectAccount,
   setBlockedUserIds,
-  setFollowers,
   setFollowing,
-  setFriends,
+  setFriends
 } from '@/core/slices';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,13 +16,13 @@ export function SocialEventListener() {
 
   const currentUserId = user?.userId;
 
-  const { refetch: refetchAllRelations } = useGetAllRelationsQuery(currentUserId, { skip: !currentUserId });
-  const { refetch: refetchFollowers } = useGetFollowersQuery(currentUserId, { skip: !currentUserId });
+  const { refetch: refetchAllRelations } = useGetAllRelationsQuery(currentUserId, {
+    skip: !currentUserId,
+  });
 
   useEffect(() => {
     if (!currentUserId) {
       dispatch(setFriends([]));
-      dispatch(setFollowers([]));
       dispatch(setFollowing([]));
       dispatch(setBlockedUserIds([]));
     }
@@ -37,7 +33,6 @@ export function SocialEventListener() {
 
     const handleRelationshipChanged = (data?: any) => {
       refetchAllRelations();
-      refetchFollowers();
     };
 
     socket.on('update_social', handleRelationshipChanged);
@@ -45,7 +40,7 @@ export function SocialEventListener() {
     return () => {
       socket.off('update_social', handleRelationshipChanged);
     };
-  }, [socket, currentUserId, refetchAllRelations, refetchFollowers]);
+  }, [socket, currentUserId, refetchAllRelations]);
 
   return null;
 }

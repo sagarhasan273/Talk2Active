@@ -36,7 +36,7 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { user, followers, following, friends, isAuthenticated } = useCredentials();
+  const { user, following, friends, isAuthenticated } = useCredentials();
 
   const { unreadFriendsCount, hasUnreadMessages, checkOnlineUsers, setActiveFriend } = useSocialStorage();
 
@@ -251,7 +251,6 @@ export const SocialView = ({ sx, onJoinRoom }: { sx?: SxProps, onJoinRoom: (room
             >
               <SocialMain
                 friends={friends}
-                followers={followers}
                 following={following}
                 currentUserId={currentUserId}
                 currentUserName={currentUserName}
