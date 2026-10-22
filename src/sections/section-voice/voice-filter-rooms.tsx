@@ -100,7 +100,6 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     setSelectedLevel('all');
     setHideFullRooms(false);
     setShowActiveOnly(false);
-    setIsExpanded(false);
   }, []);
 
   const handleFilterUpdate = useCallback((updates: Partial<FilterState>) => {
