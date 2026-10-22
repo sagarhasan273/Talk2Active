@@ -80,7 +80,7 @@ export const roomSlice = createSlice({
       const countsMap = action.payload;
       state.roomLanguageOptions = state.roomLanguageOptions.map((lang) => ({
         ...lang,
-        count: countsMap[lang.code] || 0,
+        count: countsMap[lang.code] || lang.count || 0,
       }));
     },
 
@@ -104,6 +104,18 @@ export const roomSlice = createSlice({
       const exists = state.rooms.some((r) => r.roomId === newRoom.roomId);
       if (!exists) {
         state.rooms.unshift(newRoom);
+
+        if (Array.isArray(newRoom.languages)) {
+          newRoom.languages.forEach((langCode) => {
+            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            if (langOption) {
+              langOption.count += 1;
+            }
+          });
+
+          const allOption = state.roomLanguageOptions.find(l => l.code === 'all');
+          if (allOption) allOption.count += 1;
+        }
       }
     },
 

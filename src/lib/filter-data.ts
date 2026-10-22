@@ -9,7 +9,6 @@ export const ROOM_LANGUAGE_OPTIONS: RoomLanguageOptionType[] = [
   { code: 'all', value: "all", label: "All Language", count: 0 },
   // Top Global
   { code: 'en', value: 'en', label: 'English', count: 0 },
-  { code: 'zh', value: 'zh', label: 'Chinese', count: 0 },
   { code: 'es', value: 'es', label: 'Spanish', count: 0 },
   { code: 'hi', value: 'hi', label: 'Hindi', count: 0 },
   { code: 'ur', value: 'ur', label: 'Urdu', count: 0 },
@@ -38,6 +37,7 @@ export const ROOM_LANGUAGE_OPTIONS: RoomLanguageOptionType[] = [
   { code: 'ca', value: 'ca', label: 'Catalan', count: 0 },
   { code: 'ceb', value: 'ceb', label: 'Cebuano', count: 0 },
   { code: 'ny', value: 'ny', label: 'Chichewa', count: 0 },
+  { code: 'zh', value: 'zh', label: 'Chinese', count: 0 },
   { code: 'co', value: 'co', label: 'Corsican', count: 0 },
   { code: 'hr', value: 'hr', label: 'Croatian', count: 0 },
   { code: 'cs', value: 'cs', label: 'Czech', count: 0 },

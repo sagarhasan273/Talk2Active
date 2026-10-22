@@ -208,6 +208,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
           <Autocomplete
             size="small"
             options={roomLanguageOptions}
+            getOptionDisabled={(option) => option.value !== 'all' && option.count === 0}
             getOptionLabel={(option) => (option.value === 'all' ? 'All Language' : option.label)}
             value={
               roomLanguageOptions.find((opt) => opt.value === selectedLanguage) || roomLanguageOptions[0]
