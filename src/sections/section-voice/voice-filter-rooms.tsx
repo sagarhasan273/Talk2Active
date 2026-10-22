@@ -72,7 +72,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const [selectedLevel, setSelectedLevel] = useState(initialFilters.selectedLevel || 'all');
   const [hideFullRooms, setHideFullRooms] = useState(initialFilters.hideFullRooms || false);
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
     const handler = setTimeout(() => {

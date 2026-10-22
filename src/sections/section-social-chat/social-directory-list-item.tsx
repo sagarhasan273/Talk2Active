@@ -1,4 +1,4 @@
-import { Lock, MessageCircle, Mic, PhoneCall } from 'lucide-react';
+import { Mic, PhoneCall } from 'lucide-react';
 import React from 'react';
 
 import { alpha, Avatar, Badge, Box, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
@@ -155,7 +155,7 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
           </Tooltip>
         )}
 
-        {tab === 'following' && onUnfollow && (
+        {tab !== 'friends' && onUnfollow && (
           <ButtonUnfollowIcon
             targetUserId={item.accountDetails.userId}
             onSuccess={(e) => onUnfollow(e, item)}
@@ -174,46 +174,6 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
               },
             }}
           />
-        )}
-
-        {canChat ? (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenChat(item);
-            }}
-            sx={{
-              color: 'primary.main',
-              bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08),
-              borderRadius: 1,
-              width: 30,
-              height: 30,
-              border: '1px solid',
-              borderColor: alpha(theme.palette.primary.main, 0.25),
-              '&:hover': { bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.08) },
-            }}
-            title={`Message ${person.name}`}
-          >
-            <MessageCircle size={15} />
-          </IconButton>
-        ) : (
-          tab !== 'following' && (
-            <Tooltip title="Mutual follow required to chat" arrow>
-              <Box
-                sx={{
-                  color: isDark ? 'text.disabled' : '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 30,
-                  height: 30,
-                }}
-              >
-                <Lock size={14} />
-              </Box>
-            </Tooltip>
-          )
         )}
       </Stack>
     </Box>

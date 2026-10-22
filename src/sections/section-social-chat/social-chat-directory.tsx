@@ -87,11 +87,18 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
     }
 
     return [...list].sort((a, b) => {
+      const inRoomA = Boolean(onlineStatusMap[a.accountDetails?.userId]);
+      const inRoomB = Boolean(onlineStatusMap[b.accountDetails?.userId]);
+
+      if (inRoomA && !inRoomB) return -1;
+      if (!inRoomA && inRoomB) return 1;
+
       const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
       const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+
       return timeB - timeA;
     });
-  }, [rawDataByTab, tab, searchQuery]);
+  }, [rawDataByTab, tab, searchQuery, onlineStatusMap]); // Make sure onlineStatusMap is in your dependencies!
 
   const handleUnfollowClick = async (e: React.MouseEvent, item: AllRelationsType) => {
     e.stopPropagation();
@@ -120,8 +127,6 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
 
       const isBottom = scrollHeight - scrollTop <= clientHeight + 50;
 
-      // Determine if there are more items to fetch.
-      // Replace this with `followersApiData?.meta?.hasNextPage` if your API provides it.
       const hasMore = apiFollowersList.length > 0 && apiFollowersList.length % 20 === 0;
 
       if (isBottom && tab === 'followers' && hasMore && !isFetchingFollowers) {
