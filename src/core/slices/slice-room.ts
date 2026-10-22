@@ -28,21 +28,13 @@ interface RoomState {
   isRoomsLoading: boolean;
   participants: RoomParticipantType[];
   isUnreadRoomMessage: boolean;
-  userStatsMap: Record<string, { follower_count?: number; following_count?: number; friend_count?: number }>;
+  userStatsMap: Record<
+    string,
+    { follower_count?: number; following_count?: number; friend_count?: number }
+  >;
   roomLanguageOptions: RoomLanguageOptionType[];
+  visitedRoomIds: string[];
 }
-
-const initialState: RoomState = {
-  roomId: null,
-  room: null,
-  rooms: [],
-  loading: false,
-  isRoomsLoading: false, // Initialized
-  participants: [],
-  isUnreadRoomMessage: false,
-  userStatsMap: {},
-  roomLanguageOptions: ROOM_LANGUAGE_OPTIONS
-};
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const getTargetId = (obj: any): string => {
@@ -61,6 +53,28 @@ const applyUserUpdate = (target: any, update: Record<string, any>) => {
   if (target.accountDetails && typeof target.accountDetails === 'object') {
     Object.assign(target.accountDetails, update);
   }
+};
+
+const getInitialVisitedRooms = (): string[] => {
+  try {
+    const stored = localStorage.getItem('voice_visited_rooms');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const initialState: RoomState = {
+  roomId: null,
+  room: null,
+  rooms: [],
+  loading: false,
+  isRoomsLoading: false, // Initialized
+  participants: [],
+  isUnreadRoomMessage: false,
+  userStatsMap: {},
+  roomLanguageOptions: ROOM_LANGUAGE_OPTIONS,
+  visitedRoomIds: getInitialVisitedRooms(),
 };
 
 // ── Slice ──────────────────────────────────────────────────────────────────
@@ -107,13 +121,13 @@ export const roomSlice = createSlice({
 
         if (Array.isArray(newRoom.languages)) {
           newRoom.languages.forEach((langCode) => {
-            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption) {
               langOption.count += 1;
             }
           });
 
-          const allOption = state.roomLanguageOptions.find(l => l.code === 'all');
+          const allOption = state.roomLanguageOptions.find((l) => l.code === 'all');
           if (allOption) allOption.count += 1;
         }
       }
@@ -134,12 +148,12 @@ export const roomSlice = createSlice({
           const newLanguages = roomUpdate.languages;
 
           // Find which languages were removed and which were newly added
-          const languagesToRemove = oldLanguages.filter(lang => !newLanguages.includes(lang));
-          const languagesToAdd = newLanguages.filter(lang => !oldLanguages.includes(lang));
+          const languagesToRemove = oldLanguages.filter((lang) => !newLanguages.includes(lang));
+          const languagesToAdd = newLanguages.filter((lang) => !oldLanguages.includes(lang));
 
           // Decrement removed languages
           languagesToRemove.forEach((langCode) => {
-            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption && langOption.count > 0) {
               langOption.count -= 1;
             }
@@ -147,7 +161,7 @@ export const roomSlice = createSlice({
 
           // Increment added languages
           languagesToAdd.forEach((langCode) => {
-            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption) {
               langOption.count += 1;
             }
@@ -176,14 +190,14 @@ export const roomSlice = createSlice({
 
         if (Array.isArray(roomToRemove.languages)) {
           roomToRemove.languages.forEach((langCode) => {
-            const langOption = state.roomLanguageOptions.find(l => l.code === langCode);
+            const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption && langOption.count > 0) {
               langOption.count -= 1;
             }
           });
 
           // Decrement the global 'all' counter
-          const allOption = state.roomLanguageOptions.find(l => l.code === 'all');
+          const allOption = state.roomLanguageOptions.find((l) => l.code === 'all');
           if (allOption && allOption.count > 0) {
             allOption.count -= 1;
           }
@@ -300,7 +314,9 @@ export const roomSlice = createSlice({
           state.userStatsMap[id] = {
             ...state.userStatsMap[id],
             ...(update.follower_count !== undefined && { follower_count: update.follower_count }),
-            ...(update.following_count !== undefined && { following_count: update.following_count }),
+            ...(update.following_count !== undefined && {
+              following_count: update.following_count,
+            }),
             ...(update.friend_count !== undefined && { friend_count: update.friend_count }),
           };
         }
@@ -334,6 +350,19 @@ export const roomSlice = createSlice({
       });
     },
 
+    markRoomAsVisited: (state, action: PayloadAction<string>) => {
+      const roomId = action.payload;
+      if (!roomId || state.visitedRoomIds.includes(roomId)) return;
+
+      state.visitedRoomIds.unshift(roomId);
+
+      if (state.visitedRoomIds.length > 50) {
+        state.visitedRoomIds.pop();
+      }
+
+      localStorage.setItem('voice_visited_rooms', JSON.stringify(state.visitedRoomIds));
+    },
+
     resetRoom: (state) => {
       state.roomId = null;
       state.room = null;
@@ -355,7 +384,8 @@ export const {
   updateParticipant,
   updateParticipants,
   resetRoom,
-  updateRoomLanguageCounts
+  updateRoomLanguageCounts,
+  markRoomAsVisited,
 } = roomSlice.actions;
 
 // ── Selectors ─────────────────────────────────────────────────────────────
@@ -368,6 +398,7 @@ export const selectParticipants = (state: RootState) => state.room.participants;
 export const selectIsUnreadRoomMessage = (state: RootState) => state.room.isUnreadRoomMessage;
 export const selectUserStatsMap = (state: RootState) => state.room.userStatsMap;
 export const selectRoomLanguageOptions = (state: RootState) => state.room.roomLanguageOptions;
+export const selectVisitedRoomIds = (state: RootState) => state.room.visitedRoomIds;
 
 // ── useRoomTools Hook ─────────────────────────────────────────────────────
 export const useRoomTools = () => {
@@ -381,6 +412,7 @@ export const useRoomTools = () => {
   const participants = useSelector(selectParticipants);
   const isUnreadRoomMessage = useSelector(selectIsUnreadRoomMessage);
   const roomLanguageOptions = useSelector(selectRoomLanguageOptions);
+  const visitedRoomIds = useSelector(selectVisitedRoomIds);
 
   const getRoomById = useCallback(
     (targetRoomId: string): RoomType | undefined => {
@@ -397,7 +429,8 @@ export const useRoomTools = () => {
       setRoomLoading: (isLoading: boolean) => dispatch(setRoomLoading(isLoading)),
       setRoomsLoading: (isLoading: boolean) => dispatch(setRoomsLoading(isLoading)),
       addRoom: (roomData: RoomType) => dispatch(addRoom(roomData)),
-      updateRoom: (roomUpdate: Partial<RoomType> & { roomId: string }) => dispatch(updateRoom(roomUpdate)),
+      updateRoom: (roomUpdate: Partial<RoomType> & { roomId: string }) =>
+        dispatch(updateRoom(roomUpdate)),
       removeRoom: (roomId: string) => dispatch(removeRoom(roomId)),
       addParticipantToRoom: (rId: string, participant: RoomParticipantType) =>
         dispatch(addParticipantToRoom({ roomId: rId, participant })),
@@ -408,7 +441,9 @@ export const useRoomTools = () => {
       updateParticipants: (participantsList: Array<UserStatsUpdate>) =>
         dispatch(updateParticipants(participantsList)),
       resetRoom: () => dispatch(resetRoom()),
-      updateRoomLanguageCounts: (counts: Record<string, number>) => dispatch(updateRoomLanguageCounts(counts)),
+      updateRoomLanguageCounts: (counts: Record<string, number>) =>
+        dispatch(updateRoomLanguageCounts(counts)),
+      markRoomAsVisited: (roomId: string) => dispatch(markRoomAsVisited(roomId)),
     }),
     [dispatch]
   );
@@ -424,8 +459,21 @@ export const useRoomTools = () => {
       isUnreadRoomMessage,
       getRoomById,
       roomLanguageOptions,
+      visitedRoomIds,
       ...actions,
     }),
-    [roomId, room, rooms, loading, isRoomsLoading, participants, isUnreadRoomMessage, getRoomById, roomLanguageOptions, actions]
+    [
+      roomId,
+      room,
+      rooms,
+      loading,
+      isRoomsLoading,
+      participants,
+      isUnreadRoomMessage,
+      getRoomById,
+      roomLanguageOptions,
+      visitedRoomIds,
+      actions,
+    ]
   );
 };

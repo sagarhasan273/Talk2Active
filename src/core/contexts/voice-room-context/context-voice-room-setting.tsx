@@ -55,7 +55,7 @@ export const VoiceRoomSettingProvider: React.FC<{
 
   const { connectToRoom, disconnectRoom, isInRoom } = useLiveKitSession();
 
-  const { setRoom, setRoomLoading, resetRoom } = useRoomTools();
+  const { setRoom, setRoomLoading, resetRoom, markRoomAsVisited } = useRoomTools();
   const { playUserJoin, playUserLeave } = useRoomSounds({ volume: 1 });
 
   // Connect to the isolated Data layer
@@ -147,7 +147,7 @@ export const VoiceRoomSettingProvider: React.FC<{
       if (response.status && response.data.token) {
         setRoom(response.data.room);
         setLivekitToken(response.data.token);
-
+        markRoomAsVisited(selectedRoom.roomId)
         try {
           await connectToRoom(response.data.token);
           playUserJoin();

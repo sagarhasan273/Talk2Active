@@ -10,6 +10,7 @@ import {
   Clear as ClearIcon,
   FiberManualRecord as DotIcon,
   FilterList as FilterListIcon,
+  History as HistoryIcon, // <-- Added Icon
   Language as LanguageIcon,
   PeopleAltOutlined as PeopleIcon,
   RestartAlt as ResetIcon,
@@ -50,6 +51,7 @@ export interface FilterState {
   selectedLevel: string;
   hideFullRooms: boolean;
   showActiveOnly: boolean;
+  showVisitedRooms: boolean;
 }
 
 export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
@@ -69,6 +71,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const [selectedLevel, setSelectedLevel] = useState(initialFilters.selectedLevel || 'all');
   const [hideFullRooms, setHideFullRooms] = useState(initialFilters.hideFullRooms || false);
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
+  const [showVisitedRooms, setShowVisitedRooms] = useState(initialFilters.showVisitedRooms || false); // <-- Added state
   const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
@@ -79,11 +82,12 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         selectedLevel,
         hideFullRooms,
         showActiveOnly,
+        showVisitedRooms, // <-- Included in output
       });
     }, 280);
 
     return () => clearTimeout(handler);
-  }, [searchQuery, selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, onFilterChange]);
+  }, [searchQuery, selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, showVisitedRooms, onFilterChange]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -91,8 +95,9 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     if (selectedLevel !== 'all') count += 1;
     if (hideFullRooms) count += 1;
     if (showActiveOnly) count += 1;
+    if (showVisitedRooms) count += 1; // <-- Increment counter
     return count;
-  }, [selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly]);
+  }, [selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, showVisitedRooms]);
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery('');
@@ -100,6 +105,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     setSelectedLevel('all');
     setHideFullRooms(false);
     setShowActiveOnly(false);
+    setShowVisitedRooms(false); // <-- Reset on clear
   }, []);
 
   const handleFilterUpdate = useCallback((updates: Partial<FilterState>) => {
@@ -108,6 +114,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     if (updates.selectedLevel !== undefined) setSelectedLevel(updates.selectedLevel);
     if (updates.hideFullRooms !== undefined) setHideFullRooms(updates.hideFullRooms);
     if (updates.showActiveOnly !== undefined) setShowActiveOnly(updates.showActiveOnly);
+    if (updates.showVisitedRooms !== undefined) setShowVisitedRooms(updates.showVisitedRooms); // <-- Handle update
   }, []);
 
   const inputSurfaceBg = 'background.default';
@@ -220,7 +227,14 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               <Box
                 component="li"
                 {...props}
-                sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
+                sx={{
+                  fontSize: '0.8rem',
+                  py: 0.6,
+                  gap: 1,
+                  minHeight: 34,
+                  fontWeight: 500,
+                  opacity: option.value !== 'all' && option.count === 0 ? 0.5 : 1,
+                }}
               >
                 <Box sx={{ flex: 1 }}>{option.label}</Box>
                 {option.count > 0 && (
@@ -437,52 +451,102 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
           }}
         >
           <Grid container spacing={1} alignItems="center">
-            {/* Live Only Toggle */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Chip
-                icon={
-                  <DotIcon
-                    sx={{
-                      fontSize: '10px !important',
-                      color: showActiveOnly ? 'success.main' : 'text.disabled',
-                    }}
-                  />
-                }
-                label="Live Speaking Only"
-                clickable
-                onClick={() => handleFilterUpdate({ showActiveOnly: !showActiveOnly })}
-                sx={{
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  height: 30,
-                  borderRadius: 1,
-                  px: 0.5,
-                  fontWeight: 700,
-                  fontSize: '0.75rem',
-                  bgcolor: showActiveOnly
-                    ? isDark
-                      ? alpha(theme.palette.success.main, 0.14)
-                      : '#ecfdf5'
-                    : inputSurfaceBg,
-                  color: showActiveOnly
-                    ? isDark
+
+            {/* Quick Toggle Buttons (Live & Visited) */}
+            <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+
+                {/* Live Only Toggle */}
+                <Chip
+                  icon={
+                    <DotIcon
+                      sx={{
+                        fontSize: '10px !important',
+                        color: showActiveOnly ? 'success.main' : 'text.disabled',
+                      }}
+                    />
+                  }
+                  label="Live Speaking Only"
+                  clickable
+                  onClick={() => handleFilterUpdate({ showActiveOnly: !showActiveOnly })}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    height: 30,
+                    borderRadius: 1,
+                    px: 0.5,
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    bgcolor: showActiveOnly
+                      ? isDark
+                        ? alpha(theme.palette.success.main, 0.14)
+                        : '#ecfdf5'
+                      : inputSurfaceBg,
+                    color: showActiveOnly
                       ? 'success.main'
-                      : '#059669'
-                    : isDark
-                      ? 'text.secondary'
-                      : '#475569',
-                  border: '1px solid',
-                  borderColor: showActiveOnly
-                    ? isDark
-                      ? alpha(theme.palette.success.main, 0.35)
-                      : '#a7f3d0'
-                    : inputBorderColor,
-                }}
-              />
+                      : isDark
+                        ? 'text.secondary'
+                        : '#475569',
+                    border: '1px solid',
+                    borderColor: showActiveOnly
+                      ? isDark
+                        ? alpha(theme.palette.success.main, 0.35)
+                        : '#a7f3d0'
+                      : inputBorderColor,
+                    '&:hover': {
+                      bgcolor: theme.palette.success.main,
+                      color: 'common.white',
+                    },
+                  }}
+                />
+
+                {/* Visited Rooms Toggle */}
+                <Chip
+                  icon={
+                    <HistoryIcon
+                      sx={{
+                        fontSize: '15px !important',
+                        color: showVisitedRooms ? 'info.main' : 'text.disabled',
+                      }}
+                    />
+                  }
+                  label="Visited Rooms"
+                  clickable
+                  onClick={() => handleFilterUpdate({ showVisitedRooms: !showVisitedRooms })}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    height: 30,
+                    borderRadius: 1,
+                    px: 0.5,
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    bgcolor: showVisitedRooms
+                      ? isDark
+                        ? alpha(theme.palette.info.main, 0.14)
+                        : '#eff6ff'
+                      : inputSurfaceBg,
+                    color: showVisitedRooms
+                      ? 'info.main'
+                      : isDark
+                        ? 'text.secondary'
+                        : '#475569',
+                    border: '1px solid',
+                    borderColor: showVisitedRooms
+                      ? isDark
+                        ? alpha(theme.palette.info.main, 0.35)
+                        : '#bfdbfe'
+                      : inputBorderColor,
+                    '&:hover': {
+                      bgcolor: theme.palette.info.main,
+                      color: 'common.white',
+                      '& .MuiChip-icon': { color: 'common.white' }, // Ensures icon turns white on hover
+                    },
+                  }}
+                />
+              </Stack>
             </Grid>
 
             {/* Popular Languages (Sorted by live count) */}
-            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 5 }}>
               <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
                 <Typography
                   variant="caption"
@@ -495,7 +559,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 </Typography>
                 {[...roomLanguageOptions]
                   .sort((a, b) => (b.count || 0) - (a.count || 0))
-                  .slice(0, 5)
+                  .slice(0, 4)
                   .map((lang) => {
                     const isSelected = selectedLanguage === lang.value;
                     return (
@@ -516,9 +580,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                             component="span"
                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                           >
-                            <Box component="span">
-                              {lang.label}
-                            </Box>
+                            <Box component="span">{lang.label}</Box>
                             <Typography
                               component="span"
                               sx={{
@@ -546,8 +608,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                           borderColor: isSelected ? theme.palette.primary.main : inputBorderColor,
                           '&:hover': {
                             bgcolor: theme.palette.primary.main,
-                            color: "common.white",
-                          }
+                            color: 'common.white',
+                          },
                         }}
                       />
                     );
@@ -642,6 +704,16 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="success"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ showActiveOnly: false })}
+                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                />
+              )}
+              {showVisitedRooms && (
+                <Label
+                  label="Visited"
+                  size="small"
+                  color="info" // Distinguishable badge color
+                  variant="soft"
+                  onDelete={() => handleFilterUpdate({ showVisitedRooms: false })}
                   sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
                 />
               )}

@@ -66,10 +66,15 @@ const NOOP = () => { };
 const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom?: () => void }) => {
   const { isInRoom } = useLiveKitSession();
   // if (isInRoom) return null;
-  return <DefaultHeader onQuickJoin={NOOP} sx={{
-    mt: isInRoom ? 0 : 1,
-    mb: 1
-  }} />;
+  return (
+    <DefaultHeader
+      onQuickJoin={NOOP}
+      sx={{
+        mt: isInRoom ? 0 : 1,
+        mb: 1,
+      }}
+    />
+  );
 });
 
 // ── 1. Isolated Fast-Scroll Pill ──
@@ -256,7 +261,7 @@ interface RoomlistMainProps {
 
 export const RoomlistMain = memo(function RoomlistMain({
   onSelectRoom,
-  isVisible
+  isVisible,
 }: RoomlistMainProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -264,8 +269,8 @@ export const RoomlistMain = memo(function RoomlistMain({
   const { user, isAuthenticated } = useCredentials();
   const currentUserId = user?.userId;
 
-  const { room: joinRoom, rooms, isRoomsLoading, getRoomById } = useRoomTools();
-  const { isInRoom, handleSelectRoom } = useVoiceRoomSetting();
+  const { rooms, isRoomsLoading, getRoomById, visitedRoomIds } = useRoomTools();
+  const { handleSelectRoom } = useVoiceRoomSetting();
 
   const logOpen = useBoolean();
 
@@ -281,6 +286,7 @@ export const RoomlistMain = memo(function RoomlistMain({
     selectedLevel: 'all',
     hideFullRooms: false,
     showActiveOnly: false,
+    showVisitedRooms: false,
   });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -295,29 +301,38 @@ export const RoomlistMain = memo(function RoomlistMain({
   const lastScrollPosRef = useRef(0);
   const lastScrollTimeRef = useRef(performance.now());
 
-  const stableOnSelectRoom = useCallback((room: RoomType) => {
-    if (!isAuthenticated) {
-      logOpen.onTrue();
-      return;
-    }
-    onSelectRoomRef.current(room);
-  }, [isAuthenticated]);
+  const stableOnSelectRoom = useCallback(
+    (room: RoomType) => {
+      if (!isAuthenticated) {
+        logOpen.onTrue();
+        return;
+      }
+      onSelectRoomRef.current(room);
+    },
+    [isAuthenticated]
+  );
 
-  const handleAvatarClick = useCallback((rawUser: any) => {
-    if (!isAuthenticated) {
-      logOpen.onTrue();
-      return;
-    }
-    modalsRef.current?.openProfile(rawUser);
-  }, [isAuthenticated]);
+  const handleAvatarClick = useCallback(
+    (rawUser: any) => {
+      if (!isAuthenticated) {
+        logOpen.onTrue();
+        return;
+      }
+      modalsRef.current?.openProfile(rawUser);
+    },
+    [isAuthenticated]
+  );
 
-  const handleOverflowClick = useCallback((room: RoomType) => {
-    if (!isAuthenticated) {
-      logOpen.onTrue();
-      return;
-    }
-    modalsRef.current?.openRoomDialog(room);
-  }, [isAuthenticated]);
+  const handleOverflowClick = useCallback(
+    (room: RoomType) => {
+      if (!isAuthenticated) {
+        logOpen.onTrue();
+        return;
+      }
+      modalsRef.current?.openRoomDialog(room);
+    },
+    [isAuthenticated]
+  );
 
   const handleJoinFromSocialChat = useCallback(
     (roomId: string) => {
@@ -405,9 +420,18 @@ export const RoomlistMain = memo(function RoomlistMain({
       const matchesCapacity =
         !filterRooms.hideFullRooms || room.participants.length < room.max_participants;
       const matchesActive = !filterRooms.showActiveOnly || room.isActive;
-      return matchesSearch && matchesLanguage && matchesLevel && matchesCapacity && matchesActive;
+      const matchesShowVisitedRooms =
+        !filterRooms.showVisitedRooms || visitedRoomIds.includes(room.roomId);
+      return (
+        matchesSearch &&
+        matchesLanguage &&
+        matchesLevel &&
+        matchesCapacity &&
+        matchesActive &&
+        matchesShowVisitedRooms
+      );
     });
-  }, [rooms, filterRooms]);
+  }, [rooms, visitedRoomIds, filterRooms]);
 
   const allCards = useMemo(() => ['creation' as const, ...filteredRooms], [filteredRooms]);
   const { columns, cardWidth, scrollMargin } = gridMetrics;
@@ -524,31 +548,7 @@ export const RoomlistMain = memo(function RoomlistMain({
                   return null;
                 }
 
-                if (isInRoom && joinRoom?.roomId) {
-                  return (
-                    <VoiceRoomCard
-                      key={joinRoom?.roomId}
-                      roomData={joinRoom}
-                      currentUserId={currentUserId}
-                      cardWidth={cardWidth}
-                      onJoinRoom={stableOnSelectRoom}
-                      onAvatarClick={handleAvatarClick}
-                      onOverflowClick={handleOverflowClick}
-                      sx={sxCard}
-                    />
-                  )
-                }
-
-                return (
-                  <RoomCardCreation
-                    key="creation-card"
-                    sx={sxCard}
-                  />
-                );
-              }
-
-              if (isInRoom && joinRoom?.roomId === card?.roomId) {
-                return null
+                return <RoomCardCreation key="creation-card" sx={sxCard} />;
               }
 
               return (
