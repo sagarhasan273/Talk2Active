@@ -19,7 +19,7 @@ import {
 import { ButtonUnfollowIcon } from '@/components/buttons';
 import { useSocialSetting, useSocialStorage } from '@/core/contexts';
 import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
-import { fDateTime } from '@/utils/format-time';
+import { fToNow } from '@/utils/format-time';
 import { getInitials } from '@/utils/social-chat-helper';
 
 interface SocialChatDirectoryProps {
@@ -266,7 +266,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
               const isInRoom = Boolean(roomId);
 
               const latestText =
-                item.latestMessage?.text || `Last seen: ${fDateTime(person.lastActive)}`;
+                item.latestMessage?.text || `Last seen: ${fToNow(person.lastActive)} ago`;
 
               return (
                 <Box
@@ -363,29 +363,31 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                     >
                       {person.name}
                     </Typography>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{
-                        fontSize: 11,
-                        color:
-                          unreadCount > 0
-                            ? 'text.primary'
-                            : isInRoom
-                              ? 'success.main'
-                              : isDark
-                                ? 'text.secondary'
-                                : '#64748b',
-                        fontWeight: unreadCount > 0 ? 700 : 500,
-                        mt: 0.2,
-                      }}
-                      noWrap
-                    >
-                      {unreadCount > 0
-                        ? `${unreadCount} unread messages`
-                        : isInRoom
-                          ? '🎙️ In a voice room'
-                          : latestText}
-                    </Typography>
+                    {(canChat || (!canChat && isInRoom)) && (
+                      <Typography
+                        variant="subtitle2"
+                        sx={{
+                          fontSize: 11,
+                          color:
+                            unreadCount > 0
+                              ? 'text.primary'
+                              : isInRoom
+                                ? 'success.main'
+                                : isDark
+                                  ? 'text.secondary'
+                                  : '#64748b',
+                          fontWeight: unreadCount > 0 ? 700 : 500,
+                          mt: 0.2,
+                        }}
+                        noWrap
+                      >
+                        {unreadCount > 0
+                          ? `${unreadCount} unread messages`
+                          : isInRoom
+                            ? '🎙️ In a voice room'
+                            : latestText}
+                      </Typography>
+                    )}
                   </Box>
 
                   {/* Right Action Buttons */}

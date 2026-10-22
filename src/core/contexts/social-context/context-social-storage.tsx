@@ -301,7 +301,7 @@ export const SocialStorageProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!statusData?.userId) return;
       const resolvedOnline = statusData.status === 'online' ? statusData.roomId : null;
       setOnlineStatusMap((prev) => ({ ...prev, [statusData.userId]: resolvedOnline ?? null }));
-      if (!resolvedOnline && statusData.lastActive) {
+      if (statusData.lastActive) {
         dispatch(
           updateRelationPresence({ userId: statusData.userId, lastActive: statusData.lastActive })
         );
