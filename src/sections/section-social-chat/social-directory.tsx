@@ -1,6 +1,6 @@
 // src/sections/section-common/social-chat-directory.tsx
 
-import { Lock, MessageCircle, Mic, PhoneCall, X } from 'lucide-react';
+import { Lock, MessageCircle, Mic, PhoneCall, Search, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -8,12 +8,14 @@ import {
   Avatar,
   Badge,
   Box,
+  Button,
   CircularProgress,
   IconButton,
+  InputBase,
   Stack,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
 import { ButtonUnfollowIcon } from '@/components/buttons';
@@ -48,6 +50,8 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   const { tab, setTab, openChat } = useSocialSetting();
 
   const [unfollowedIds, setUnfollowedIds] = useState<Set<string>>(new Set());
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const friendIds = useMemo(() => new Set(friends.map((f) => f.accountDetails.userId)), [friends]);
 
@@ -63,7 +67,16 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
   };
 
   const dataByTab = useMemo(() => {
-    const list = rawDataByTab[tab] || [];
+    let list = rawDataByTab[tab] || [];
+
+    // Filter by search term if active
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      list = list.filter((item) =>
+        item.accountDetails?.name?.toLowerCase().includes(query)
+      );
+    }
+
     return [...list].sort((a, b) => {
       const timeA = new Date(
         a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0
@@ -73,7 +86,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
       ).getTime();
       return timeB - timeA;
     });
-  }, [rawDataByTab, tab]);
+  }, [rawDataByTab, tab, searchQuery]);
 
   const handleUnfollowClick = async (e: React.MouseEvent, item: AllRelationsType) => {
     e.stopPropagation();
@@ -99,11 +112,14 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
       }}
     >
       {/* Directory Header */}
-      <Box
+      {/* You will need to import Zoom, Chip, and Button from '@mui/material' if not already imported */}
+
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={1}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
           px: 2,
           py: 1.5,
           borderBottom: '1px solid',
@@ -112,57 +128,101 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
           flexShrink: 0,
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1}>
+        {/* LEFT SIDE: Title & Unread Badge */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            minWidth: 0,
+          }}
+        >
           <Typography
             sx={{
               fontSize: 14,
               fontWeight: 800,
               letterSpacing: '-0.01em',
+              lineHeight: 1.2,
               color: isDark ? 'text.primary' : '#0f172a',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smoothly animates the title's movement
             }}
           >
             Social Directory
           </Typography>
 
-          {unreadFriendsCount > 0 && (
+          <Box
+            sx={{
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: unreadFriendsCount > 0 ? 24 : 0,
+              opacity: unreadFriendsCount > 0 ? 1 : 0,
+            }}
+          >
             <Box
               sx={{
+                display: 'inline-block',
                 px: 0.85,
-                py: 0.15,
+                py: 0.25,
                 borderRadius: 1,
                 fontSize: 10.5,
                 fontWeight: 800,
                 bgcolor: alpha(theme.palette.error.main, 0.12),
                 color: 'error.main',
+                whiteSpace: 'nowrap',
               }}
             >
               {unreadFriendsCount} {unreadFriendsCount === 1 ? 'friend' : 'friends'} unread
             </Box>
-          )}
-        </Stack>
+          </Box>
+        </Box>
 
-        {onClose && (
-          <IconButton
+        {/* RIGHT SIDE: Action Buttons */}
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Button
             size="small"
-            onClick={onClose}
+            color="warning"
+            variant={tab === 'followers' ? 'contained' : 'outlined'}
+            onClick={() => {
+              setTab('followers');
+              if (isSearchOpen) {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }
+            }}
+            startIcon={<Sparkles size={13} strokeWidth={2.5} />}
             sx={{
               borderRadius: 1,
-              bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
-              border: '1px solid',
-              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-              color: 'text.secondary',
-              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08), color: 'error.main' },
+              fontSize: 10.5,
+              fontWeight: 800,
+              letterSpacing: 0.5,
             }}
           >
-            <X size={16} />
-          </IconButton>
-        )}
-      </Box>
+            Followers
+          </Button>
 
-      {/* Navigation Tabs */}
+          {onClose && (
+            <IconButton
+              size="small"
+              onClick={onClose}
+              sx={{
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+                color: 'text.secondary',
+              }}
+            >
+              <X size={16} />
+            </IconButton>
+          )}
+        </Stack>
+      </Stack>
+
+      {/* Navigation Tabs & Search */}
       <Box
         sx={{
           display: 'flex',
+          alignItems: 'center',
           p: 0.75,
           gap: 0.5,
           bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
@@ -171,62 +231,140 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
           flexShrink: 0,
         }}
       >
-        {(['friends', 'following'] as SocialChatTabKey[]).map((key) => {
-          const count = rawDataByTab[key]?.length || 0;
-          const active = tab === key;
-          const showUnreadBadge = key === 'friends' && unreadFriendsCount > 0;
+        {/* Animated Search Bar (Expands Left to Right) */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: isSearchOpen ? 1 : '0 0 auto',
+            width: isSearchOpen ? 'auto' : '32px',
+            height: 32,
+            bgcolor: isSearchOpen ? (isDark ? alpha('#fff', 0.04) : '#ffffff') : 'transparent',
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: isSearchOpen ? (isDark ? alpha('#fff', 0.08) : '#e2e8f0') : 'transparent',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'hidden',
+          }}
+        >
+          <IconButton
+            size="small"
+            onClick={() => {
+              if (isSearchOpen) setSearchQuery('');
+              setIsSearchOpen(!isSearchOpen);
+            }}
+            sx={{
+              minWidth: 32,
+              height: 32,
+              borderRadius: 1,
+              color: isSearchOpen
+                ? isDark ? 'text.primary' : '#0f172a'
+                : isDark ? 'text.secondary' : '#64748b',
+              '&:hover': {
+                color: isDark ? 'text.primary' : '#0f172a',
+                bgcolor: isSearchOpen ? 'transparent' : alpha(theme.palette.primary.main, 0.1),
+              },
+            }}
+          >
+            {isSearchOpen ? <X size={16} /> : <Search size={16} />}
+          </IconButton>
+          <InputBase
+            autoFocus={isSearchOpen}
+            placeholder={`Search ${tab}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }
+            }}
+            sx={{
+              flex: 1,
+              fontSize: 12,
+              opacity: isSearchOpen ? 1 : 0,
+              pointerEvents: isSearchOpen ? 'auto' : 'none',
+              transition: 'opacity 0.2s ease',
+              ml: 0.5,
+            }}
+          />
+        </Box>
 
-          return (
-            <Box
-              key={key}
-              onClick={() => setTab(key)}
-              sx={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 0.5,
-                py: 0.75,
-                borderRadius: 1,
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                bgcolor: active
-                  ? isDark
-                    ? alpha(theme.palette.primary.main, 0.16)
-                    : alpha(theme.palette.primary.main, 0.1)
-                  : 'transparent',
-                color: active ? 'primary.main' : isDark ? 'text.secondary' : '#64748b',
-                border: '1px solid',
-                borderColor: active ? alpha(theme.palette.primary.main, 0.3) : 'transparent',
-                transition: 'all 0.18s ease',
-                textTransform: 'capitalize',
-              }}
-            >
-              <span>{key}</span>
+        {/* Tabs Container */}
+        <Box
+          sx={{
+            display: 'flex',
+            flex: isSearchOpen ? '0 0 0px' : 1,
+            opacity: isSearchOpen ? 0 : 1,
+            overflow: 'hidden',
+            gap: 0.5,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          {(['friends', 'following'] as SocialChatTabKey[]).map((key) => {
+            const count = rawDataByTab[key]?.length || 0;
+            const active = tab === key;
+            const showUnreadBadge = key === 'friends' && unreadFriendsCount > 0;
+
+            return (
               <Box
-                component="span"
+                key={key}
+                onClick={() => {
+                  setTab(key);
+                  if (isSearchOpen) {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                  }
+                }}
                 sx={{
-                  px: 0.5,
-                  py: 0.1,
-                  borderRadius: 0.75,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  bgcolor: showUnreadBadge
-                    ? 'error.main'
-                    : active
-                      ? alpha(theme.palette.primary.main, 0.2)
-                      : isDark
-                        ? alpha('#fff', 0.06)
-                        : '#e2e8f0',
-                  color: showUnreadBadge ? '#fff' : 'inherit',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                  py: 0.75,
+                  borderRadius: 1,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minWidth: 80, // Prevent text wrapping during transition
+                  bgcolor: active
+                    ? isDark
+                      ? alpha(theme.palette.primary.main, 0.16)
+                      : alpha(theme.palette.primary.main, 0.1)
+                    : 'transparent',
+                  color: active ? 'primary.main' : isDark ? 'text.secondary' : '#64748b',
+                  border: '1px solid',
+                  borderColor: active ? alpha(theme.palette.primary.main, 0.3) : 'transparent',
+                  transition: 'all 0.18s ease',
+                  textTransform: 'capitalize',
                 }}
               >
-                {showUnreadBadge ? unreadFriendsCount : count}
+                <span>{key}</span>
+                <Box
+                  component="span"
+                  sx={{
+                    px: 0.5,
+                    py: 0.1,
+                    borderRadius: 0.75,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    bgcolor: showUnreadBadge
+                      ? 'error.main'
+                      : active
+                        ? alpha(theme.palette.primary.main, 0.2)
+                        : isDark
+                          ? alpha('#fff', 0.06)
+                          : '#e2e8f0',
+                    color: showUnreadBadge ? '#fff' : 'inherit',
+                  }}
+                >
+                  {showUnreadBadge ? unreadFriendsCount : count}
+                </Box>
               </Box>
-            </Box>
-          );
-        })}
+            );
+          })}
+        </Box>
       </Box>
 
       {/* Directory List */}
@@ -253,7 +391,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
             variant="caption"
             sx={{ display: 'block', textAlign: 'center', color: 'text.secondary', mt: 4 }}
           >
-            No {tab} found.
+            {searchQuery ? `No results found for "${searchQuery}"` : `No ${tab} found.`}
           </Typography>
         ) : (
           <Stack spacing={0.5}>
@@ -271,7 +409,14 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
               return (
                 <Box
                   key={person.userId}
-                  onClick={() => canChat && openChat(item)}
+                  onClick={() => {
+                    if (canChat) {
+                      openChat(item);
+                    }
+                    if (tab === 'followers') {
+                      setTab('friends');
+                    }
+                  }}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -457,7 +602,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
                         }}
                         title={`Message ${person.name}`}
                       >
-                        <MessageCircle size={15} /> {/* Kept icon small */}
+                        <MessageCircle size={15} />
                       </IconButton>
                     ) : (
                       tab !== 'following' && (
