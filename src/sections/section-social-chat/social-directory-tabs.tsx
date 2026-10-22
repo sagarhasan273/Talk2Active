@@ -60,7 +60,7 @@ export const DirectoryTabs: React.FC<DirectoryTabsProps> = ({
           bgcolor: isSearchOpen ? (isDark ? alpha('#fff', 0.04) : '#ffffff') : 'transparent',
           borderRadius: 1,
           border: '1px solid',
-          borderColor: isSearchOpen ? (isDark ? alpha('#fff', 0.08) : '#e2e8f0') : 'transparent',
+          borderColor: isSearchOpen ? 'primary.main' : 'divider',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
         }}
