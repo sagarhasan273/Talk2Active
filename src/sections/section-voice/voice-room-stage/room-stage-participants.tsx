@@ -87,7 +87,7 @@ export const RoomStageParticipants = ({
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
   const { socket } = useSocket();
-  const { playUserLeave } = useRoomSounds();
+  const { playUserJoin, playUserLeave } = useRoomSounds();
 
   const [ghostIds, setGhostIds] = useState<Set<string>>(new Set());
 
@@ -136,6 +136,7 @@ export const RoomStageParticipants = ({
       const joinedRoomId = localParticipant?.attributes?.roomId;
       if (joinedRoomId !== payload.roomId) return;
       clearGhostId(extractParticipantId(payload));
+      playUserJoin();
     };
 
     socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
