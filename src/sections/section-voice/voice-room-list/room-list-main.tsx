@@ -587,7 +587,7 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollBottom={handleScrollToBottom}
       />
 
-      {isVisible && <SocialView onJoinRoom={handleJoinFromSocialChat} />}
+      <SocialView onJoinRoom={handleJoinFromSocialChat} sx={{ display: isVisible ? 'flex' : 'none' }} />
 
       {isVisible && <LoginPromptDialog openBoolean={logOpen} />}
     </>
