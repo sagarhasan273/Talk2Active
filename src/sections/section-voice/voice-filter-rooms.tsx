@@ -71,7 +71,9 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   const [selectedLevel, setSelectedLevel] = useState(initialFilters.selectedLevel || 'all');
   const [hideFullRooms, setHideFullRooms] = useState(initialFilters.hideFullRooms || false);
   const [showActiveOnly, setShowActiveOnly] = useState(initialFilters.showActiveOnly || false);
-  const [showVisitedRooms, setShowVisitedRooms] = useState(initialFilters.showVisitedRooms || false); // <-- Added state
+  const [showVisitedRooms, setShowVisitedRooms] = useState(
+    initialFilters.showVisitedRooms || false
+  ); // <-- Added state
   const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
@@ -87,7 +89,15 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
     }, 280);
 
     return () => clearTimeout(handler);
-  }, [searchQuery, selectedLanguage, selectedLevel, hideFullRooms, showActiveOnly, showVisitedRooms, onFilterChange]);
+  }, [
+    searchQuery,
+    selectedLanguage,
+    selectedLevel,
+    hideFullRooms,
+    showActiveOnly,
+    showVisitedRooms,
+    onFilterChange,
+  ]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -118,32 +128,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
   }, []);
 
   const inputSurfaceBg = 'background.default';
-  const inputBorderColor = 'divider';
-
-  const compactSelectSx = {
-    height: 36,
-    borderRadius: 1,
-    bgcolor: inputSurfaceBg,
-    fontSize: '0.8rem',
-    color: 'text.primary',
-    '& .MuiOutlinedInput-notchedOutline': { borderColor: inputBorderColor },
-    '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: alpha(theme.palette.primary.main, 0.5),
-    },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.primary.main,
-      borderWidth: 1.5,
-    },
-    '& .MuiSelect-select': {
-      display: 'flex',
-      alignItems: 'center',
-      py: 0,
-      px: 1.25,
-      height: '36px !important',
-      fontSize: '0.8rem',
-      fontWeight: 600,
-    },
-  };
+  const inputBorderColor = isDark ? theme.palette.grey[700] : theme.palette.grey[400];
 
   return (
     <Paper
@@ -192,8 +177,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                height: 36,
-                borderRadius: 1,
+                height: 26,
+                borderRadius: 0.5,
                 bgcolor: inputSurfaceBg,
                 fontSize: '0.8rem',
                 color: isDark ? 'text.primary' : '#0f172a',
@@ -217,7 +202,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             getOptionDisabled={(option) => option.value !== 'all' && option.count === 0}
             getOptionLabel={(option) => (option.value === 'all' ? 'All Language' : option.label)}
             value={
-              roomLanguageOptions.find((opt) => opt.value === selectedLanguage) || roomLanguageOptions[0]
+              roomLanguageOptions.find((opt) => opt.value === selectedLanguage) ||
+              roomLanguageOptions[0]
             }
             onChange={(_, newValue) => {
               handleFilterUpdate({ selectedLanguage: newValue ? newValue.value : 'all' });
@@ -230,8 +216,10 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 sx={{
                   fontSize: '0.8rem',
                   py: 0.6,
+                  height: 26,
+                  borderRadius: 0.5,
                   gap: 1,
-                  minHeight: 34,
+                  // minHeight: 34,
                   fontWeight: 500,
                   opacity: option.value !== 'all' && option.count === 0 ? 0.5 : 1,
                 }}
@@ -252,14 +240,20 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
-                      <InputAdornment position="start" sx={{ pl: 1.25, mr: -0.5 }}>
+                      <InputAdornment
+                        position="start"
+                        sx={{ pl: 1.25, mr: -0.5, borderRadius: 0.5 }}
+                      >
                         {isAll ? (
                           <LanguageIcon
                             sx={{ fontSize: 16, color: isDark ? 'text.secondary' : '#64748b' }}
                           />
                         ) : (
                           <Typography component="span" sx={{ fontSize: 14 }}>
-                            {roomLanguageOptions.find((opt) => opt.value === selectedLanguage)?.count}
+                            {
+                              roomLanguageOptions.find((opt) => opt.value === selectedLanguage)
+                                ?.count
+                            }
                           </Typography>
                         )}
                       </InputAdornment>
@@ -267,8 +261,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      height: 36,
-                      borderRadius: 1,
+                      height: 26,
+                      borderRadius: 0.5,
                       bgcolor: inputSurfaceBg,
                       fontSize: '0.8rem',
                       color: isAll ? (isDark ? 'text.secondary' : '#475569') : 'text.primary',
@@ -289,7 +283,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
               paper: {
                 sx: {
                   maxHeight: 280,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   mt: 0.5,
                   bgcolor: isDark ? '#181c26' : '#ffffff',
                   border: '1px solid',
@@ -328,7 +322,33 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 const opt = LEVEL_OPTIONS.find((item) => item.value === selected);
                 return `${opt?.emoji || ''} ${opt?.label || selected}`;
               }}
-              sx={compactSelectSx}
+              sx={{
+                height: 26,
+                borderRadius: 0.5,
+                bgcolor: inputSurfaceBg,
+                fontSize: '0.8rem',
+                color: 'text.primary',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: inputBorderColor,
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: theme.palette.primary.main,
+                  borderWidth: 1.5,
+                },
+                '& .MuiSelect-select': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  py: 0,
+                  px: 1,
+                  height: '26px !important',
+                  minHeight: '26px !important',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                },
+              }}
               MenuProps={{
                 PaperProps: {
                   sx: {
@@ -346,7 +366,14 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 <MenuItem
                   key={opt.value}
                   value={opt.value}
-                  sx={{ fontSize: '0.8rem', py: 0.6, gap: 1, minHeight: 34, fontWeight: 500 }}
+                  sx={{
+                    fontSize: '0.8rem',
+                    py: 0.6,
+                    gap: 1,
+                    height: 26,
+                    borderRadius: 0.5,
+                    fontWeight: 500,
+                  }}
                 >
                   <Typography component="span" sx={{ fontSize: 14 }}>
                     {opt.emoji}
@@ -375,9 +402,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             size="small"
             onClick={() => handleFilterUpdate({ hideFullRooms: !hideFullRooms })}
             sx={{
-              height: 36,
-              borderRadius: 1,
-              px: 0.5,
+              height: 26,
+              borderRadius: 0.5,
               fontWeight: 700,
               fontSize: '0.76rem',
               color: hideFullRooms ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
@@ -417,8 +443,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 size="small"
                 sx={{
                   width: 36,
-                  height: 36,
-                  borderRadius: 1,
+                  height: 26,
+                  borderRadius: 0.5,
                   bgcolor: isExpanded
                     ? alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1)
                     : inputSurfaceBg,
@@ -447,15 +473,13 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
             pt: 1.25,
             mt: 1.25,
             borderTop: '1px dashed',
-            borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+            borderColor: inputBorderColor,
           }}
         >
           <Grid container spacing={1} alignItems="center">
-
             {/* Quick Toggle Buttons (Live & Visited) */}
             <Grid size={{ xs: 12, sm: 12, md: 4 }}>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-
                 {/* Live Only Toggle */}
                 <Chip
                   icon={
@@ -471,8 +495,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onClick={() => handleFilterUpdate({ showActiveOnly: !showActiveOnly })}
                   sx={{
                     justifyContent: 'flex-start',
-                    height: 30,
-                    borderRadius: 1,
+                    height: 26,
+                    borderRadius: 0.5,
                     px: 0.5,
                     fontWeight: 700,
                     fontSize: '0.75rem',
@@ -481,11 +505,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                         ? alpha(theme.palette.success.main, 0.14)
                         : '#ecfdf5'
                       : inputSurfaceBg,
-                    color: showActiveOnly
-                      ? 'success.main'
-                      : isDark
-                        ? 'text.secondary'
-                        : '#475569',
+                    color: showActiveOnly ? 'success.main' : isDark ? 'text.secondary' : '#475569',
                     border: '1px solid',
                     borderColor: showActiveOnly
                       ? isDark
@@ -495,6 +515,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                     '&:hover': {
                       bgcolor: theme.palette.success.main,
                       color: 'common.white',
+                      borderColor: alpha(theme.palette.success.main, 0.35),
                     },
                   }}
                 />
@@ -504,7 +525,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   icon={
                     <HistoryIcon
                       sx={{
-                        fontSize: '15px !important',
+                        fontSize: '14px !important',
                         color: showVisitedRooms ? 'info.main' : 'text.disabled',
                       }}
                     />
@@ -514,8 +535,8 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   onClick={() => handleFilterUpdate({ showVisitedRooms: !showVisitedRooms })}
                   sx={{
                     justifyContent: 'flex-start',
-                    height: 30,
-                    borderRadius: 1,
+                    height: 26,
+                    borderRadius: 0.5,
                     px: 0.5,
                     fontWeight: 700,
                     fontSize: '0.75rem',
@@ -524,11 +545,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                         ? alpha(theme.palette.info.main, 0.14)
                         : '#eff6ff'
                       : inputSurfaceBg,
-                    color: showVisitedRooms
-                      ? 'info.main'
-                      : isDark
-                        ? 'text.secondary'
-                        : '#475569',
+                    color: showVisitedRooms ? 'info.main' : isDark ? 'text.secondary' : '#475569',
                     border: '1px solid',
                     borderColor: showVisitedRooms
                       ? isDark
@@ -537,6 +554,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                       : inputBorderColor,
                     '&:hover': {
                       bgcolor: theme.palette.info.main,
+                      borderColor: alpha(theme.palette.info.main, 0.35),
                       color: 'common.white',
                       '& .MuiChip-icon': { color: 'common.white' }, // Ensures icon turns white on hover
                     },
@@ -555,7 +573,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   fontSize="0.7rem"
                   sx={{ mr: 0.25 }}
                 >
-                  Popular:
+                  Quick choice:
                 </Typography>
                 {[...roomLanguageOptions]
                   .sort((a, b) => (b.count || 0) - (a.count || 0))
@@ -594,10 +612,10 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                           </Box>
                         }
                         sx={{
-                          borderRadius: 1,
+                          height: 26,
+                          borderRadius: 0.5,
                           fontSize: '0.7rem',
                           fontWeight: isSelected ? 700 : 600,
-                          height: 26,
                           bgcolor: isSelected ? theme.palette.primary.main : inputSurfaceBg,
                           color: isSelected
                             ? 'primary.contrastText'
@@ -674,7 +692,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="primary"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ selectedLanguage: 'all' })}
-                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                  sx={{ height: 24, borderRadius: 0.5, fontSize: '0.68rem' }}
                 />
               )}
               {selectedLevel !== 'all' && (
@@ -684,7 +702,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="secondary"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ selectedLevel: 'all' })}
-                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                  sx={{ height: 24, borderRadius: 0.5, fontSize: '0.68rem' }}
                 />
               )}
               {hideFullRooms && (
@@ -694,7 +712,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="info"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ hideFullRooms: false })}
-                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                  sx={{ height: 24, borderRadius: 0.5, fontSize: '0.68rem' }}
                 />
               )}
               {showActiveOnly && (
@@ -704,7 +722,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="success"
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ showActiveOnly: false })}
-                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                  sx={{ height: 24, borderRadius: 0.5, fontSize: '0.68rem' }}
                 />
               )}
               {showVisitedRooms && (
@@ -714,7 +732,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   color="info" // Distinguishable badge color
                   variant="soft"
                   onDelete={() => handleFilterUpdate({ showVisitedRooms: false })}
-                  sx={{ height: 22, borderRadius: 1, fontSize: '0.68rem' }}
+                  sx={{ height: 24, borderRadius: 0.5, fontSize: '0.68rem' }}
                 />
               )}
             </Stack>
