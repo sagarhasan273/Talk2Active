@@ -28,7 +28,7 @@ export const KrispNoiseFilterToggle = () => {
       onClick={() => setNoiseFilterEnabled(!isNoiseFilterEnabled)}
       sx={{
         textTransform: 'none',
-        borderRadius: 1,
+        borderRadius: 0.5,
         fontSize: 11,
         fontWeight: 700,
         py: 0.25,

@@ -375,7 +375,7 @@ const SocialMessageBubbleComponent: React.FC<SocialMessageBubbleProps> = ({
                   minWidth: 0,
                   bgcolor: alpha('#000', 0.22),
                   border: `1px solid ${alpha('#fff', 0.35)}`,
-                  borderRadius: 1.25,
+                  borderRadius: 0.5,
                   px: 1,
                   py: 0.45,
                   fontSize: 12.5,

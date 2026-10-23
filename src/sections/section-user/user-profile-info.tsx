@@ -29,7 +29,7 @@ function UserProfileInfo() {
   };
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 1 }}>
+    <Paper sx={{ p: 3, borderRadius: 0.5 }}>
       {/* Avatar and Actions */}
       <Box
         sx={{

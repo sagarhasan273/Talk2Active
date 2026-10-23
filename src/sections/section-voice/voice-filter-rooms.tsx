@@ -138,7 +138,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
         p: { xs: 1.25, sm: 1.5 },
         mb: 1,
         bgcolor: 'background.default',
-        borderRadius: 1,
+        borderRadius: 0.5,
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
       }}
@@ -168,7 +168,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   <IconButton
                     size="small"
                     onClick={() => setSearchQuery('')}
-                    sx={{ p: 0.25, borderRadius: 1 }}
+                    sx={{ p: 0.25, borderRadius: 0.5 }}
                   >
                     <ClearIcon sx={{ fontSize: 15 }} />
                   </IconButton>
@@ -353,7 +353,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                 PaperProps: {
                   sx: {
                     maxHeight: 280,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     mt: 0.5,
                     bgcolor: isDark ? '#181c26' : '#ffffff',
                     border: '1px solid',
@@ -654,7 +654,7 @@ export const VoiceRoomsFilter: React.FC<VoiceRoomsFilterProps> = ({
                   py: 0.25,
                   px: 1,
                   height: 28,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                 }}
               >
                 Reset Filters

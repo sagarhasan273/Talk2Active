@@ -489,7 +489,7 @@ export const RoomlistMain = memo(function RoomlistMain({
     gridColumn: '1 / -1',
     width: '100%',
     pointerEvents: 'none',
-    borderRadius: 1,
+    borderRadius: 0.5,
     backgroundImage: `repeating-linear-gradient(
       to bottom,
       ${skeletonFillColor} 0px,

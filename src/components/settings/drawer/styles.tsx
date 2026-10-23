@@ -86,7 +86,7 @@ export function BlockOption({ icon, label, selected, sx, ...other }: BlockOption
         '--active-color': (theme) =>
           `linear-gradient(135deg, ${theme.vars.palette.primary.light}, ${theme.vars.palette.primary.main})`,
         width: 1,
-        borderRadius: 1.5,
+        borderRadius: 0.5,
         lineHeight: '18px',
         color: 'text.disabled',
         border: `solid 1px transparent`,

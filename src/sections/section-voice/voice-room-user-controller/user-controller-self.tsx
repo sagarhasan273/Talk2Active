@@ -57,7 +57,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
   const sectionCardSx = {
     p: 2,
     mb: 1.5,
-    borderRadius: 1.5,
+    borderRadius: 0.5,
     bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
     border: '1px solid',
     borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
@@ -112,7 +112,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
               sx={{
                 width: 42,
                 height: 42,
-                borderRadius: 1.5,
+                borderRadius: 0.5,
                 bgcolor: isMuted
                   ? alpha(theme.palette.error.main, 0.16)
                   : isDark
@@ -188,7 +188,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
               label="Input Microphone"
               onChange={(e) => setActiveMicDevice(e.target.value)}
               sx={{
-                borderRadius: 1.25,
+                borderRadius: 0.5,
                 bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
               }}
             >
@@ -208,7 +208,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
               label="Output Speaker"
               onChange={(e) => setActiveSpeakerDevice(e.target.value)}
               sx={{
-                borderRadius: 1.25,
+                borderRadius: 0.5,
                 bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
               }}
             >

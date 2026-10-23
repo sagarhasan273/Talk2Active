@@ -72,7 +72,7 @@ export const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
               display: 'inline-block',
               px: 0.85,
               py: 0.25,
-              borderRadius: 1,
+              borderRadius: 0.5,
               fontSize: 10.5,
               fontWeight: 800,
               bgcolor: alpha(theme.palette.error.main, 0.12),
@@ -100,7 +100,7 @@ export const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
           }}
           startIcon={<Sparkles size={13} strokeWidth={2.5} />}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontSize: 10.5,
             fontWeight: 800,
             letterSpacing: 0.5,
@@ -114,7 +114,7 @@ export const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
             size="small"
             onClick={onClose}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
               color: 'text.secondary',

@@ -141,7 +141,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 color: '#fff',
                 px: 1.25,
                 py: 0.5,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 fontSize: 11.5,
                 fontWeight: 700,
                 display: 'inline-flex',
@@ -307,7 +307,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
               spacing={0.4}
               sx={{
                 p: 0.35,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 bgcolor: alpha('#181c26', 0.82),
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${alpha('#fff', 0.14)}`,
@@ -419,7 +419,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                     }}
                     sx={{
                       position: 'relative',
-                      borderRadius: 1.5,
+                      borderRadius: 0.5,
                       overflow: 'hidden',
                       bgcolor: '#12151e',
                       border: '2px solid',
@@ -473,7 +473,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                         zIndex: 3,
                         px: 1.25,
                         py: 0.5,
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         bgcolor: alpha('#181c26', 0.9),
                         backdropFilter: 'blur(6px)',
                         border: `1px solid ${alpha('#fff', 0.14)}`,
@@ -541,7 +541,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                 disableElevation
                 onClick={() => setShowScreenShareView(true)}
                 startIcon={<Eye size={13} />}
-                sx={{ borderRadius: 1, textTransform: 'none', fontSize: 11.5, fontWeight: 700 }}
+                sx={{ borderRadius: 0.5, textTransform: 'none', fontSize: 11.5, fontWeight: 700 }}
               >
                 View Screen Share
               </Button>
@@ -633,7 +633,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                   zIndex: 5,
                   width: 30,
                   height: 30,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? alpha('#181c26', 0.9) : alpha('#ffffff', 0.92),
                 }}
               >
@@ -672,7 +672,7 @@ export const RoomStageDesktopView: React.FC<SharedStageViewProps> = ({
                   zIndex: 5,
                   width: 30,
                   height: 30,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? alpha('#181c26', 0.9) : alpha('#ffffff', 0.92),
                 }}
               >

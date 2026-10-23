@@ -55,7 +55,7 @@ export const ParticipantStatusOverlay = ({ participant }: { participant: any }) 
           color: '#fff',
           px: 1,
           py: 0.25,
-          borderRadius: 1,
+          borderRadius: 0.5,
           boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
         }}
       >

@@ -38,7 +38,7 @@ export function SingleFilePreview({ file, sx, className, ...other }: SingleFileP
         sx={{
           width: 1,
           height: 1,
-          borderRadius: 1,
+          borderRadius: 0.5,
           objectFit: 'cover',
         }}
       />

@@ -105,7 +105,7 @@ export function NotificationItem({ notification }: { notification: NotificationI
         sx={{
           p: 1.5,
           my: 1.5,
-          borderRadius: 1.5,
+          borderRadius: 0.5,
           color: 'text.secondary',
           bgcolor: 'background.neutral',
         }}
@@ -129,7 +129,7 @@ export function NotificationItem({ notification }: { notification: NotificationI
         pl: 1,
         p: 1.5,
         mt: 1.5,
-        borderRadius: 1.5,
+        borderRadius: 0.5,
         bgcolor: 'background.neutral',
       }}
     >

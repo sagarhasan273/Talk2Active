@@ -131,7 +131,7 @@ function StatusGrid({
             onClick={() => onSelect(status)}
             sx={{
               width: '100%',
-              borderRadius: 1,
+              borderRadius: 0.5,
               display: 'flex',
               flexDirection: 'row',
               alignItems: 'center',
@@ -304,7 +304,7 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
         size="small"
         onClick={handleOpen}
         sx={{
-          borderRadius: 1,
+          borderRadius: 0.5,
           color: currentStatus.color,
           border:
             primaryName !== 'online' ? `1px solid ${varAlpha(currentChannel, 0.4)}` : '1px solid',
@@ -386,7 +386,7 @@ export const VoiceButtonUserStatus: React.FC<ChatStatusButtonProps> = ({ onStatu
                     bgcolor: isDark ? '#181c26' : '#ffffff',
                     border: '1px solid',
                     borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     boxShadow: isDark
                       ? '0 12px 28px rgba(0, 0, 0, 0.55)'
                       : '0 12px 28px rgba(15, 23, 42, 0.14)',

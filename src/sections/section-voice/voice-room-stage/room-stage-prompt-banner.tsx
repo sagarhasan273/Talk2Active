@@ -22,7 +22,7 @@ export const PromptBanner = ({ prompt, onChangePrompt }: PromptBannerProps) => {
         px: 1.75,
         py: 1.25,
         mb: 2,
-        borderRadius: 1.5,
+        borderRadius: 0.5,
         bgcolor: isDark ? alpha('#1a1f2b', 0.85) : alpha(theme.palette.primary.main, 0.04),
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.08) : alpha(theme.palette.primary.main, 0.15),
@@ -33,7 +33,7 @@ export const PromptBanner = ({ prompt, onChangePrompt }: PromptBannerProps) => {
           sx={{
             width: 28,
             height: 28,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: alpha(theme.palette.primary.main, 0.14),
             color: 'primary.main',
             display: 'flex',
@@ -71,7 +71,7 @@ export const PromptBanner = ({ prompt, onChangePrompt }: PromptBannerProps) => {
           sx={{
             px: 1.25,
             py: 0.5,
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontSize: 11.5,
             fontWeight: 700,
             color: 'primary.main',

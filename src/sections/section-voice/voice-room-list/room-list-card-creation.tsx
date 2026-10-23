@@ -35,7 +35,7 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
           flexDirection: 'column',
           justifyContent: 'space-between',
           p: 2.25,
-          borderRadius: 1,
+          borderRadius: 0.5,
           cursor: 'pointer',
           userSelect: 'none',
           WebkitTapHighlightColor: 'transparent',
@@ -60,7 +60,7 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
             sx={{
               px: 0.85,
               py: 0.25,
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#38bdf8', 0.12) : alpha(theme.palette.primary.main, 0.08),
               color: isDark ? '#38bdf8' : 'primary.main',
               display: 'inline-flex',
@@ -127,7 +127,7 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
             sx={{
               px: 2.5,
               py: 0.65,
-              borderRadius: 1,
+              borderRadius: 0.5,
               textTransform: 'none',
               fontWeight: 600,
               fontSize: '0.8rem',

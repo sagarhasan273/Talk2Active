@@ -58,7 +58,7 @@ export const DirectoryTabs: React.FC<DirectoryTabsProps> = ({
           width: isSearchOpen ? 'auto' : '32px',
           height: 32,
           bgcolor: isSearchOpen ? (isDark ? alpha('#fff', 0.04) : '#ffffff') : 'transparent',
-          borderRadius: 1,
+          borderRadius: 0.5,
           border: '1px solid',
           borderColor: isSearchOpen ? 'primary.main' : 'divider',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -74,7 +74,7 @@ export const DirectoryTabs: React.FC<DirectoryTabsProps> = ({
           sx={{
             minWidth: 32,
             height: 32,
-            borderRadius: 1,
+            borderRadius: 0.5,
             color: isSearchOpen
               ? isDark ? 'text.primary' : '#0f172a'
               : isDark ? 'text.secondary' : '#64748b',
@@ -140,7 +140,7 @@ export const DirectoryTabs: React.FC<DirectoryTabsProps> = ({
                 justifyContent: 'center',
                 gap: 0.5,
                 py: 0.75,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 fontSize: 11.5,
                 fontWeight: 700,
                 cursor: 'pointer',

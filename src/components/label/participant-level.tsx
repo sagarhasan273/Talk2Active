@@ -163,7 +163,7 @@ export const ParticipantLevel = ({
       }
       sx={{
         height: isSmall ? 26 : 32,
-        borderRadius: 1,
+        borderRadius: 0.5,
         px: 0.5,
         cursor: onClick ? 'pointer' : 'default',
         userSelect: 'none',

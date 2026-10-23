@@ -74,7 +74,7 @@ export function LayoutOption({ option, selected, sx, ...other }: OptionProps) {
   const renderIconNav = () => {
     const baseStyles = {
       flexShrink: 0,
-      borderRadius: 1,
+      borderRadius: 0.5,
       bgcolor: 'currentColor',
     };
 

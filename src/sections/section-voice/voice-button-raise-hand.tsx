@@ -132,7 +132,7 @@ export const VoiceButtonRaiseHand = ({
             p: 1,
             width: 34,
             height: 34,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: handIsActive
               ? alpha(theme.palette.warning.main, 0.16)
               : isDark
@@ -199,7 +199,7 @@ export const VoiceButtonRaiseHand = ({
             sx: {
               mt: -1,
               p: 1,
-              borderRadius: 1,
+              borderRadius: 0.5,
               minWidth: 190,
               maxWidth: 230,
               bgcolor: isDark ? '#181c26' : '#ffffff',
@@ -240,7 +240,7 @@ export const VoiceButtonRaiseHand = ({
                     justifyContent: 'center',
                     width: 40,
                     height: 40,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     fontSize: '1.3rem',
                     bgcolor: isSelected
                       ? alpha(theme.palette.warning.main, 0.16)

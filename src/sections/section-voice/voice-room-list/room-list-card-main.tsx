@@ -117,7 +117,7 @@ const VoiceRoomCardComponent = ({
       sx={[
         {
           p: 2,
-          borderRadius: 1,
+          borderRadius: 0.5,
           position: 'relative',
           cursor: 'pointer',
           userSelect: 'none',
@@ -209,7 +209,7 @@ const VoiceRoomCardComponent = ({
           gap: 1.25,
           p: 1,
           my: 1,
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
@@ -245,7 +245,7 @@ const VoiceRoomCardComponent = ({
             gap: 0.5,
             px: 0.85,
             py: 0.3,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.06) : '#ffffff',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -304,7 +304,7 @@ const VoiceRoomCardComponent = ({
         sx={{
           flexShrink: 0,
           mt: 1,
-          borderRadius: 1,
+          borderRadius: 0.5,
           textTransform: 'none',
           fontWeight: 700,
           fontSize: 13,

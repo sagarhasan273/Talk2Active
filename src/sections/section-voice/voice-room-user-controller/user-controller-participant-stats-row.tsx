@@ -44,7 +44,7 @@ export const ParticipantStatsRow = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             bgcolor: (theme) =>
               theme.palette.mode === 'dark' ? alpha('#fff', 0.03) : alpha('#000', 0.025),
             border: '1px solid',

@@ -120,7 +120,7 @@ export const ButtonReportUser = ({
             onClick={handleOpen}
             sx={{
               p: size === 'small' ? '5px' : '7px',
-              borderRadius: 1,
+              borderRadius: 0.5,
               border: '1px solid',
               borderColor: 'divider',
               color: 'warning.main',
@@ -151,7 +151,7 @@ export const ButtonReportUser = ({
           onClick={handleOpen}
           startIcon={<FlagRoundedIcon sx={{ fontSize: 16 }} />}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
@@ -184,7 +184,7 @@ export const ButtonReportUser = ({
           onClick={handleOpen}
           startIcon={<FlagRoundedIcon sx={{ fontSize: 16 }} />}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
@@ -210,7 +210,7 @@ export const ButtonReportUser = ({
         startIcon={<FlagRoundedIcon sx={{ fontSize: 16 }} />}
         sx={{
           height: size === 'small' ? 36 : 40, // Height matching
-          borderRadius: 1.25,
+          borderRadius: 0.5,
           fontWeight: 700,
           textTransform: 'none',
           fontSize: size === 'small' ? 12 : 13,

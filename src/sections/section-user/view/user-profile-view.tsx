@@ -29,7 +29,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = () => {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  interface TabChangeEvent extends React.SyntheticEvent<Element, Event> {}
+  interface TabChangeEvent extends React.SyntheticEvent<Element, Event> { }
 
   interface HandleTabChange {
     (event: TabChangeEvent, newValue: number): void;
@@ -59,7 +59,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = () => {
             backgroundImage: `url(${user?.profilePhoto})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            borderRadius: 1,
+            borderRadius: 0.5,
             mb: 1,
             position: 'relative',
             overflow: 'hidden',
@@ -79,7 +79,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = () => {
         <UserProfileInfo />
 
         {/* Tabs */}
-        <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 0.5, overflow: 'hidden' }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}

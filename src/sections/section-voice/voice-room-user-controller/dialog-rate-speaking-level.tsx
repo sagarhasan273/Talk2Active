@@ -195,7 +195,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
               color: 'primary.main',
               px: 1.25,
               py: 0.4,
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: alpha(theme.palette.primary.main, 0.12),
             }}
           >
@@ -213,7 +213,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             disabled={isLoading}
             onChange={(e) => handleLevelChange(e.target.value as SpeakingProficiencyLevel)}
             sx={{
-              borderRadius: 1.5,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
             }}
             MenuProps={{
@@ -222,7 +222,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
               },
               PaperProps: {
                 sx: {
-                  borderRadius: 1.5,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? '#1a1f2b' : 'background.paper',
                   border: '1px solid',
                   borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08),
@@ -231,7 +231,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             }}
           >
             {PROFICIENCY_LEVELS.map((tier) => (
-              <MenuItem key={tier.value} value={tier.value} sx={{ borderRadius: 1, mx: 0.5 }}>
+              <MenuItem key={tier.value} value={tier.value} sx={{ borderRadius: 0.5, mx: 0.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                   <span>{tier.emoji}</span>
                   <Typography variant="body2" fontWeight={600}>
@@ -263,7 +263,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
           sx={{
             fontWeight: 600,
             textTransform: 'none',
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             color: 'text.secondary',
           }}
         >
@@ -278,7 +278,7 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
           sx={{
             fontWeight: 600,
             textTransform: 'none',
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             minWidth: 130,
             boxShadow: 'none',
             '&:hover': { boxShadow: 'none' },

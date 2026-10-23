@@ -114,7 +114,7 @@ export const RoomParticipantsDialog = ({
       PaperProps={{
         elevation: 0,
         sx: {
-          borderRadius: 1,
+          borderRadius: 0.5,
           overflow: 'hidden',
           bgcolor: isDark ? '#181c26' : '#ffffff',
           backgroundImage: 'none',
@@ -162,7 +162,7 @@ export const RoomParticipantsDialog = ({
                 color="warning"
                 sx={{
                   height: 18,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   fontSize: 10,
                   fontWeight: 800,
                   textTransform: 'uppercase',
@@ -185,7 +185,7 @@ export const RoomParticipantsDialog = ({
                 size="small"
                 onClick={() => onEditRoom(room)}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
                   border: '1px solid',
                   borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -199,7 +199,7 @@ export const RoomParticipantsDialog = ({
             size="small"
             onClick={onClose}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -217,7 +217,7 @@ export const RoomParticipantsDialog = ({
             sx={{
               p: 1.25,
               mb: 2,
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
@@ -256,7 +256,7 @@ export const RoomParticipantsDialog = ({
               '&::-webkit-scrollbar': { width: 5 },
               '&::-webkit-scrollbar-thumb': {
                 bgcolor: alpha(theme.palette.divider, 0.4),
-                borderRadius: 1,
+                borderRadius: 0.5,
               },
             }}
           >
@@ -283,7 +283,7 @@ export const RoomParticipantsDialog = ({
                         zIndex: 4,
                         width: 24,
                         height: 24,
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         bgcolor: isDark ? '#181c26' : '#ffffff',
                         border: '1px solid',
                         borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
@@ -312,7 +312,7 @@ export const RoomParticipantsDialog = ({
             sx={{
               mt: 2.5,
               height: 42,
-              borderRadius: 1,
+              borderRadius: 0.5,
               fontWeight: 700,
               textTransform: 'none',
               boxShadow: 'none',
@@ -335,7 +335,7 @@ export const RoomParticipantsDialog = ({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         PaperProps={{
           sx: {
-            borderRadius: 1,
+            borderRadius: 0.5,
             minWidth: 160,
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',

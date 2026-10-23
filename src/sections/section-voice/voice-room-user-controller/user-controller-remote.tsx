@@ -62,8 +62,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const isDark = theme.palette.mode === 'dark';
   const room = useRoomContext();
 
-  const { user: currentUser, checkIfFollowing, checkIfBlocked } = useCredentials();
-  const { room: roomJoined, updateParticipants } = useRoomTools();
+  const { user: currentUser, checkIfBlocked } = useCredentials();
+  const { room: roomJoined } = useRoomTools();
 
   const userId = String(user.userId);
   const isBlocked = checkIfBlocked(userId);
@@ -77,7 +77,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const sectionCardSx = {
     p: 2,
     mb: 1.5,
-    borderRadius: 1.5,
+    borderRadius: 0.5,
     bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
     border: '1px solid',
     borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
@@ -168,7 +168,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
               sx={{
                 width: 40,
                 height: 40,
-                borderRadius: 1.5,
+                borderRadius: 0.5,
                 color: volume === 0 ? 'error.main' : 'text.primary',
                 bgcolor:
                   volume === 0
@@ -218,7 +218,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           sx={{
             p: 2,
             mb: 1.5,
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             bgcolor: alpha(theme.palette.warning.main, 0.06),
             border: `1px dashed ${alpha(theme.palette.warning.main, 0.35)}`,
           }}
@@ -244,7 +244,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
               fullWidth
               startIcon={<MicOffIcon />}
               onClick={() => handleHostMute(true)}
-              sx={{ borderRadius: 1.25, fontWeight: 600, textTransform: 'none', boxShadow: 'none' }}
+              sx={{ borderRadius: 0.5, fontWeight: 600, textTransform: 'none', boxShadow: 'none' }}
             >
               Mute for All
             </Button>
@@ -255,7 +255,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
               fullWidth
               startIcon={<KickIcon />}
               onClick={handleHostKick}
-              sx={{ borderRadius: 1.25, fontWeight: 600, textTransform: 'none' }}
+              sx={{ borderRadius: 0.5, fontWeight: 600, textTransform: 'none' }}
             >
               Kick User
             </Button>
@@ -269,7 +269,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
         sx={{
           p: 2,
           mb: 1.5,
-          borderRadius: 1.5,
+          borderRadius: 0.5,
           bgcolor: alpha(theme.palette.primary.main, isDark ? 0.08 : 0.04),
           border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         }}
@@ -290,7 +290,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
             startIcon={<StarIcon />}
             onClick={onOpenRating}
             sx={{
-              borderRadius: 1.25,
+              borderRadius: 0.5,
               px: 1.75,
               fontWeight: 600,
               textTransform: 'none',
@@ -308,8 +308,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mb: 1.25 }}>
         {<ButtonRelationshipToggle
           targetUser={{ id: userId, name: user.name }}
-          isFollow={Boolean(checkIfFollowing(userId))}
-          isBlocked={isBlocked}
           size="small"
           variant="soft"
           fullWidth
@@ -333,7 +331,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           startIcon={<ChatIcon />}
           onClick={() => onShare?.(userId)}
           sx={{
-            borderRadius: 1.25,
+            borderRadius: 0.5,
             fontWeight: 600,
             textTransform: 'none',
             borderColor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),

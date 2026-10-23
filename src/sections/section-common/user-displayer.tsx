@@ -73,7 +73,7 @@ export const UserDisplayer = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const { checkIfFollowing, checkIfBlocked } = useCredentials();
+  const { checkIfBlocked } = useCredentials();
 
   const [reportOpen, setReportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -180,7 +180,7 @@ export const UserDisplayer = ({
               position: 'relative',
               width: '100%',
               maxWidth: { xs: 360, sm: 580 },
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? '#181c26' : '#ffffff',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -221,7 +221,7 @@ export const UserDisplayer = ({
                 size="small"
                 sx={{
                   color: 'text.secondary',
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   width: 26,
                   height: 26,
                   bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
@@ -365,7 +365,7 @@ export const UserDisplayer = ({
                       sx={{
                         mb: 2,
                         p: 1.25,
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
                         border: '1px solid',
                         borderColor: isDark ? alpha('#fff', 0.05) : '#f1f5f9',
@@ -387,7 +387,7 @@ export const UserDisplayer = ({
                 <Box
                   sx={{
                     p: 1,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
                     border: '1px solid',
                     borderColor: isDark ? alpha('#fff', 0.07) : '#e2e8f0',
@@ -450,8 +450,6 @@ export const UserDisplayer = ({
                     {resolvedUserId && (
                       <ButtonRelationshipToggle
                         targetUser={{ id: resolvedUserId, name: user.name }}
-                        isFollow={checkIfFollowing(resolvedUserId)}
-                        isBlocked={isBlocked}
                         size="small"
                         variant="soft"
                         sx={{ flex: 1, minWidth: '100px' }}
@@ -485,7 +483,7 @@ export const UserDisplayer = ({
                   width: { xs: '100%', sm: 205 },
                   height: { xs: 220, sm: 205 },
                   flexShrink: 0,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   overflow: 'hidden',
                   bgcolor: isDark ? alpha('#fff', 0.03) : '#f1f5f9',
                   border: '1px solid',

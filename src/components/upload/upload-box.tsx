@@ -1,7 +1,7 @@
 import { useDropzone } from 'react-dropzone';
 
+import { keyframes, Stack, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import { Stack, keyframes, Typography } from '@mui/material';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -44,7 +44,7 @@ export function UploadBox({
         height: 64,
         flexShrink: 0,
         display: 'flex',
-        borderRadius: 1,
+        borderRadius: 0.5,
         cursor: 'pointer',
         alignItems: 'center',
         color: 'primary.light',

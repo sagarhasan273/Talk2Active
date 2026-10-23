@@ -30,7 +30,7 @@ export function ResultItem({ title, path, groupLabel, onClickItem }: Props) {
         borderColor: 'transparent',
         borderBottomColor: (theme) => theme.vars.palette.divider,
         '&:hover': {
-          borderRadius: 1,
+          borderRadius: 0.5,
           borderColor: (theme) => theme.vars.palette.primary.main,
           backgroundColor: (theme) =>
             varAlpha(

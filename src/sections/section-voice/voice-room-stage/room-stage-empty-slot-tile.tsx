@@ -30,7 +30,7 @@ export const EmptySlotTile = ({ openSlots, maxParticipants, onClick }: EmptySlot
         bgcolor: isDark ? alpha('#181c26', 0.55) : '#ffffff',
         border: '1.5px dashed',
         borderColor: isDark ? alpha('#fff', 0.14) : '#cbd5e1',
-        borderRadius: 1,
+        borderRadius: 0.5,
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': onClick
           ? {

@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 
+import { DownloadButton, RemoveButton } from './action-buttons';
 import { fileThumbnailClasses } from './classes';
-import { fileData, fileThumb, fileFormat } from './utils';
-import { RemoveButton, DownloadButton } from './action-buttons';
+import { fileData, fileFormat, fileThumb } from './utils';
 
 import type { FileThumbnailProps } from './types';
 
@@ -58,7 +58,7 @@ export function FileThumbnail({
         width: 36,
         height: 36,
         flexShrink: 0,
-        borderRadius: 1.25,
+        borderRadius: 0.5,
         alignItems: 'center',
         position: 'relative',
         display: 'inline-flex',

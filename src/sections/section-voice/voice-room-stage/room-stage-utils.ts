@@ -1,7 +1,5 @@
 // src/sections/section-voice/voice-room-stage/room-stage-types.ts
 
-import type { RoomParticipantType } from '@/types/type-room';
-import type { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { alpha } from '@mui/material/styles';
 
 
@@ -9,7 +7,7 @@ export const getHudGlassButtonSx = (active = false, isCompact = false) => ({
   minWidth: 0,
   height: isCompact ? 28 : 30,
   px: isCompact ? 0.85 : 1.1,
-  borderRadius: 1,
+  borderRadius: 0.5,
   fontSize: isCompact ? 11 : 11.5,
   fontWeight: 700,
   textTransform: 'none',

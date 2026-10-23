@@ -205,7 +205,7 @@ export const SocialChatDirectory: React.FC<SocialChatDirectoryProps> = ({
             p: 1,
             scrollbarWidth: 'thin',
             '&::-webkit-scrollbar': { width: 5 },
-            '&::-webkit-scrollbar-thumb': { bgcolor: alpha(theme.palette.divider, 0.4), borderRadius: 1 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: alpha(theme.palette.divider, 0.4), borderRadius: 0.5 },
           }}
         >
           {isLoading ? (

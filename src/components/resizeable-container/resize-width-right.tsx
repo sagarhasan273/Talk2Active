@@ -1,5 +1,5 @@
 import { varAlpha } from '@/theme/styles';
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import { Box, useTheme } from '@mui/material';
 
@@ -62,7 +62,7 @@ export const ResizeWidthRight = ({
         width,
         flexShrink: 0,
         display: 'flex',
-        borderRadius: 1,
+        borderRadius: 0.5,
         bgcolor: 'background.paper',
         border: '1px solid',
         borderColor: 'divider',

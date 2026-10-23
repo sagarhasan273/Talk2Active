@@ -152,7 +152,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             onClick={closeActiveChat}
             sx={{
               color: 'text.secondary',
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -228,7 +228,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                 startIcon={<PhoneCall size={13} />}
                 onClick={() => { if (roomId) onJoinRoom?.(roomId) }}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   px: 1.25,
                   py: 0.35,
                   fontSize: 11,
@@ -248,7 +248,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               onClick={onClose}
               sx={{
                 color: 'text.secondary',
-                borderRadius: 1,
+                borderRadius: 0.5,
                 bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -290,7 +290,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             '&::-webkit-scrollbar': { width: 5 },
             '&::-webkit-scrollbar-thumb': {
               bgcolor: alpha(theme.palette.divider, 0.4),
-              borderRadius: 1,
+              borderRadius: 0.5,
             },
           }}
         >
@@ -314,7 +314,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
                 sx={{
                   width: 44,
                   height: 44,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -363,7 +363,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 20,
-              borderRadius: 1,
+              borderRadius: 0.5,
               px: 1.5,
               py: 0.4,
               fontSize: 11.5,
@@ -425,7 +425,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-            borderRadius: 1,
+            borderRadius: 0.5,
             px: 1.25,
             py: 0.5,
             transition: 'border-color 0.18s ease',
@@ -462,7 +462,7 @@ export const SocialChatConversation: React.FC<SocialChatConversationProps> = ({
             sx={{
               bgcolor: draft.trim() ? 'primary.main' : 'transparent',
               color: draft.trim() ? '#fff' : isDark ? 'text.disabled' : '#cbd5e1',
-              borderRadius: 1,
+              borderRadius: 0.5,
               width: 30,
               height: 30,
               transition: 'all 0.18s ease',

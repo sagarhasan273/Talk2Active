@@ -98,7 +98,7 @@ export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
       } else {
         toast.error(
           response.data.message ||
-            `Failed to ${isEdit ? 'update' : 'create'} post. Please try again.`
+          `Failed to ${isEdit ? 'update' : 'create'} post. Please try again.`
         );
       }
     } catch (error) {
@@ -133,7 +133,7 @@ export function CreatePost({ isOpen, onClose, editData }: CreatePostProps) {
             maxWidth: 600,
             bgcolor: 'background.neutral',
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 1,
+            borderRadius: 0.5,
             boxShadow: 24,
             p: 2,
           }}

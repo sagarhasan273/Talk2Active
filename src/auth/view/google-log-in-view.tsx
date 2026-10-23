@@ -71,7 +71,7 @@ export const GoogleLogInView = ({
       sx={{
         py: 2,
         px: 1,
-        borderRadius: 1,
+        borderRadius: 0.5,
         borderColor: 'divider',
         color: 'primary.darker',
         backgroundColor: 'primary.lighter',

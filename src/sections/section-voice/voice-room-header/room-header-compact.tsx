@@ -117,7 +117,7 @@ export const CompactRoomHeader = ({
                   height: 36,
                   minWidth: { xs: 36, sm: 'auto' },
                   px: { xs: 1, sm: 1.5 },
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   textTransform: 'none',
                   fontWeight: 700,
                   fontSize: '0.8rem',
@@ -169,7 +169,7 @@ export const CompactRoomHeader = ({
                   gap: 0.5,
                   px: 0.75,
                   py: 0.25,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
                   border: '1px solid',
                   borderColor: isDark ? alpha(theme.palette.success.main, 0.25) : '#a7f3d0',
@@ -183,7 +183,7 @@ export const CompactRoomHeader = ({
                       key={idx}
                       sx={{
                         width: 2,
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         bgcolor: 'success.main',
                         animation: `${miniWave} 1s ease-in-out infinite`,
                         animationDelay: `${delay}s`,
@@ -219,7 +219,7 @@ export const CompactRoomHeader = ({
                   size="small"
                   color="primary"
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     bgcolor: isDark
                       ? alpha(theme.palette.primary.main, 0.14)
                       : alpha(theme.palette.primary.main, 0.08),
@@ -235,7 +235,7 @@ export const CompactRoomHeader = ({
                   size="small"
                   sx={{
                     transform: 'none !important',
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     border: '1px solid',
                     borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
                     bgcolor: isDark ? 'transparent' : '#f8fafc',
@@ -285,7 +285,7 @@ export const CompactRoomHeader = ({
               sx={{
                 width: 36,
                 height: 36,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 color: copied ? 'success.main' : isDark ? 'text.secondary' : '#475569',
                 bgcolor: copied
                   ? alpha(theme.palette.success.main, 0.1)
@@ -323,7 +323,7 @@ export const CompactRoomHeader = ({
                 sx={{
                   width: 36,
                   height: 36,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   color: isDark ? 'text.secondary' : '#475569',
                   bgcolor: isDark ? alpha('#fff', 0.03) : '#f8fafc',
                   border: '1px solid',

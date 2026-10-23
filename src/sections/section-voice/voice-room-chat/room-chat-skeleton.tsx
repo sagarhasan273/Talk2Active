@@ -117,7 +117,7 @@ export const RoomChatSkeleton: React.FC<RoomChatSkeletonProps> = ({
         height: '100%',
         minHeight: 0,
         bgcolor: isDark ? '#181c26' : '#ffffff',
-        borderRadius: 1,
+        borderRadius: 0.5,
         border: isFullPanel ? 'none' : '1px solid',
         borderColor,
         overflow: 'hidden',
@@ -138,7 +138,7 @@ export const RoomChatSkeleton: React.FC<RoomChatSkeletonProps> = ({
         }}
       >
         <Skeleton variant="text" width={70} height={22} />
-        <Skeleton variant="rounded" width={26} height={26} sx={{ borderRadius: 1 }} />
+        <Skeleton variant="rounded" width={26} height={26} sx={{ borderRadius: 0.5 }} />
       </Box>
 
       {/* 2. Messages Feed Skeleton */}
@@ -169,10 +169,10 @@ export const RoomChatSkeleton: React.FC<RoomChatSkeletonProps> = ({
         }}
       >
         <Stack direction="row" alignItems="center" spacing={0.75}>
-          <Skeleton variant="rounded" width={78} height={24} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rounded" width={26} height={24} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rounded" width={78} height={24} sx={{ borderRadius: 0.5 }} />
+          <Skeleton variant="rounded" width={26} height={24} sx={{ borderRadius: 0.5 }} />
         </Stack>
-        <Skeleton variant="rounded" width={64} height={24} sx={{ borderRadius: 1 }} />
+        <Skeleton variant="rounded" width={64} height={24} sx={{ borderRadius: 0.5 }} />
       </Box>
 
       {/* 4. Input Field & Send Button Skeleton */}
@@ -192,7 +192,7 @@ export const RoomChatSkeleton: React.FC<RoomChatSkeletonProps> = ({
           height={38}
           sx={{
             flex: 1,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
           }}
         />
@@ -201,7 +201,7 @@ export const RoomChatSkeleton: React.FC<RoomChatSkeletonProps> = ({
           width={38}
           height={38}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             flexShrink: 0,
             bgcolor: alpha(theme.palette.primary.main, 0.2),
           }}

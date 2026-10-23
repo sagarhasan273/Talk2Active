@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Close, PlayArrow } from '@mui/icons-material';
-import { Box, Card, Button, Avatar, IconButton, CardContent } from '@mui/material';
+import { Avatar, Box, Button, Card, CardContent, IconButton } from '@mui/material';
 
 import { extractYouTubeId } from 'src/utils/helper';
 
@@ -66,11 +66,11 @@ export function PostCreator({ currentUser }: PostCreatorProps) {
                 autoFocus
                 inputProps={{ maxLength: 280 }}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
                     p: 0,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                   },
                   '& .MuiOutlinedInput-input': {
                     padding: {
@@ -81,7 +81,7 @@ export function PostCreator({ currentUser }: PostCreatorProps) {
                       xs: '0.775rem',
                       sm: '1rem',
                     },
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                   },
                 }}
               />
@@ -94,7 +94,7 @@ export function PostCreator({ currentUser }: PostCreatorProps) {
                       paddingBottom: '56.25%',
                       height: 0,
                       overflow: 'hidden',
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       bgcolor: 'black',
                     }}
                   >

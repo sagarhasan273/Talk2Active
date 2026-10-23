@@ -206,7 +206,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
   const sectionSx = {
     p: 1.75,
-    borderRadius: 1,
+    borderRadius: 0.5,
     border: '1px solid',
     borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
     bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
@@ -223,7 +223,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
 
   const inputSx = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 1,
+      borderRadius: 0.5,
       bgcolor: isDark ? '#181c26' : '#ffffff',
       '& fieldset': {
         borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
@@ -277,7 +277,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
               sx={{
                 width: 38,
                 height: 38,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 display: 'grid',
                 placeItems: 'center',
                 flexShrink: 0,
@@ -311,7 +311,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
             sx={{
               width: 30,
               height: 30,
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -404,7 +404,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                     onDelete={() => removeLanguage(code)}
                     sx={{
                       height: 26,
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       fontSize: 12,
                       fontWeight: 700,
                       color: 'primary.main',
@@ -470,7 +470,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                     onClick={() => updateForm('level', value)}
                     sx={{
                       height: 28,
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       fontSize: 11.5,
                       fontWeight: selected ? 700 : 600,
                       transform: 'none !important',
@@ -516,7 +516,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
                   label={String(formData.max_participants)}
                   sx={{
                     height: 24,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     fontSize: 12,
                     fontWeight: 800,
                     color: 'primary.main',
@@ -569,7 +569,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
           color="inherit"
           fullWidth={isMobile}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             textTransform: 'none',
             fontWeight: 600,
             borderColor: isDark ? alpha('#fff', 0.14) : '#cbd5e1',
@@ -588,7 +588,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
           fullWidth={isMobile}
           startIcon={<RecordVoiceOver />}
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             textTransform: 'none',
             fontWeight: 700,
             flex: isMobile ? 2 : undefined,

@@ -52,7 +52,7 @@ export const RoomStageSkeleton: React.FC<RoomStageSkeletonProps> = ({
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0, flex: 1 }}>
-          <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: 1, flexShrink: 0 }} />
+          <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: 0.5, flexShrink: 0 }} />
           <Box sx={{ minWidth: 0, flex: 1, maxWidth: 280 }}>
             <Skeleton variant="text" width="75%" height={22} />
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
@@ -63,8 +63,8 @@ export const RoomStageSkeleton: React.FC<RoomStageSkeletonProps> = ({
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 1 }} />
-          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 0.5 }} />
+          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 0.5 }} />
         </Stack>
       </Box>
 
@@ -87,19 +87,19 @@ export const RoomStageSkeleton: React.FC<RoomStageSkeletonProps> = ({
           flexShrink: 0,
         }}
       >
-        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 1.5 }} />
-        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 1.5 }} />
-        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 1.5 }} />
+        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 0.5 }} />
+        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 0.5 }} />
+        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 0.5 }} />
         {!isMobile && (
-          <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 1.5 }} />
+          <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 0.5 }} />
         )}
-        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 1.5 }} />
+        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 0.5 }} />
         <Skeleton
           variant="rounded"
           width={isMobile ? 48 : 88}
           height={42}
           sx={{
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             bgcolor: alpha(theme.palette.error.main, 0.2),
           }}
         />

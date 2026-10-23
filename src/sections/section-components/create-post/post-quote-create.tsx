@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { Box, Chip, Card, Avatar, capitalize, Typography, CardContent } from '@mui/material';
+import { Avatar, Box, capitalize, Card, CardContent, Chip, Typography } from '@mui/material';
 
 import { PostTagsEnum } from 'src/enums/enum-post';
 
@@ -43,7 +43,7 @@ export function PostQuoteCreate({ currentUser }: { currentUser: any }) {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   p: 0,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                 },
                 '& .MuiOutlinedInput-input': {
                   padding: {
@@ -54,7 +54,7 @@ export function PostQuoteCreate({ currentUser }: { currentUser: any }) {
                     xs: '0.775rem',
                     sm: '1rem',
                   },
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                 },
               }}
             />
@@ -76,13 +76,13 @@ export function PostQuoteCreate({ currentUser }: { currentUser: any }) {
               inputProps={{ maxLength: 280 }}
               size="small"
               sx={{
-                borderRadius: 1,
+                borderRadius: 0.5,
                 '& .MuiOutlinedInput-input': {
                   fontSize: {
                     xs: '0.775rem',
                     sm: '1rem',
                   },
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                 },
               }}
             />
@@ -124,7 +124,7 @@ export function PostQuoteCreate({ currentUser }: { currentUser: any }) {
                     xs: '0.775rem',
                     sm: '1rem',
                   },
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                 },
               }}
             />

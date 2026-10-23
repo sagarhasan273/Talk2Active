@@ -68,7 +68,7 @@ export const VoiceRoomActiveBar = ({
         width: '100%',
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 1,
+        borderRadius: 0.5,
         backdropFilter: 'blur(20px)',
         bgcolor: isDark ? alpha('#181c26', 0.94) : alpha('#ffffff', 0.96),
         border: '1px solid',
@@ -97,7 +97,7 @@ export const VoiceRoomActiveBar = ({
             position: 'relative',
             width: { xs: 38, sm: 42 },
             height: { xs: 38, sm: 42 },
-            borderRadius: 1,
+            borderRadius: 0.5,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -118,7 +118,7 @@ export const VoiceRoomActiveBar = ({
                 key={idx}
                 sx={{
                   width: 3,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: 'primary.main',
                   animation: `${soundwave} 1.2s ease-in-out infinite`,
                   animationDelay: `${delay}s`,
@@ -175,7 +175,7 @@ export const VoiceRoomActiveBar = ({
                   size="small"
                   color="primary"
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     bgcolor: isDark
                       ? alpha(theme.palette.primary.main, 0.14)
                       : alpha(theme.palette.primary.main, 0.08),
@@ -257,7 +257,7 @@ export const VoiceRoomActiveBar = ({
             sx={{
               height: { xs: 34, sm: 38 },
               px: { xs: 1.5, sm: 2 },
-              borderRadius: 1,
+              borderRadius: 0.5,
               textTransform: 'none',
               fontWeight: 700,
               fontSize: { xs: '0.75rem', sm: '0.8125rem' },
@@ -281,7 +281,7 @@ export const VoiceRoomActiveBar = ({
             sx={{
               width: { xs: 34, sm: 38 },
               height: { xs: 34, sm: 38 },
-              borderRadius: 1,
+              borderRadius: 0.5,
               color: 'error.main',
               bgcolor: alpha(theme.palette.error.main, 0.1),
               border: `1px solid ${alpha(theme.palette.error.main, 0.22)}`,

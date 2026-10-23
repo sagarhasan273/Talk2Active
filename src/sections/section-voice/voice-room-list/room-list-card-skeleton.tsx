@@ -16,7 +16,7 @@ export const VoiceRoomCardSkeleton = ({ sx }: VoiceRoomCardSkeletonProps) => {
       sx={[
         {
           p: 2,
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: 'background.default',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -50,7 +50,7 @@ export const VoiceRoomCardSkeleton = ({ sx }: VoiceRoomCardSkeletonProps) => {
           gap: 1.25,
           p: 1,
           my: 1,
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
@@ -62,7 +62,7 @@ export const VoiceRoomCardSkeleton = ({ sx }: VoiceRoomCardSkeletonProps) => {
           <Skeleton variant="text" width="45%" height={18} />
           <Skeleton variant="text" width="25%" height={14} />
         </Stack>
-        <Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: 1 }} />
+        <Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: 0.5 }} />
       </Box>
 
       {/* 3. Stage Area */}
@@ -78,7 +78,7 @@ export const VoiceRoomCardSkeleton = ({ sx }: VoiceRoomCardSkeletonProps) => {
       </Box>
 
       {/* 4. Join Button */}
-      <Skeleton variant="rounded" width="100%" height={36} sx={{ borderRadius: 1, mt: 1, flexShrink: 0 }} />
+      <Skeleton variant="rounded" width="100%" height={36} sx={{ borderRadius: 0.5, mt: 1, flexShrink: 0 }} />
     </Paper>
   );
 };

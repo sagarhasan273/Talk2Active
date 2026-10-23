@@ -34,7 +34,7 @@ export function BaseOption({ icon, label, tooltip, selected, sx, ...other }: Pro
         width: 1,
         px: 1.5,
         py: 1,
-        borderRadius: 1,
+        borderRadius: 0.5,
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'row',

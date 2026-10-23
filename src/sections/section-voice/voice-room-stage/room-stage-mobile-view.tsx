@@ -170,7 +170,7 @@ export const RoomStageMobileView: React.FC<SharedStageViewProps> = ({
                   color: '#fff',
                   px: 1.25,
                   py: 0.5,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   zIndex: 4,
                   pointerEvents: 'none',
                   display: 'inline-flex',
@@ -215,7 +215,7 @@ export const RoomStageMobileView: React.FC<SharedStageViewProps> = ({
                       }}
                       sx={{
                         position: 'relative',
-                        borderRadius: 1,
+                        borderRadius: 0.5,
                         overflow: 'hidden',
                         bgcolor: '#12151e',
                         border: `1px solid ${alpha('#fff', 0.12)}`,
@@ -372,7 +372,7 @@ export const RoomStageMobileView: React.FC<SharedStageViewProps> = ({
               onClick={() => setShowScreenShareView(true)}
               startIcon={<Eye size={13} />}
               sx={{
-                borderRadius: 1,
+                borderRadius: 0.5,
                 textTransform: 'none',
                 fontSize: 11.5,
                 fontWeight: 700,

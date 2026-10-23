@@ -1,11 +1,11 @@
-import type { StackProps } from '@mui/material/Stack';
 import type { ContainerProps } from '@mui/material/Container';
+import type { StackProps } from '@mui/material/Stack';
 
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
 
-import { varAlpha, stylesMode } from 'src/theme/styles';
+import { stylesMode, varAlpha } from 'src/theme/styles';
 
 // ----------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ export function ComponentBlock({ title, sx, children, ...other }: ComponentBlock
         gap: 2,
         width: 1,
         flexWrap: 'wrap',
-        borderRadius: 1.5,
+        borderRadius: 0.5,
         position: 'relative',
         flexDirection: 'row',
         alignItems: 'center',

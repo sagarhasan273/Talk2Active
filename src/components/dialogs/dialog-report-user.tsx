@@ -68,7 +68,7 @@ export function DialogReportUser({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: isDark ? alpha(theme.palette.background.paper, 0.96) : '#ffffff',
           backdropFilter: 'blur(16px)',
           border: '1px solid',
@@ -91,7 +91,7 @@ export function DialogReportUser({
             sx={{
               width: 32,
               height: 32,
-              borderRadius: 1,
+              borderRadius: 0.5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -127,7 +127,7 @@ export function DialogReportUser({
               sx={{
                 fontSize: 11.5,
                 fontWeight: 600,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 color: 'text.primary',
                 bgcolor: isDark ? alpha('#fff', 0.05) : alpha('#000', 0.04),
                 border: '1px solid',
@@ -153,7 +153,7 @@ export function DialogReportUser({
           variant="outlined"
           sx={{
             '& .MuiOutlinedInput-root': {
-              borderRadius: 1.5,
+              borderRadius: 0.5,
               fontSize: '0.875rem',
             },
           }}
@@ -161,7 +161,7 @@ export function DialogReportUser({
       </DialogContent>
 
       <DialogActions sx={{ px: 2.5, pb: 2.5 }}>
-        <Button variant="outlined" color="inherit" onClick={onClose} sx={{ borderRadius: 1.25 }}>
+        <Button variant="outlined" color="inherit" onClick={onClose} sx={{ borderRadius: 0.5 }}>
           Cancel
         </Button>
         <Button
@@ -170,7 +170,7 @@ export function DialogReportUser({
           disabled={!reason.trim()}
           onClick={handleSubmit}
           sx={{
-            borderRadius: 1.25,
+            borderRadius: 0.5,
             fontWeight: 700,
             boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.35)}`,
           }}

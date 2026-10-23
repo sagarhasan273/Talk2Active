@@ -2,8 +2,8 @@
 
 import type { SxProps, Theme } from '@mui/material';
 
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
   alpha,
@@ -22,7 +22,7 @@ import { UserStats } from '@/types/type-social';
 import { usePopover } from 'src/components/custom-popover';
 import { Iconify } from 'src/components/iconify';
 import { useFollowMutation, useUnfollowMutation } from 'src/core/apis';
-import { selectAccount, updateParticipants } from 'src/core/slices'; // Ensure updateParticipants is exported from here
+import { updateParticipants, useCredentials } from 'src/core/slices'; // Ensure updateParticipants is exported from here
 import { RelationshipTypeEnum } from 'src/enums/enum-social';
 
 // ----------------------------------------------------------------------
@@ -34,8 +34,6 @@ export type ButtonRelationshipToggleProps = {
     id: string;
     name: string;
   };
-  isFollow?: boolean;
-  isBlocked?: boolean;
   variant?: FollowButtonVariant;
   size?: 'small' | 'medium';
   fullWidth?: boolean;
@@ -48,8 +46,6 @@ export type ButtonRelationshipToggleProps = {
 
 export function ButtonRelationshipToggle({
   targetUser,
-  isFollow = false,
-  isBlocked = false,
   variant = 'soft',
   size = 'small',
   fullWidth = false,
@@ -61,25 +57,26 @@ export function ButtonRelationshipToggle({
 }: ButtonRelationshipToggleProps) {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const user = useSelector(selectAccount);
+
+  const { user, checkIfFollowing, checkIfBlocked } = useCredentials();
+
   const popover = usePopover();
 
   // Local state for optimistic UI updates + sync with parent props
-  const [following, setFollowing] = useState<boolean>(isFollow);
+  const following = checkIfFollowing(targetUser.id);
   const [isHoveringFollowing, setIsHoveringFollowing] = useState(false);
 
-  useEffect(() => {
-    setFollowing(isFollow);
-  }, [isFollow]);
 
   const [followMutate, { isLoading: isFollowLoading }] = useFollowMutation();
   const [unfollowMutate, { isLoading: isUnfollowLoading }] = useUnfollowMutation();
+
   const isLoading = isFollowLoading || isUnfollowLoading;
+  const isBlocked = checkIfBlocked(targetUser.id);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setFollowing(true);
+
     try {
       const response = await followMutate({
         requester: user?.userId,
@@ -92,7 +89,6 @@ export function ButtonRelationshipToggle({
         onStatsUpdate?.(response.data);
       }
     } catch {
-      setFollowing(false);
     }
   };
 
@@ -100,7 +96,6 @@ export function ButtonRelationshipToggle({
     e.preventDefault();
     e.stopPropagation();
     popover.onClose();
-    setFollowing(false);
     try {
       const response = await unfollowMutate({
         requester: user?.userId,
@@ -113,7 +108,6 @@ export function ButtonRelationshipToggle({
         onStatsUpdate?.(response.data);
       }
     } catch {
-      setFollowing(true);
     }
   };
 
@@ -169,7 +163,7 @@ export function ButtonRelationshipToggle({
           sx: {
             p: 1.5,
             width: 220,
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             border: `1px solid ${theme.palette.divider}`,
             boxShadow: theme.shadows[12],
             bgcolor: 'background.paper',
@@ -205,7 +199,7 @@ export function ButtonRelationshipToggle({
             onClick={following ? handleUnfollowClick : handleFollow}
             sx={{
               p: size === 'small' ? '5px' : '7px',
-              borderRadius: 1,
+              borderRadius: 0.5,
               color: following ? 'error.main' : 'primary.main',
               border: '1px solid',
               borderColor: following
@@ -214,12 +208,17 @@ export function ButtonRelationshipToggle({
               bgcolor: following
                 ? alpha(theme.palette.error.main, 0.04)
                 : alpha(theme.palette.primary.main, 0.04),
-              '&:hover': {
-                borderColor: following ? 'error.main' : 'primary.main',
-                bgcolor: following
-                  ? alpha(theme.palette.error.main, 0.12)
-                  : alpha(theme.palette.primary.main, 0.12),
+              transition: 'all 0.2s ease-in-out',
+
+              // Only apply hover effects on devices with a real mouse/pointer
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': {
+                  bgcolor: following ? 'error.main' : 'primary.main',
+                  borderColor: following ? 'error.main' : 'primary.main',
+                  color: 'common.white',
+                },
               },
+
               ...((following ? unfollowSx : followSx) as any),
               ...(sx as any),
             }}
@@ -268,7 +267,7 @@ export function ButtonRelationshipToggle({
               )
             }
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               fontWeight: 700,
               textTransform: 'none',
               fontSize: size === 'small' ? 12 : 13,
@@ -332,7 +331,7 @@ export function ButtonRelationshipToggle({
               )
             }
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               fontWeight: 700,
               textTransform: 'none',
               fontSize: size === 'small' ? 12 : 13,
@@ -370,7 +369,7 @@ export function ButtonRelationshipToggle({
             )
           }
           sx={{
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,

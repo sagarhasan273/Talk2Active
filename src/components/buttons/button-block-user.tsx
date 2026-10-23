@@ -108,7 +108,7 @@ export const ButtonBlockUser = ({
           sx: {
             p: 1.5,
             width: 220,
-            borderRadius: 1.5,
+            borderRadius: 0.5,
             border: `1px solid ${theme.palette.divider}`,
             boxShadow: theme.shadows[8],
           },
@@ -149,7 +149,7 @@ export const ButtonBlockUser = ({
             disabled={isLoading}
             sx={{
               px: 1,
-              borderRadius: 1.25,
+              borderRadius: 0.5,
               border: '1px solid',
               borderColor: isCurrentlyBlocked ? 'error.main' : 'divider',
               color: isCurrentlyBlocked ? 'error.main' : 'text.secondary',
@@ -183,7 +183,7 @@ export const ButtonBlockUser = ({
           startIcon={iconOrSpinner}
           sx={{
             px: 1,
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
@@ -219,7 +219,7 @@ export const ButtonBlockUser = ({
           startIcon={iconOrSpinner}
           sx={{
             px: 1,
-            borderRadius: 1,
+            borderRadius: 0.5,
             fontWeight: 700,
             textTransform: 'none',
             fontSize: size === 'small' ? 12 : 13,
@@ -246,7 +246,7 @@ export const ButtonBlockUser = ({
         startIcon={iconOrSpinner}
         sx={{
           px: 1,
-          borderRadius: 1,
+          borderRadius: 0.5,
           fontWeight: 700,
           textTransform: 'none',
           fontSize: size === 'small' ? 12 : 13,

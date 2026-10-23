@@ -47,7 +47,7 @@ export const DefaultHeader = ({
           overflow: 'hidden',
           my: 1,
           p: { xs: 2.25, sm: 3 },
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: 'background.default',
           backgroundImage: isDark
             ? `radial-gradient(circle at 100% 0%, ${alpha(theme.palette.primary.main, 0.14)} 0%, transparent 55%)`
@@ -79,7 +79,7 @@ export const DefaultHeader = ({
                 sx={{
                   width: 26,
                   height: 26,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.1),
                   color: 'primary.main',
                   display: 'flex',
@@ -145,7 +145,7 @@ export const DefaultHeader = ({
               startIcon={<AddIcon />}
               onClick={handleCreation}
               sx={{
-                borderRadius: 1,
+                borderRadius: 0.5,
                 px: 2.25,
                 py: 1,
                 textTransform: 'none',
@@ -178,7 +178,7 @@ export const DefaultHeader = ({
                   disabled
                   onClick={onQuickJoin}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     px: 2,
                     py: 1,
                     textTransform: 'none',

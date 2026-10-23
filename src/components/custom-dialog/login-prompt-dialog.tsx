@@ -1,7 +1,7 @@
 import type { UseBooleanReturn } from 'src/hooks/use-boolean';
 
 import { Close, LockOutlined } from '@mui/icons-material';
-import { Box, Dialog, Typography, IconButton, DialogContent } from '@mui/material';
+import { Box, Dialog, DialogContent, IconButton, Typography } from '@mui/material';
 
 import { GoogleLogInView } from 'src/auth/view';
 
@@ -15,7 +15,7 @@ export function LoginPromptDialog({ openBoolean }: LoginPromptDialogProps) {
       open={openBoolean.value}
       PaperProps={{
         sx: {
-          borderRadius: 1,
+          borderRadius: 0.5,
           p: 1,
           maxWidth: 360,
           width: '100%',

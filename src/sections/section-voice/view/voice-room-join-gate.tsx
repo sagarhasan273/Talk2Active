@@ -64,7 +64,7 @@ export function VoiceRoomJoinGate({
           maxWidth: { xs: '100%', sm: 360 },
           overflow: 'hidden',
           p: { xs: 2.5, sm: 3 },
-          borderRadius: 1,
+          borderRadius: 0.5,
           textAlign: 'center',
           bgcolor: isDark ? alpha('#131722', 0.95) : alpha('#ffffff', 0.98),
           backgroundImage: 'none',
@@ -93,7 +93,7 @@ export function VoiceRoomJoinGate({
             zIndex: 3,
             width: 28,
             height: 28,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
             color: isDark ? 'text.secondary' : '#64748b',
             '&:hover': {
@@ -182,7 +182,7 @@ export function VoiceRoomJoinGate({
               py: 1,
               px: 1.5,
               mb: 2,
-              borderRadius: 1.5,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha(theme.palette.success.main, 0.08) : alpha(theme.palette.success.main, 0.05),
               border: '1px solid',
               borderColor: isDark ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.success.main, 0.12),
@@ -250,7 +250,7 @@ export function VoiceRoomJoinGate({
             onClick={onJoin}
             endIcon={<ArrowRight size={16} />}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               py: 0.9,
               fontWeight: 800,
               fontSize: '0.875rem',
@@ -270,7 +270,7 @@ export function VoiceRoomJoinGate({
             variant="text"
             onClick={onCancel}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               py: 0.75,
               textTransform: 'none',
               fontWeight: 600,

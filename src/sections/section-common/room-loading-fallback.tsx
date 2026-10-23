@@ -122,7 +122,7 @@ export function RoomLoadingFallback({ error: propError, onRetry, sx }: RoomLoadi
             mt: 0.5,
             px: 2,
             py: 1.25,
-            borderRadius: 1.25,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.03) : '#ffffff',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -162,7 +162,7 @@ export function RoomLoadingFallback({ error: propError, onRetry, sx }: RoomLoadi
           sx={{
             textTransform: 'none',
             fontWeight: 700,
-            borderRadius: 1.25,
+            borderRadius: 0.5,
             px: 3,
             py: 1,
             boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,

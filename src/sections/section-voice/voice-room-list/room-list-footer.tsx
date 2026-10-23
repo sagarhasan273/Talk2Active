@@ -46,7 +46,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
         width: '100%',
         mb: 20,
         p: { xs: 2.5, sm: 3.5 },
-        borderRadius: 1,
+        borderRadius: 0.5,
         position: 'relative',
         overflow: 'hidden',
         bgcolor: 'background.default',
@@ -83,7 +83,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               sx={{
                 width: 28,
                 height: 28,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 bgcolor: 'primary.main',
                 color: '#fff',
                 display: 'flex',
@@ -109,7 +109,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               sx={{
                 px: 0.8,
                 py: 0.25,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 bgcolor: alpha(theme.palette.primary.main, isDark ? 0.18 : 0.1),
                 border: '1px solid',
                 borderColor: alpha(theme.palette.primary.main, 0.25),
@@ -149,7 +149,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   gap: 0.6,
                   px: 1.15,
                   py: 0.45,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   bgcolor: isDark
                     ? alpha(theme.palette.primary.main, 0.08)
                     : alpha(theme.palette.primary.main, 0.04),
@@ -179,7 +179,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 1,
+            borderRadius: 0.5,
             minWidth: { xs: '100%', md: 340 },
             maxWidth: { xs: '100%', md: 380 },
             bgcolor: isDark ? alpha('#000', 0.25) : '#ffffff',
@@ -261,7 +261,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   sx={{
                     width: 30,
                     height: 30,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
                     borderColor: isDark
@@ -289,7 +289,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
                   sx={{
                     width: 30,
                     height: 30,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     bgcolor: isDark ? alpha('#fff', 0.04) : '#fafafa',
                     border: '1px solid',
                     borderColor: isDark
@@ -379,7 +379,7 @@ export const RoomListFooter = ({ onCreateRoom }: RoomListFooterProps) => {
               sx={{
                 height: 26,
                 px: 1.25,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 textTransform: 'none',
                 fontSize: 11,
                 fontWeight: 700,

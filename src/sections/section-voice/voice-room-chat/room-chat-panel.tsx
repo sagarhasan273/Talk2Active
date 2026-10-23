@@ -271,7 +271,7 @@ export const RoomChatPanel = ({
         flexDirection: 'column',
         height: '100%',
         minHeight: 0,
-        borderRadius: 1,
+        borderRadius: 0.5,
         overflow: 'hidden',
       }}
     >
@@ -297,7 +297,7 @@ export const RoomChatPanel = ({
             size="small"
             onClick={onClose}
             sx={{
-              borderRadius: 1,
+              borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.04) : '#ffffff',
               border: '1px solid',
               borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -368,7 +368,7 @@ export const RoomChatPanel = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 20,
-              borderRadius: 1,
+              borderRadius: 0.5,
               px: 1.5,
               py: 0.5,
               textTransform: 'none',
@@ -494,7 +494,7 @@ export const RoomChatPanel = ({
           <LinearProgress
             variant="determinate"
             value={uploadProgress}
-            sx={{ height: 4, borderRadius: 1 }}
+            sx={{ height: 4, borderRadius: 0.5 }}
           />
         </Box>
       )}
@@ -521,7 +521,7 @@ export const RoomChatPanel = ({
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 objectFit: 'cover',
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
@@ -575,7 +575,7 @@ export const RoomChatPanel = ({
               fontWeight: 700,
               py: 0.3,
               px: 1,
-              borderRadius: 1,
+              borderRadius: 0.5,
               color: whisperTarget ? 'warning.dark' : isDark ? 'text.secondary' : '#475569',
               bgcolor: whisperTarget
                 ? alpha(theme.palette.warning.main, 0.16)
@@ -606,7 +606,7 @@ export const RoomChatPanel = ({
             onClose={() => setWhisperAnchorEl(null)}
             PaperProps={{
               sx: {
-                borderRadius: 1,
+                borderRadius: 0.5,
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                 bgcolor: isDark ? '#181c26' : '#ffffff',
@@ -664,7 +664,7 @@ export const RoomChatPanel = ({
                 onClick={() => fileInputRef.current?.click()}
                 sx={{
                   p: 0.6,
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   color: uploadedImageUrl ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
                   bgcolor: uploadedImageUrl
                     ? alpha(theme.palette.primary.main, 0.12)
@@ -703,7 +703,7 @@ export const RoomChatPanel = ({
                 fontWeight: 700,
                 py: 0.3,
                 px: 1,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 color: isAskingAi ? 'primary.main' : isDark ? 'text.secondary' : '#475569',
                 borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
                 bgcolor: isDark ? alpha('#fff', 0.02) : '#ffffff',
@@ -761,7 +761,7 @@ export const RoomChatPanel = ({
               : isDark
                 ? alpha('#fff', 0.1)
                 : '#e2e8f0',
-            borderRadius: 1,
+            borderRadius: 0.5,
             px: 1.5,
             py: 1,
             fontSize: 13,
@@ -782,7 +782,7 @@ export const RoomChatPanel = ({
           sx={{
             width: 38,
             height: 38,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: whisperTarget ? 'warning.main' : 'primary.main',
             color: whisperTarget ? 'common.black' : 'primary.contrastText',
             boxShadow: 'none',

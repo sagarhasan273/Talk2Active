@@ -1,5 +1,5 @@
 import type { TabsProps } from '@mui/material/Tabs';
-import type { Theme, SxProps } from '@mui/material/styles';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 import NoSsr from '@mui/material/NoSsr';
 import { tabClasses } from '@mui/material/Tab';
@@ -38,7 +38,7 @@ export function CustomTabs({ children, slotProps, sx, ...other }: CustomTabsProp
           ...slotProps?.flexContainer,
         },
         [`& .${tabsClasses.scrollButtons}`]: {
-          borderRadius: 1,
+          borderRadius: 0.5,
           minHeight: 'inherit',
           ...slotProps?.scrollButtons,
         },
@@ -49,7 +49,7 @@ export function CustomTabs({ children, slotProps, sx, ...other }: CustomTabsProp
           '& > span': {
             width: 1,
             height: 1,
-            borderRadius: 1,
+            borderRadius: 0.5,
             display: 'block',
             bgcolor: 'common.white',
             boxShadow: (theme) => theme.customShadows.z1,

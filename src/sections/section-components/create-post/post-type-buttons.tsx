@@ -1,7 +1,6 @@
-import React from 'react';
-import { Image, Video, Quote, Youtube } from 'lucide-react';
+import { Image, Quote, Video, Youtube } from 'lucide-react';
 
-import { Stack, Button } from '@mui/material';
+import { Button, Stack } from '@mui/material';
 
 import type { PostTypeProps } from './types';
 
@@ -33,7 +32,7 @@ export default function PostTypePropsButtons({
         border: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',
-        borderRadius: 1,
+        borderRadius: 0.5,
         boxShadow: 1,
         flexWrap: 'wrap',
       }}
@@ -51,7 +50,7 @@ export default function PostTypePropsButtons({
             // mx: 'auto',
             textTransform: 'none',
             fontWeight: 500,
-            borderRadius: 1,
+            borderRadius: 0.5,
             px: 2.5,
             py: 1.2,
             border: 'none',

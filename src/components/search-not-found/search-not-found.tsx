@@ -19,7 +19,7 @@ export function SearchNotFound({ query, sx, ...other }: SearchNotFoundProps) {
   }
 
   return (
-    <Box sx={{ textAlign: 'center', borderRadius: 1.5, ...sx }} {...other}>
+    <Box sx={{ textAlign: 'center', borderRadius: 0.5, ...sx }} {...other}>
       <Box sx={{ mb: 1, typography: 'h6' }}>Not found</Box>
 
       <Typography variant="body2">

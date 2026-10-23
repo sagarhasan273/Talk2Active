@@ -167,7 +167,7 @@ export const RoomChatMessage = ({
               gap: 0.5,
               bgcolor: 'background.paper',
               border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 1.5,
+              borderRadius: 0.5,
               boxShadow: theme.shadows[3],
               zIndex: 10,
               p: 0.25,
@@ -272,7 +272,7 @@ export const RoomChatMessage = ({
                 sx={{
                   maxWidth: '100%',
                   maxHeight: 250,
-                  borderRadius: 1.5,
+                  borderRadius: 0.5,
                   mb: message.text ? 1 : 0,
                   display: 'block',
                   cursor: 'pointer',
@@ -298,7 +298,7 @@ export const RoomChatMessage = ({
                   sx={{
                     bgcolor: alpha(theme.palette.common.black, 0.08),
                     border: `1px solid ${theme.palette.divider}`,
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                     px: 1,
                     py: 0.5,
                     fontSize: 13,

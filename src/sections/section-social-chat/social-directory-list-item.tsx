@@ -3,7 +3,8 @@ import React from 'react';
 
 import { alpha, Avatar, Badge, Box, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 
-import { ButtonUnfollowIcon } from '@/components/buttons';
+import { ButtonRelationshipToggle, ButtonUnfollowIcon } from '@/components/buttons';
+import { useCredentials } from '@/core/slices';
 import type { AllRelationsType, SocialChatTabKey } from '@/types/type-social';
 import { fToNow } from '@/utils/format-time';
 import { getInitials } from '@/utils/social-chat-helper';
@@ -32,6 +33,8 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const { checkIfFollowing, checkIfBlocked } = useCredentials();
+
   const person = item.accountDetails;
   const isInRoom = Boolean(roomId);
   const latestText = item.latestMessage?.text || `Last seen: ${fToNow(person.lastActive)} ago`;
@@ -47,7 +50,7 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
         gap: 1.25,
         px: 1.25,
         py: 0.9,
-        borderRadius: 1,
+        borderRadius: 0.5,
         cursor: canChat ? 'pointer' : 'default',
         transition: 'background-color 0.15s ease, transform 0.12s ease',
         '&:hover': canChat ? { bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc' } : undefined,
@@ -143,7 +146,7 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
               sx={{
                 color: '#fff',
                 bgcolor: 'success.main',
-                borderRadius: 1,
+                borderRadius: 0.5,
                 width: 30,
                 height: 30,
                 boxShadow: `0 3px 10px ${alpha(theme.palette.success.main, 0.35)}`,
@@ -155,13 +158,13 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
           </Tooltip>
         )}
 
-        {tab !== 'friends' && onUnfollow && (
+        {tab === 'following' && onUnfollow && (
           <ButtonUnfollowIcon
             targetUserId={item.accountDetails.userId}
             onSuccess={(e) => onUnfollow(e, item)}
             sx={{
               height: 30,
-              borderRadius: 1,
+              borderRadius: 0.5,
               px: 1.25,
               fontSize: 11,
               fontWeight: 700,
@@ -172,6 +175,21 @@ export const DirectoryListItem: React.FC<DirectoryListItemProps> = ({
               '&:hover': {
                 bgcolor: alpha(theme.palette.error.main, isDark ? 0.14 : 0.08),
               },
+            }}
+          />
+        )}
+        {tab === 'followers' && onUnfollow && (
+          <ButtonRelationshipToggle
+            targetUser={{ id: item.accountDetails.userId, name: String(item.accountDetails.name) }}
+            variant='icon'
+            sx={{
+              height: 30,
+              borderRadius: 0.5,
+              px: 1.25,
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: 'none',
+              minWidth: 'auto',
             }}
           />
         )}

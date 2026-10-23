@@ -121,7 +121,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           top: 12,
           right: 12,
           color: 'text.secondary',
-          borderRadius: 1,
+          borderRadius: 0.5,
           bgcolor: isDark ? alpha('#fff', 0.04) : '#f8fafc',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
@@ -199,7 +199,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
             color: accountCfg.color,
             border: '1px solid',
             borderColor: alpha(accountCfg.color, 0.3),
-            borderRadius: 1,
+            borderRadius: 0.5,
           }}
         />
 
@@ -214,7 +214,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 height: 22,
                 px: 1,
                 cursor: 'pointer',
-                borderRadius: 1,
+                borderRadius: 0.5,
                 bgcolor: copiedId
                   ? alpha(theme.palette.success.main, 0.12)
                   : isDark
@@ -259,7 +259,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
           sx={{
             mt: 1.25,
             p: 1,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.02) : '#f8fafc',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.05) : '#f1f5f9',
@@ -285,7 +285,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
         mx: 2,
         mb: 2,
         p: 0.75,
-        borderRadius: 1,
+        borderRadius: 0.5,
         bgcolor: isDark ? alpha('#fff', 0.025) : '#f8fafc',
         border: '1px solid',
         borderColor: isDark ? alpha('#fff', 0.07) : '#e2e8f0',
@@ -350,7 +350,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
         <Box
           sx={{
             p: 1.25,
-            borderRadius: 1,
+            borderRadius: 0.5,
             bgcolor: isDark ? alpha('#fff', 0.025) : '#ffffff',
             border: '1px solid',
             borderColor: isDark ? alpha('#fff', 0.07) : '#e2e8f0',
@@ -452,7 +452,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 p: 0,
                 width: 320,
                 mt: 1.2,
-                borderRadius: 1,
+                borderRadius: 0.5,
                 overflow: 'hidden',
                 border: '1px solid',
                 borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',

@@ -1,24 +1,24 @@
 import { useState } from 'react';
 
-import { Link, Search, PlayArrow, VideoLibrary } from '@mui/icons-material';
+import { Link, PlayArrow, Search, VideoLibrary } from '@mui/icons-material';
 import {
+  Alert,
   Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
   Tab,
   Tabs,
-  Grid,
-  Card,
-  Alert,
-  Dialog,
-  Button,
   TextField,
-  CardMedia,
   Typography,
-  IconButton,
-  DialogTitle,
-  CardContent,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
 } from '@mui/material';
 
 import { extractYouTubeId } from 'src/utils/helper';
@@ -195,13 +195,13 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
                 value={url}
                 onChange={handleUrlChange}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   '& .MuiOutlinedInput-input': {
                     fontSize: {
                       xs: '0.775rem',
                       sm: '1rem',
                     },
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                   },
                 }}
               />
@@ -223,7 +223,7 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
                       paddingBottom: '56.25%',
                       height: 0,
                       overflow: 'hidden',
-                      borderRadius: 1,
+                      borderRadius: 0.5,
                       bgcolor: 'black',
                     }}
                   >
@@ -275,13 +275,13 @@ export function YouTubeSelector({ open, onClose, onSelect }: YouTubeSelectorProp
                 helperText="Search real YouTube videos using YouTube Data API"
                 size="small"
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: 0.5,
                   '& .MuiOutlinedInput-input': {
                     fontSize: {
                       xs: '0.775rem',
                       sm: '1rem',
                     },
-                    borderRadius: 1,
+                    borderRadius: 0.5,
                   },
                 }}
               />

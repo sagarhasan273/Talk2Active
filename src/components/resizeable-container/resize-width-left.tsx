@@ -55,7 +55,7 @@ export const ResizeWidthLeft = ({
         width,
         flexShrink: 0,
         display: 'flex',
-        borderRadius: 1,
+        borderRadius: 0.5,
         bgcolor: 'background.paper',
         boxShadow: 1,
       }}

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Close } from '@mui/icons-material';
-import { Box, Dialog, IconButton, DialogContent } from '@mui/material';
+import { Box, Dialog, DialogContent, IconButton } from '@mui/material';
 
 import { Iconify } from '../iconify';
 
@@ -137,7 +137,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ open, onClose, imageUr
         '& .MuiDialog-paper': {
           backgroundColor: 'rgba(0, 0, 0, 0.9)',
           backdropFilter: 'blur(10px)',
-          borderRadius: 1,
+          borderRadius: 0.5,
         },
       }}
       // Prevent event propagation at Dialog level
@@ -175,7 +175,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ open, onClose, imageUr
           alignItems: 'center',
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           padding: '4px 12px',
-          borderRadius: 1,
+          borderRadius: 0.5,
         }}
       >
         <IconButton

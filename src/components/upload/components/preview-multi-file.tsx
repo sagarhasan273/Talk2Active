@@ -6,9 +6,9 @@ import { fData } from 'src/utils/format-number';
 
 import { varAlpha } from 'src/theme/styles';
 
+import { fileData, FileThumbnail } from '../../file-thumbnail';
 import { Iconify } from '../../iconify';
 import { uploadClasses } from '../classes';
-import { fileData, FileThumbnail } from '../../file-thumbnail';
 
 import type { MultiFilePreviewProps } from '../types';
 
@@ -102,7 +102,7 @@ export function MultiFilePreview({
               pl: 1.5,
               gap: 1.5,
               display: 'flex',
-              borderRadius: 1,
+              borderRadius: 0.5,
               alignItems: 'center',
               border: (theme) =>
                 `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,

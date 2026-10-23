@@ -30,7 +30,7 @@ export const SocialMain: React.FC<SocialChatProps> = ({
         '& *::-webkit-scrollbar': { width: 5 },
         '& *::-webkit-scrollbar-thumb': {
           bgcolor: alpha(theme.palette.divider, 0.5),
-          borderRadius: 1,
+          borderRadius: 0.5,
         },
       }}
     >
