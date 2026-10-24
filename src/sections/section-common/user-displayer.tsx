@@ -6,7 +6,9 @@ import ButtonReportUser from '@/components/buttons/button-report-user';
 import { Label } from '@/components/label';
 import { useCredentials } from '@/core/slices';
 import type { RootState } from '@/core/types'; // Import RootState for typed selector
+import { AccountTypeEnum } from '@/enums/enum-user';
 import type { UserStats } from '@/types/type-social';
+import { UserType } from '@/types/type-user';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
@@ -36,7 +38,7 @@ export type UserDisplayerProfile = {
   username?: string;
   profilePhoto?: string | null;
   verified?: boolean;
-  accountType?: 'admin' | 'supporter' | 'vip' | 'moderator' | 'member' | string;
+  accountType?: UserType['accountType'];
   bio?: string;
   follower_count?: number;
   following_count?: number;
@@ -120,7 +122,7 @@ export const UserDisplayer = ({
   );
 
   const accountCfg =
-    AccountTypeConfig[user.accountType?.toLowerCase() ?? 'member'] ?? AccountTypeConfig.member;
+    AccountTypeConfig[user.accountType?.toLowerCase() ?? AccountTypeEnum.MEMBER] ?? AccountTypeConfig.member;
 
   const getInitials = (fullName: string) => {
     if (!fullName) return '';

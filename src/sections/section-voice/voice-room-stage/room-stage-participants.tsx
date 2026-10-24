@@ -1,6 +1,7 @@
 // src/sections/section-voice/voice-room-stage/room-stage-participants.tsx
 
 import { useSocket } from '@/core/contexts';
+import { AccountTypeEnum } from '@/enums/enum-user';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
 import type { ParticipantStageType, RoomParticipantType } from '@/types/type-room';
@@ -48,7 +49,7 @@ function parseParticipant(
     profilePhoto: data.profilePhoto ?? '',
     bio: data.bio ?? '',
     verified: Boolean(data.verified),
-    accountType: data.accountType ?? 'member',
+    accountType: data.accountType ?? AccountTypeEnum.MEMBER,
     follower_count: data.follower_count ?? 0,
     following_count: data.following_count ?? 0,
     friend_count: data.friend_count ?? 0,

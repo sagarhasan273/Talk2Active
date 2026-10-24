@@ -26,6 +26,7 @@ import {
   useUpdateFeedbackMutation,
 } from 'src/core/apis';
 
+import { toastErrorResponse } from '@/utils/response';
 import FeedbackCard from '../feedback-card';
 import FeedbackForm from '../feedback-form';
 
@@ -148,7 +149,7 @@ export default function FeedbackView() {
     try {
       await reactToFeedback({ feedbackId, action }).unwrap();
     } catch (error) {
-      console.error('Reaction failed', error);
+      toastErrorResponse(error, error?.data?.error);
     }
   };
 
@@ -221,7 +222,7 @@ export default function FeedbackView() {
                   currentUserId={currentUserId}
                   editingId={editingId}
                   isDark={isDark}
-                  isAdmin ={Boolean(user?.accountType === 'ADMIN')}
+                  isAdmin={Boolean(user?.accountType === 'ADMIN')}
                   onEdit={() => handleEditClick(fb)}
                   onDelete={() => handleDeleteRequest(fb.id)}
                   onReact={(action: 'LIKE' | 'DISLIKE') => handleReaction(fb.id, action)}

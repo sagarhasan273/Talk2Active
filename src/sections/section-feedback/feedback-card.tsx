@@ -23,7 +23,7 @@ import {
   Typography,
   useTheme
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUpdateFeedbackStatusMutation } from 'src/core/apis';
 
 interface FeedbackCardProps {
@@ -32,7 +32,7 @@ interface FeedbackCardProps {
   editingId: string | null;
   isDark: boolean;
   isAdmin?: boolean;
-  page?: number; // Needed for the optimistic update cache target
+  page?: number;
   onEdit: () => void;
   onDelete: () => void;
   onReact: (action: 'LIKE' | 'DISLIKE') => void;
@@ -56,7 +56,14 @@ export default function FeedbackCard({
   const [copiedId, setCopiedId] = useState(false);
   const [statusAnchor, setStatusAnchor] = useState<null | HTMLElement>(null);
 
-  // Initialize the mutation
+  // Local state for immediate UI updates without waiting for full GET refetch
+  const [localStatus, setLocalStatus] = useState(feedback.status);
+
+  // Keep local state synced if the parent data changes
+  useEffect(() => {
+    setLocalStatus(feedback.status);
+  }, [feedback.status]);
+
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateFeedbackStatusMutation();
 
   const isOwner =
@@ -83,9 +90,11 @@ export default function FeedbackCard({
 
   const handleStatusSelect = async (newStatus: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED') => {
     handleStatusClose();
-    if (newStatus !== feedback.status) {
+    if (newStatus !== localStatus) {
       try {
         await updateStatus({ feedbackId: feedback.id, status: newStatus, page }).unwrap();
+        // Update local state immediately on success
+        setLocalStatus(newStatus);
       } catch (error) {
         console.error('Failed to update status:', error);
       }
@@ -112,20 +121,26 @@ export default function FeedbackCard({
         <Avatar
           src={feedback.user?.profilePhoto}
           alt={feedback.user?.name}
-          sx={{ width: 48, height: 48, borderRadius: 0.5 }}
+          sx={{ width: 44, height: 44, borderRadius: 0.5 }}
         />
 
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          {/* HEADER ROW: Name & ID (Left) | Chip & Actions (Right) */}
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1 }}>
-
+          {/* HEADER ROW: FlexWrap enabled for 360px screens */}
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            spacing={1}
+            useFlexGap
+            flexWrap="wrap"
+            sx={{ mb: 1 }}
+          >
             {/* LEFT SIDE */}
-            <Stack direction="column" spacing={0.5}>
+            <Stack direction="column" spacing={0.5} sx={{ minWidth: 0, flex: '1 1 auto' }}>
               <Typography variant="body1" fontWeight={700} noWrap>
                 {feedback.user?.name || 'Anonymous User'}
               </Typography>
 
-              {/* Copyable genUserId */}
               {feedback.user?.genUserId && (
                 <Tooltip title={copiedId ? 'Copied ID!' : 'Click to copy ID'} arrow placement="top">
                   <Box
@@ -167,7 +182,7 @@ export default function FeedbackCard({
             </Stack>
 
             {/* RIGHT SIDE */}
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
               <Chip
                 size="small"
                 label={feedback.type}
@@ -214,7 +229,7 @@ export default function FeedbackCard({
 
           {/* ATTACHED IMAGES */}
           {feedback.images && feedback.images.length > 0 && (
-            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
               {feedback.images.map((img: string, idx: number) => (
                 <Box
                   key={idx}
@@ -223,8 +238,8 @@ export default function FeedbackCard({
                   alt="attachment"
                   onClick={() => onImageClick(img, `Attachment by ${feedback.user?.name || 'User'}`)}
                   sx={{
-                    width: 88,
-                    height: 88,
+                    width: 72,
+                    height: 72,
                     objectFit: 'cover',
                     borderRadius: 0.5,
                     border: '1px solid',
@@ -238,9 +253,14 @@ export default function FeedbackCard({
             </Stack>
           )}
 
-          {/* BOTTOM ROW: Reactions (Left) & Status (Right) */}
-          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={1}
+            useFlexGap
+            flexWrap="wrap"
+          >
             {/* REACTIONS (Left) */}
             <Stack direction="row" alignItems="center" spacing={1}>
               <Button
@@ -250,10 +270,13 @@ export default function FeedbackCard({
                 sx={{
                   borderRadius: 0.5,
                   color: isLiked ? 'error.main' : 'text.secondary',
-                  bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
+                  // bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
                   px: 1,
                   minWidth: 48,
-                  '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) },
+                  '&:hover': {
+                    // bgcolor: alpha(theme.palette.error.main, 0.16),
+                    color: 'error.main',
+                  },
                 }}
               >
                 {feedback.likeCount || 0}
@@ -285,9 +308,9 @@ export default function FeedbackCard({
                   disabled={isUpdatingStatus}
                   endIcon={<KeyboardArrowDown />}
                   color={
-                    feedback.status === 'RESOLVED'
+                    localStatus === 'RESOLVED'
                       ? 'success'
-                      : feedback.status === 'VIEWED_BY_ADMIN'
+                      : localStatus === 'VIEWED_BY_ADMIN'
                         ? 'info'
                         : 'inherit'
                   }
@@ -296,9 +319,9 @@ export default function FeedbackCard({
                     textTransform: 'none',
                     fontWeight: 700,
                     bgcolor:
-                      feedback.status === 'RESOLVED'
+                      localStatus === 'RESOLVED'
                         ? alpha(theme.palette.success.main, 0.12)
-                        : feedback.status === 'VIEWED_BY_ADMIN'
+                        : localStatus === 'VIEWED_BY_ADMIN'
                           ? alpha(theme.palette.info.main, 0.12)
                           : isDark
                             ? alpha('#fff', 0.04)
@@ -306,9 +329,9 @@ export default function FeedbackCard({
                     px: 1.5,
                   }}
                 >
-                  {feedback.status === 'RESOLVED'
+                  {localStatus === 'RESOLVED'
                     ? '✅ Resolved'
-                    : feedback.status === 'VIEWED_BY_ADMIN'
+                    : localStatus === 'VIEWED_BY_ADMIN'
                       ? '👀 Viewed'
                       : '⏳ Pending'}
                 </Button>
@@ -332,11 +355,11 @@ export default function FeedbackCard({
               </>
             ) : (
               /* Hide for normal users if status is PENDING */
-              feedback.status && feedback.status !== 'PENDING' && (
+              localStatus && localStatus !== 'PENDING' && (
                 <Chip
                   size="small"
-                  label={feedback.status === 'RESOLVED' ? '✅ Resolved' : '👀 Viewed by Admin'}
-                  color={feedback.status === 'RESOLVED' ? 'success' : 'info'}
+                  label={localStatus === 'RESOLVED' ? '✅ Resolved' : '👀 Viewed by Admin'}
+                  color={localStatus === 'RESOLVED' ? 'success' : 'info'}
                   variant="soft"
                   sx={{
                     borderRadius: 0.5,
@@ -344,12 +367,11 @@ export default function FeedbackCard({
                     fontSize: '0.65rem',
                     height: 24,
                     letterSpacing: 0.5,
-                    color: feedback.status === 'RESOLVED' ? 'success.main' : 'info.main'
+                    color: localStatus === 'RESOLVED' ? 'success.main' : 'info.main'
                   }}
                 />
               )
             )}
-
           </Stack>
         </Box>
       </Stack>

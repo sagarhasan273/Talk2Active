@@ -107,7 +107,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     [user?.genUserId]
   );
 
-  const accountCfg = AccountTypeConfig[user?.accountType ?? 'member'] ?? AccountTypeConfig.member;
+  const accountCfg = AccountTypeConfig[user?.accountType ?? AccountTypeEnum.MEMBER] ?? AccountTypeConfig.member;
 
   // ── Coverless Profile Identity Section ────────────────────────────────
   const renderIdentity = (
