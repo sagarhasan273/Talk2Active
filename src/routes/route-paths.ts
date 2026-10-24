@@ -14,6 +14,6 @@ export const paths = {
   // User
   user: {
     root: ROOTS.USER,
-    profile: `${ROOTS.USER}/profile`,
+    feedback: `${ROOTS.USER}/feedback`,
   },
 };

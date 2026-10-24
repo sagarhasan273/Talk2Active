@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import {
   chatApi,
+  feedbackApi,
   inventoryApi,
   messageApi,
   postApi,
@@ -11,8 +12,7 @@ import {
 } from './apis';
 import { accountSlice, postsSlice, roomSlice } from './slices';
 
-
-const apis = [userApi, postApi, socialApi, suggestionApi, chatApi, messageApi, inventoryApi];
+const apis = [userApi, postApi, socialApi, suggestionApi, chatApi, messageApi, inventoryApi, feedbackApi];
 
 // Combine reducers
 const rootReducer = {
@@ -23,6 +23,7 @@ const rootReducer = {
   [userApi.reducerPath]: userApi.reducer,
   [postApi.reducerPath]: postApi.reducer,
   [socialApi.reducerPath]: socialApi.reducer,
+  [feedbackApi.reducerPath]: feedbackApi.reducer,
   [suggestionApi.reducerPath]: suggestionApi.reducer,
   [chatApi.reducerPath]: chatApi.reducer,
   [messageApi.reducerPath]: messageApi.reducer,
@@ -30,10 +31,8 @@ const rootReducer = {
 };
 
 export const store = configureStore({
-  // 2. Pass that pre-built object to the store. ✅
   reducer: rootReducer,
 
-  // This middleware configuration will now work correctly.
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apis.map((api) => api.middleware)),
 });

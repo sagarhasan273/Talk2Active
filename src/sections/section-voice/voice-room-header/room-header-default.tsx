@@ -1,13 +1,15 @@
 // src/sections/section-voice/voice-room-header/room-header-default.tsx
 
-import { VerifiedIcon } from 'lucide-react';
-
 import { LoginPromptDialog } from '@/components/custom-dialog';
 import { useCredentials } from '@/core/slices';
 import { useBoolean } from '@/hooks/use-boolean';
+
+
+import { useRouter } from '@/routes/route-hooks';
 import { AutoAwesomeMosaicOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
-import { alpha, Box, Button, Paper, Stack, SxProps, Tooltip, Typography, useTheme } from '@mui/material';
+import FeedbackOutlinedIcon from '@mui/icons-material/FeedbackOutlined';
+import { alpha, Box, Button, Paper, Stack, SxProps, Typography, useTheme } from '@mui/material';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 
 // ----------------------------------------------------------------------
@@ -15,14 +17,13 @@ import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 // ----------------------------------------------------------------------
 
 export const DefaultHeader = ({
-  onQuickJoin,
   sx
 }: {
-  onQuickJoin?: () => void;
   sx?: SxProps;
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const router = useRouter();
 
   const { isAuthenticated } = useCredentials();
 
@@ -162,36 +163,29 @@ export const DefaultHeader = ({
               Create New Room
             </Button>
 
-            <Tooltip
-              title={
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <VerifiedIcon style={{ fontSize: 14 }} />
-                  <span>Verified accounts only</span>
-                </Stack>
-              }
-              arrow
+            <Button
+              variant="outlined"
+              size="medium"
+              startIcon={<FeedbackOutlinedIcon sx={{ fontSize: 18 }} />}
+              onClick={() => router.push('/feedback')}
+              sx={{
+                borderRadius: 0.5,
+                px: 2,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: 13.5,
+                borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
+                color: isDark ? 'text.primary' : 'text.secondary',
+                bgcolor: isDark ? 'transparent' : '#f8fafc',
+                '&:hover': {
+                  bgcolor: isDark ? alpha('#fff', 0.04) : '#f1f5f9',
+                  borderColor: isDark ? alpha('#fff', 0.2) : '#cbd5e1',
+                },
+              }}
             >
-              <span>
-                <Button
-                  variant="outlined"
-                  size="medium"
-                  disabled
-                  onClick={onQuickJoin}
-                  sx={{
-                    borderRadius: 0.5,
-                    px: 2,
-                    py: 1,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: 13.5,
-                    borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
-                    bgcolor: isDark ? 'transparent' : '#f8fafc',
-                  }}
-                >
-                  Quick Join
-                </Button>
-              </span>
-            </Tooltip>
+              Feedback
+            </Button>
           </Stack>
         </Stack>
       </Paper>

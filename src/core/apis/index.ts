@@ -1,4 +1,5 @@
 export * from './api-chat';
+export * from './api-feedback';
 export * from './api-inventory';
 export * from './api-message';
 export * from './api-post';
