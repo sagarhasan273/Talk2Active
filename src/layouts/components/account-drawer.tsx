@@ -26,6 +26,7 @@ import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
+import { AccountTypeEnum } from '@/enums/enum-user';
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';
 

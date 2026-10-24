@@ -33,6 +33,7 @@ import FeedbackForm from '../feedback-form';
 export default function FeedbackView() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
   const { currentUserId, user } = useCredentials();
 
   const [page, setPage] = useState(1);
@@ -45,7 +46,6 @@ export default function FeedbackView() {
 
   const [lightboxImage, setLightboxImage] = useState<{ src: string; name: string } | null>(null);
 
-  // Custom Delete Modal State
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [feedbackToDelete, setFeedbackToDelete] = useState<string | null>(null);
 

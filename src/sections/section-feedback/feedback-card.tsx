@@ -227,6 +227,29 @@ export default function FeedbackCard({
             {feedback.content}
           </Typography>
 
+          {/* ADMIN ONLY: REFERENCE URL */}
+          {isAdmin && feedback.referenceUrl && (
+            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 2 }}>
+              <Iconify icon="mingcute:link-line" width={16} sx={{ color: 'text.secondary' }} />
+              <Typography
+                component="a"
+                href={feedback.referenceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="caption"
+                noWrap
+                sx={{
+                  color: 'primary.main',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                {feedback.referenceUrl}
+              </Typography>
+            </Stack>
+          )}
+
           {/* ATTACHED IMAGES */}
           {feedback.images && feedback.images.length > 0 && (
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
@@ -270,11 +293,9 @@ export default function FeedbackCard({
                 sx={{
                   borderRadius: 0.5,
                   color: isLiked ? 'error.main' : 'text.secondary',
-                  // bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
                   px: 1,
                   minWidth: 48,
                   '&:hover': {
-                    // bgcolor: alpha(theme.palette.error.main, 0.16),
                     color: 'error.main',
                   },
                 }}
