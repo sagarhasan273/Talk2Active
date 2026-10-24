@@ -1,3 +1,5 @@
+import { AccountTypeEnum } from '@/enums/enum-user';
+import { UserType } from '@/types/type-user';
 import { Avatar } from '@mui/material';
 import { keyframes, styled } from '@mui/material/styles';
 
@@ -24,13 +26,13 @@ const spinCCW = keyframes`
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AccountType = 'admin' | 'supporter' | 'vip' | 'moderator' | 'member';
+type AccountType = UserType['accountType'];
 type SpinDirection = 'clockwise' | 'counter-clockwise';
 
 // ─── Role Config (no innerBorder — comes from props) ──────────────────────────
 
 const roleConfig = {
-  admin: {
+  ADMIN: {
     ring: 'conic-gradient(#ff0000 0%, #ff4500 18%, #cc0000 35%, #ff0000 50%, #ff2200 68%, #991100 82%, #ff0000 100%)',
     shadow:
       'conic-gradient(rgba(255,0,0,.95), rgba(255,69,0,.9), rgba(248, 128, 128, 0.85), rgba(253, 111, 111, 0.95), rgba(255,34,0,.9), rgba(153,17,0,.8), rgba(255,0,0,.95))',
@@ -38,15 +40,7 @@ const roleConfig = {
     avatarBg: 'linear-gradient(135deg, #3d0000, #180000)',
     avatarColor: '#ff5555',
   },
-  vip: {
-    ring: 'conic-gradient(#ffd700 0%, #ffec6e 20%, #b8860b 40%, #ffd700 60%, #ffe066 75%, #a07800 90%, #ffd700 100%)',
-    shadow:
-      'conic-gradient(rgba(255,215,0,.9), rgba(255,236,110,.85), rgba(184,134,11,.8), rgba(255,215,0,.9), rgba(255,224,102,.85), rgba(160,120,0,.75), rgba(255,215,0,.9))',
-    maskBg: '#181200',
-    avatarBg: 'linear-gradient(135deg, #3a2c00, #181200)',
-    avatarColor: '#ffd700',
-  },
-  supporter: {
+  SUPPORTER: {
     ring: `conic-gradient(
     #00f5ff 0%, #a855f7 18%, #06b6d4 35%,
     #f0abfc 50%, #00f5ff 68%, #e879f9 82%, #00f5ff 100%
@@ -61,15 +55,7 @@ const roleConfig = {
     avatarBg: 'linear-gradient(135deg, #0e3a44, #03141a)',
     avatarColor: '#06b6d4',
   },
-  moderator: {
-    ring: 'conic-gradient(#00e676 0%, #1de9b6 25%, #00b0ff 50%, #1de9b6 75%, #00e676 100%)',
-    shadow:
-      'conic-gradient(rgba(0,230,118,.75), rgba(29,233,182,.7), rgba(0,176,255,.7), rgba(29,233,182,.7), rgba(0,230,118,.75))',
-    maskBg: '#001008',
-    avatarBg: 'linear-gradient(135deg, #00240e, #001008)',
-    avatarColor: '#00e676',
-  },
-  member: {
+  MEMBER: {
     ring: '',
     shadow: '',
     maskBg: 'transparent',
@@ -80,27 +66,21 @@ const roleConfig = {
 
 // ─── Default inner borders per role (used as fallback when prop not provided) ──
 const defaultInnerBorderWidth: Partial<Record<AccountType, number>> = {
-  admin: 2.5,
-  vip: 2,
-  supporter: 2,
-  moderator: 2,
-  member: 0,
+  ADMIN: 2.5,
+  SUPPORTER: 2,
+  MEMBER: 0,
 };
 
 const defaultInnerBorderStyle: Partial<Record<AccountType, string>> = {
-  admin: 'solid',
-  vip: 'dashed',
-  supporter: 'dashed',
-  moderator: 'double',
-  member: 'none',
+  ADMIN: 'solid',
+  SUPPORTER: 'dashed',
+  MEMBER: 'dashed',
 };
 
 const defaultInnerBorderColor: Partial<Record<AccountType, string>> = {
-  admin: 'rgba(255, 255, 255, 0.85)',
-  vip: 'rgba(255,220,0,0.55)',
-  supporter: 'rgba(165, 243, 252, 0.7)',
-  moderator: 'rgba(255,255,255,0.45)',
-  member: 'transparent',
+  ADMIN: 'rgba(255, 255, 255, 0.85)',
+  SUPPORTER: 'rgba(165, 243, 252, 0.7)',
+  MEMBER: 'transparent',
 };
 
 // ─── Arc Gradient Helper ──────────────────────────────────────────────────────
@@ -138,7 +118,7 @@ const ShadowLayer = styled('div')<{
   spindirection: SpinDirection;
 }>(({ accounttype, showshadow, spinspeed, spindirection }) => {
   const cfg = roleConfig[accounttype];
-  if (accounttype === 'member' || showshadow === 'false' || !cfg.shadow) return { display: 'none' };
+  if (accounttype === AccountTypeEnum.MEMBER || showshadow === 'false' || !cfg.shadow) return { display: 'none' };
   const anim = spindirection === 'clockwise' ? spinCW : spinCCW;
   return {
     position: 'absolute',
@@ -159,7 +139,7 @@ const OuterRing = styled('div')<{
   borderlength: number;
 }>(({ accounttype, dospin, spinspeed, spindirection, borderlength }) => {
   const cfg = roleConfig[accounttype];
-  if (accounttype === 'member' || !cfg.ring) return { display: 'none' };
+  if (accounttype === AccountTypeEnum.MEMBER || !cfg.ring) return { display: 'none' };
   const anim = spindirection === 'clockwise' ? spinCW : spinCCW;
   return {
     position: 'absolute',
@@ -178,7 +158,7 @@ const InnerRing = styled('div')<{
   borderlength: number;
   innerborder: string;
 }>(({ accounttype, dospin, spinspeed, spindirection, borderlength, innerborder }) => {
-  if (accounttype === 'member') return { display: 'none' };
+  if (accounttype === AccountTypeEnum.MEMBER) return { display: 'none' };
   // Inner always counter-rotates relative to outer
   const anim = spindirection === 'clockwise' ? spinCCW : spinCW;
   const maskImage =
@@ -241,7 +221,7 @@ export const AvatarUser = ({
   name,
   avatarUrl,
   verified,
-  accountType = 'member',
+  accountType = 'MEMBER',
   showShadow = true,
   shouldSpin = true,
   spinSpeed = '1.5s',
@@ -257,7 +237,7 @@ export const AvatarUser = ({
   const width = innerBorder ?? defaultInnerBorderWidth[accountType] ?? 2;
   const style = defaultInnerBorderStyle[accountType] ?? 'solid';
   const color = defaultInnerBorderColor[accountType];
-  const resolvedInnerBorder = accountType === 'member' ? 'none' : `${width}px ${style} ${color}`;
+  const resolvedInnerBorder = accountType === 'MEMBER' ? 'none' : `${width}px ${style} ${color}`;
 
   return (
     <AvatarWrapper>
@@ -288,8 +268,8 @@ export const AvatarUser = ({
           src={verified ? (avatarUrl ?? undefined) : undefined}
           alt={name}
           sx={{
-            background: accountType !== 'member' ? cfg.avatarBg : undefined,
-            color: accountType !== 'member' ? cfg.avatarColor : undefined,
+            background: accountType !== 'MEMBER' ? cfg.avatarBg : undefined,
+            color: accountType !== 'MEMBER' ? cfg.avatarColor : undefined,
             fontWeight: 800,
             fontSize: '0.875rem',
             letterSpacing: '0.04em',

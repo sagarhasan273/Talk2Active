@@ -61,14 +61,11 @@ const sxCard = {
   justifyContent: 'space-between',
 };
 
-const NOOP = () => { };
-
 const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom?: () => void }) => {
   const { isInRoom } = useLiveKitSession();
   // if (isInRoom) return null;
   return (
     <DefaultHeader
-      onQuickJoin={NOOP}
       sx={{
         mt: isInRoom ? 0 : 1,
         mb: 1,

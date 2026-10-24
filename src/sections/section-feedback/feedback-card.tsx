@@ -19,9 +19,9 @@ import {
   Menu,
   MenuItem,
   Stack,
-  Theme,
   Tooltip,
   Typography,
+  useTheme
 } from '@mui/material';
 import { useState } from 'react';
 import { useUpdateFeedbackStatusMutation } from 'src/core/apis';
@@ -31,7 +31,6 @@ interface FeedbackCardProps {
   currentUserId?: string;
   editingId: string | null;
   isDark: boolean;
-  theme: Theme;
   isAdmin?: boolean;
   page?: number; // Needed for the optimistic update cache target
   onEdit: () => void;
@@ -45,7 +44,6 @@ export default function FeedbackCard({
   currentUserId,
   editingId,
   isDark,
-  theme,
   isAdmin,
   page = 1,
   onEdit,
@@ -53,6 +51,8 @@ export default function FeedbackCard({
   onReact,
   onImageClick,
 }: FeedbackCardProps) {
+  const theme = useTheme();
+
   const [copiedId, setCopiedId] = useState(false);
   const [statusAnchor, setStatusAnchor] = useState<null | HTMLElement>(null);
 
@@ -335,7 +335,7 @@ export default function FeedbackCard({
               feedback.status && feedback.status !== 'PENDING' && (
                 <Chip
                   size="small"
-                  label={feedback.status === 'RESOLVED' ? '✅ Resolved' : '👀 Viewed'}
+                  label={feedback.status === 'RESOLVED' ? '✅ Resolved' : '👀 Viewed by Admin'}
                   color={feedback.status === 'RESOLVED' ? 'success' : 'info'}
                   variant="soft"
                   sx={{
@@ -344,6 +344,7 @@ export default function FeedbackCard({
                     fontSize: '0.65rem',
                     height: 24,
                     letterSpacing: 0.5,
+                    color: feedback.status === 'RESOLVED' ? 'success.main' : 'info.main'
                   }}
                 />
               )

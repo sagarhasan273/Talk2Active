@@ -32,7 +32,7 @@ import FeedbackForm from '../feedback-form';
 export default function FeedbackView() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { currentUserId } = useCredentials();
+  const { currentUserId, user } = useCredentials();
 
   const [page, setPage] = useState(1);
   const [content, setContent] = useState('');
@@ -221,7 +221,7 @@ export default function FeedbackView() {
                   currentUserId={currentUserId}
                   editingId={editingId}
                   isDark={isDark}
-                  theme={theme}
+                  isAdmin ={Boolean(user?.accountType === 'ADMIN')}
                   onEdit={() => handleEditClick(fb)}
                   onDelete={() => handleDeleteRequest(fb.id)}
                   onReact={(action: 'LIKE' | 'DISLIKE') => handleReaction(fb.id, action)}

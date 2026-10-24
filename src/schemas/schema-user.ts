@@ -1,3 +1,4 @@
+import { AccountTypeEnum } from '@/enums/enum-user';
 import { z } from 'zod';
 import { DatePreprocessor } from './schema-chat';
 
@@ -38,7 +39,7 @@ export const UserBaseSchema = z.object({
     .optional(),
   lastActive: z.union([z.string(), z.date()]).optional(),
   verified: z.boolean(),
-  accountType: z.enum(['admin', 'supporter', 'member']),
+  accountType: z.nativeEnum(AccountTypeEnum),
   follower_count: z.number().int().nonnegative(),
   following_count: z.number().int().nonnegative(),
   friend_count: z.number().int().nonnegative(),
