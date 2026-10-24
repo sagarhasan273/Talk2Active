@@ -167,7 +167,7 @@ export const DefaultHeader = ({
               variant="outlined"
               size="medium"
               startIcon={<FeedbackOutlinedIcon sx={{ fontSize: 18 }} />}
-              onClick={() => router.push('/feedback')}
+              onClick={() => router.open('/feedback')}
               sx={{
                 borderRadius: 0.5,
                 px: 2,

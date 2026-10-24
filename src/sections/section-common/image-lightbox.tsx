@@ -17,7 +17,7 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
     sx={{
       zIndex: (theme) => Math.max(theme.zIndex.tooltip, theme.zIndex.modal) + 1000, // or 9999
       bgcolor: 'rgba(0, 0, 0, 0.88)',
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       flexDirection: 'column',
       p: 2,
@@ -41,6 +41,7 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
           position: 'absolute',
           top: -46,
           right: 0,
+          borderRadius: 0.5,
           color: '#fff',
           bgcolor: alpha('#fff', 0.12),
           '&:hover': { bgcolor: alpha('#fff', 0.22) },
@@ -57,7 +58,7 @@ export const ImageLightbox = ({ src, name, onClose }: ImageLightboxProps) => (
           width: { xs: 260, sm: 340, md: 400 },
           height: { xs: 260, sm: 340, md: 400 },
           objectFit: 'cover',
-          borderRadius: 3,
+          borderRadius: 0.5,
           border: '1px solid rgba(255, 255, 255, 0.15)',
           boxShadow: '0 24px 64px -8px rgba(0, 0, 0, 0.75)',
         }}
