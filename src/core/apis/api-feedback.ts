@@ -3,16 +3,16 @@ import { STORAGE_KEY } from 'src/auth/context/jwt';
 import { CONFIG } from 'src/config-global';
 import type { ResponseType } from 'src/types/type-common';
 
-// Adjust these types based on your actual data structures
 export interface FeedbackType {
-  _id: string;
-  userId: any;
+  id: string; // Updated to match the backend JSON transform
+  user: any; // Populated user object
   type: string;
   content: string;
   images: string[];
   referenceUrl?: string;
-  likes: string[];
-  dislikes: string[];
+  likeCount: number; // Replaced likes array
+  dislikeCount: number; // Replaced dislikes array
+  currentUserReaction?: 'LIKE' | 'DISLIKE' | null; // Dynamic state for the frontend
   createdAt: string;
 }
 
@@ -54,8 +54,16 @@ export const feedbackApi = createApi({
     updateFeedback: builder.mutation<{ status: boolean; data: { feedback: FeedbackType } }, Partial<any>>({
       query: (formData) => ({
         url: `feedback/update`,
-        method: 'POST',
+        method: 'POST', // or 'PUT'/'PATCH' depending on your controller
         body: formData,
+      }),
+      invalidatesTags: ['feedback-recall'],
+    }),
+
+    deleteFeedback: builder.mutation<ResponseType, string>({
+      query: (id) => ({
+        url: `feedback/${id}`,
+        method: 'DELETE',
       }),
       invalidatesTags: ['feedback-recall'],
     }),
@@ -66,11 +74,8 @@ export const feedbackApi = createApi({
         method: 'PUT',
         body: { action },
       }),
-      // Avoid full refetch on reaction if possible, or keep it simple and invalidate:
       invalidatesTags: ['feedback-recall'],
     }),
-
-
   }),
 });
 
@@ -78,5 +83,6 @@ export const {
   useGetFeedbacksQuery,
   useCreateFeedbackMutation,
   useReactToFeedbackMutation,
-  useUpdateFeedbackMutation
+  useUpdateFeedbackMutation,
+  useDeleteFeedbackMutation,
 } = feedbackApi;

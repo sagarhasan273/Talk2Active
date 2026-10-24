@@ -212,24 +212,15 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
                 alignItems: 'center',
                 gap: 0.5,
                 height: 22,
+                width: 'fit-content',
                 px: 1,
                 cursor: 'pointer',
                 borderRadius: 0.5,
-                bgcolor: copiedId
-                  ? alpha(theme.palette.success.main, 0.12)
-                  : isDark
-                    ? alpha('#fff', 0.04)
-                    : '#f8fafc',
+                bgcolor: copiedId ? alpha(theme.palette.success.main, 0.12) : isDark ? alpha('#fff', 0.04) : '#f8fafc',
                 border: '1px solid',
-                borderColor: copiedId
-                  ? alpha(theme.palette.success.main, 0.3)
-                  : isDark
-                    ? alpha('#fff', 0.08)
-                    : '#e2e8f0',
+                borderColor: copiedId ? alpha(theme.palette.success.main, 0.3) : isDark ? alpha('#fff', 0.08) : '#e2e8f0',
                 transition: 'all 0.15s ease',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                },
+                '&:hover': { borderColor: 'primary.main' },
               }}
             >
               <Typography
