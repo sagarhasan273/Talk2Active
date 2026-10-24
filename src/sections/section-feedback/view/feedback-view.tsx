@@ -105,116 +105,115 @@ export default function FeedbackView() {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 2, sm: 3 } }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 800, letterSpacing: '-0.02em' }}>
-        Community Feedback
-      </Typography>
+    <Scrollbar>
+      <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h4" sx={{ mb: 1, fontWeight: 800, letterSpacing: '-0.02em' }}>
+          Community Feedback
+        </Typography>
 
-      {/* INPUT SECTION */}
-      <Card
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 4,
-          borderRadius: 0.5,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
-          <Select
-            size="small"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            sx={{ width: { xs: '100%', sm: 160 }, borderRadius: 0.5 }}
-          >
-            <MenuItem value="FEATURE">✨ Feature</MenuItem>
-            <MenuItem value="BUG">🐛 Bug</MenuItem>
-            <MenuItem value="GENERAL">💡 General</MenuItem>
-          </Select>
+        {/* INPUT SECTION */}
+        <Card
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 1,
+            borderRadius: 0.5,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
+            <Select
+              size="small"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              sx={{ width: { xs: '100%', sm: 160 }, borderRadius: 0.5 }}
+            >
+              <MenuItem value="FEATURE">✨ Feature</MenuItem>
+              <MenuItem value="BUG">🐛 Bug</MenuItem>
+              <MenuItem value="GENERAL">💡 General</MenuItem>
+            </Select>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Optional URL (e.g. screenshot link)"
+              value={referenceUrl}
+              onChange={(e) => setReferenceUrl(e.target.value)}
+              InputProps={{
+                startAdornment: <LinkIcon color="action" sx={{ mr: 1, fontSize: 20 }} />,
+                sx: { borderRadius: 0.5 },
+              }}
+            />
+          </Stack>
+
           <TextField
             fullWidth
-            size="small"
-            placeholder="Optional URL (e.g. screenshot link)"
-            value={referenceUrl}
-            onChange={(e) => setReferenceUrl(e.target.value)}
-            InputProps={{
-              startAdornment: <LinkIcon color="action" sx={{ mr: 1, fontSize: 20 }} />,
-              sx: { borderRadius: 0.5 },
-            }}
+            multiline
+            rows={3}
+            placeholder="Found a bug? Have an idea?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            sx={{ mb: 2 }}
+            InputProps={{ sx: { borderRadius: 0.5 } }}
           />
-        </Stack>
 
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          placeholder="Found a bug? Have an idea?"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          sx={{ mb: 2 }}
-          InputProps={{ sx: { borderRadius: 0.5 } }}
-        />
+          {/* Image Previews */}
+          {uploadedImages.length > 0 && (
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              {uploadedImages.map((url, index) => (
+                <Box key={index} sx={{ position: 'relative', width: 72, height: 72 }}>
+                  <Box
+                    component="img"
+                    src={url}
+                    alt="upload preview"
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0.5 }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => removeImage(index)}
+                    sx={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
+                    }}
+                  >
+                    <Close sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Stack>
+          )}
 
-        {/* Image Previews */}
-        {uploadedImages.length > 0 && (
-          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-            {uploadedImages.map((url, index) => (
-              <Box key={index} sx={{ position: 'relative', width: 72, height: 72 }}>
-                <Box
-                  component="img"
-                  src={url}
-                  alt="upload preview"
-                  sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0.5 }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => removeImage(index)}
-                  sx={{
-                    position: 'absolute',
-                    top: -8,
-                    right: -8,
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
-                  }}
-                >
-                  <Close sx={{ fontSize: 14 }} />
-                </IconButton>
-              </Box>
-            ))}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Button
+              component="label"
+              startIcon={isUploading ? <CircularProgress size={16} /> : <ImagesIcon size={18} />}
+              color="inherit"
+              disabled={isUploading || uploadedImages.length >= 3}
+              sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600 }}
+            >
+              {uploadedImages.length >= 3 ? 'Max 3 Images' : 'Attach Image'}
+              <input type="file" hidden accept="image/*" multiple onChange={handleImageFileChange} />
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              disableElevation
+              disabled={!content.trim() || isSubmitting || isUploading}
+              sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600, px: 3 }}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
           </Stack>
-        )}
+        </Card>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Button
-            component="label"
-            startIcon={isUploading ? <CircularProgress size={16} /> : <ImagesIcon size={18} />}
-            color="inherit"
-            disabled={isUploading || uploadedImages.length >= 3}
-            sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600 }}
-          >
-            {uploadedImages.length >= 3 ? 'Max 3 Images' : 'Attach Image'}
-            <input type="file" hidden accept="image/*" multiple onChange={handleImageFileChange} />
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            disableElevation
-            disabled={!content.trim() || isSubmitting || isUploading}
-            sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600, px: 3 }}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Button>
-        </Stack>
-      </Card>
+        <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
 
-      <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
-
-      {/* FEEDBACK LIST WRAPPED IN SCROLLBAR */}
-      <Scrollbar sx={{ maxHeight: 600, pr: 1, mb: 4 }}>
         <Stack spacing={1}>
           {isLoading ? (
             <Box display="flex" justifyContent="center" py={6}>
@@ -226,7 +225,7 @@ export default function FeedbackView() {
                 key={fb._id}
                 elevation={0}
                 sx={{
-                  p: 3,
+                  p: 2,
                   borderRadius: 0.5,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -316,20 +315,21 @@ export default function FeedbackView() {
             ))
           )}
         </Stack>
-      </Scrollbar>
 
-      {/* PAGINATION */}
-      {totalPages > 1 && (
-        <Box display="flex" justifyContent="center" pt={2}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(e, val) => setPage(val)}
-            color="primary"
-            shape="rounded"
-          />
-        </Box>
-      )}
-    </Box>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <Box display="flex" justifyContent="center" pt={2}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(e, val) => setPage(val)}
+              color="primary"
+              shape="rounded"
+            />
+          </Box>
+        )}
+      </Box>
+    </Scrollbar >
   );
 }
