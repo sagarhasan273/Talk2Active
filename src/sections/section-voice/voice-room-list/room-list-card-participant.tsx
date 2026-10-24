@@ -1,5 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-list-card-participant.tsx
 
+import { AccountTypeEnum } from '@/enums/enum-user';
 import { RoomParticipantType } from '@/types/type-room';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import CrownRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
@@ -19,7 +20,7 @@ export const RoomCardParticipant = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const isSupporter = user.accountType === 'supporter';
+  const isSupporter = user.accountType === AccountTypeEnum.SUPPORTER;
   const displayName = isSupporter ? user.name : user.name?.split(' ')[0];
 
   const getInitials = (fullName?: string) => {

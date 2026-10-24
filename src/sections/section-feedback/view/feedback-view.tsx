@@ -125,13 +125,11 @@ export default function FeedbackView() {
     }
   };
 
-  // Open the modal instead of window.confirm
   const handleDeleteRequest = (id: string) => {
     setFeedbackToDelete(id);
     setDeleteDialogOpen(true);
   };
 
-  // Execute deletion when confirm is clicked
   const confirmDelete = async () => {
     if (!feedbackToDelete) return;
     try {
@@ -147,9 +145,17 @@ export default function FeedbackView() {
 
   const handleReaction = async (feedbackId: string, action: 'LIKE' | 'DISLIKE') => {
     try {
-      await reactToFeedback({ feedbackId, action }).unwrap();
-    } catch (error) {
-      toastErrorResponse(error, error?.data?.error);
+      const response = await reactToFeedback({ feedbackId, action }).unwrap();
+      return response.data; // Return the exact updated document payload to the card
+    } catch (error: any) {
+      toastErrorResponse(error, error?.data?.error || 'Authentication required');
+
+      // Reload the page on API error after a 1-second delay so the toast is readable
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
+      throw error;
     }
   };
 
@@ -223,6 +229,7 @@ export default function FeedbackView() {
                   editingId={editingId}
                   isDark={isDark}
                   isAdmin={Boolean(user?.accountType === 'ADMIN')}
+                  page={page}
                   onEdit={() => handleEditClick(fb)}
                   onDelete={() => handleDeleteRequest(fb.id)}
                   onReact={(action: 'LIKE' | 'DISLIKE') => handleReaction(fb.id, action)}
@@ -247,7 +254,6 @@ export default function FeedbackView() {
         </Box>
       </Scrollbar>
 
-      {/* LIGHTBOX */}
       {lightboxImage && (
         <ImageLightbox
           src={lightboxImage.src}
@@ -256,7 +262,6 @@ export default function FeedbackView() {
         />
       )}
 
-      {/* CONFIRM DELETE MODAL */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

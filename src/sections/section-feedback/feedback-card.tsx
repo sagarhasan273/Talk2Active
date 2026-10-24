@@ -35,7 +35,7 @@ interface FeedbackCardProps {
   page?: number;
   onEdit: () => void;
   onDelete: () => void;
-  onReact: (action: 'LIKE' | 'DISLIKE') => void;
+  onReact: (action: 'LIKE' | 'DISLIKE') => Promise<any>;
   onImageClick: (src: string, name: string) => void;
 }
 
@@ -58,19 +58,26 @@ export default function FeedbackCard({
 
   // Local state for immediate UI updates without waiting for full GET refetch
   const [localStatus, setLocalStatus] = useState(feedback.status);
+  const [localReaction, setLocalReaction] = useState<'LIKE' | 'DISLIKE' | null>(feedback.currentUserReaction);
+  const [localLikeCount, setLocalLikeCount] = useState<number>(feedback.likeCount || 0);
+  const [localDislikeCount, setLocalDislikeCount] = useState<number>(feedback.dislikeCount || 0);
 
   // Keep local state synced if the parent data changes
   useEffect(() => {
     setLocalStatus(feedback.status);
-  }, [feedback.status]);
+    setLocalReaction(feedback.currentUserReaction);
+    setLocalLikeCount(feedback.likeCount || 0);
+    setLocalDislikeCount(feedback.dislikeCount || 0);
+  }, [feedback.status, feedback.currentUserReaction, feedback.likeCount, feedback.dislikeCount]);
 
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateFeedbackStatusMutation();
 
   const isOwner =
     currentUserId &&
     (feedback.user?.userId === currentUserId || feedback.user?.id === currentUserId);
-  const isLiked = feedback.currentUserReaction === 'LIKE';
-  const isDisliked = feedback.currentUserReaction === 'DISLIKE';
+
+  const isLiked = localReaction === 'LIKE';
+  const isDisliked = localReaction === 'DISLIKE';
 
   const handleCopyId = () => {
     if (feedback.user?.genUserId) {
@@ -93,11 +100,51 @@ export default function FeedbackCard({
     if (newStatus !== localStatus) {
       try {
         await updateStatus({ feedbackId: feedback.id, status: newStatus, page }).unwrap();
-        // Update local state immediately on success
         setLocalStatus(newStatus);
       } catch (error) {
         console.error('Failed to update status:', error);
       }
+    }
+  };
+
+  const handleLocalReact = async (action: 'LIKE' | 'DISLIKE') => {
+    // 1. Optimistic Math (Instant UI feedback)
+    let newLikeCount = localLikeCount;
+    let newDislikeCount = localDislikeCount;
+    let newReaction: 'LIKE' | 'DISLIKE' | null = null;
+
+    if (localReaction === action) {
+      // Toggle off
+      if (action === 'LIKE') newLikeCount = Math.max(0, newLikeCount - 1);
+      if (action === 'DISLIKE') newDislikeCount = Math.max(0, newDislikeCount - 1);
+    } else {
+      // Switch or Add new
+      if (localReaction === 'LIKE') newLikeCount = Math.max(0, newLikeCount - 1);
+      if (localReaction === 'DISLIKE') newDislikeCount = Math.max(0, newDislikeCount - 1);
+
+      if (action === 'LIKE') newLikeCount += 1;
+      if (action === 'DISLIKE') newDislikeCount += 1;
+      newReaction = action;
+    }
+
+    setLocalReaction(newReaction);
+    setLocalLikeCount(newLikeCount);
+    setLocalDislikeCount(newDislikeCount);
+
+    // 2. Fire API request and sync exact state from the DB response
+    try {
+      const serverUpdatedFeedback = await onReact(action);
+
+      if (serverUpdatedFeedback) {
+        setLocalReaction(serverUpdatedFeedback.currentUserReaction);
+        setLocalLikeCount(serverUpdatedFeedback.likeCount);
+        setLocalDislikeCount(serverUpdatedFeedback.dislikeCount);
+      }
+    } catch (error) {
+      // 3. Revert on failure
+      setLocalReaction(feedback.currentUserReaction);
+      setLocalLikeCount(feedback.likeCount || 0);
+      setLocalDislikeCount(feedback.dislikeCount || 0);
     }
   };
 
@@ -125,7 +172,6 @@ export default function FeedbackCard({
         />
 
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          {/* HEADER ROW: FlexWrap enabled for 360px screens */}
           <Stack
             direction="row"
             alignItems="flex-start"
@@ -288,7 +334,7 @@ export default function FeedbackCard({
             <Stack direction="row" alignItems="center" spacing={1}>
               <Button
                 size="small"
-                onClick={() => onReact('LIKE')}
+                onClick={() => handleLocalReact('LIKE')}
                 startIcon={isLiked ? <Favorite sx={{ fontSize: 18, color: 'error.main' }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
                 sx={{
                   borderRadius: 0.5,
@@ -300,12 +346,12 @@ export default function FeedbackCard({
                   },
                 }}
               >
-                {feedback.likeCount || 0}
+                {localLikeCount}
               </Button>
 
               <Button
                 size="small"
-                onClick={() => onReact('DISLIKE')}
+                onClick={() => handleLocalReact('DISLIKE')}
                 startIcon={isDisliked ? <HeartBroken sx={{ fontSize: 18, color: 'text.primary' }} /> : <HeartBrokenOutlined sx={{ fontSize: 18 }} />}
                 sx={{
                   borderRadius: 0.5,
@@ -316,7 +362,7 @@ export default function FeedbackCard({
                   '&:hover': { bgcolor: isDark ? alpha('#fff', 0.12) : 'grey.200' },
                 }}
               >
-                {feedback.dislikeCount || 0}
+                {localDislikeCount}
               </Button>
             </Stack>
 

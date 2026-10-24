@@ -58,7 +58,7 @@ export const feedbackApi = createApi({
         method: 'POST', // or 'PUT'/'PATCH' depending on your controller
         body: formData,
       }),
-      invalidatesTags: ['feedback-recall'],
+      // invalidatesTags: ['feedback-recall'],
     }),
 
     deleteFeedback: builder.mutation<ResponseType, string>({
@@ -75,7 +75,7 @@ export const feedbackApi = createApi({
         method: 'PUT',
         body: { action },
       }),
-      invalidatesTags: ['feedback-recall'],
+      // invalidatesTags: ['feedback-recall'],
     }),
 
     updateFeedbackStatus: builder.mutation<
