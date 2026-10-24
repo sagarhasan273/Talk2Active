@@ -2,9 +2,12 @@
 
 import {
   Close,
+  EditOutlined,
+  Favorite,
   FavoriteBorder,
+  HeartBroken,
   HeartBrokenOutlined,
-  Link as LinkIcon
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import {
   Avatar,
@@ -21,31 +24,40 @@ import {
   Stack,
   TextField,
   Typography,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import { useState } from 'react';
 
-// Import your custom Scrollbar component and image upload helper
+import { ImagesIcon, MessageSquareHeart } from 'lucide-react';
 import { Scrollbar } from 'src/components/scrollbar';
-import { uploadImage } from 'src/utils/helper'; // Adjust the import path to match your structure
+import { useCredentials } from 'src/core/slices';
+import { uploadImage } from 'src/utils/helper';
 
-// Import RTK Query hooks (without the image upload one)
-import { ImagesIcon } from 'lucide-react';
 import {
   useCreateFeedbackMutation,
   useGetFeedbacksQuery,
   useReactToFeedbackMutation,
+  useUpdateFeedbackMutation,
 } from 'src/core/apis';
 
 export default function FeedbackView() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const { currentUserId } = useCredentials();
+
   const [page, setPage] = useState(1);
   const [content, setContent] = useState('');
   const [type, setType] = useState('FEATURE');
   const [referenceUrl, setReferenceUrl] = useState('');
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { data, isLoading } = useGetFeedbacksQuery({ page, limit: 10 });
   const [createFeedback, { isLoading: isSubmitting }] = useCreateFeedbackMutation();
+  const [updateFeedback, { isLoading: isUpdating }] = useUpdateFeedbackMutation();
   const [reactToFeedback] = useReactToFeedbackMutation();
 
   const feedbacks = data?.data?.feedbacks || [];
@@ -59,7 +71,6 @@ export default function FeedbackView() {
 
     try {
       for (const file of files) {
-        // Use your custom upload utility
         const response = await uploadImage(file);
         if (response?.imageUrl) {
           setUploadedImages((prev) => [...prev, response.imageUrl]);
@@ -69,7 +80,7 @@ export default function FeedbackView() {
       console.error('Failed to upload image:', error);
     } finally {
       setIsUploading(false);
-      e.target.value = ''; // Reset file input
+      e.target.value = '';
     }
   };
 
@@ -77,20 +88,44 @@ export default function FeedbackView() {
     setUploadedImages((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleEditClick = (fb: any) => {
+    setEditingId(fb._id);
+    setContent(fb.content);
+    setType(fb.type);
+    setReferenceUrl(fb.referenceUrl || '');
+    setUploadedImages(fb.images || []);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setContent('');
+    setType('FEATURE');
+    setReferenceUrl('');
+    setUploadedImages([]);
+  };
+
   const handleSubmit = async () => {
     if (!content.trim()) return;
     try {
-      await createFeedback({
-        type,
-        content,
-        referenceUrl,
-        images: uploadedImages, // Array of URLs successfully uploaded via uploadImage
-      }).unwrap();
-
-      setContent('');
-      setReferenceUrl('');
-      setUploadedImages([]);
-      setPage(1);
+      if (editingId) {
+        await updateFeedback({
+          id: editingId,
+          type,
+          content,
+          referenceUrl,
+          images: uploadedImages,
+        }).unwrap();
+      } else {
+        await createFeedback({
+          type,
+          content,
+          referenceUrl,
+          images: uploadedImages,
+        }).unwrap();
+        setPage(1);
+      }
+      handleCancelEdit();
     } catch (error) {
       console.error('Submission failed', error);
     }
@@ -106,43 +141,89 @@ export default function FeedbackView() {
 
   return (
     <Scrollbar>
-      <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 2, sm: 3 } }}>
-        <Typography variant="h4" sx={{ mb: 1, fontWeight: 800, letterSpacing: '-0.02em' }}>
-          Community Feedback
-        </Typography>
+      <Box sx={{ maxWidth: 800, mx: 'auto', p: 2 }}>
 
-        {/* INPUT SECTION */}
+        {/* HEADER */}
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 0.5,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
+            }}
+          >
+            <MessageSquareHeart size={20} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+              Community Feedback
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Help us improve by sharing your ideas and reporting bugs.
+            </Typography>
+          </Box>
+        </Stack>
+
+        {/* COMPOSE / EDIT SECTION */}
         <Card
           elevation={0}
           sx={{
             p: 2,
-            mb: 1,
+            mb: 2,
             borderRadius: 0.5,
             border: '1px solid',
-            borderColor: 'divider',
+            borderColor: editingId ? 'primary.main' : isDark ? alpha('#fff', 0.1) : 'grey.200',
             bgcolor: 'background.paper',
+            boxShadow: editingId ? `0 0 0 1px ${theme.palette.primary.main}` : isDark ? 'none' : '0px 4px 24px rgba(0, 0, 0, 0.04)',
+            transition: 'all 0.2s ease',
           }}
         >
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
+          {editingId && (
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" color="primary.main" fontWeight={700}>
+                Editing Feedback
+              </Typography>
+              <IconButton size="small" onClick={handleCancelEdit} sx={{ borderRadius: 0.5 }}>
+                <Close fontSize="small" />
+              </IconButton>
+            </Stack>
+          )}
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 1 }}>
             <Select
               size="small"
               value={type}
               onChange={(e) => setType(e.target.value)}
-              sx={{ width: { xs: '100%', sm: 160 }, borderRadius: 0.5 }}
+              sx={{
+                width: { xs: '100%', sm: 160 },
+                borderRadius: 0.5,
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
+                '& fieldset': { border: 'none' }
+              }}
             >
-              <MenuItem value="FEATURE">✨ Feature</MenuItem>
-              <MenuItem value="BUG">🐛 Bug</MenuItem>
-              <MenuItem value="GENERAL">💡 General</MenuItem>
+              <MenuItem value="FEATURE">✨ Feature Request</MenuItem>
+              <MenuItem value="BUG">🐛 Bug Report</MenuItem>
+              <MenuItem value="GENERAL">💡 General Idea</MenuItem>
             </Select>
             <TextField
               fullWidth
               size="small"
-              placeholder="Optional URL (e.g. screenshot link)"
+              placeholder="Attach a relevant URL (e.g., screenshot link)"
               value={referenceUrl}
               onChange={(e) => setReferenceUrl(e.target.value)}
               InputProps={{
-                startAdornment: <LinkIcon color="action" sx={{ mr: 1, fontSize: 20 }} />,
-                sx: { borderRadius: 0.5 },
+                startAdornment: <LinkIcon color="action" sx={{ mr: 1, fontSize: 18 }} />,
+                sx: {
+                  borderRadius: 0.5,
+                  bgcolor: alpha(theme.palette.background.default, 0.6),
+                  '& fieldset': { borderColor: 'transparent' },
+                  '&:hover fieldset': { borderColor: isDark ? alpha('#fff', 0.2) : 'grey.300' }
+                },
               }}
             />
           </Stack>
@@ -150,34 +231,43 @@ export default function FeedbackView() {
           <TextField
             fullWidth
             multiline
-            rows={3}
-            placeholder="Found a bug? Have an idea?"
+            minRows={2}
+            placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            sx={{ mb: 2 }}
-            InputProps={{ sx: { borderRadius: 0.5 } }}
+            sx={{ mb: 1 }}
+            InputProps={{
+              sx: {
+                borderRadius: 0.5,
+                p: 2,
+                bgcolor: alpha(theme.palette.background.default, 0.6),
+                '& fieldset': { borderColor: isDark ? alpha('#fff', 0.05) : 'grey.200' },
+                '&:hover fieldset': { borderColor: 'primary.main' },
+              }
+            }}
           />
 
-          {/* Image Previews */}
+          {/* IMAGE PREVIEWS */}
           {uploadedImages.length > 0 && (
-            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
               {uploadedImages.map((url, index) => (
                 <Box key={index} sx={{ position: 'relative', width: 72, height: 72 }}>
                   <Box
                     component="img"
                     src={url}
                     alt="upload preview"
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0.5 }}
+                    sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 0.5, border: '1px solid', borderColor: 'divider' }}
                   />
                   <IconButton
                     size="small"
                     onClick={() => removeImage(index)}
                     sx={{
                       position: 'absolute',
-                      top: -8,
-                      right: -8,
+                      top: -6,
+                      right: -6,
                       bgcolor: 'background.paper',
-                      boxShadow: 1,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      borderRadius: 0.5,
                       '&:hover': { bgcolor: 'error.lighter', color: 'error.main' },
                     }}
                   >
@@ -194,142 +284,202 @@ export default function FeedbackView() {
               startIcon={isUploading ? <CircularProgress size={16} /> : <ImagesIcon size={18} />}
               color="inherit"
               disabled={isUploading || uploadedImages.length >= 3}
-              sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600 }}
+              sx={{
+                borderRadius: 0.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                color: 'text.secondary',
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08), color: 'primary.main' }
+              }}
             >
-              {uploadedImages.length >= 3 ? 'Max 3 Images' : 'Attach Image'}
+              {uploadedImages.length >= 3 ? 'Max 3 Images' : 'Attach Media'}
               <input type="file" hidden accept="image/*" multiple onChange={handleImageFileChange} />
             </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disableElevation
-              disabled={!content.trim() || isSubmitting || isUploading}
-              sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 600, px: 3 }}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
+
+            <Stack direction="row" spacing={1}>
+              {editingId && (
+                <Button
+                  variant="outlined"
+                  onClick={handleCancelEdit}
+                  sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 700, px: 2 }}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+                disableElevation
+                disabled={!content.trim() || isSubmitting || isUpdating || isUploading}
+                sx={{ borderRadius: 0.5, textTransform: 'none', fontWeight: 700, px: 3 }}
+              >
+                {isSubmitting || isUpdating ? 'Saving...' : editingId ? 'Update Feedback' : 'Post Feedback'}
+              </Button>
+            </Stack>
           </Stack>
         </Card>
 
-        <Divider sx={{ mb: 3, borderStyle: 'dashed' }} />
+        <Divider sx={{ mb: 2, borderStyle: 'dashed', borderColor: isDark ? alpha('#fff', 0.1) : 'grey.300' }} />
 
+        {/* FEEDBACK LIST */}
         <Stack spacing={1}>
           {isLoading ? (
-            <Box display="flex" justifyContent="center" py={6}>
+            <Box display="flex" justifyContent="center" py={8}>
               <CircularProgress disableShrink />
             </Box>
+          ) : feedbacks.length === 0 ? (
+            <Box textAlign="center" py={8}>
+              <Typography variant="h6" color="text.secondary">No feedback yet</Typography>
+              <Typography variant="body2" color="text.disabled">Be the first to share your thoughts!</Typography>
+            </Box>
           ) : (
-            feedbacks.map((fb: any) => (
-              <Card
-                key={fb._id}
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 0.5,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    borderColor: 'primary.light',
-                    boxShadow: '0 4px 24px 0 rgba(0,0,0,0.04)',
-                  },
-                }}
-              >
-                <Stack direction="row" spacing={2}>
-                  <Avatar
-                    src={fb.userId?.profilePhoto}
-                    alt={fb.userId?.name}
-                    sx={{ width: 44, height: 44, borderRadius: 0.5 }}
-                  />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-                      <Typography variant="subtitle2" fontWeight={700}>
-                        {fb.userId?.name}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={fb.type}
-                        color={fb.type === 'BUG' ? 'error' : fb.type === 'FEATURE' ? 'primary' : 'default'}
-                        variant="soft"
-                        sx={{ borderRadius: 0.5, fontWeight: 700, fontSize: '0.7rem', height: 22 }}
-                      />
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
-                      {fb.content}
-                    </Typography>
+            feedbacks.map((fb: any) => {
+              const isOwner = currentUserId && (fb.user?._id === currentUserId || fb.user?.id === currentUserId);
+              const isLiked = fb.currentUserReaction === 'LIKE';
+              const isDisliked = fb.currentUserReaction === 'DISLIKE';
 
-                    {/* Render Images if they exist */}
-                    {fb.images && fb.images.length > 0 && (
-                      <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                        {fb.images.map((img: string, idx: number) => (
-                          <Box
-                            key={idx}
-                            component="img"
-                            src={img}
-                            alt="feedback attachment"
+              return (
+                <Card
+                  key={fb._id}
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: 0.5,
+                    border: '1px solid',
+                    borderColor: editingId === fb._id ? 'primary.main' : isDark ? alpha('#fff', 0.08) : 'grey.200',
+                    bgcolor: editingId === fb._id ? alpha(theme.palette.primary.main, 0.02) : isDark ? alpha('#fff', 0.01) : '#ffffff',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      borderColor: editingId === fb._id ? 'primary.main' : alpha(theme.palette.primary.main, 0.3),
+                      boxShadow: isDark ? 'none' : '0 4px 16px rgba(0,0,0,0.03)',
+                    },
+                  }}
+                >
+                  <Stack direction="row" spacing={1}>
+                    <Avatar
+                      src={fb.user?.profilePhoto}
+                      alt={fb.user?.name}
+                      sx={{ width: 44, height: 44, borderRadius: 0.5 }}
+                    />
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="subtitle2" fontWeight={700} noWrap>
+                            {fb.user?.name || 'Anonymous User'}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={fb.type}
+                            color={fb.type === 'BUG' ? 'error' : fb.type === 'FEATURE' ? 'primary' : 'default'}
                             sx={{
-                              width: 88,
-                              height: 88,
-                              objectFit: 'cover',
                               borderRadius: 0.5,
-                              border: '1px solid',
-                              borderColor: 'divider',
+                              fontWeight: 800,
+                              fontSize: '0.65rem',
+                              height: 20,
+                              letterSpacing: 0.5
                             }}
                           />
-                        ))}
-                      </Stack>
-                    )}
+                        </Stack>
 
-                    {/* REACTIONS */}
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleReaction(fb._id, 'LIKE')}
-                          sx={{ borderRadius: 0.5, bgcolor: 'error.lighter' }}
-                        >
-                          <FavoriteBorder fontSize="small" />
-                        </IconButton>
-                        <Typography variant="caption" fontWeight={600} color="text.secondary">
-                          {fb.likes?.length || 0}
-                        </Typography>
+                        {/* EDIT BUTTON (Only visible if owner) */}
+                        {isOwner && (
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditClick(fb)}
+                            sx={{ color: 'text.secondary', borderRadius: 0.5 }}
+                          >
+                            <EditOutlined fontSize="small" />
+                          </IconButton>
+                        )}
                       </Stack>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <IconButton
+
+                      <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6, color: 'text.primary' }}>
+                        {fb.content}
+                      </Typography>
+
+                      {/* ATTACHED IMAGES */}
+                      {fb.images && fb.images.length > 0 && (
+                        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                          {fb.images.map((img: string, idx: number) => (
+                            <Box
+                              key={idx}
+                              component="img"
+                              src={img}
+                              alt="attachment"
+                              sx={{
+                                width: 88,
+                                height: 88,
+                                objectFit: 'cover',
+                                borderRadius: 0.5,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            />
+                          ))}
+                        </Stack>
+                      )}
+
+                      {/* REACTIONS */}
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Button
+                          size="small"
+                          onClick={() => handleReaction(fb._id, 'LIKE')}
+                          startIcon={isLiked ? <Favorite sx={{ fontSize: 18, color: 'error.main' }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
+                          sx={{
+                            borderRadius: 0.5,
+                            color: isLiked ? 'error.main' : 'text.secondary',
+                            bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
+                            px: 1,
+                            minWidth: 48,
+                            '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) }
+                          }}
+                        >
+                          {fb.likeCount || 0}
+                        </Button>
+
+                        <Button
                           size="small"
                           onClick={() => handleReaction(fb._id, 'DISLIKE')}
-                          sx={{ borderRadius: 0.5, bgcolor: 'background.neutral' }}
+                          startIcon={isDisliked ? <HeartBroken sx={{ fontSize: 18, color: 'text.primary' }} /> : <HeartBrokenOutlined sx={{ fontSize: 18 }} />}
+                          sx={{
+                            borderRadius: 0.5,
+                            color: isDisliked ? 'text.primary' : 'text.secondary',
+                            bgcolor: isDisliked ? alpha(theme.palette.text.primary, 0.12) : isDark ? alpha('#fff', 0.04) : 'grey.100',
+                            px: 1,
+                            minWidth: 48,
+                            '&:hover': { bgcolor: isDark ? alpha('#fff', 0.12) : 'grey.200' }
+                          }}
                         >
-                          <HeartBrokenOutlined fontSize="small" />
-                        </IconButton>
-                        <Typography variant="caption" fontWeight={600} color="text.secondary">
-                          {fb.dislikes?.length || 0}
-                        </Typography>
+                          {fb.dislikeCount || 0}
+                        </Button>
                       </Stack>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Card>
-            ))
+
+                    </Box>
+                  </Stack>
+                </Card>
+              );
+            })
           )}
         </Stack>
 
-
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <Box display="flex" justifyContent="center" pt={2}>
+          <Box display="flex" justifyContent="center" pt={3} pb={2}>
             <Pagination
               count={totalPages}
               page={page}
               onChange={(e, val) => setPage(val)}
               color="primary"
               shape="rounded"
+              sx={{
+                '& .MuiPaginationItem-root': { borderRadius: 0.5 },
+              }}
             />
           </Box>
         )}
       </Box>
-    </Scrollbar >
+    </Scrollbar>
   );
 }

@@ -51,6 +51,15 @@ export const feedbackApi = createApi({
       invalidatesTags: ['feedback-recall'],
     }),
 
+    updateFeedback: builder.mutation<{ status: boolean; data: { feedback: FeedbackType } }, Partial<any>>({
+      query: (formData) => ({
+        url: `feedback/update`,
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: ['feedback-recall'],
+    }),
+
     reactToFeedback: builder.mutation<ResponseType, { feedbackId: string; action: 'LIKE' | 'DISLIKE' }>({
       query: ({ feedbackId, action }) => ({
         url: `feedback/${feedbackId}/react`,
@@ -61,14 +70,7 @@ export const feedbackApi = createApi({
       invalidatesTags: ['feedback-recall'],
     }),
 
-    uploadFeedbackImage: builder.mutation<{ status: boolean; data: { imageUrl: string } }, FormData>({
-      query: (formData) => ({
-        url: `upload/image`, // Update this to match your actual backend upload route
-        method: 'POST',
-        body: formData,
-      }),
-      // No invalidation needed here, it just returns a URL to be used in createFeedback
-    }),
+
   }),
 });
 
@@ -76,5 +78,5 @@ export const {
   useGetFeedbacksQuery,
   useCreateFeedbackMutation,
   useReactToFeedbackMutation,
-  useUploadFeedbackImageMutation,
+  useUpdateFeedbackMutation
 } = feedbackApi;
