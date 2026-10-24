@@ -1,6 +1,15 @@
 'use client';
 
-import { Box, CircularProgress, Divider, Pagination, Stack, Typography, alpha, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent, DialogContentText,
+  DialogTitle,
+  Divider, Pagination, Stack, Typography, alpha, useTheme
+} from '@mui/material';
 import { MessageSquareHeart } from 'lucide-react';
 import { useState } from 'react';
 
@@ -35,10 +44,14 @@ export default function FeedbackView() {
 
   const [lightboxImage, setLightboxImage] = useState<{ src: string; name: string } | null>(null);
 
+  // Custom Delete Modal State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [feedbackToDelete, setFeedbackToDelete] = useState<string | null>(null);
+
   const { data, isLoading } = useGetFeedbacksQuery({ page, limit: 10 });
   const [createFeedback, { isLoading: isSubmitting }] = useCreateFeedbackMutation();
   const [updateFeedback, { isLoading: isUpdating }] = useUpdateFeedbackMutation();
-  const [deleteFeedback] = useDeleteFeedbackMutation();
+  const [deleteFeedback, { isLoading: isDeleting }] = useDeleteFeedbackMutation();
   const [reactToFeedback] = useReactToFeedbackMutation();
 
   const feedbacks = data?.data?.feedbacks || [];
@@ -111,15 +124,23 @@ export default function FeedbackView() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this feedback?')) {
-      try {
-        await deleteFeedback(id).unwrap();
-        // If the user deletes the post they are currently editing, reset the form
-        if (editingId === id) handleCancelEdit();
-      } catch (error) {
-        console.error('Failed to delete feedback:', error);
-      }
+  // Open the modal instead of window.confirm
+  const handleDeleteRequest = (id: string) => {
+    setFeedbackToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Execute deletion when confirm is clicked
+  const confirmDelete = async () => {
+    if (!feedbackToDelete) return;
+    try {
+      await deleteFeedback(feedbackToDelete).unwrap();
+      if (editingId === feedbackToDelete) handleCancelEdit();
+    } catch (error) {
+      console.error('Failed to delete feedback:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setFeedbackToDelete(null);
     }
   };
 
@@ -202,7 +223,7 @@ export default function FeedbackView() {
                   isDark={isDark}
                   theme={theme}
                   onEdit={() => handleEditClick(fb)}
-                  onDelete={() => handleDelete(fb.id)}
+                  onDelete={() => handleDeleteRequest(fb.id)}
                   onReact={(action: 'LIKE' | 'DISLIKE') => handleReaction(fb.id, action)}
                   onImageClick={(src: string, name: string) => setLightboxImage({ src, name })}
                 />
@@ -225,6 +246,7 @@ export default function FeedbackView() {
         </Box>
       </Scrollbar>
 
+      {/* LIGHTBOX */}
       {lightboxImage && (
         <ImageLightbox
           src={lightboxImage.src}
@@ -232,6 +254,39 @@ export default function FeedbackView() {
           onClose={() => setLightboxImage(null)}
         />
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{ sx: { borderRadius: 1 } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>Delete Feedback</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this feedback? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            color="inherit"
+            sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 0.5 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            color="error"
+            variant="contained"
+            disableElevation
+            disabled={isDeleting}
+            sx={{ fontWeight: 700, textTransform: 'none', borderRadius: 0.5 }}
+          >
+            {isDeleting ? 'Deleting...' : 'Confirm'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

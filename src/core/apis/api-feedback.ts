@@ -7,6 +7,7 @@ export interface FeedbackType {
   id: string; // Updated to match the backend JSON transform
   user: any; // Populated user object
   type: string;
+  status: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED';
   content: string;
   images: string[];
   referenceUrl?: string;
@@ -76,6 +77,32 @@ export const feedbackApi = createApi({
       }),
       invalidatesTags: ['feedback-recall'],
     }),
+
+    updateFeedbackStatus: builder.mutation<
+      ResponseType,
+      { feedbackId: string; status: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED'; page?: number; limit?: number }
+    >({
+      query: ({ feedbackId, status }) => ({
+        url: `feedback/${feedbackId}/status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      async onQueryStarted({ feedbackId, status, page = 1, limit = 10 }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          feedbackApi.util.updateQueryData('getFeedbacks', { page, limit }, (draft) => {
+            const feedback = draft.data.feedbacks.find((fb) => fb.id === feedbackId);
+            if (feedback) {
+              feedback.status = status;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+    }),
   }),
 });
 
@@ -85,4 +112,5 @@ export const {
   useReactToFeedbackMutation,
   useUpdateFeedbackMutation,
   useDeleteFeedbackMutation,
+  useUpdateFeedbackStatusMutation
 } = feedbackApi;

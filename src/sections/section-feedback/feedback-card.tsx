@@ -6,6 +6,7 @@ import {
   FavoriteBorder,
   HeartBroken,
   HeartBrokenOutlined,
+  KeyboardArrowDown,
 } from '@mui/icons-material';
 import {
   alpha,
@@ -15,12 +16,15 @@ import {
   Card,
   Chip,
   IconButton,
+  Menu,
+  MenuItem,
   Stack,
   Theme,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
+import { useUpdateFeedbackStatusMutation } from 'src/core/apis';
 
 interface FeedbackCardProps {
   feedback: any;
@@ -28,6 +32,8 @@ interface FeedbackCardProps {
   editingId: string | null;
   isDark: boolean;
   theme: Theme;
+  isAdmin?: boolean;
+  page?: number; // Needed for the optimistic update cache target
   onEdit: () => void;
   onDelete: () => void;
   onReact: (action: 'LIKE' | 'DISLIKE') => void;
@@ -40,12 +46,18 @@ export default function FeedbackCard({
   editingId,
   isDark,
   theme,
+  isAdmin,
+  page = 1,
   onEdit,
   onDelete,
   onReact,
   onImageClick,
 }: FeedbackCardProps) {
   const [copiedId, setCopiedId] = useState(false);
+  const [statusAnchor, setStatusAnchor] = useState<null | HTMLElement>(null);
+
+  // Initialize the mutation
+  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateFeedbackStatusMutation();
 
   const isOwner =
     currentUserId &&
@@ -58,6 +70,25 @@ export default function FeedbackCard({
       navigator.clipboard.writeText(feedback.user.genUserId);
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
+  const handleStatusOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setStatusAnchor(event.currentTarget);
+  };
+
+  const handleStatusClose = () => {
+    setStatusAnchor(null);
+  };
+
+  const handleStatusSelect = async (newStatus: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED') => {
+    handleStatusClose();
+    if (newStatus !== feedback.status) {
+      try {
+        await updateStatus({ feedbackId: feedback.id, status: newStatus, page }).unwrap();
+      } catch (error) {
+        console.error('Failed to update status:', error);
+      }
     }
   };
 
@@ -207,41 +238,118 @@ export default function FeedbackCard({
             </Stack>
           )}
 
-          {/* REACTIONS */}
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Button
-              size="small"
-              onClick={() => onReact('LIKE')}
-              startIcon={isLiked ? <Favorite sx={{ fontSize: 18, color: 'error.main' }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
-              sx={{
-                borderRadius: 0.5,
-                color: isLiked ? 'error.main' : 'text.secondary',
-                bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
-                px: 1,
-                minWidth: 48,
-                '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) },
-              }}
-            >
-              {feedback.likeCount || 0}
-            </Button>
+          {/* BOTTOM ROW: Reactions (Left) & Status (Right) */}
+          <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
 
-            <Button
-              size="small"
-              onClick={() => onReact('DISLIKE')}
-              startIcon={isDisliked ? <HeartBroken sx={{ fontSize: 18, color: 'text.primary' }} /> : <HeartBrokenOutlined sx={{ fontSize: 18 }} />}
-              sx={{
-                borderRadius: 0.5,
-                color: isDisliked ? 'text.primary' : 'text.secondary',
-                bgcolor: isDisliked ? alpha(theme.palette.text.primary, 0.12) : isDark ? alpha('#fff', 0.04) : 'grey.100',
-                px: 1,
-                minWidth: 48,
-                '&:hover': { bgcolor: isDark ? alpha('#fff', 0.12) : 'grey.200' },
-              }}
-            >
-              {feedback.dislikeCount || 0}
-            </Button>
+            {/* REACTIONS (Left) */}
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Button
+                size="small"
+                onClick={() => onReact('LIKE')}
+                startIcon={isLiked ? <Favorite sx={{ fontSize: 18, color: 'error.main' }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
+                sx={{
+                  borderRadius: 0.5,
+                  color: isLiked ? 'error.main' : 'text.secondary',
+                  bgcolor: isLiked ? alpha(theme.palette.error.main, 0.12) : alpha(theme.palette.error.main, 0.04),
+                  px: 1,
+                  minWidth: 48,
+                  '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.16) },
+                }}
+              >
+                {feedback.likeCount || 0}
+              </Button>
+
+              <Button
+                size="small"
+                onClick={() => onReact('DISLIKE')}
+                startIcon={isDisliked ? <HeartBroken sx={{ fontSize: 18, color: 'text.primary' }} /> : <HeartBrokenOutlined sx={{ fontSize: 18 }} />}
+                sx={{
+                  borderRadius: 0.5,
+                  color: isDisliked ? 'text.primary' : 'text.secondary',
+                  bgcolor: isDisliked ? alpha(theme.palette.text.primary, 0.12) : isDark ? alpha('#fff', 0.04) : 'grey.100',
+                  px: 1,
+                  minWidth: 48,
+                  '&:hover': { bgcolor: isDark ? alpha('#fff', 0.12) : 'grey.200' },
+                }}
+              >
+                {feedback.dislikeCount || 0}
+              </Button>
+            </Stack>
+
+            {/* ADMIN STATUS CONTROLS / READONLY STATUS (Right) */}
+            {isAdmin ? (
+              <>
+                <Button
+                  size="small"
+                  onClick={handleStatusOpen}
+                  disabled={isUpdatingStatus}
+                  endIcon={<KeyboardArrowDown />}
+                  color={
+                    feedback.status === 'RESOLVED'
+                      ? 'success'
+                      : feedback.status === 'VIEWED_BY_ADMIN'
+                        ? 'info'
+                        : 'inherit'
+                  }
+                  sx={{
+                    borderRadius: 0.5,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    bgcolor:
+                      feedback.status === 'RESOLVED'
+                        ? alpha(theme.palette.success.main, 0.12)
+                        : feedback.status === 'VIEWED_BY_ADMIN'
+                          ? alpha(theme.palette.info.main, 0.12)
+                          : isDark
+                            ? alpha('#fff', 0.04)
+                            : 'grey.100',
+                    px: 1.5,
+                  }}
+                >
+                  {feedback.status === 'RESOLVED'
+                    ? '✅ Resolved'
+                    : feedback.status === 'VIEWED_BY_ADMIN'
+                      ? '👀 Viewed'
+                      : '⏳ Pending'}
+                </Button>
+
+                <Menu
+                  anchorEl={statusAnchor}
+                  open={Boolean(statusAnchor)}
+                  onClose={handleStatusClose}
+                  PaperProps={{ sx: { borderRadius: 1, minWidth: 140 } }}
+                >
+                  <MenuItem onClick={() => handleStatusSelect('PENDING')} sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    ⏳ Pending
+                  </MenuItem>
+                  <MenuItem onClick={() => handleStatusSelect('VIEWED_BY_ADMIN')} sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    👀 Viewed
+                  </MenuItem>
+                  <MenuItem onClick={() => handleStatusSelect('RESOLVED')} sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    ✅ Resolved
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              /* Hide for normal users if status is PENDING */
+              feedback.status && feedback.status !== 'PENDING' && (
+                <Chip
+                  size="small"
+                  label={feedback.status === 'RESOLVED' ? '✅ Resolved' : '👀 Viewed'}
+                  color={feedback.status === 'RESOLVED' ? 'success' : 'info'}
+                  variant="soft"
+                  sx={{
+                    borderRadius: 0.5,
+                    fontWeight: 800,
+                    fontSize: '0.65rem',
+                    height: 24,
+                    letterSpacing: 0.5,
+                  }}
+                />
+              )
+            )}
+
           </Stack>
-
         </Box>
       </Stack>
     </Card>
