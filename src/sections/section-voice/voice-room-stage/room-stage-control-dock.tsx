@@ -1,5 +1,3 @@
-// src/sections/section-voice/voice-room-stage/room-stage-control-dock.tsx
-
 import {
   Headphones,
   MessageSquare,
@@ -15,7 +13,7 @@ import React, { useCallback, useState } from 'react';
 import { useVoiceRoomSetting } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
-import { Box, Button, IconButton, Popover, Tooltip, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, IconButton, Popover, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Track } from 'livekit-client';
 
@@ -47,6 +45,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const { playToggleMute, playToggleDeafen } = useRoomSounds();
 
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
+  const [leaveAnchorEl, setLeaveAnchorEl] = useState<HTMLElement | null>(null);
 
   // LiveKit hooks for local mic and deafen controls
   const room = useRoomContext();
@@ -119,7 +118,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     <>
       <Box
         sx={{
-          mx: { xs: 1, sm: 2 },
+          mx: { xs: 1, sm: 'auto' },
           mb: { xs: 1, sm: 1.5 },
           mt: 0.5,
           px: { xs: 1.25, sm: 2 },
@@ -135,6 +134,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          maxWidth: 'sm',
           gap: { xs: 0.75, sm: 1.25 },
         }}
       >
@@ -262,7 +262,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           </IconButton>
 
           <Button
-            onClick={handleLeaveRoom}
+            onClick={(e) => setLeaveAnchorEl(e.currentTarget)}
             disableElevation
             startIcon={<PhoneOff size={16} />}
             sx={{
@@ -296,7 +296,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
       </Box >
 
       {/* Floating Reaction Popover */}
-      < Popover
+      <Popover
         open={Boolean(emojiAnchor)}
         anchorEl={emojiAnchor}
         onClose={() => setEmojiAnchor(null)}
@@ -345,7 +345,69 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             </IconButton>
           ))
         }
-      </Popover >
+      </Popover>
+
+      {/* Leave Confirmation Popover */}
+      <Popover
+        open={Boolean(leaveAnchorEl)}
+        anchorEl={leaveAnchorEl}
+        onClose={() => setLeaveAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'top', // Open upwards from the button
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              mb: 1,
+              p: 2,
+              borderRadius: 0.75,
+              minWidth: 220,
+              bgcolor: isDark ? '#181c26' : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+              boxShadow: isDark
+                ? '0 8px 32px rgba(0,0,0,0.6)'
+                : '0 8px 24px rgba(15,23,42,0.1)',
+              backgroundImage: 'none',
+            }
+          }
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, color: isDark ? 'text.primary' : '#0f172a' }}>
+          Leave Room?
+        </Typography>
+        <Typography variant="caption" sx={{ color: isDark ? 'text.secondary' : '#475569', display: 'block', mb: 2.5 }}>
+          Are you sure you want to disconnect?
+        </Typography>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => setLeaveAnchorEl(null)}
+            sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 0.5 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            color="error"
+            variant="contained"
+            disableElevation
+            onClick={() => {
+              setLeaveAnchorEl(null);
+              handleLeaveRoom();
+            }}
+            sx={{ fontWeight: 700, textTransform: 'none', borderRadius: 0.5 }}
+          >
+            Leave
+          </Button>
+        </Stack>
+      </Popover>
     </>
   );
 };

@@ -2,6 +2,7 @@ import type { RoomType } from '@/types/type-room';
 
 import { useParticipants } from '@livekit/components-react';
 import { ArrowRightIcon, Headphones, PhoneOffIcon } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   alpha,
@@ -10,6 +11,7 @@ import {
   IconButton,
   keyframes,
   Paper,
+  Popover,
   Stack,
   Tooltip,
   Typography,
@@ -61,6 +63,9 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
+  // State for the Popover anchor
+  const [leaveAnchorEl, setLeaveAnchorEl] = useState<HTMLButtonElement | null>(null);
+
   const participants = useParticipants();
   const participantCount = participants.length;
 
@@ -76,7 +81,7 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
   const mixLive = isDark ? `color-mix(in srgb, ${live} 12%, ${base})` : `color-mix(in srgb, ${live} 8%, ${base})`;
   const mixPrimary = isDark ? `color-mix(in srgb, ${primary} 12%, ${base})` : `color-mix(in srgb, ${primary} 6%, ${base})`;
 
-  // 3. Solid cutouts for the Avatar Stack borders (avatars need solid colors, not gradients)
+  // 3. Solid cutouts for the Avatar Stack borders
   const cutoutSurface = mixLive;
   const cutoutMobileRow2 = isDark ? `color-mix(in srgb, #000 25%, ${cutoutSurface})` : `color-mix(in srgb, ${live} 4%, #f8fafc)`;
 
@@ -230,7 +235,7 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
   const leaveButton = (
     <Tooltip title="Disconnect voice" arrow>
       <IconButton
-        onClick={onLeaveRoom}
+        onClick={(e) => setLeaveAnchorEl(e.currentTarget)}
         aria-label="Disconnect voice"
         sx={{
           width: { xs: 36, sm: 44 },
@@ -252,91 +257,152 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
   // ── Layout ─────────────────────────────────────────────────────────
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 0.5,
-        p: '2px',
-        isolation: 'isolate',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: '200%',
-          aspectRatio: '1 / 1',
-          zIndex: -1,
-          background: `conic-gradient(from 0deg, ${alpha(live, 0.15)}, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)} 50%, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)})`,
-          animation: `${spin} 4s linear infinite`,
-        },
-        ...reduceMotion,
-      }}
-    >
-      <Paper
-        elevation={0}
+    <>
+      <Box
         sx={{
           width: '100%',
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 0.5,
-          boxShadow: 'none',
-          border: 'none',
-          ...movingBackgroundConfig,
+          p: '2px',
+          isolation: 'isolate',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '200%',
+            aspectRatio: '1 / 1',
+            zIndex: -1,
+            background: `conic-gradient(from 0deg, ${alpha(live, 0.15)}, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)} 50%, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)})`,
+            animation: `${spin} 4s linear infinite`,
+          },
+          ...reduceMotion,
         }}
       >
-        {isMobile ? (
-          <>
-            {/* Row 1 */}
-            <Box sx={{ px: 1.5, pt: 1.25, pb: 1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
-              {equalizer}
-              {info}
-              {leaveButton}
-            </Box>
-
-            {/* Row 2 - Inherits the moving background but adds a top border separator */}
+        <Paper
+          elevation={0}
+          sx={{
+            width: '100%',
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: 0.5,
+            boxShadow: 'none',
+            border: 'none',
+            ...movingBackgroundConfig,
+          }}
+        >
+          {isMobile ? (
+            <>
+              <Box sx={{ px: 1.5, pt: 1.25, pb: 1, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                {equalizer}
+                {info}
+                {leaveButton}
+              </Box>
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  borderTop: `1px solid ${isDark ? alpha('#fff', 0.07) : alpha(live, 0.18)}`,
+                }}
+              >
+                <Box sx={{ minWidth: 0, flexShrink: 0 }}>
+                  {participantCount > 0 && <ParticipantAvatarStack surface={cutoutMobileRow2} />}
+                </Box>
+                {joinButton}
+              </Box>
+            </>
+          ) : (
             <Box
               sx={{
-                px: 1.5,
+                px: { sm: 2, md: 2.75 },
                 py: 1.5,
+                minHeight: 76,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 1,
-                borderTop: `1px solid ${isDark ? alpha('#fff', 0.07) : alpha(live, 0.18)}`,
+                gap: { sm: 2, md: 2.5 },
               }}
             >
-              <Box sx={{ minWidth: 0, flexShrink: 0 }}>
-                {participantCount > 0 && <ParticipantAvatarStack surface={cutoutMobileRow2} />}
-              </Box>
+              {equalizer}
+              {info}
+              {participantCount > 0 && (
+                <Box sx={{ flexShrink: 0 }}>
+                  <ParticipantAvatarStack surface={cutoutSurface} />
+                </Box>
+              )}
               {joinButton}
+              {leaveButton}
             </Box>
-          </>
-        ) : (
-          <Box
-            sx={{
-              px: { sm: 2, md: 2.75 },
-              py: 1.5,
-              minHeight: 76,
-              display: 'flex',
-              alignItems: 'center',
-              gap: { sm: 2, md: 2.5 },
-            }}
+          )}
+        </Paper>
+      </Box>
+
+      {/* Confirmation Popover */}
+      <Popover
+        open={Boolean(leaveAnchorEl)}
+        anchorEl={leaveAnchorEl}
+        onClose={() => setLeaveAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              p: 2,
+              borderRadius: 0.75,
+              minWidth: 220,
+              bgcolor: isDark ? '#181c26' : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
+              boxShadow: isDark
+                ? '0 8px 32px rgba(0,0,0,0.6)'
+                : '0 8px 24px rgba(15,23,42,0.1)',
+              backgroundImage: 'none',
+            }
+          }
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, color: isDark ? 'text.primary' : '#0f172a' }}>
+          Leave Room?
+        </Typography>
+        <Typography variant="caption" sx={{ color: isDark ? 'text.secondary' : '#475569', display: 'block', mb: 2.5 }}>
+          Are you sure you want to disconnect?
+        </Typography>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => setLeaveAnchorEl(null)}
+            sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 0.5 }}
           >
-            {equalizer}
-            {info}
-            {participantCount > 0 && (
-              <Box sx={{ flexShrink: 0 }}>
-                <ParticipantAvatarStack surface={cutoutSurface} />
-              </Box>
-            )}
-            {joinButton}
-            {leaveButton}
-          </Box>
-        )}
-      </Paper>
-    </Box>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            color="error"
+            variant="contained"
+            disableElevation
+            onClick={() => {
+              setLeaveAnchorEl(null);
+              onLeaveRoom();
+            }}
+            sx={{ fontWeight: 700, textTransform: 'none', borderRadius: 0.5 }}
+          >
+            Leave
+          </Button>
+        </Stack>
+      </Popover>
+    </>
   );
 };
 
