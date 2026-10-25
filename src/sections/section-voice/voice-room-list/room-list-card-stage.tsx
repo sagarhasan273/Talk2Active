@@ -10,66 +10,47 @@ export const computeStageLayout = (width: number, height: number, totalRequested
   if (!width || !height || totalRequested <= 0) return null;
 
   const pillAllowance = 12; // Extra space at the bottom for the follower pill
-  const minPodDiameter = 36;
   const minGap = 8;
-  const safeWidth = width - 8;
 
-  // Dynamically calculate how many columns can physically fit so flexbox NEVER wraps to a 3rd row
-  const physicalMaxCols = Math.floor((safeWidth + minGap) / (minPodDiameter + minGap));
+  // A larger safety buffer (32px) guarantees border paddings won't overflow the flex container
+  const safeWidth = width - 32;
 
-  // Cap between 3 and 7 columns per row (making the absolute max visible items 14)
-  const maxColsAllowed = Math.max(3, Math.min(7, physicalMaxCols));
+  // --- NEW DECISION LOGIC BASED ON YOUR RULES ---
+  // 1 to 5 participants stay on 1 row. 6 or more break to 2 rows.
+  let bestRows = totalRequested >= 6 ? 2 : 1;
 
-  let bestSize = 0;
-  let bestRows = 1;
-  let bestCols = 1;
-  let bestGap = 8;
+  let bestCols = bestRows === 1 ? totalRequested : Math.ceil(totalRequested / 2);
+  bestCols = Math.min(7, bestCols); // Absolute max limit of 7 columns
 
-  // --- SCENARIO 1: Try fitting everyone in 1 Row ---
-  const cols1 = Math.min(totalRequested, maxColsAllowed);
-  const gap1 = cols1 <= 4 ? 14 : minGap;
-  const maxW1 = Math.floor((safeWidth - gap1 * (cols1 - 1)) / cols1) - 1;
-  const maxH1 = height - pillAllowance;
-  const size1 = Math.min(maxW1, maxH1, 76);
+  // Use a wider gap for 1-3 people for aesthetics, otherwise use tight minGap
+  let bestGap = (bestRows === 1 && totalRequested <= 3) ? 16 : minGap;
 
-  // --- SCENARIO 2: Try splitting them into 2 Rows ---
-  // CRITICAL FIX: Math.min() caps the columns so a 100-slot room doesn't try to render 50 items per row
-  const cols2 = Math.min(Math.ceil(totalRequested / 2), maxColsAllowed);
-  const gap2 = cols2 <= 4 ? 14 : minGap;
-  const maxW2 = Math.floor((safeWidth - gap2 * (cols2 - 1)) / cols2) - 1;
-  const maxH2 = Math.floor((height - pillAllowance - gap2) / 2);
-  const size2 = Math.min(maxW2, maxH2, 76);
+  // Calculate maximum physical dimensions the avatar can be
+  const maxW = Math.floor((safeWidth - bestGap * (bestCols - 1)) / bestCols);
+  const maxH = bestRows === 1
+    ? height - pillAllowance
+    : Math.floor((height - pillAllowance - bestGap) / 2);
 
-  // --- DECISION LOGIC ---
-  if (totalRequested > maxColsAllowed) {
-    // If they exceed max allowed in a row, FORCE 2 rows
+  // Take the smallest constraint, capped at 76px max
+  let bestSize = Math.min(maxW, maxH, 76);
+
+  // Safety Fallback: If 4 or 5 users squish smaller than 36px on a tiny screen, force 2 rows early
+  if (bestRows === 1 && bestSize < 36 && totalRequested >= 4) {
     bestRows = 2;
-    bestCols = cols2;
-    bestSize = size2;
-    bestGap = gap2;
-  } else {
-    // Switch to 2 rows only if it results in significantly larger avatars
-    if (size2 >= size1 + 4 && size2 >= minPodDiameter) {
-      bestRows = 2;
-      bestCols = cols2;
-      bestSize = size2;
-      bestGap = gap2;
-    } else {
-      bestRows = 1;
-      bestCols = cols1;
-      bestSize = size1;
-      bestGap = gap1;
-    }
+    bestCols = Math.ceil(totalRequested / 2);
+    bestGap = minGap;
+    const newMaxW = Math.floor((safeWidth - bestGap * (bestCols - 1)) / bestCols);
+    const newMaxH = Math.floor((height - pillAllowance - bestGap) / 2);
+    bestSize = Math.min(newMaxW, newMaxH, 76);
   }
 
-  // Final fallback to prevent disappearing avatars
-  bestSize = Math.max(minPodDiameter, bestSize);
-  const maxVisible = bestCols * bestRows;
+  // Absolute minimum size cap
+  bestSize = Math.max(36, bestSize);
 
   return {
     maxCols: bestCols,
     maxRows: bestRows,
-    maxVisible,
+    maxVisible: bestCols * bestRows,
     size: bestSize,
     fontSize: Math.max(11, Math.round(bestSize * 0.28)),
     gapPx: bestGap,
@@ -122,19 +103,16 @@ export default function VoiceRoomCardStage({
   const displayPods = useMemo(() => {
     if (!layout) return [];
 
-    // 1. Unify all elements into a single flat array
     const allSlots: PodItem[] = [];
     speakers.forEach((s, idx) =>
       allSlots.push({ type: 'speaker', data: s, key: `sp-${s.userId || idx}` })
     );
     for (let i = 0; i < availableSpace; i++) allSlots.push({ type: 'empty', key: `emp-${i}` });
 
-    // 2. If it perfectly fits within the max visible limit (e.g., 14 slots), return as-is
     if (allSlots.length <= layout.maxVisible) {
       return allSlots;
     }
 
-    // 3. Overflow case: Reserve the very last slot for the counter
     const visible = allSlots.slice(0, layout.maxVisible - 1);
     const hiddenCount = allSlots.length - visible.length;
     visible.push({ type: 'overflow', count: hiddenCount, key: 'overflow-badge' });
@@ -153,12 +131,12 @@ export default function VoiceRoomCardStage({
         minWidth: 0,
         px: 0.5,
         display: 'flex',
-        flexWrap: 'wrap',
+        // FORCE NOWRAP IF ONLY 1 ROW to guarantee it never accidentally breaks
+        flexWrap: layout.maxRows === 1 ? 'nowrap' : 'wrap',
         alignItems: 'center',
         justifyContent: 'center',
         alignContent: 'center',
         gap: `${layout.gapPx}px`,
-        // overflow: 'hidden',
       }}
     >
       {displayPods.map((pod) => {
@@ -178,7 +156,10 @@ export default function VoiceRoomCardStage({
                 zIndex: 1,
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
-                '&:hover': {},
+                '&:hover': {
+                  zIndex: 10,
+                  transform: 'scale(1.05)',
+                },
               }}
             >
               <Box
@@ -189,13 +170,20 @@ export default function VoiceRoomCardStage({
                   position: 'relative',
                 }}
               >
-                <AvatarWrapper accountType={speaker?.accountType}>
+                {/* Apply 100% dimensions and border-box sizing to stop padding overflow */}
+                <AvatarWrapper
+                  accountType={speaker?.accountType}
+                  showShadow={false}
+                  borderThickness={0.38}
+                  sx={{ width: '100%', height: '100%', boxSizing: 'border-box' }}
+                >
                   <Avatar
                     src={speaker?.profilePhoto || undefined}
                     alt={speaker?.name}
                     sx={{
                       width: '100%',
                       height: '100%',
+                      boxSizing: 'border-box',
                       fontSize: layout.fontSize,
                       fontWeight: 800,
                       bgcolor: isDark ? '#252b3b' : '#f1f5f9',

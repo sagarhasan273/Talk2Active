@@ -1,5 +1,3 @@
-// src/sections/section-voice/voice-room-header/room-header-active-bar.tsx
-
 import type { RoomType } from '@/types/type-room';
 
 import { useParticipants } from '@livekit/components-react';
@@ -40,6 +38,13 @@ const spin = keyframes`
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 `;
 
+// Gentle sweeping motion for the inner background
+const panBackground = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
 const reduceMotion = { '@media (prefers-reduced-motion: reduce)': { animation: 'none' } };
 
 // ----------------------------------------------------------------------
@@ -60,16 +65,27 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
   const participantCount = participants.length;
 
   const live = theme.palette.success.main;
+  const primary = theme.palette.primary.main;
 
-  // 1. Base surface color for the main bar
-  const base = isDark ? '#181c26' : '#ffffff';
-  const tint = isDark ? 16 : 11;
-  const surface = `color-mix(in srgb, ${live} ${tint}%, ${base})`;
+  // 1. Base colors
+  const baseDark = '#181c26';
+  const baseLight = '#ffffff';
+  const base = isDark ? baseDark : baseLight;
 
-  // 2. Solid surface color specifically for the mobile bottom row
-  const mobileRow2Surface = isDark
-    ? `color-mix(in srgb, #000 25%, ${surface})`
-    : `color-mix(in srgb, ${live} 8%, ${surface})`;
+  // 2. Mix colors for the sweeping gradient
+  const mixLive = isDark ? `color-mix(in srgb, ${live} 12%, ${base})` : `color-mix(in srgb, ${live} 8%, ${base})`;
+  const mixPrimary = isDark ? `color-mix(in srgb, ${primary} 12%, ${base})` : `color-mix(in srgb, ${primary} 6%, ${base})`;
+
+  // 3. Solid cutouts for the Avatar Stack borders (avatars need solid colors, not gradients)
+  const cutoutSurface = mixLive;
+  const cutoutMobileRow2 = isDark ? `color-mix(in srgb, #000 25%, ${cutoutSurface})` : `color-mix(in srgb, ${live} 4%, #f8fafc)`;
+
+  // 4. Reusable animated background configuration
+  const movingBackgroundConfig = {
+    background: `linear-gradient(90deg, ${mixLive}, ${mixPrimary}, ${mixLive})`,
+    backgroundSize: '200% 100%',
+    animation: `${panBackground} 6s ease-in-out infinite`,
+  };
 
   // ── Shared pieces ──────────────────────────────────────────────────
 
@@ -255,9 +271,7 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
           background: `conic-gradient(from 0deg, ${alpha(live, 0.15)}, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)} 50%, ${live}, ${theme.palette.primary.main}, ${alpha(live, 0.15)})`,
           animation: `${spin} 4s linear infinite`,
         },
-        '@media (prefers-reduced-motion: reduce)': {
-          '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },
-        },
+        ...reduceMotion,
       }}
     >
       <Paper
@@ -268,8 +282,8 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
           overflow: 'hidden',
           borderRadius: 0.5,
           boxShadow: 'none',
-          backgroundColor: surface,
-          backgroundImage: 'none',
+          border: 'none',
+          ...movingBackgroundConfig,
         }}
       >
         {isMobile ? (
@@ -281,7 +295,7 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
               {leaveButton}
             </Box>
 
-            {/* Row 2 - using mobileRow2Surface for flawless avatar cutouts */}
+            {/* Row 2 - Inherits the moving background but adds a top border separator */}
             <Box
               sx={{
                 px: 1.5,
@@ -291,11 +305,10 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
                 justifyContent: 'space-between',
                 gap: 1,
                 borderTop: `1px solid ${isDark ? alpha('#fff', 0.07) : alpha(live, 0.18)}`,
-                bgcolor: mobileRow2Surface,
               }}
             >
               <Box sx={{ minWidth: 0, flexShrink: 0 }}>
-                {participantCount > 0 && <ParticipantAvatarStack surface={mobileRow2Surface} />}
+                {participantCount > 0 && <ParticipantAvatarStack surface={cutoutMobileRow2} />}
               </Box>
               {joinButton}
             </Box>
@@ -315,7 +328,7 @@ export const VoiceRoomActiveBar = ({ room, onEnterRoom, onLeaveRoom }: Props) =>
             {info}
             {participantCount > 0 && (
               <Box sx={{ flexShrink: 0 }}>
-                <ParticipantAvatarStack surface={surface} />
+                <ParticipantAvatarStack surface={cutoutSurface} />
               </Box>
             )}
             {joinButton}
