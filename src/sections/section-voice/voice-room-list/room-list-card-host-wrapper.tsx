@@ -1,0 +1,118 @@
+import React from 'react';
+
+import { alpha, Box, keyframes, type SxProps, useTheme } from '@mui/material';
+
+// ─── Animations ─────────────────────────────────────────────────────────
+
+const spin = keyframes`
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+`;
+
+// ----------------------------------------------------------------------
+
+export type AccountTier = 'ADMIN' | 'SUPPORTER' | 'MEMBER' | string;
+
+export type VoiceRoomHostWrapperProps = {
+  children: React.ReactNode;
+  accountType?: AccountTier;
+  sx?: SxProps;
+};
+
+export const VoiceRoomHostWrapper = ({
+  children,
+  accountType = 'MEMBER',
+  sx,
+}: VoiceRoomHostWrapperProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const normalizedTier = accountType.toUpperCase();
+
+  const hasAnimatedBorder = normalizedTier === 'ADMIN' || normalizedTier === 'SUPPORTER';
+
+  let borderGradient = 'none';
+  let glowShadow = 'none';
+
+  // Base colors for mixing
+  const baseDark = '#181c26';
+  const baseLight = '#ffffff';
+  let innerBg = isDark ? alpha('#fff', 0.035) : '#f8fafc'; // Default for normal members
+
+  if (normalizedTier === 'ADMIN') {
+    // Admin: Soft Violet & Rose Pink
+    const c1 = '#8B5CF6';
+    const c2 = '#F43F5E';
+    borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
+    glowShadow = `0 4px 20px -4px ${alpha(c2, 0.25)}`;
+    // Fancy light tint of the primary tier color
+    innerBg = isDark
+      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+
+  } else if (normalizedTier === 'SUPPORTER') {
+    // Supporter: Sky Blue & Soft Amber
+    const c1 = '#0EA5E9';
+    const c2 = '#FBBF24';
+    borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
+    glowShadow = `0 4px 20px -4px ${alpha(c1, 0.25)}`;
+    // Fancy light tint of the primary tier color
+    innerBg = isDark
+      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+  }
+
+  return (
+    <Box
+      sx={[
+        {
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 0.75,
+          p: hasAnimatedBorder ? '1.5px' : '0px',
+          isolation: 'isolate',
+          minWidth: 0,
+          flexShrink: 0,
+          boxShadow: hasAnimatedBorder ? glowShadow : 'none',
+          ...(hasAnimatedBorder && {
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '300%',
+              aspectRatio: '1 / 1',
+              zIndex: -1,
+              background: borderGradient,
+              animation: `${spin} 4s linear infinite`,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },
+            },
+          }),
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
+      {/* Inner Box with the subtle tinted background to keep text highly legible */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          p: 1,
+          borderRadius: 0.5,
+          bgcolor: innerBg,
+          border: hasAnimatedBorder ? 'none' : '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
+          minWidth: 0,
+          height: '100%',
+          width: '100%',
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
+export default VoiceRoomHostWrapper;

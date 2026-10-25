@@ -38,6 +38,7 @@ import { SocialView } from '@/sections/section-social-chat';
 import VoiceRoomScrollButtons from '../voice-button-room-list-scroll';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { DefaultHeader } from '../voice-room-header/room-header-default';
+import VoiceRoomCardBorderWrapper from './room-list-card-border-wrapper';
 import { RoomCardCreation } from './room-list-card-creation';
 import { RoomParticipantsDialog } from './room-list-card-dialog';
 import { VoiceRoomCard } from './room-list-card-main';
@@ -549,17 +550,19 @@ export const RoomlistMain = memo(function RoomlistMain({
               }
 
               return (
-                <VoiceRoomCard
-                  key={card.roomId}
-                  index={visibleSliceStart + idx - 1}
-                  roomData={card}
-                  currentUserId={currentUserId}
-                  cardWidth={cardWidth}
-                  onJoinRoom={stableOnSelectRoom}
-                  onAvatarClick={handleAvatarClick}
-                  onOverflowClick={handleOverflowClick}
-                  sx={sxCard}
-                />
+                <VoiceRoomCardBorderWrapper accountType={card?.host?.accountType}>
+                  <VoiceRoomCard
+                    key={card.roomId}
+                    index={visibleSliceStart + idx - 1}
+                    roomData={card}
+                    currentUserId={currentUserId}
+                    cardWidth={cardWidth}
+                    onJoinRoom={stableOnSelectRoom}
+                    onAvatarClick={handleAvatarClick}
+                    onOverflowClick={handleOverflowClick}
+                    sx={sxCard}
+                  />
+                </VoiceRoomCardBorderWrapper>
               );
             })}
 

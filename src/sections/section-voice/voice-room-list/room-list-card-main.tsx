@@ -10,6 +10,7 @@ import {
   Avatar,
   Box,
   Button,
+  keyframes, // <-- Added keyframes import
   Paper,
   Skeleton,
   Stack,
@@ -21,7 +22,17 @@ import {
 import { Label, ParticipantLevel } from '@/components/label';
 import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
+import VoiceRoomHostWrapper from './room-list-card-host-wrapper';
 import VoiceRoomCardStage, { computeStageLayout } from './room-list-card-stage';
+
+// ─── Animations ─────────────────────────────────────────────────────────
+
+const spin = keyframes`
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+`;
+
+// ----------------------------------------------------------------------
 
 type VoiceRoomCardProps = {
   roomData: RoomType;
@@ -88,7 +99,6 @@ const VoiceRoomCardComponent = ({
     [participants, hostId]
   );
 
-  // Instant 1-pass layout math using parent-measured cardWidth (no per-card ResizeObserver!)
   const stageInnerWidth = Math.max(220, cardWidth - 32);
   const layout = useMemo(
     () => computeStageLayout(stageInnerWidth, STAGE_HEIGHT, totalSlots),
@@ -202,20 +212,8 @@ const VoiceRoomCardComponent = ({
       </Box>
 
       {/* 2. Host Strip */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.25,
-          p: 1,
-          my: 1,
-          borderRadius: 0.5,
-          bgcolor: isDark ? alpha('#fff', 0.035) : '#f8fafc',
-          border: '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
-          flexShrink: 0,
-          minWidth: 0,
-        }}
+      <VoiceRoomHostWrapper
+        accountType={(roomData?.host as any)?.accountType || 'MEMBER'}
       >
         <Box
           onClick={(e) => handleAvatarClick(e, roomData?.host)}
@@ -258,7 +256,7 @@ const VoiceRoomCardComponent = ({
             {participantsCount}/{max}
           </Typography>
         </Box>
-      </Box>
+      </VoiceRoomHostWrapper>
 
       {/* 3. Stage Area: Shows lightweight skeleton circles during extreme fast-scroll, or full stage */}
       <Box sx={{ flex: 1, height: STAGE_HEIGHT, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
