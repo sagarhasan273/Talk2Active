@@ -10,7 +10,6 @@ import { VoiceRoomLayout } from 'src/layouts/voice-room';
 import { VoiceModalCreateRoom } from '../voice-modal-create-room';
 import { RoomContainerMain } from '../voice-room-container';
 import { VoiceRoomActiveBar } from '../voice-room-header/room-header-active-bar';
-import { isParticipantSpeaking } from '../voice-room-header/utils';
 import { RoomlistMain } from '../voice-room-list';
 import VoiceRoomEventListener from './voice-room-event-listener';
 import { VoiceRoomJoinGate } from './voice-room-join-gate';
@@ -33,20 +32,11 @@ export function VoiceMainView() {
     handleBackToRooms,
   } = useVoiceRoomSetting();
 
-  const participants = useMemo(() => room?.participants || [], [room]);
-
-  const currentSpeaker = useMemo(
-    () => participants.find((participant) => isParticipantSpeaking(participant)) || null,
-    [participants]
-  );
-
   const header = useMemo(() => {
     if (isInRoom && room && selectedTab === 'room-list') {
       return (
         <VoiceRoomActiveBar
           room={room}
-          participants={participants}
-          currentSpeaker={currentSpeaker}
           onEnterRoom={() => handleBackToRooms()}
           onLeaveRoom={handleLeaveRoom}
         />
@@ -57,8 +47,6 @@ export function VoiceMainView() {
     isInRoom,
     room,
     selectedTab,
-    participants,
-    currentSpeaker,
     handleBackToRooms,
     handleLeaveRoom,
   ]);
