@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 
 import { Label, ParticipantLevel } from '@/components/label';
+import AvatarWrapper from '@/sections/section-common/avatar-wrapper';
 import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
 import VoiceRoomHostWrapper from './room-list-card-host-wrapper';
@@ -219,14 +220,16 @@ const VoiceRoomCardComponent = ({
           onClick={(e) => handleAvatarClick(e, roomData?.host)}
           sx={{ position: 'relative', cursor: 'pointer' }}
         >
-          <Avatar
-            src={roomData?.host?.profilePhoto || undefined}
-            alt={roomData?.host?.name || 'Unknown'}
-            imgProps={{ loading: 'lazy', decoding: 'async' }}
-            sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 800, border: `2px solid ${theme.palette.primary.main}` }}
-          >
-            {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
-          </Avatar>
+          <AvatarWrapper accountType={roomData?.host?.accountType}>
+            <Avatar
+              src={roomData?.host?.profilePhoto || undefined}
+              alt={roomData?.host?.name || 'Unknown'}
+              imgProps={{ loading: 'lazy', decoding: 'async' }}
+              sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 800, border: `2px solid ${theme.palette.primary.main}` }}
+            >
+              {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
+            </Avatar>
+          </AvatarWrapper>
         </Box>
         <Stack sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="body2" fontWeight={700} noWrap sx={{ color: isDark ? 'text.primary' : '#0f172a', lineHeight: 1.2, fontSize: 13 }}>

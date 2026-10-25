@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 
+import AvatarWrapper from '@/sections/section-common/avatar-wrapper';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import { alpha, Avatar, Box, Typography } from '@mui/material';
@@ -157,7 +158,7 @@ export default function VoiceRoomCardStage({
         justifyContent: 'center',
         alignContent: 'center',
         gap: `${layout.gapPx}px`,
-        overflow: 'hidden',
+        // overflow: 'hidden',
       }}
     >
       {displayPods.map((pod) => {
@@ -174,6 +175,7 @@ export default function VoiceRoomCardStage({
                 flexDirection: 'column',
                 alignItems: 'center',
                 flexShrink: 0,
+                zIndex: 1,
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
                 '&:hover': {},
@@ -187,21 +189,23 @@ export default function VoiceRoomCardStage({
                   position: 'relative',
                 }}
               >
-                <Avatar
-                  src={speaker?.profilePhoto || undefined}
-                  alt={speaker?.name}
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    fontSize: layout.fontSize,
-                    fontWeight: 800,
-                    bgcolor: isDark ? '#252b3b' : '#f1f5f9',
-                    color: isDark ? '#fff' : '#0f172a',
-                    border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
-                  }}
-                >
-                  {getInitials(speaker?.name)}
-                </Avatar>
+                <AvatarWrapper accountType={speaker?.accountType}>
+                  <Avatar
+                    src={speaker?.profilePhoto || undefined}
+                    alt={speaker?.name}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      fontSize: layout.fontSize,
+                      fontWeight: 800,
+                      bgcolor: isDark ? '#252b3b' : '#f1f5f9',
+                      color: isDark ? '#fff' : '#0f172a',
+                      border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
+                    }}
+                  >
+                    {getInitials(speaker?.name)}
+                  </Avatar>
+                </AvatarWrapper>
                 {speaker?.verified && (
                   <Box
                     sx={{

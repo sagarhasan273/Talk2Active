@@ -29,6 +29,8 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux'; // Import useSelector
 import DialogReportUser from '../../components/dialogs/dialog-report-user';
+import AvatarWrapper from './avatar-wrapper';
+import UserDisplayerWrapper from './user-displayer-wrapper';
 
 export type UserDisplayerProfile = {
   id?: string;
@@ -60,8 +62,6 @@ type UserDisplayerProps = {
 const AccountTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
   admin: { label: 'Admin', color: '#ff1744', bg: 'rgba(255,23,68,0.12)' },
   supporter: { label: 'Supporter', color: '#d500f9', bg: 'rgba(213,0,249,0.12)' },
-  vip: { label: 'VIP', color: '#ff8f00', bg: 'rgba(255,143,0,0.12)' },
-  moderator: { label: 'Moderator', color: '#00c853', bg: 'rgba(0,200,83,0.12)' },
   member: { label: 'Member', color: '#78909c', bg: 'rgba(120,144,156,0.12)' },
 };
 
@@ -175,24 +175,7 @@ export const UserDisplayer = ({
         }}
       >
         <Fade in={open}>
-          <Box
-            onClick={(e) => e.stopPropagation()}
-            sx={{
-              outline: 'none',
-              position: 'relative',
-              width: '100%',
-              maxWidth: { xs: 360, sm: 580 },
-              borderRadius: 0.5,
-              bgcolor: isDark ? '#181c26' : '#ffffff',
-              border: '1px solid',
-              borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-              boxShadow: isDark
-                ? '0 24px 64px -12px rgba(0, 0, 0, 0.85)'
-                : '0 20px 48px -12px rgba(15, 23, 42, 0.18)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Top Bar */}
+          <UserDisplayerWrapper accountType={user.accountType}>
             <Box
               sx={{
                 display: 'flex',
@@ -479,48 +462,42 @@ export const UserDisplayer = ({
               </Box>
 
               {/* RIGHT: Large Square Profile Image Showcase */}
-              <Box
-                sx={{
-                  position: 'relative',
-                  width: { xs: '100%', sm: 205 },
-                  height: { xs: 220, sm: 205 },
-                  flexShrink: 0,
-                  borderRadius: 0.5,
-                  overflow: 'hidden',
-                  bgcolor: isDark ? alpha('#fff', 0.03) : '#f1f5f9',
-                  border: '1px solid',
-                  borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
-                  boxShadow: isDark
-                    ? '0 8px 24px -4px rgba(0, 0, 0, 0.5)'
-                    : '0 8px 20px -4px rgba(15, 23, 42, 0.08)',
-                }}
-              >
-                <Avatar
-                  variant="square"
-                  src={user.profilePhoto || undefined}
-                  alt={user.name}
+              <AvatarWrapper accountType={user.accountType} variant='rounded' borderThickness={0.5}>
+                <Box
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    fontSize: '3.25rem',
-                    fontWeight: 800,
-                    bgcolor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
-                    color: 'primary.main',
-                    '& img': {
-                      objectFit: 'cover',
-                    },
+                    position: 'relative',
+                    width: { xs: '100%', sm: 205 },
+                    height: { xs: 220, sm: 205 },
+                    flexShrink: 0,
+                    borderRadius: 0.5,
+                    overflow: 'hidden',
                   }}
                 >
-                  {getInitials(user.name)}
-                </Avatar>
-              </Box>
+                  <Avatar
+                    variant="square"
+                    src={user.profilePhoto || undefined}
+                    alt={user.name}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      fontSize: '3.25rem',
+                      fontWeight: 800,
+                      '& img': {
+                        objectFit: 'cover',
+                      },
+                    }}
+                  >
+                    {getInitials(user.name)}
+                  </Avatar>
+                </Box>
+              </AvatarWrapper>
             </Box>
-          </Box>
+          </UserDisplayerWrapper>
         </Fade>
-      </Modal>
+      </Modal >
 
       {/* Report User Modal Dialog */}
-      <DialogReportUser
+      < DialogReportUser
         open={reportOpen}
         userId={resolvedUserId}
         userName={user.name}

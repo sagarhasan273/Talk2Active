@@ -103,13 +103,106 @@ function buildPartialRing(fullGradient: string, borderLength: number): string {
 }
 
 // ─── Styled Components ────────────────────────────────────────────────────────
+import React from 'react';
 
-const AvatarWrapper = styled('div')({
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
+import { alpha, Box, type SxProps } from '@mui/material';
+
+// ─── Animations ─────────────────────────────────────────────────────────
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+`;
+
+// ----------------------------------------------------------------------
+
+type AccountTier = 'ADMIN' | 'SUPPORTER' | 'MEMBER' | string;
+type AvatarVariant = 'circular' | 'rounded' | 'square';
+
+type AvatarWrapperProps = {
+  children: React.ReactNode;
+  accountType?: AccountTier;
+  variant?: AvatarVariant;
+  /** Thickness of the spinning gradient border */
+  borderThickness?: number | string;
+  /** Space between the spinning border and the avatar */
+  innerGap?: number | string;
+  sx?: SxProps;
+};
+
+const AvatarWrapper = ({
+  children,
+  accountType = 'MEMBER',
+  variant = 'circular',
+  borderThickness = 0.2,
+  sx,
+}: AvatarWrapperProps) => {
+  const normalizedTier = accountType.toUpperCase();
+
+  const hasAnimatedBorder = normalizedTier === 'ADMIN' || normalizedTier === 'SUPPORTER';
+
+  let bRadius: string | number = '50%';
+  if (variant === 'square') bRadius = 0;
+  if (variant === 'rounded') bRadius = 1.25;
+
+  let borderGradient = 'none';
+  let glowShadow = 'none';
+
+  if (normalizedTier === 'ADMIN') {
+    const c1 = '#ff1744';
+    const c2 = '#ffb300';
+
+    borderGradient = `conic-gradient(${c1} 0%, ${c2} 25%, ${c1} 50%, ${c2} 75%, ${c1} 100%)`;
+    glowShadow = `0 8px 32px -4px ${alpha(c1, 0.45)}`;
+
+  } else if (normalizedTier === 'SUPPORTER') {
+    // Exact colors from your AvatarUser SUPPORTER config
+    borderGradient = 'conic-gradient(#00f5ff 0%, #a855f7 18%, #06b6d4 35%, #f0abfc 50%, #00f5ff 68%, #e879f9 82%, #00f5ff 100%)';
+    glowShadow = `0 0 14px ${alpha('#00f5ff', 0.65)}`;
+  }
+
+  return (
+    <Box
+      sx={[
+        {
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: bRadius,
+          overflow: 'hidden', // Forces the spinning gradient to clip to the shape
+          // The padding creates the thickness of the spinning border
+          p: hasAnimatedBorder ? borderThickness : 0,
+          isolation: 'isolate',
+          boxShadow: hasAnimatedBorder ? glowShadow : 'none',
+          ...(hasAnimatedBorder && {
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              // Make the spinning box 200% size so its corners never show while rotating
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
+              zIndex: -1,
+              background: borderGradient,
+              animation: `${spin} 2.5s linear infinite`,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '&::before': { animation: 'none' },
+            },
+          }),
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
+      {children}
+    </Box>
+  );
+};
+
+export default AvatarWrapper;
+
 
 const ShadowLayer = styled('div')<{
   accounttype: AccountType;
@@ -150,39 +243,6 @@ const OuterRing = styled('div')<{
   };
 });
 
-const InnerRing = styled('div')<{
-  accounttype: AccountType;
-  dospin: string;
-  spinspeed: string;
-  spindirection: SpinDirection;
-  borderlength: number;
-  innerborder: string;
-}>(({ accounttype, dospin, spinspeed, spindirection, borderlength, innerborder }) => {
-  if (accounttype === AccountTypeEnum.MEMBER) return { display: 'none' };
-  // Inner always counter-rotates relative to outer
-  const anim = spindirection === 'clockwise' ? spinCCW : spinCW;
-  const maskImage =
-    borderlength < 100
-      ? `conic-gradient(black 0% ${borderlength}%, transparent ${borderlength}% 100%)`
-      : undefined;
-  return {
-    position: 'absolute',
-    inset: '-5%',
-    borderRadius: '50%',
-    background: 'transparent',
-    border: innerborder,
-    WebkitMaskImage: maskImage,
-    maskImage,
-    animation: dospin === 'true' ? `${anim} ${spinspeed} linear infinite` : 'none',
-  };
-});
-
-const DarkMask = styled('div')<{ accounttype: AccountType }>(({ accounttype }) => ({
-  position: 'absolute',
-  inset: '7%',
-  borderRadius: '50%',
-  background: roleConfig[accounttype].maskBg,
-}));
 
 const AvatarInner = styled('div')({
   position: 'relative',
@@ -199,19 +259,6 @@ export type AvatarUserProps = {
   avatarUrl?: string | null;
   verified?: boolean;
   accountType?: AccountType;
-  showShadow?: boolean;
-  shouldSpin?: boolean;
-  spinSpeed?: string;
-  innerRingSpinSpeed?: string;
-  spinDirection?: SpinDirection;
-  /** 1–100. Visible arc length. 100 = full circle, 50 = half arc. */
-  borderLength?: number;
-  /**
-   * CSS border shorthand for the inner decorative ring.
-   * e.g. '2px dashed rgba(255,255,255,0.5)'
-   * Falls back to a sensible default per role if not provided.
-   */
-  innerBorder?: number;
   sx?: Record<string, any>;
 };
 
@@ -222,65 +269,20 @@ export const AvatarUser = ({
   avatarUrl,
   verified,
   accountType = 'MEMBER',
-  showShadow = true,
-  shouldSpin = true,
-  spinSpeed = '1.5s',
-  innerRingSpinSpeed = '5.5s',
-  spinDirection = 'clockwise',
-  borderLength = 100,
-  innerBorder = 0,
   sx,
 }: AvatarUserProps) => {
-  const cfg = roleConfig[accountType];
-  const pct = Math.min(100, Math.max(1, borderLength));
-
-  const width = innerBorder ?? defaultInnerBorderWidth[accountType] ?? 2;
-  const style = defaultInnerBorderStyle[accountType] ?? 'solid';
-  const color = defaultInnerBorderColor[accountType];
-  const resolvedInnerBorder = accountType === 'MEMBER' ? 'none' : `${width}px ${style} ${color}`;
 
   return (
-    <AvatarWrapper>
-      <ShadowLayer
-        accounttype={accountType}
-        showshadow={String(showShadow)}
-        spinspeed={spinSpeed}
-        spindirection="counter-clockwise"
-      />
-      <OuterRing
-        accounttype={accountType}
-        dospin={String(shouldSpin)}
-        spinspeed={spinSpeed}
-        spindirection={spinDirection}
-        borderlength={pct}
-      />
-      <InnerRing
-        accounttype={accountType}
-        dospin={String(shouldSpin)}
-        spinspeed={innerRingSpinSpeed}
-        spindirection="counter-clockwise"
-        borderlength={pct}
-        innerborder={resolvedInnerBorder}
-      />
-      <DarkMask accounttype={accountType} />
-      <AvatarInner>
-        <Avatar
-          src={verified ? (avatarUrl ?? undefined) : undefined}
-          alt={name}
-          sx={{
-            background: accountType !== 'MEMBER' ? cfg.avatarBg : undefined,
-            color: accountType !== 'MEMBER' ? cfg.avatarColor : undefined,
-            fontWeight: 800,
-            fontSize: '0.875rem',
-            letterSpacing: '0.04em',
-            width: 40,
-            height: 40,
-            ...sx,
-          }}
-        >
-          {getAvatarText(name)}
-        </Avatar>
-      </AvatarInner>
+    <AvatarWrapper accountType={accountType}>
+      <Avatar
+        src={verified ? (avatarUrl ?? undefined) : undefined}
+        alt={name}
+        sx={{
+          ...sx,
+        }}
+      >
+        {getAvatarText(name)}
+      </Avatar>
     </AvatarWrapper>
   );
 };

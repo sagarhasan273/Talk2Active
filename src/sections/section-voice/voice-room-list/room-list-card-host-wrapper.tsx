@@ -106,7 +106,7 @@ export const VoiceRoomHostWrapper = ({
               aspectRatio: '1 / 1',
               zIndex: -1,
               background: borderGradient,
-              animation: `${spin} 4s linear infinite`,
+              animation: `${spin} 3s linear infinite`,
             },
             '@media (prefers-reduced-motion: reduce)': {
               '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },

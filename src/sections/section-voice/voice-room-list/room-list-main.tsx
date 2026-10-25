@@ -550,9 +550,8 @@ export const RoomlistMain = memo(function RoomlistMain({
               }
 
               return (
-                <VoiceRoomCardBorderWrapper accountType={card?.host?.accountType}>
+                <VoiceRoomCardBorderWrapper key={card.roomId} accountType={card?.host?.accountType}>
                   <VoiceRoomCard
-                    key={card.roomId}
                     index={visibleSliceStart + idx - 1}
                     roomData={card}
                     currentUserId={currentUserId}

@@ -6,7 +6,6 @@ import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
@@ -26,6 +25,7 @@ import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
+import { Label } from '@/components/label';
 import { AccountTypeEnum } from '@/enums/enum-user';
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';
@@ -45,8 +45,6 @@ export type AccountDrawerProps = IconButtonProps & {
 export const AccountTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
   admin: { label: 'Admin', color: '#ff1744', bg: 'rgba(255,23,68,0.12)' },
   supporter: { label: 'Supporter', color: '#d500f9', bg: 'rgba(213,0,249,0.12)' },
-  vip: { label: 'VIP', color: '#ff8f00', bg: 'rgba(255,143,0,0.12)' },
-  moderator: { label: 'Moderator', color: '#00c853', bg: 'rgba(0,200,83,0.12)' },
   member: { label: 'Member', color: '#78909c', bg: 'rgba(120,144,156,0.12)' },
 };
 
@@ -72,6 +70,7 @@ const StatItem = ({ label, value }: { label: string; value: string | number }) =
     </Typography>
   </Box>
 );
+
 
 // ─────────────────────────────────────────────
 
@@ -108,7 +107,7 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
     [user?.genUserId]
   );
 
-  const accountCfg = AccountTypeConfig[user?.accountType ?? AccountTypeEnum.MEMBER] ?? AccountTypeConfig.member;
+  const accountCfg = AccountTypeConfig[user?.accountType?.toLowerCase() ?? AccountTypeEnum.MEMBER] ?? AccountTypeConfig.member;
 
   // ── Coverless Profile Identity Section ────────────────────────────────
   const renderIdentity = (
@@ -188,19 +187,24 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
 
       {/* Role Chip & Copyable User ID Pill */}
       <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 1.5, flexWrap: 'wrap' }}>
-        <Chip
+        <Label
           label={accountCfg.label}
           size="small"
           sx={{
-            height: 22,
+            height: 21,
             fontSize: 10,
             fontWeight: 800,
             letterSpacing: 0.4,
+            textTransform: 'uppercase',
             bgcolor: accountCfg.bg,
             color: accountCfg.color,
             border: '1px solid',
             borderColor: alpha(accountCfg.color, 0.3),
-            borderRadius: 0.5,
+            borderRadius: 0.75,
+            '&:hover': {
+              bgcolor: accountCfg.bg,
+              color: accountCfg.color,
+            },
           }}
         />
 
