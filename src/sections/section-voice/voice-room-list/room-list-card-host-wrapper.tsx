@@ -4,9 +4,17 @@ import { alpha, Box, keyframes, type SxProps, useTheme } from '@mui/material';
 
 // ─── Animations ─────────────────────────────────────────────────────────
 
+// Restored circular spin for the outer border
 const spin = keyframes`
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
+`;
+
+// Gentle sweeping motion for the inner background color
+const panBackground = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 `;
 
 // ----------------------------------------------------------------------
@@ -33,32 +41,47 @@ export const VoiceRoomHostWrapper = ({
   let borderGradient = 'none';
   let glowShadow = 'none';
 
-  // Base colors for mixing
+  // Base colors for mixing the light inner background
   const baseDark = '#181c26';
   const baseLight = '#ffffff';
   let innerBg = isDark ? alpha('#fff', 0.035) : '#f8fafc'; // Default for normal members
+  let innerBgConfig = {};
 
   if (normalizedTier === 'ADMIN') {
     // Admin: Soft Violet & Rose Pink
     const c1 = '#8B5CF6';
     const c2 = '#F43F5E';
+
+    // Spinning Border is kept exactly as it was
     borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
     glowShadow = `0 4px 20px -4px ${alpha(c2, 0.25)}`;
-    // Fancy light tint of the primary tier color
-    innerBg = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+
+    // Light animated background for the inner box
+    const mix1 = isDark ? `color-mix(in srgb, ${c1} 12%, ${baseDark})` : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+    const mix2 = isDark ? `color-mix(in srgb, ${c2} 12%, ${baseDark})` : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
+    innerBg = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
+    innerBgConfig = {
+      backgroundSize: '200% 100%',
+      animation: `${panBackground} 5s ease-in-out infinite`,
+    };
 
   } else if (normalizedTier === 'SUPPORTER') {
     // Supporter: Sky Blue & Soft Amber
     const c1 = '#0EA5E9';
     const c2 = '#FBBF24';
+
+    // Spinning Border is kept exactly as it was
     borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
     glowShadow = `0 4px 20px -4px ${alpha(c1, 0.25)}`;
-    // Fancy light tint of the primary tier color
-    innerBg = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+
+    // Light animated background for the inner box
+    const mix1 = isDark ? `color-mix(in srgb, ${c1} 12%, ${baseDark})` : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+    const mix2 = isDark ? `color-mix(in srgb, ${c2} 12%, ${baseDark})` : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
+    innerBg = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
+    innerBgConfig = {
+      backgroundSize: '200% 100%',
+      animation: `${panBackground} 5s ease-in-out infinite`,
+    };
   }
 
   return (
@@ -93,7 +116,7 @@ export const VoiceRoomHostWrapper = ({
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {/* Inner Box with the subtle tinted background to keep text highly legible */}
+      {/* Inner Box with the animated, lightly tinted background */}
       <Box
         sx={{
           display: 'flex',
@@ -101,7 +124,8 @@ export const VoiceRoomHostWrapper = ({
           gap: 1.25,
           p: 1,
           borderRadius: 0.5,
-          bgcolor: innerBg,
+          background: innerBg,
+          ...innerBgConfig,
           border: hasAnimatedBorder ? 'none' : '1px solid',
           borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
           minWidth: 0,
