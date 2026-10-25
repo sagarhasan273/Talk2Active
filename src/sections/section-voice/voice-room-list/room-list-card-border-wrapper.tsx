@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-card/room-list-card-border-wrapper.tsx
+
 import React from 'react';
 
 import { alpha, Box, keyframes, type SxProps } from '@mui/material';
@@ -30,12 +32,10 @@ export const VoiceRoomCardBorderWrapper = ({
   let borderGradient = 'none';
 
   if (normalizedTier === 'ADMIN') {
-    // Admin: Royal Purple & Crimson Red
     const c1 = '#7C3AED';
     const c2 = '#E11D48';
     borderGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
   } else if (normalizedTier === 'SUPPORTER') {
-    // Supporter: Royal Blue & Premium Gold
     const c1 = '#3B82F6';
     const c2 = '#F59E0B';
     borderGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
@@ -46,11 +46,25 @@ export const VoiceRoomCardBorderWrapper = ({
       sx={[
         {
           width: '100%',
+          height: 296,
+          minHeight: 296,
+          maxHeight: 296,
+          maxWidth: { xs: '100%', sm: 1, md: 520 },
+          display: 'flex',
+          flexDirection: 'column',
+          boxSizing: 'border-box',
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 0.5,
           p: hasAnimatedBorder ? '2px' : '0px',
           isolation: 'isolate',
+          contain: 'layout size style',
+          '& > *': {
+            height: '100% !important',
+            minHeight: '0 !important',
+            maxHeight: '100% !important',
+            flex: 1,
+          },
           ...(hasAnimatedBorder && {
             '&::before': {
               content: '""',

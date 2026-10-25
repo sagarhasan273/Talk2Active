@@ -10,9 +10,7 @@ import {
   Avatar,
   Box,
   Button,
-  keyframes, // <-- Added keyframes import
   Paper,
-  Skeleton,
   Stack,
   type SxProps,
   Typography,
@@ -25,13 +23,6 @@ import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
 import VoiceRoomHostWrapper from './room-list-card-host-wrapper';
 import VoiceRoomCardStage, { computeStageLayout } from './room-list-card-stage';
-
-// ─── Animations ─────────────────────────────────────────────────────────
-
-const spin = keyframes`
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to   { transform: translate(-50%, -50%) rotate(360deg); }
-`;
 
 // ----------------------------------------------------------------------
 
@@ -53,18 +44,15 @@ type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
 const STAGE_HEIGHT = 110;
 
 const sxCardBase = {
-  height: 296,
-  minHeight: 280,
-  maxHeight: 296,
+  height: '100%',
   width: '100%',
   minWidth: 0,
-  maxWidth: { xs: '100%', sm: 1, md: 520 },
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
   boxSizing: 'border-box',
   overflow: 'hidden',
-  contain: 'layout paint style',
+  contain: 'strict',
 };
 
 const VoiceRoomCardComponent = ({
@@ -73,7 +61,6 @@ const VoiceRoomCardComponent = ({
   onAvatarClick,
   onOverflowClick,
   cardWidth = 320,
-  isScrolling = false,
   sx,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
@@ -100,7 +87,8 @@ const VoiceRoomCardComponent = ({
     [participants, hostId]
   );
 
-  const stageInnerWidth = Math.max(220, cardWidth - 32);
+  // Round to nearest 4px so sub-pixel resize jitter never recalculates the layout
+  const stageInnerWidth = Math.max(220, Math.round((cardWidth - 32) / 4) * 4);
   const layout = useMemo(
     () => computeStageLayout(stageInnerWidth, STAGE_HEIGHT, totalSlots),
     [stageInnerWidth, totalSlots]
@@ -143,10 +131,10 @@ const VoiceRoomCardComponent = ({
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {/* 1. Header & Topic */}
-      <Box sx={{ flexShrink: 0, minWidth: 0 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1.1}>
-          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden' }}>
+      {/* 1. Header & Topic (Locked height so it never shifts) */}
+      <Box sx={{ flexShrink: 0, minWidth: 0, height: 52 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1}>
+          <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden', height: 20 }}>
             {(roomData.languages?.length ? roomData.languages : ['en']).slice(0, 2).map((lang, idx) => (
               <Label
                 key={`${lang}-${idx}`}
@@ -181,6 +169,7 @@ const VoiceRoomCardComponent = ({
                 alignItems: 'center',
                 gap: 0.5,
                 px: 0.5,
+                height: 20,
                 borderRadius: 0.5,
                 bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : '#ecfdf5',
                 border: '1px solid',
@@ -206,26 +195,34 @@ const VoiceRoomCardComponent = ({
           variant="subtitle1"
           fontWeight={800}
           noWrap
-          sx={{ color: isDark ? 'text.primary' : '#0f172a', fontSize: '1.025rem', lineHeight: 1.3, letterSpacing: '-0.01em' }}
+          sx={{ color: isDark ? 'text.primary' : '#0f172a', fontSize: '1.025rem', lineHeight: '22px', height: 22, letterSpacing: '-0.01em' }}
         >
           {roomData?.topic || 'Untitled room'}
         </Typography>
       </Box>
 
       {/* 2. Host Strip */}
-      <VoiceRoomHostWrapper
-        accountType={(roomData?.host as any)?.accountType || 'MEMBER'}
-      >
+      <VoiceRoomHostWrapper accountType={(roomData?.host as any)?.accountType || 'MEMBER'}>
         <Box
           onClick={(e) => handleAvatarClick(e, roomData?.host)}
-          sx={{ position: 'relative', cursor: 'pointer' }}
+          sx={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, flexShrink: 0 }}
         >
-          <AvatarWrapper accountType={roomData?.host?.accountType}>
+          <AvatarWrapper
+            accountType={roomData?.host?.accountType}
+            sx={{ width: 36, height: 36, boxSizing: 'border-box' }}
+          >
             <Avatar
               src={roomData?.host?.profilePhoto || undefined}
               alt={roomData?.host?.name || 'Unknown'}
               imgProps={{ loading: 'lazy', decoding: 'async' }}
-              sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 800, border: `2px solid ${theme.palette.primary.main}` }}
+              sx={{
+                width: '100%',
+                height: '100%',
+                boxSizing: 'border-box',
+                fontSize: 14,
+                fontWeight: 800,
+                border: `2px solid ${theme.palette.primary.main}`,
+              }}
             >
               {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
             </Avatar>
@@ -261,34 +258,31 @@ const VoiceRoomCardComponent = ({
         </Box>
       </VoiceRoomHostWrapper>
 
-      {/* 3. Stage Area: Shows lightweight skeleton circles during extreme fast-scroll, or full stage */}
-      <Box sx={{ flex: 1, height: STAGE_HEIGHT, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {isScrolling ? (
-          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center">
-            {Array.from({ length: Math.min(5, totalSlots) }).map((_, i) => (
-              <Skeleton
-                key={i}
-                variant="circular"
-                animation={false}
-                width={46}
-                height={46}
-                sx={{ bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#0f172a', 0.06) }}
-              />
-            ))}
-          </Stack>
-        ) : (
-          layout && (
-            <VoiceRoomCardStage
-              speakers={allUsers}
-              availableSpace={availableSpace}
-              layout={layout}
-              isFull={isFull}
-              isDark={isDark}
-              onAvatarClick={handleAvatarClick}
-              onJoinClick={handleJoinClick}
-              onOverflowClick={handleOverflowClick}
-            />
-          )
+      {/* 3. Stage Area: Strictly locked to 110px without mid-scroll DOM swapping */}
+      <Box
+        sx={{
+          height: STAGE_HEIGHT,
+          minHeight: STAGE_HEIGHT,
+          maxHeight: STAGE_HEIGHT,
+          flexShrink: 0,
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          contain: 'strict',
+        }}
+      >
+        {layout && (
+          <VoiceRoomCardStage
+            speakers={allUsers}
+            availableSpace={availableSpace}
+            layout={layout}
+            isFull={isFull}
+            isDark={isDark}
+            onAvatarClick={handleAvatarClick}
+            onJoinClick={handleJoinClick}
+            onOverflowClick={handleOverflowClick}
+          />
         )}
       </Box>
 
@@ -304,7 +298,8 @@ const VoiceRoomCardComponent = ({
         endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
         sx={{
           flexShrink: 0,
-          mt: 1,
+          height: 36,
+          minHeight: 36,
           borderRadius: 0.5,
           textTransform: 'none',
           fontWeight: 700,
@@ -320,8 +315,7 @@ const VoiceRoomCardComponent = ({
 
 const areRoomCardPropsEqual = (prev: VoiceRoomCardExtendedProps, next: VoiceRoomCardExtendedProps) => {
   if (prev.currentUserId !== next.currentUserId) return false;
-  if (prev.cardWidth !== next.cardWidth) return false;
-  if (prev.isScrolling !== next.isScrolling) return false;
+  if (Math.abs((prev.cardWidth ?? 320) - (next.cardWidth ?? 320)) >= 4) return false;
   if (prev.sx !== next.sx) return false;
 
   const r1 = prev.roomData;

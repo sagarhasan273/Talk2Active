@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-card/room-list-card-stage.tsx
+
 import React, { useMemo } from 'react';
 
 import AvatarWrapper from '@/sections/section-common/avatar-wrapper';
@@ -9,30 +11,28 @@ import { UserPlus } from 'lucide-react';
 export const computeStageLayout = (width: number, height: number, totalRequested: number) => {
   if (!width || !height || totalRequested <= 0) return null;
 
-  const pillAllowance = 12; // Extra space at the bottom for the follower pill
+  const pillAllowance = 10; // Exact extra vertical space added by the follower pill (mt: -0.75 + height)
   const minGap = 8;
 
-  // A larger safety buffer (32px) guarantees border paddings won't overflow the flex container
-  const safeWidth = width - 32;
+  // Safety buffer guarantees border paddings never overflow the flex container
+  const safeWidth = Math.max(180, width - 24);
 
-  // --- NEW DECISION LOGIC BASED ON YOUR RULES ---
   // 1 to 5 participants stay on 1 row. 6 or more break to 2 rows.
   let bestRows = totalRequested >= 6 ? 2 : 1;
 
   let bestCols = bestRows === 1 ? totalRequested : Math.ceil(totalRequested / 2);
   bestCols = Math.min(7, bestCols); // Absolute max limit of 7 columns
 
-  // Use a wider gap for 1-3 people for aesthetics, otherwise use tight minGap
-  let bestGap = (bestRows === 1 && totalRequested <= 3) ? 16 : minGap;
+  let bestGap = bestRows === 1 && totalRequested <= 3 ? 16 : minGap;
 
-  // Calculate maximum physical dimensions the avatar can be
+  // CRITICAL CLS FIX: Subtract pillAllowance for EVERY row so 2 rows never exceed 110px height
   const maxW = Math.floor((safeWidth - bestGap * (bestCols - 1)) / bestCols);
-  const maxH = bestRows === 1
-    ? height - pillAllowance
-    : Math.floor((height - pillAllowance - bestGap) / 2);
+  const maxH =
+    bestRows === 1
+      ? height - pillAllowance - 4
+      : Math.floor((height - pillAllowance * 2 - bestGap - 4) / 2);
 
-  // Take the smallest constraint, capped at 76px max
-  let bestSize = Math.min(maxW, maxH, 76);
+  let bestSize = Math.min(maxW, maxH, 72);
 
   // Safety Fallback: If 4 or 5 users squish smaller than 36px on a tiny screen, force 2 rows early
   if (bestRows === 1 && bestSize < 36 && totalRequested >= 4) {
@@ -40,12 +40,11 @@ export const computeStageLayout = (width: number, height: number, totalRequested
     bestCols = Math.ceil(totalRequested / 2);
     bestGap = minGap;
     const newMaxW = Math.floor((safeWidth - bestGap * (bestCols - 1)) / bestCols);
-    const newMaxH = Math.floor((height - pillAllowance - bestGap) / 2);
-    bestSize = Math.min(newMaxW, newMaxH, 76);
+    const newMaxH = Math.floor((height - pillAllowance * 2 - bestGap - 4) / 2);
+    bestSize = Math.min(newMaxW, newMaxH, 72);
   }
 
-  // Absolute minimum size cap
-  bestSize = Math.max(36, bestSize);
+  bestSize = Math.max(34, bestSize);
 
   return {
     maxCols: bestCols,
@@ -122,21 +121,26 @@ export default function VoiceRoomCardStage({
 
   if (!layout) return null;
 
+  // Exact total height of a pod including its follower pill
+  const podTotalHeight = layout.size + 8;
+
   return (
     <Box
       sx={{
-        flex: 1,
-        minHeight: 0,
         width: '100%',
-        minWidth: 0,
+        height: 110,
+        minHeight: 110,
+        maxHeight: 110,
         px: 0.5,
         display: 'flex',
-        // FORCE NOWRAP IF ONLY 1 ROW to guarantee it never accidentally breaks
         flexWrap: layout.maxRows === 1 ? 'nowrap' : 'wrap',
         alignItems: 'center',
         justifyContent: 'center',
         alignContent: 'center',
         gap: `${layout.gapPx}px`,
+        boxSizing: 'border-box',
+        // Isolates internal stage rendering so it can NEVER trigger a page layout shift
+        contain: 'strict',
       }}
     >
       {displayPods.map((pod) => {
@@ -149,6 +153,8 @@ export default function VoiceRoomCardStage({
               onClick={(e) => onAvatarClick(e, speaker)}
               sx={{
                 position: 'relative',
+                width: layout.size,
+                height: podTotalHeight,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -168,9 +174,9 @@ export default function VoiceRoomCardStage({
                   height: layout.size,
                   borderRadius: '50%',
                   position: 'relative',
+                  flexShrink: 0,
                 }}
               >
-                {/* Apply 100% dimensions and border-box sizing to stop padding overflow */}
                 <AvatarWrapper
                   accountType={speaker?.accountType}
                   showShadow={false}
@@ -180,6 +186,7 @@ export default function VoiceRoomCardStage({
                   <Avatar
                     src={speaker?.profilePhoto || undefined}
                     alt={speaker?.name}
+                    imgProps={{ loading: 'lazy', decoding: 'async' }}
                     sx={{
                       width: '100%',
                       height: '100%',
@@ -219,8 +226,8 @@ export default function VoiceRoomCardStage({
               <Box
                 sx={{
                   mt: -0.75,
+                  height: 14,
                   px: 0.6,
-                  py: 0.1,
                   borderRadius: 0.75,
                   bgcolor: isDark ? '#252b3b' : '#f1f5f9',
                   border: '1px solid',
@@ -230,6 +237,8 @@ export default function VoiceRoomCardStage({
                   justifyContent: 'center',
                   gap: 0.25,
                   zIndex: 3,
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <FavoriteRoundedIcon sx={{ fontSize: 9.5, color: 'primary.main' }} />
@@ -256,9 +265,12 @@ export default function VoiceRoomCardStage({
               title="Available seat • Click to join stage"
               onClick={onJoinClick}
               sx={{
+                width: layout.size,
+                height: podTotalHeight,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                justifyContent: 'flex-start',
                 flexShrink: 0,
                 cursor: 'pointer',
                 '&:hover .empty-pod-circle': {
@@ -284,6 +296,7 @@ export default function VoiceRoomCardStage({
                   justifyContent: 'center',
                   transition: 'all 0.2s ease',
                   flexShrink: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <UserPlus
@@ -305,26 +318,37 @@ export default function VoiceRoomCardStage({
               onClick={onOverflowClick}
               sx={{
                 width: layout.size,
-                height: layout.size,
-                borderRadius: '50%',
-                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
-                border: (theme) => `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
-                color: 'primary.main',
+                height: podTotalHeight,
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: layout.fontSize - 1,
                 flexShrink: 0,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  transform: 'scale(1.06)',
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
-                },
               }}
             >
-              +{pod.count}
+              <Box
+                sx={{
+                  width: layout.size,
+                  height: layout.size,
+                  borderRadius: '50%',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                  border: (theme) => `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                  color: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: layout.fontSize - 1,
+                  boxSizing: 'border-box',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'scale(1.06)',
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
+                  },
+                }}
+              >
+                +{pod.count}
+              </Box>
             </Box>
           );
         }

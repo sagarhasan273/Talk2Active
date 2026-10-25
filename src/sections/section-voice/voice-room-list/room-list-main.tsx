@@ -443,14 +443,21 @@ export const RoomlistMain = memo(function RoomlistMain({
     overscan: columns === 1 ? 4 : 3,
   });
 
+  // Extract scrolling state for the skeleton rendering logic inside VoiceRoomCard
+  const isVirtualizerScrolling = rowVirtualizer.isScrolling;
+
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
 
-  const paddingTop = virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
-  const paddingBottom =
+  // FIX: Subtract GRID_GAP from the padding to counteract the CSS Grid gap injection
+  const rawPaddingTop = virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
+  const paddingTop = rawPaddingTop > 0 ? rawPaddingTop - GRID_GAP : 0;
+
+  const rawPaddingBottom =
     virtualRows.length > 0
       ? Math.max(0, totalSize - (virtualRows[virtualRows.length - 1].end - scrollMargin))
       : 0;
+  const paddingBottom = rawPaddingBottom > 0 ? rawPaddingBottom - GRID_GAP : 0;
 
   const visibleSliceStart = virtualRows.length > 0 ? virtualRows[0].index * columns : 0;
   const visibleSliceEnd =
@@ -556,6 +563,7 @@ export const RoomlistMain = memo(function RoomlistMain({
                     roomData={card}
                     currentUserId={currentUserId}
                     cardWidth={cardWidth}
+                    isScrolling={isVirtualizerScrolling}
                     onJoinRoom={stableOnSelectRoom}
                     onAvatarClick={handleAvatarClick}
                     onOverflowClick={handleOverflowClick}
