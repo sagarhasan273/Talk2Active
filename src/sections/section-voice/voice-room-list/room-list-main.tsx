@@ -534,20 +534,6 @@ export const RoomlistMain = memo(function RoomlistMain({
         <RoomListHeaderSlot />
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        {/*
-          🔑 CLS + no-blank-scroll strategy:
-
-          • Outer container has FIXED height = totalSize (never uses padding).
-          • Rows are absolutely positioned and shifted with translate3d →
-            compositor-only, zero layout invalidation → 0 CLS on fling.
-          • A ::before pseudo-element paints a "ghost card grid" behind
-            everything (solid bars per row + column-gap mask). Rendered
-            rows paint over it. During a fast fling, when React can't keep
-            up with the browser's scroll speed, the ghost shows through —
-            the user sees skeleton card outlines instead of blank space.
-          • `minHeight` prevents the grid from collapsing on the
-            loading→loaded transition when there are very few rooms.
-        */}
         <Box
           ref={gridContainerRef}
           sx={{

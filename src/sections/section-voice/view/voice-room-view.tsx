@@ -53,41 +53,17 @@ export function VoiceMainView() {
 
   const mainContent = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          opacity: selectedTab === 'room-list' ? 1 : 0,
-          pointerEvents: selectedTab === 'room-list' ? 'auto' : 'none',
-          zIndex: selectedTab === 'room-list' ? 2 : 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <RoomlistMain
-          onSelectRoom={handleSelectRoom}
-          isVisible={selectedTab === 'room-list'}
-        />
-      </Box>
+      {selectedTab === 'room-list' && <RoomlistMain
+        onSelectRoom={handleSelectRoom}
+        isVisible={selectedTab === 'room-list'}
+      />}
 
       {/* ── Room Stage Tab ── */}
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          opacity: selectedTab !== 'room-list' ? 1 : 0,
-          pointerEvents: selectedTab !== 'room-list' ? 'auto' : 'none',
-          zIndex: selectedTab !== 'room-list' ? 2 : 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <RoomContainerMain
-          onLeaveRoom={handleLeaveRoom}
-          onSettingsClick={editRoomBoolean.onTrue}
-          onBack={handleBackToRooms}
-        />
-      </Box>
+      {selectedTab !== 'room-list' && <RoomContainerMain
+        onLeaveRoom={handleLeaveRoom}
+        onSettingsClick={editRoomBoolean.onTrue}
+        onBack={handleBackToRooms}
+      />}
     </Box>
   );
 
