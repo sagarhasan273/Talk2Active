@@ -16,6 +16,8 @@ interface UserState {
   following: AllRelationsType[];
   followers: AllRelationsType[];
   blockedUserIds: string[];
+  /** Users who have blocked the current user. Updated via socket + `/me`. */
+  blockedByUserIds: string[];
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -26,6 +28,7 @@ const initialState: UserState = {
   following: [],
   followers: [],
   blockedUserIds: [],
+  blockedByUserIds: [],
   isAuthenticated: false,
   loading: false,
 };
@@ -35,10 +38,8 @@ export const accountSlice = createSlice({
   initialState,
   reducers: {
     setAccount: (state, action: PayloadAction<UserState['user']>) => {
-      const hasValidId = action.payload && (
-        action.payload.userId ||
-        action.payload.genUserId
-      );
+      const hasValidId =
+        action.payload && (action.payload.userId || action.payload.genUserId);
       if (hasValidId) {
         state.user = action.payload;
         state.isAuthenticated = true;
@@ -50,8 +51,12 @@ export const accountSlice = createSlice({
       state.friends = Array.from(payloadArray)
         .map((item) => ({ ...item }))
         .sort((a, b) => {
-          const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
-          const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+          const timeA = new Date(
+            a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0
+          ).getTime();
+          const timeB = new Date(
+            b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0
+          ).getTime();
           return timeB - timeA;
         });
     },
@@ -66,6 +71,10 @@ export const accountSlice = createSlice({
 
     setBlockedUserIds: (state, action: PayloadAction<string[]>) => {
       state.blockedUserIds = action.payload || [];
+    },
+
+    setBlockedByUserIds: (state, action: PayloadAction<string[]>) => {
+      state.blockedByUserIds = action.payload || [];
     },
 
     updateRelationPresence: (
@@ -95,7 +104,6 @@ export const accountSlice = createSlice({
       updateList(state.followers);
     },
 
-    // ── Bubble conversation to top when a new message arrives ───────────────
     updateLatestMessage: (
       state,
       action: PayloadAction<{ recipientId: string; text: string; createdAt: string }>
@@ -109,18 +117,19 @@ export const accountSlice = createSlice({
       if (index > -1) {
         state.friends[index] = {
           ...state.friends[index],
-          latestMessage: {
-            text,
-            createdAt,
-          },
+          latestMessage: { text, createdAt },
         };
       }
 
       state.friends = Array.from(state.friends)
         .map((item) => ({ ...item }))
         .sort((a, b) => {
-          const timeA = new Date(a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0).getTime();
-          const timeB = new Date(b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0).getTime();
+          const timeA = new Date(
+            a.latestMessage?.createdAt || a.accountDetails?.lastActive || 0
+          ).getTime();
+          const timeB = new Date(
+            b.latestMessage?.createdAt || b.accountDetails?.lastActive || 0
+          ).getTime();
           return timeB - timeA;
         });
     },
@@ -143,10 +152,7 @@ export const accountSlice = createSlice({
         const id = item?.accountDetails?.userId || (item as any)?.userId;
         return String(id) !== targetId;
       });
-      state.friends = state.friends.filter((item) => {
-        const id = item?.accountDetails?.userId || (item as any)?.userId;
-        return String(id) !== targetId;
-      });
+      // NOTE: unfollow != unfriend. `friends` is server-owned.
     },
 
     toggleBlockUser: (state, action: PayloadAction<string>) => {
@@ -172,11 +178,12 @@ export const accountSlice = createSlice({
     },
 
     logout: (state) => {
-      state.user = {} as UserType;
+      state.user = null;
       state.friends = [];
       state.following = [];
       state.followers = [];
       state.blockedUserIds = [];
+      state.blockedByUserIds = [];
       state.isAuthenticated = false;
       state.loading = false;
     },
@@ -189,6 +196,7 @@ export const {
   setFollowing,
   setFriends,
   setBlockedUserIds,
+  setBlockedByUserIds,
   updateRelationPresence,
   updateLatestMessage,
   addFollowing,
@@ -204,6 +212,7 @@ export const selectFollowers = (state: RootState) => state.account.followers;
 export const selectFollowing = (state: RootState) => state.account.following;
 export const selectFriends = (state: RootState) => state.account.friends;
 export const selectBlockedUserIds = (state: RootState) => state.account.blockedUserIds;
+export const selectBlockedByUserIds = (state: RootState) => state.account.blockedByUserIds;
 export const selectIsAuthenticated = (state: RootState) => state.account.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.account.loading;
 
@@ -217,23 +226,21 @@ export const useCredentials = () => {
   const following = useSelector(selectFollowing);
   const friends = useSelector(selectFriends);
   const blockedUserIds = useSelector(selectBlockedUserIds);
+  const blockedByUserIds = useSelector(selectBlockedByUserIds);
   const authLoading = useSelector(selectAuthLoading);
 
   const currentUserId = String(user?.userId || '');
 
   const followingIds = useMemo(() => {
     const set = new Set<string>();
-
     (following || []).forEach((f) => {
       const id = f?.accountDetails?.userId || (f as any)?.userId || (f as any)?._id;
       if (id) set.add(String(id));
     });
-
     (friends || []).forEach((f) => {
       const id = f?.accountDetails?.userId || (f as any)?.userId || (f as any)?._id;
       if (id) set.add(String(id));
     });
-
     return set;
   }, [following, friends]);
 
@@ -246,9 +253,15 @@ export const useCredentials = () => {
     return set;
   }, [friends]);
 
-  const blockedIds = useMemo(() => {
-    return new Set<string>((blockedUserIds || []).map((id) => String(id)));
-  }, [blockedUserIds]);
+  const blockedIds = useMemo(
+    () => new Set<string>((blockedUserIds || []).map((id) => String(id))),
+    [blockedUserIds]
+  );
+
+  const blockedByIds = useMemo(
+    () => new Set<string>((blockedByUserIds || []).map((id) => String(id))),
+    [blockedByUserIds]
+  );
 
   const checkIfFollowing = useCallback(
     (targetUserId?: string | null): boolean => {
@@ -277,6 +290,15 @@ export const useCredentials = () => {
     [currentUserId, blockedIds]
   );
 
+  const checkIfBlockedMe = useCallback(
+    (targetUserId?: string | null): boolean => {
+      if (!targetUserId || !currentUserId) return false;
+      const targetId = String(targetUserId);
+      return targetId !== currentUserId && blockedByIds.has(targetId);
+    },
+    [currentUserId, blockedByIds]
+  );
+
   return useMemo(
     () => ({
       user,
@@ -287,19 +309,27 @@ export const useCredentials = () => {
       following,
       friends,
       blockedUserIds,
+      blockedByUserIds,
       followingIds,
       friendsIds,
       blockedIds,
+      blockedByIds,
       checkIfFollowing,
       checkIfFriend,
       checkIfBlocked,
+      checkIfBlockedMe,
       setAccount: (payload: UserState['user']) => dispatch(setAccount(payload)),
       setFollower: (payload: UserState['followers']) => dispatch(setFollowers(payload)),
       setFollowing: (payload: UserState['following']) => dispatch(setFollowing(payload)),
       setFriends: (payload: UserState['friends']) => dispatch(setFriends(payload)),
       setBlockedUserIds: (payload: string[]) => dispatch(setBlockedUserIds(payload)),
-      updateLatestMessage: (payload: { recipientId: string; text: string; createdAt: string }) =>
-        dispatch(updateLatestMessage(payload)),
+      setBlockedByUserIds: (payload: string[]) =>
+        dispatch(setBlockedByUserIds(payload)),
+      updateLatestMessage: (payload: {
+        recipientId: string;
+        text: string;
+        createdAt: string;
+      }) => dispatch(updateLatestMessage(payload)),
       addFollowing: (payload: AllRelationsType) => dispatch(addFollowing(payload)),
       removeFollowing: (targetUserId: string) => dispatch(removeFollowing(targetUserId)),
       toggleBlockUser: (targetUserId: string) => dispatch(toggleBlockUser(targetUserId)),
@@ -315,12 +345,15 @@ export const useCredentials = () => {
       following,
       friends,
       blockedUserIds,
+      blockedByUserIds,
       followingIds,
       friendsIds,
       blockedIds,
+      blockedByIds,
       checkIfFollowing,
       checkIfFriend,
       checkIfBlocked,
+      checkIfBlockedMe,
       dispatch,
     ]
   );

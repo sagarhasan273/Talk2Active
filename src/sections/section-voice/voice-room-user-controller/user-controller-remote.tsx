@@ -7,9 +7,10 @@ import {
   Headset as HeadsetIcon,
   HeadsetOff as HeadsetOffIcon,
   PersonRemoveTwoTone as KickIcon,
+  Mic as MicIcon,
   MicOff as MicOffIcon,
   StarRounded as StarIcon,
-  VolumeUp as VolumeUpIcon
+  VolumeUp as VolumeUpIcon,
 } from '@mui/icons-material';
 import {
   alpha,
@@ -31,8 +32,10 @@ import ButtonReportUser from '@/components/buttons/button-report-user';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
-
-const remoteVolumeMap = new Map<string, number>();
+import {
+  getStoredVolume,
+  setStoredVolume,
+} from './hook-participant-audio-controller';
 
 interface RoomUserControllerRemoteProps {
   user: ParticipantStageType;
@@ -71,8 +74,12 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
     currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId)
   );
 
-  const [volume, setVolume] = useState<number>(() => remoteVolumeMap.get(userId) ?? 50);
+  // Shared volume store — always in sync with the enforcement hook and
+  // with the main drawer's deafened indicator.
+  const [volume, setVolume] = useState<number>(() => getStoredVolume(userId));
 
+  // Host-mute toggle state (previously always sent `mute: true`)
+  const [hostMuted, setHostMuted] = useState(false);
 
   const sectionCardSx = {
     p: 2,
@@ -86,7 +93,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const handleVolumeChange = (_: Event, val: number | number[]) => {
     const level = Array.isArray(val) ? val[0] : val;
     setVolume(level);
-    remoteVolumeMap.set(userId, level);
+    setStoredVolume(userId, level);
     onLocalVolumeTracked?.(level);
 
     if (room && userId) {
@@ -107,17 +114,19 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
     onToggleDeafen?.(userId);
   };
 
-  const handleHostMute = async (mute: boolean) => {
+  const handleHostMute = async () => {
     if (!room?.localParticipant) return;
+    const next = !hostMuted;
     const payload = JSON.stringify({
       type: 'FORCE_MUTE_PARTICIPANT',
       targetIdentity: userId,
-      mute,
+      mute: next,
     });
     await room.localParticipant.publishData(new TextEncoder().encode(payload), {
       reliable: true,
       topic: 'room_interactions',
     });
+    setHostMuted(next);
   };
 
   const handleHostKick = async () => {
@@ -138,7 +147,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
   return (
     <>
-      {/* Bio / Joined Date */}
       {user.joinedAt && (
         <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
           <Typography variant="caption" color="text.disabled">
@@ -156,7 +164,12 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           variant="caption"
           fontWeight={800}
           color="text.secondary"
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.25 }}
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            display: 'block',
+            mb: 1.25,
+          }}
         >
           Participant Volume
         </Typography>
@@ -204,7 +217,11 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
               valueLabelDisplay="auto"
               sx={{ flex: 1 }}
             />
-            <Typography variant="caption" fontWeight={700} sx={{ minWidth: 34, textAlign: 'right' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{ minWidth: 34, textAlign: 'right' }}
+            >
               {volume}%
             </Typography>
           </Box>
@@ -238,15 +255,20 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           <Stack direction="row" spacing={1.25}>
             <Button
               variant="contained"
-              color="error"
+              color={hostMuted ? 'warning' : 'error'}
               size="small"
               disableElevation
               fullWidth
-              startIcon={<MicOffIcon />}
-              onClick={() => handleHostMute(true)}
-              sx={{ borderRadius: 0.5, fontWeight: 600, textTransform: 'none', boxShadow: 'none' }}
+              startIcon={hostMuted ? <MicIcon /> : <MicOffIcon />}
+              onClick={handleHostMute}
+              sx={{
+                borderRadius: 0.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: 'none',
+              }}
             >
-              Mute for All
+              {hostMuted ? 'Unmute for All' : 'Mute for All'}
             </Button>
             <Button
               variant="outlined"
@@ -274,12 +296,21 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
         }}
       >
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1.5}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          spacing={1.5}
+        >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="subtitle2" fontWeight={800}>
               Rate Speaking Proficiency
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block' }}
+            >
               Share fluency & pronunciation feedback
             </Typography>
           </Box>
@@ -304,14 +335,21 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
         </Stack>
       </Paper>
 
-      {/* Follow / Block */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mb: 1.25 }}>
-        {<ButtonRelationshipToggle
+      {/* Follow / Block / PM */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 1.25,
+          mb: 1.25,
+        }}
+      >
+        <ButtonRelationshipToggle
           targetUser={{ id: userId, name: user.name }}
           size="small"
           variant="soft"
           fullWidth
-        />}
+        />
         <ButtonBlockUser
           targetUserId={user.userId}
           userName={user.name}
@@ -340,11 +378,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           PM
         </Button>
       </Box>
-
-
-
     </>
   );
 };
 
-export default React.memo(RoomUserControllerRemote);
+export default RoomUserControllerRemote;

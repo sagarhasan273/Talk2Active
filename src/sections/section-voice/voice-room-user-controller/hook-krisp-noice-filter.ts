@@ -1,19 +1,28 @@
+// src/sections/section-voice/voice-room-user-controller/hook-krisp-noice-filter.ts
+
 import { useRoomContext } from '@livekit/components-react';
-import { isKrispNoiseFilterSupported, KrispNoiseFilter } from '@livekit/krisp-noise-filter';
+import {
+  isKrispNoiseFilterSupported,
+  KrispNoiseFilter,
+} from '@livekit/krisp-noise-filter';
 import { LocalAudioTrack, Track } from 'livekit-client';
 import { useCallback, useEffect, useState } from 'react';
 
-// Module-level singletons that persist across mount/unmount of dialogs
+// Module-level singletons persist across mount/unmount of the drawer.
 let globalProcessorInstance: ReturnType<typeof KrispNoiseFilter> | null = null;
 let globalIsFilterEnabled = false;
+// Once the hook (or the user) has ever toggled the filter this session,
+// we trust the module flags and stop probing track internals.
+let sessionInitialised = false;
 
 export const useKrispNoiseFilter = () => {
   const room = useRoomContext();
-  const [isNoiseFilterEnabled, setIsNoiseFilterEnabled] = useState(globalIsFilterEnabled);
+  const [isNoiseFilterEnabled, setIsNoiseFilterEnabled] = useState(
+    globalIsFilterEnabled
+  );
   const [isNoiseFilterPending, setIsNoiseFilterPending] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
 
-  // Check hardware/browser support
   useEffect(() => {
     try {
       setIsSupported(isKrispNoiseFilterSupported());
@@ -28,15 +37,18 @@ export const useKrispNoiseFilter = () => {
     return pub?.track instanceof LocalAudioTrack ? pub.track : null;
   }, [room]);
 
-  // Sync state on drawer/modal mount with actual track & global state
+  // Sync state on drawer mount — but only probe once per session.
+  // Repeatedly reading `track.processor` caused false-positives when
+  // some other code path (or a previous session) left a processor around.
   useEffect(() => {
-    const audioTrack = getLocalAudioTrack();
-    if (audioTrack) {
-      // Check if track already has an active processor attached
-      const hasActiveProcessor = Boolean((audioTrack as any).processor);
+    if (!sessionInitialised) {
+      const audioTrack = getLocalAudioTrack();
+      const hasActiveProcessor = Boolean((audioTrack as any)?.processor);
       if (hasActiveProcessor && !globalIsFilterEnabled) {
         globalIsFilterEnabled = true;
+        globalProcessorInstance = (audioTrack as any).processor ?? null;
       }
+      sessionInitialised = true;
     }
     setIsNoiseFilterEnabled(globalIsFilterEnabled);
   }, [getLocalAudioTrack]);

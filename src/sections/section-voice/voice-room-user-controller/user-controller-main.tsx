@@ -27,6 +27,7 @@ import React, { useState } from 'react';
 import { UseBooleanReturn } from '@/hooks/use-boolean';
 import { ParticipantStageType } from '@/types/type-room';
 import { fUsername } from 'src/utils/helper';
+import { getStoredVolume } from './hook-participant-audio-controller';
 import ParticipantStatsRow from './user-controller-participant-stats-row';
 import { RoomUserControllerRemote } from './user-controller-remote';
 import { RoomUserControllerSelf } from './user-controller-self';
@@ -55,12 +56,16 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   const room = useRoomContext();
 
   const [copied, setCopied] = useState(false);
-  const [remoteVolume, setRemoteVolume] = useState<number>(50);
 
   const isSelf = Boolean(user?.isSelf);
   const userId = String(user?.userId || '');
 
-  // 1. Determine Muted State
+  // 🔑 Read the shared store — previously this always started at 50 even
+  // when a per-participant volume was already saved from an earlier session.
+  const [remoteVolume, setRemoteVolume] = useState<number>(() =>
+    getStoredVolume(userId)
+  );
+
   const isMuted = isSelf
     ? room?.localParticipant
       ? !room.localParticipant.isMicrophoneEnabled
@@ -71,7 +76,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
       return p ? !p.isMicrophoneEnabled || !micPub || micPub.isMuted : true;
     })();
 
-  // 2. Determine Deafened State
   const isDeafened = isSelf ? false : remoteVolume === 0;
 
   const handleCopyId = (e: React.MouseEvent) => {
@@ -91,10 +95,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
       open={open}
       onClose={onClose}
       PaperProps={{ elevation: 0 }}
-      SlideProps={{
-        direction: 'up',
-        timeout: { enter: 320, exit: 240 },
-      }}
+      SlideProps={{ direction: 'up', timeout: { enter: 320, exit: 240 } }}
       sx={{
         zIndex: theme.zIndex.drawer,
         '& .MuiBackdrop-root': {
@@ -109,7 +110,9 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          backgroundColor: isDark ? '#1a1f2b' : alpha(theme.palette.background.paper, 0.98),
+          backgroundColor: isDark
+            ? '#1a1f2b'
+            : alpha(theme.palette.background.paper, 0.98),
           backgroundImage: 'none',
           backdropFilter: 'blur(16px)',
           border: '1px solid',
@@ -117,10 +120,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           boxShadow: isDark
             ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
             : `0 24px 48px -12px ${alpha(theme.palette.common.black, 0.25)}`,
-
           ...(isMobile
             ? {
-              // Mobile: Bottom sheet that slides smoothly from bottom -> up
               position: 'fixed',
               left: 0,
               right: 0,
@@ -133,7 +134,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
               borderBottomRightRadius: 0,
             }
             : {
-              // Desktop: Perfectly centered on screen while keeping slide-up animation
               position: 'fixed',
               inset: 0,
               margin: 'auto',
@@ -142,9 +142,16 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         },
       }}
     >
-      {/* Mobile drag handle bar */}
       {isMobile && (
-        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', pt: 1.25, pb: 0.5 }}>
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 1.25,
+            pb: 0.5,
+          }}
+        >
           <Box
             sx={{
               width: 38,
@@ -156,7 +163,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         </Box>
       )}
 
-      {/* Shared Drawer Top Header */}
       <Box
         sx={{
           px: 3,
@@ -206,10 +212,15 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         </IconButton>
       </Box>
 
-      {/* Main Scrollable Body */}
       <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3 }, py: 2.5 }}>
-        {/* User Identity Row with Avatar & Status Badge */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, sm: 2.5 }, mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: { xs: 2, sm: 2.5 },
+            mb: 2,
+          }}
+        >
           <Box sx={{ position: 'relative', flexShrink: 0 }}>
             <Badge
               overlap="circular"
@@ -276,7 +287,15 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
             </Badge>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, pt: 0.25 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minWidth: 0,
+              pt: 0.25,
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.35 }}>
               <Typography
                 variant="h6"
@@ -354,7 +373,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           </Box>
         </Box>
 
-        {/* View Specific Modules */}
         {isSelf ? (
           <RoomUserControllerSelf user={user} isMuted={isMuted} />
         ) : (
@@ -372,4 +390,7 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   );
 };
 
-export default React.memo(RoomUserControllerMain);
+// Note: removed the useless React.memo wrapper — the parent passes
+// `onClose` / `onRateOpen` inline every render, so shallow compare always
+// fails. If you want it back, wrap those in useCallback first.
+export default RoomUserControllerMain;

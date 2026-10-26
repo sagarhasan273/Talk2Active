@@ -175,6 +175,42 @@ type ParticipantTileProps = {
   isSharingScreen?: boolean;
 };
 
+// ────────────────────────────────────────────────────────────────────────
+// FIX (Bug 2): custom comparator so tiles don't re-render just because
+// `participants.map(parseParticipant)` in the parent created a new object
+// reference on every room event. Each actually-rendered field is compared.
+// `rawParticipant` (LiveKit Participant) is stable per session and carries
+// mute / speaking / quality identity, so it's a strong but cheap signal.
+// ────────────────────────────────────────────────────────────────────────
+const areParticipantTilePropsEqual = (
+  prev: ParticipantTileProps,
+  next: ParticipantTileProps
+) => {
+  if (prev.isSharingScreen !== next.isSharingScreen) return false;
+
+  const a = prev.participant;
+  const b = next.participant;
+
+  if (a === b) return true;
+  if (!a || !b) return false;
+
+  if (a.rawParticipant !== b.rawParticipant) return false;
+
+  return (
+    a.id === b.id &&
+    a.userId === b.userId &&
+    a.name === b.name &&
+    a.profilePhoto === b.profilePhoto &&
+    a.verified === b.verified &&
+    a.isHost === b.isHost &&
+    a.isSelf === b.isSelf &&
+    a.handRaised === b.handRaised &&
+    a.activeReactionEmoji === b.activeReactionEmoji &&
+    a.status === b.status &&
+    a.isGhost === b.isGhost
+  );
+};
+
 export const ParticipantTile = React.memo(
   ({ participant, isSharingScreen = false }: ParticipantTileProps) => {
     const theme = useTheme();
@@ -530,7 +566,13 @@ export const ParticipantTile = React.memo(
                       color: '#000',
                       boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.45)}`,
                       zIndex: 2,
+                      // FIX (Bug 3): hint compositor + respect reduced-motion
+                      // so this infinite wiggle can't burn frames on mobile.
+                      willChange: 'transform',
                       animation: `${handWiggle} 1.2s infinite ease-in-out`,
+                      '@media (prefers-reduced-motion: reduce)': {
+                        animation: 'none',
+                      },
                     }}
                   >
                     <Hand size={13} strokeWidth={2.5} />
@@ -625,7 +667,8 @@ export const ParticipantTile = React.memo(
         />
       </>
     );
-  }
+  },
+  areParticipantTilePropsEqual
 );
 
 export default ParticipantTile;

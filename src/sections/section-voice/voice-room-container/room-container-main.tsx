@@ -1,4 +1,4 @@
-// src/sections/section-voice/view/voice-room-body.tsx
+// src/sections/section-voice/voice-room-container/room-container-main.tsx
 
 import {
   RoomAudioRenderer,
@@ -8,7 +8,7 @@ import {
 } from '@livekit/components-react';
 import { Box } from '@mui/material';
 import { RoomEvent } from 'livekit-client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useVoiceRoomSetting } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
@@ -36,6 +36,13 @@ export function RoomContainerMain({
 
   const [raisedHandsSet, setRaisedHandsSet] = useState<Set<string>>(new Set());
   const [participantReactions, setParticipantReactions] = useState<Record<string, string>>({});
+
+  const dataRef = useRef({
+    localParticipant,
+    onLeaveRoom,
+    playHandRaise,
+  });
+  dataRef.current = { localParticipant, onLeaveRoom, playHandRaise };
 
   // --- Stage Interaction Handlers ---
   const handleToggleRaiseHand = useCallback(async () => {
@@ -103,7 +110,7 @@ export function RoomContainerMain({
     }
   }, [localParticipant]);
 
-  // --- Stage Data Channel Listener (Hand Raise, Emoji, Force Mute) ---
+  // --- Data channel listener — deps: [room] only ---
   useEffect(() => {
     if (!room) return;
 
@@ -119,7 +126,7 @@ export function RoomContainerMain({
             else next.delete(data.identity);
             return next;
           });
-          playHandRaise();
+          dataRef.current.playHandRaise();
         }
 
         if (data.type === 'FLOATING_EMOJI') {
@@ -134,11 +141,12 @@ export function RoomContainerMain({
         }
 
         if (data.type === 'FORCE_MUTE_PARTICIPANT') {
-          if (data.targetIdentity === localParticipant?.identity) {
+          const me = dataRef.current.localParticipant;
+          if (data.targetIdentity === me?.identity) {
             if (data.kicked) {
-              onLeaveRoom?.();
+              dataRef.current.onLeaveRoom?.();
             } else {
-              localParticipant?.setMicrophoneEnabled(!data.mute);
+              me?.setMicrophoneEnabled(!data.mute);
             }
           }
         }
@@ -151,7 +159,7 @@ export function RoomContainerMain({
     return () => {
       room.off(RoomEvent.DataReceived, handleDataReceived);
     };
-  }, [room, localParticipant, onLeaveRoom, playHandRaise]);
+  }, [room]);
 
   return (
     <>
@@ -160,7 +168,7 @@ export function RoomContainerMain({
 
       {isJoining || !isInRoom ? (
         <RoomContainerSkeleton />
-      ) :
+      ) : (
         <Box
           sx={{
             display: 'flex',
@@ -186,8 +194,7 @@ export function RoomContainerMain({
           />
           <RoomChatMain topicContext="" />
         </Box>
-
-      }
+      )}
 
       <RoomChatDrawer />
     </>

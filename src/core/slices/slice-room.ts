@@ -69,7 +69,7 @@ const initialState: RoomState = {
   room: null,
   rooms: [],
   loading: false,
-  isRoomsLoading: false, // Initialized
+  isRoomsLoading: false,
   participants: [],
   isUnreadRoomMessage: false,
   userStatsMap: {},
@@ -144,14 +144,18 @@ export const roomSlice = createSlice({
 
         // 1. Handle Language Count Adjustments (if languages were modified)
         if (roomUpdate.languages && Array.isArray(roomUpdate.languages)) {
-          const oldLanguages = Array.isArray(existingRoom.languages) ? existingRoom.languages : [];
+          const oldLanguages = Array.isArray(existingRoom.languages)
+            ? existingRoom.languages
+            : [];
           const newLanguages = roomUpdate.languages;
 
-          // Find which languages were removed and which were newly added
-          const languagesToRemove = oldLanguages.filter((lang) => !newLanguages.includes(lang));
-          const languagesToAdd = newLanguages.filter((lang) => !oldLanguages.includes(lang));
+          const languagesToRemove = oldLanguages.filter(
+            (lang) => !newLanguages.includes(lang)
+          );
+          const languagesToAdd = newLanguages.filter(
+            (lang) => !oldLanguages.includes(lang)
+          );
 
-          // Decrement removed languages
           languagesToRemove.forEach((langCode) => {
             const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption && langOption.count > 0) {
@@ -159,22 +163,22 @@ export const roomSlice = createSlice({
             }
           });
 
-          // Increment added languages
           languagesToAdd.forEach((langCode) => {
             const langOption = state.roomLanguageOptions.find((l) => l.code === langCode);
             if (langOption) {
               langOption.count += 1;
             }
           });
-          // Note: We do NOT touch the 'all' option count here because the total number of rooms hasn't changed.
         }
 
-        // 2. Apply the update to the room in the list
         state.rooms[roomIndex] = { ...existingRoom, ...roomUpdate };
 
-        // 3. Keep the active/current room in sync if the user is inside it
         if (state.room?.roomId === roomUpdate.roomId) {
           state.room = { ...state.room, ...roomUpdate };
+
+          if (Array.isArray(roomUpdate.participants)) {
+            state.participants = roomUpdate.participants;
+          }
         }
       }
     },
@@ -196,7 +200,6 @@ export const roomSlice = createSlice({
             }
           });
 
-          // Decrement the global 'all' counter
           const allOption = state.roomLanguageOptions.find((l) => l.code === 'all');
           if (allOption && allOption.count > 0) {
             allOption.count -= 1;
@@ -225,7 +228,9 @@ export const roomSlice = createSlice({
       const targetRoom = state.rooms.find((r) => r.roomId === roomId);
       if (targetRoom) {
         if (!targetRoom.participants) targetRoom.participants = [];
-        const exists = targetRoom.participants.some((p) => getTargetId(p) === participantId);
+        const exists = targetRoom.participants.some(
+          (p) => getTargetId(p) === participantId
+        );
         if (!exists) {
           targetRoom.participants.push(participant);
         }
@@ -233,7 +238,9 @@ export const roomSlice = createSlice({
 
       if (state.room?.roomId === roomId) {
         if (!state.room.participants) state.room.participants = [];
-        const exists = state.room.participants.some((p) => getTargetId(p) === participantId);
+        const exists = state.room.participants.some(
+          (p) => getTargetId(p) === participantId
+        );
         if (!exists) {
           state.room.participants.push(participant);
           state.participants = state.room.participants;
@@ -310,14 +317,17 @@ export const roomSlice = createSlice({
         if (id) {
           updatesMap.set(id, update);
 
-          // Store directly in the O(1) stats lookup map
           state.userStatsMap[id] = {
             ...state.userStatsMap[id],
-            ...(update.follower_count !== undefined && { follower_count: update.follower_count }),
+            ...(update.follower_count !== undefined && {
+              follower_count: update.follower_count,
+            }),
             ...(update.following_count !== undefined && {
               following_count: update.following_count,
             }),
-            ...(update.friend_count !== undefined && { friend_count: update.friend_count }),
+            ...(update.friend_count !== undefined && {
+              friend_count: update.friend_count,
+            }),
           };
         }
       }
@@ -332,17 +342,14 @@ export const roomSlice = createSlice({
         });
       };
 
-      // Apply to standalone list
       applyListUpdates(state.participants);
 
-      // Apply to active room
       if (state.room) {
         const hostUpdate = updatesMap.get(getTargetId(state.room.host));
         if (hostUpdate && state.room.host) applyUserUpdate(state.room.host, hostUpdate);
         applyListUpdates(state.room.participants);
       }
 
-      // Apply to all rooms
       state.rooms.forEach((room) => {
         const hostUpdate = updatesMap.get(getTargetId(room.host));
         if (hostUpdate && room.host) applyUserUpdate(room.host, hostUpdate);

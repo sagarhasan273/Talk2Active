@@ -53,13 +53,12 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
   const isDark = theme.palette.mode === 'dark';
 
   const [starRating, setStarRating] = useState<number>(4);
-  const [ratedLevel, setRatedLevel] = useState<SpeakingProficiencyLevel>('fluent');
+  const [ratedLevel, setRatedLevel] =
+    useState<SpeakingProficiencyLevel>('fluent');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // RTK Query Mutation Hook
   const [submitRating, { isLoading }] = useSubmitRatingMutation();
 
-  // Sync stars with proficiency tiers
   const handleRatingChange = (_: React.SyntheticEvent, val: number | null) => {
     const nextVal = val ?? 1;
     setStarRating(nextVal);
@@ -95,7 +94,6 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
     }
   };
 
-  // Submit Rating Handler
   const handleSave = async () => {
     if (!userId) return;
     setErrorMessage(null);
@@ -112,13 +110,16 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
     } catch (err: any) {
       console.error('Failed to submit rating:', err);
       setErrorMessage(
-        err?.data?.message || err?.message || 'Failed to submit rating. Please try again.'
+        err?.data?.message ||
+        err?.message ||
+        'Failed to submit rating. Please try again.'
       );
     }
   };
 
   const currentLevelObj =
-    PROFICIENCY_LEVELS.find((l) => l.value === ratedLevel) || PROFICIENCY_LEVELS[2];
+    PROFICIENCY_LEVELS.find((l) => l.value === ratedLevel) ??
+    PROFICIENCY_LEVELS[0];
 
   return (
     <Dialog
@@ -160,12 +161,18 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
       </DialogTitle>
 
       <DialogContent sx={{ pt: 1 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.5 }}>
-          How well is <Box component="strong" sx={{ color: 'text.primary' }}>{userName}</Box>{' '}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mb: 2, lineHeight: 1.5 }}
+        >
+          How well is{' '}
+          <Box component="strong" sx={{ color: 'text.primary' }}>
+            {userName}
+          </Box>{' '}
           communicating and expressing ideas?
         </Typography>
 
-        {/* 1 to 5 Star Rating Container */}
         <Box
           sx={{
             display: 'flex',
@@ -199,27 +206,29 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
               bgcolor: alpha(theme.palette.primary.main, 0.12),
             }}
           >
-            {starRating} of 5 Stars • {currentLevelObj.emoji} {currentLevelObj.label}
+            {starRating} of 5 Stars • {currentLevelObj.emoji}{' '}
+            {currentLevelObj.label}
           </Typography>
         </Box>
 
-        {/* 5-Tier Select Menu */}
         <FormControl fullWidth size="small" sx={{ mt: 2 }}>
-          <InputLabel id="rate-proficiency-tier-label">Assessed Proficiency</InputLabel>
+          <InputLabel id="rate-proficiency-tier-label">
+            Assessed Proficiency
+          </InputLabel>
           <Select
             labelId="rate-proficiency-tier-label"
             value={ratedLevel}
             label="Assessed Proficiency"
             disabled={isLoading}
-            onChange={(e) => handleLevelChange(e.target.value as SpeakingProficiencyLevel)}
+            onChange={(e) =>
+              handleLevelChange(e.target.value as SpeakingProficiencyLevel)
+            }
             sx={{
               borderRadius: 0.5,
               bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
             }}
             MenuProps={{
-              sx: {
-                zIndex: theme.zIndex.modal + 30,
-              },
+              sx: { zIndex: theme.zIndex.modal + 30 },
               PaperProps: {
                 sx: {
                   borderRadius: 0.5,
@@ -231,7 +240,11 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
             }}
           >
             {PROFICIENCY_LEVELS.map((tier) => (
-              <MenuItem key={tier.value} value={tier.value} sx={{ borderRadius: 0.5, mx: 0.5 }}>
+              <MenuItem
+                key={tier.value}
+                value={tier.value}
+                sx={{ borderRadius: 0.5, mx: 0.5 }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                   <span>{tier.emoji}</span>
                   <Typography variant="body2" fontWeight={600}>
@@ -243,12 +256,16 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
           </Select>
         </FormControl>
 
-        {/* Error Feedback */}
         {errorMessage && (
           <Typography
             variant="caption"
             color="error.main"
-            sx={{ display: 'block', mt: 1.5, textAlign: 'center', fontWeight: 600 }}
+            sx={{
+              display: 'block',
+              mt: 1.5,
+              textAlign: 'center',
+              fontWeight: 600,
+            }}
           >
             {errorMessage}
           </Typography>
@@ -274,7 +291,9 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
           disableElevation
           onClick={handleSave}
           disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
+          startIcon={
+            isLoading ? <CircularProgress size={16} color="inherit" /> : null
+          }
           sx={{
             fontWeight: 600,
             textTransform: 'none',
@@ -291,4 +310,4 @@ export const DialogRateSpeakingLevel: React.FC<DialogRateSpeakingLevelProps> = (
   );
 };
 
-export default React.memo(DialogRateSpeakingLevel);
+export default DialogRateSpeakingLevel;

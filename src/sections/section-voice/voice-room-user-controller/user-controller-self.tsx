@@ -1,9 +1,7 @@
 // src/sections/section-voice/voice-room-user-controller/user-controller-self.tsx
 
-import useRoomSounds from '@/hooks/use-room-sounds';
 import { ParticipantStageType } from '@/types/type-room';
 import { fDateTime } from '@/utils/format-time';
-import { useMediaDeviceSelect, useRoomContext } from '@livekit/components-react';
 import { Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
 import {
   alpha,
@@ -21,8 +19,9 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React from 'react';
 import { KrispNoiseFilterToggle } from '../voice-button-krisp-noise-filter';
+import { useParticipantAudioController } from './hook-participant-audio-controller';
 
 interface RoomUserControllerSelfProps {
   user: ParticipantStageType;
@@ -35,24 +34,25 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const room = useRoomContext();
-  const { playToggleMute } = useRoomSounds();
 
-  const [micGain, setMicGain] = useState<number>(() => {
-    return Number(sessionStorage.getItem('local_mic_gain') ?? 25);
+  // 🔑 Uses the shared audio controller — mic gain slider now actually
+  // applies real audio gain via Web Audio API (was previously a no-op
+  // slider that only wrote to sessionStorage).
+  const {
+    micGain,
+    microphones,
+    speakers,
+    activeMicId,
+    activeSpeakerId,
+    handleMicGainChange,
+    handleMicDeviceChange,
+    handleSpeakerDeviceChange,
+    handleToggleMic,
+  } = useParticipantAudioController({
+    userId: String(user.userId),
+    isSelf: true,
+    rawParticipant: user.rawParticipant,
   });
-
-  const {
-    devices: microphones,
-    activeDeviceId: activeMicId,
-    setActiveMediaDevice: setActiveMicDevice,
-  } = useMediaDeviceSelect({ kind: 'audioinput', requestPermissions: true });
-
-  const {
-    devices: speakers,
-    activeDeviceId: activeSpeakerId,
-    setActiveMediaDevice: setActiveSpeakerDevice,
-  } = useMediaDeviceSelect({ kind: 'audiooutput' });
 
   const sectionCardSx = {
     p: 2,
@@ -63,26 +63,8 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
     borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
   };
 
-  const handleToggleMic = async () => {
-    if (!room?.localParticipant) return;
-    const isEnabled = room.localParticipant.isMicrophoneEnabled;
-    await room.localParticipant.setMicrophoneEnabled(!isEnabled, {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-    });
-    playToggleMute(isEnabled);
-  };
-
-  const handleMicGainChange = (_: Event, val: number | number[]) => {
-    const value = Array.isArray(val) ? val[0] : val;
-    setMicGain(value);
-    sessionStorage.setItem('local_mic_gain', String(value));
-  };
-
   return (
     <>
-      {/* Bio / Joined Date */}
       {user.joinedAt && (
         <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
           <Typography variant="caption" color="text.disabled">
@@ -100,7 +82,12 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
           variant="caption"
           fontWeight={800}
           color="text.secondary"
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.5 }}
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            display: 'block',
+            mb: 1.5,
+          }}
         >
           Microphone Gain & Control
         </Typography>
@@ -158,7 +145,13 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
 
             <Divider sx={{ borderStyle: 'dashed', opacity: 0.5 }} />
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <Typography variant="caption" fontWeight={600} color="text.secondary">
                 AI Noise Suppression
               </Typography>
@@ -174,7 +167,12 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
           variant="caption"
           fontWeight={800}
           color="text.secondary"
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', mb: 1.5 }}
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            display: 'block',
+            mb: 1.5,
+          }}
         >
           Audio Hardware Devices
         </Typography>
@@ -186,7 +184,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
               labelId="self-mic-select-label"
               value={activeMicId || ''}
               label="Input Microphone"
-              onChange={(e) => setActiveMicDevice(e.target.value)}
+              onChange={(e) => handleMicDeviceChange(e.target.value)}
               sx={{
                 borderRadius: 0.5,
                 bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',
@@ -206,7 +204,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
               labelId="self-speaker-select-label"
               value={activeSpeakerId || ''}
               label="Output Speaker"
-              onChange={(e) => setActiveSpeakerDevice(e.target.value)}
+              onChange={(e) => handleSpeakerDeviceChange(e.target.value)}
               sx={{
                 borderRadius: 0.5,
                 bgcolor: isDark ? alpha('#fff', 0.02) : 'transparent',

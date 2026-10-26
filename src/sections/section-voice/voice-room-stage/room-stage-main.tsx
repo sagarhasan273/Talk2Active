@@ -7,6 +7,7 @@ import { Track } from 'livekit-client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRoomTools } from '@/core/slices';
+import useBlockedAudioFilter from '@/hooks/use-blocked-audio-filter';
 import { useResponsive } from '@/hooks/use-responsive';
 import { CompactRoomHeader } from '../voice-room-header/room-header-compact';
 import { RoomControlDock } from './room-stage-control-dock';
@@ -44,9 +45,12 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
   const isDark = theme.palette.mode === 'dark';
 
   const isMobile = useResponsive('down', 'sm');
-  const isSmallScreen = useResponsive('down', 'md'); // Routes mobile & small tablets to MobileView
+  const isSmallScreen = useResponsive('down', 'md');
 
   const { room, participants } = useRoomTools();
+
+  useBlockedAudioFilter();
+
   const screenShareContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedTrackSid, setSelectedTrackSid] = useState<string | null>(null);
@@ -57,12 +61,21 @@ export const RoomAudioStage: React.FC<RoomAudioStageProps> = ({
 
   const rawScreenShareTracks = useTracks([Track.Source.ScreenShare]);
 
-  const activeScreenShareTracks = useMemo(
+  // Memoize on track-sid signature — see Bug 4 explanation.
+  const screenShareSidKey = useMemo(
     () =>
-      rawScreenShareTracks.filter(
-        (t) => Boolean(t?.publication && t?.publication?.isSubscribed)
-      ),
+      rawScreenShareTracks
+        .filter((t) => Boolean(t?.publication?.isSubscribed))
+        .map((t) => t.publication!.trackSid)
+        .sort()
+        .join('|'),
     [rawScreenShareTracks]
+  );
+
+  const activeScreenShareTracks = useMemo(
+    () => rawScreenShareTracks.filter((t) => Boolean(t?.publication?.isSubscribed)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [screenShareSidKey]
   );
 
   const hasScreenShare = activeScreenShareTracks.length > 0;

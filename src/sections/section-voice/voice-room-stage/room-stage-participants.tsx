@@ -15,7 +15,7 @@ import {
 } from '@livekit/components-react';
 import { Box, BoxProps } from '@mui/material';
 import { RoomEvent, Track, type Participant } from 'livekit-client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { EmptySlotTile } from './room-stage-empty-slot-tile';
 import ParticipantTile from './room-stage-participant-tile';
 
@@ -113,7 +113,9 @@ export const RoomStageParticipants = ({
     });
   }, []);
 
-  // 1. Socket listener for leave & join
+  const socketCbRef = useRef({ playUserJoin, playUserLeave, clearGhostId });
+  socketCbRef.current = { playUserJoin, playUserLeave, clearGhostId };
+
   useEffect(() => {
     if (!socket) return undefined;
 
@@ -130,14 +132,14 @@ export const RoomStageParticipants = ({
         next.add(targetId);
         return next;
       });
-      playUserLeave?.();
+      socketCbRef.current.playUserLeave?.();
     };
 
     const handleUserJoin = (payload: any) => {
       const joinedRoomId = localParticipant?.attributes?.roomId;
       if (joinedRoomId !== payload.roomId) return;
-      clearGhostId(extractParticipantId(payload));
-      playUserJoin();
+      socketCbRef.current.clearGhostId(extractParticipantId(payload));
+      socketCbRef.current.playUserJoin();
     };
 
     socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
@@ -147,7 +149,7 @@ export const RoomStageParticipants = ({
       socket.off(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);
       socket.off(SOCKET_EVENTS.BROADCAST_USER_JOIN, handleUserJoin);
     };
-  }, [socket, localParticipant?.attributes?.roomId, playUserLeave, clearGhostId]);
+  }, [socket, localParticipant?.attributes?.roomId]);
 
   useEffect(() => {
     if (!room) return undefined;

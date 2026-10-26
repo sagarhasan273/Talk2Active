@@ -8,14 +8,30 @@ import {
   ScreenShareOff,
   Smile,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useVoiceRoomSetting } from '@/core/contexts';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
-import { Box, Button, IconButton, Popover, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  Popover,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { Track } from 'livekit-client';
+import {
+  type RemoteParticipant,
+  type RemoteTrack,
+  type RemoteTrackPublication,
+  RoomEvent,
+  Track,
+} from 'livekit-client';
 
 type RoomControlDockProps = {
   handRaised: boolean;
@@ -47,7 +63,6 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
   const [leaveAnchorEl, setLeaveAnchorEl] = useState<HTMLElement | null>(null);
 
-  // LiveKit hooks for local mic and deafen controls
   const room = useRoomContext();
   const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
   const [deafened, setDeafened] = useState(false);
@@ -67,33 +82,76 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     }
   }, [localParticipant, micMuted, playToggleMute]);
 
+  // ── FIX 1a: state update is pure. Toggle only. ──
   const handleToggleDeafen = useCallback(() => {
+    setDeafened((prev) => !prev);
+  }, []);
+
+  // ── FIX 1b: side effects live in an effect that runs ONLY on actual change.
+  //    Kept it idempotent so React StrictMode double-invoke is harmless.
+  const prevDeafenedRef = useRef(deafened);
+
+  useEffect(() => {
+    if (prevDeafenedRef.current === deafened) return; // skip mount + redundant updates
+    prevDeafenedRef.current = deafened;
+
+    playToggleDeafen(deafened);
+
     if (!room) return;
 
-    setDeafened((prevDeafened) => {
-      const nextDeafened = !prevDeafened;
-
-      // 🔊 Trigger sound based on the new deafen state
-      playToggleDeafen(nextDeafened);
-
-      room.remoteParticipants.forEach((participant) => {
-        participant.trackPublications.forEach((publication) => {
-          if (publication.source === Track.Source.Microphone && publication.track) {
-            const mediaStreamTrack = publication.track.mediaStreamTrack;
-            if (mediaStreamTrack) {
-              mediaStreamTrack.enabled = !nextDeafened;
-            }
-          }
-        });
+    room.remoteParticipants.forEach((participant) => {
+      participant.trackPublications.forEach((pub) => {
+        if (pub.source === Track.Source.Microphone && pub.track) {
+          const mediaTrack = pub.track.mediaStreamTrack;
+          if (mediaTrack) mediaTrack.enabled = !deafened;
+        }
       });
-
-      if (nextDeafened && isMicrophoneEnabled) {
-        localParticipant?.setMicrophoneEnabled(false);
-      }
-
-      return nextDeafened;
     });
-  }, [room, isMicrophoneEnabled, localParticipant, playToggleDeafen]);
+
+    if (deafened && isMicrophoneEnabled) {
+      localParticipant?.setMicrophoneEnabled(false);
+    }
+  }, [deafened, room, isMicrophoneEnabled, localParticipant, playToggleDeafen]);
+
+  // ── FIX 1c: keep new joiners / late-unmutes muted while deafened.
+  useEffect(() => {
+    if (!deafened || !room) return undefined;
+
+    const muteRemoteMic = (participant: RemoteParticipant) => {
+      participant.trackPublications.forEach((pub) => {
+        if (pub.source === Track.Source.Microphone && pub.track) {
+          const mediaTrack = pub.track.mediaStreamTrack;
+          if (mediaTrack) mediaTrack.enabled = false;
+        }
+      });
+    };
+
+    const handleParticipantConnected = (participant: RemoteParticipant) => {
+      muteRemoteMic(participant);
+    };
+
+    const handleTrackSubscribed = (
+      track: RemoteTrack,
+      pub: RemoteTrackPublication,
+      _participant: RemoteParticipant
+    ) => {
+      if (pub.source === Track.Source.Microphone) {
+        const mediaTrack = track.mediaStreamTrack;
+        if (mediaTrack) mediaTrack.enabled = false;
+      }
+    };
+
+    room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+
+    // Apply immediately to anyone already in the room
+    room.remoteParticipants.forEach(muteRemoteMic);
+
+    return () => {
+      room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    };
+  }, [deafened, room]);
 
   const buttonSx = {
     width: { xs: 40, sm: 42 },
@@ -124,8 +182,14 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           px: { xs: 1.25, sm: 2 },
           py: { xs: 1, sm: 1.25 },
           borderRadius: 2,
-          backdropFilter: 'blur(16px)',
-          bgcolor: 'background.paper',
+          // ── FIX (mobile paint): skip blur on mobile, it's the single
+          //    most expensive compositor op here and the dock is always visible.
+          backdropFilter: { xs: 'none', sm: 'blur(16px)' },
+          bgcolor: isMobile
+            ? isDark
+              ? alpha('#181c26', 0.96)
+              : alpha('#ffffff', 0.98)
+            : 'background.paper',
           border: '1px solid',
           borderColor: isDark ? alpha('#fff', 0.08) : alpha('#000', 0.08),
           boxShadow: isDark
@@ -225,7 +289,6 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             </IconButton>
           </Tooltip>
 
-          {/* Screen Share: Hidden on mobile browsers */}
           {!isMobile && (
             <Tooltip title={isScreenSharing ? 'Stop screen share' : 'Share screen'} arrow>
               <IconButton
@@ -293,7 +356,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             {isMobile ? null : 'Leave'}
           </Button>
         </Box>
-      </Box >
+      </Box>
 
       {/* Floating Reaction Popover */}
       <Popover
@@ -321,30 +384,28 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           },
         }}
       >
-        {
-          REACTION_EMOJIS.map((emoji) => (
-            <IconButton
-              key={emoji}
-              size="small"
-              onClick={() => {
-                onSendReaction?.(emoji);
-                setEmojiAnchor(null);
-              }}
-              sx={{
-                fontSize: 20,
-                p: 0.75,
-                borderRadius: 0.5,
-                transition: 'transform 0.15s ease',
-                '&:hover': {
-                  transform: 'scale(1.2)',
-                  bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
-                },
-              }}
-            >
-              {emoji}
-            </IconButton>
-          ))
-        }
+        {REACTION_EMOJIS.map((emoji) => (
+          <IconButton
+            key={emoji}
+            size="small"
+            onClick={() => {
+              onSendReaction?.(emoji);
+              setEmojiAnchor(null);
+            }}
+            sx={{
+              fontSize: 20,
+              p: 0.75,
+              borderRadius: 0.5,
+              transition: 'transform 0.15s ease',
+              '&:hover': {
+                transform: 'scale(1.2)',
+                bgcolor: isDark ? alpha('#fff', 0.06) : alpha('#000', 0.04),
+              },
+            }}
+          >
+            {emoji}
+          </IconButton>
+        ))}
       </Popover>
 
       {/* Leave Confirmation Popover */}
@@ -352,14 +413,8 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         open={Boolean(leaveAnchorEl)}
         anchorEl={leaveAnchorEl}
         onClose={() => setLeaveAnchorEl(null)}
-        anchorOrigin={{
-          vertical: 'top', // Open upwards from the button
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         slotProps={{
           paper: {
             sx: {
@@ -374,14 +429,20 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
                 ? '0 8px 32px rgba(0,0,0,0.6)'
                 : '0 8px 24px rgba(15,23,42,0.1)',
               backgroundImage: 'none',
-            }
-          }
+            },
+          },
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, color: isDark ? 'text.primary' : '#0f172a' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 800, mb: 0.5, color: isDark ? 'text.primary' : '#0f172a' }}
+        >
           Leave Room?
         </Typography>
-        <Typography variant="caption" sx={{ color: isDark ? 'text.secondary' : '#475569', display: 'block', mb: 2.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: isDark ? 'text.secondary' : '#475569', display: 'block', mb: 2.5 }}
+        >
           Are you sure you want to disconnect?
         </Typography>
         <Stack direction="row" spacing={1} justifyContent="flex-end">

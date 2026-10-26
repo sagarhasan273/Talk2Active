@@ -52,8 +52,8 @@ export function VoiceRoomJoinGate({
         justifyContent: 'center',
         p: { xs: 2, sm: 3 },
         bgcolor: alpha(theme.palette.common.black, isDark ? 0.7 : 0.5),
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: { xs: 'none', sm: 'blur(12px)' },
+        WebkitBackdropFilter: { xs: 'none', sm: 'blur(12px)' },
       }}
     >
       <Paper
