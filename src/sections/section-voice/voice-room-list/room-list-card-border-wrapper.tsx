@@ -91,7 +91,7 @@ export const VoiceRoomCardBorderWrapper = memo(function VoiceRoomCardBorderWrapp
                 width: '200%',
                 aspectRatio: '1 / 1',
                 background: desktopGradient,
-                animation: `${spin} 2s linear infinite`,
+                animation: `${spin} 4s linear infinite`,
                 animationPlayState: 'var(--card-anim-play-state, running)',
                 willChange: 'transform',
 

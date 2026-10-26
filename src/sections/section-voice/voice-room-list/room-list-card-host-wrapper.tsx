@@ -4,8 +4,6 @@ import React, { memo } from 'react';
 
 import { Box, keyframes, type SxProps, useTheme } from '@mui/material';
 
-// ─── Animations ─────────────────────────────────────────────────────────
-
 const spin = keyframes`
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
@@ -16,8 +14,6 @@ const panBackground = keyframes`
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 `;
-
-// ----------------------------------------------------------------------
 
 export type AccountTier = 'ADMIN' | 'SUPPORTER' | 'MEMBER' | string;
 
@@ -38,37 +34,53 @@ export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
 
   const hasAnimatedBorder = normalizedTier === 'ADMIN' || normalizedTier === 'SUPPORTER';
 
-  let borderGradient = 'none';
+  let mobileBorderGradient = 'none';
+  let desktopBorderGradient = 'none';
   let glowShadow = 'none';
 
   const baseDark = '#181c26';
   const baseLight = '#ffffff';
-  let innerBg = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc';
-  let innerBgAnimation = 'none';
+
+  let innerBgStatic: string = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc';
+  let innerBgDesktop: string = innerBgStatic;
+  let desktopInnerAnimation = 'none';
 
   if (normalizedTier === 'ADMIN') {
     const c1 = '#8B5CF6';
     const c2 = '#F43F5E';
 
-    // Simplified 3-stop gradient
-    borderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
+    mobileBorderGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
+    desktopBorderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
     glowShadow = `0 4px 20px -4px ${c1}40`;
 
-    innerBg = isDark
-      ? `linear-gradient(90deg, color-mix(in srgb, ${c1} 12%, ${baseDark}), color-mix(in srgb, ${c2} 12%, ${baseDark}), color-mix(in srgb, ${c1} 12%, ${baseDark}))`
-      : `linear-gradient(90deg, color-mix(in srgb, ${c1} 6%, ${baseLight}), color-mix(in srgb, ${c2} 6%, ${baseLight}), color-mix(in srgb, ${c1} 6%, ${baseLight}))`;
-    innerBgAnimation = `${panBackground} 6s ease-in-out infinite`;
+    const mix1 = isDark
+      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+    const mix2 = isDark
+      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
+
+    innerBgStatic = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
+    innerBgDesktop = innerBgStatic;
+    desktopInnerAnimation = `${panBackground} 6s ease-in-out infinite`;
   } else if (normalizedTier === 'SUPPORTER') {
     const c1 = '#0EA5E9';
     const c2 = '#FBBF24';
 
-    borderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
+    mobileBorderGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
+    desktopBorderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
     glowShadow = `0 4px 20px -4px ${c1}40`;
 
-    innerBg = isDark
-      ? `linear-gradient(90deg, color-mix(in srgb, ${c1} 12%, ${baseDark}), color-mix(in srgb, ${c2} 12%, ${baseDark}), color-mix(in srgb, ${c1} 12%, ${baseDark}))`
-      : `linear-gradient(90deg, color-mix(in srgb, ${c1} 6%, ${baseLight}), color-mix(in srgb, ${c2} 6%, ${baseLight}), color-mix(in srgb, ${c1} 6%, ${baseLight}))`;
-    innerBgAnimation = `${panBackground} 6s ease-in-out infinite`;
+    const mix1 = isDark
+      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
+    const mix2 = isDark
+      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
+      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
+
+    innerBgStatic = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
+    innerBgDesktop = innerBgStatic;
+    desktopInnerAnimation = `${panBackground} 6s ease-in-out infinite`;
   }
 
   return (
@@ -91,19 +103,40 @@ export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
             '&::before': {
               content: '""',
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '300%',
-              aspectRatio: '1 / 1',
               zIndex: -1,
-              background: borderGradient,
-              animation: `${spin} 3s linear infinite`,
-              animationPlayState: 'var(--card-anim-play-state, running)',
-              willChange: 'transform',
               backfaceVisibility: 'hidden',
-            },
-            '@media (prefers-reduced-motion: reduce)': {
-              '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },
+
+              // ── MOBILE (default) ─────────────────────────────
+              // Static border. Explicit `animation: 'none'` +
+              // `transform: 'none'` — no rotating GPU layer, no paint churn.
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: mobileBorderGradient,
+              animation: 'none',
+              animationPlayState: 'running',
+              transform: 'none',
+              willChange: 'auto',
+
+              // ── DESKTOP (sm+) ────────────────────────────────
+              [theme.breakpoints.up('sm')]: {
+                top: '50%',
+                left: '50%',
+                right: 'auto',
+                bottom: 'auto',
+                width: '300%',
+                aspectRatio: '1 / 1',
+                background: desktopBorderGradient,
+                animation: `${spin} 3s linear infinite`,
+                animationPlayState: 'var(--card-anim-play-state, running)',
+                transform: 'translate(-50%, -50%)',
+                willChange: 'transform',
+
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                },
+              },
             },
           }),
         },
@@ -117,16 +150,33 @@ export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
           gap: 1.25,
           px: 1,
           borderRadius: 0.5,
-          background: innerBg,
-          backgroundSize: innerBgAnimation !== 'none' ? '200% 100%' : 'auto',
-          animation: innerBgAnimation,
-          animationPlayState: 'var(--card-anim-play-state, running)',
           border: hasAnimatedBorder ? 'none' : '1px solid',
           borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
           boxSizing: 'border-box',
           minWidth: 0,
           height: '100%',
           width: '100%',
+
+          background: innerBgStatic,
+          backgroundSize: 'auto',
+          animation: 'none',
+          animationPlayState: 'running',
+
+          [theme.breakpoints.up('sm')]:
+            desktopInnerAnimation !== 'none'
+              ? {
+                background: innerBgDesktop,
+                backgroundSize: '200% 100%',
+                animation: desktopInnerAnimation,
+                animationPlayState: 'var(--card-anim-play-state, running)',
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  backgroundPosition: '0% 50%',
+                },
+              }
+              : {
+                animation: 'none',
+              },
         }}
       >
         {children}
