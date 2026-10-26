@@ -1,8 +1,8 @@
 // src/sections/section-voice/voice-room-card/room-list-card-host-wrapper.tsx
 
-import React from 'react';
+import React, { memo } from 'react';
 
-import { alpha, Box, keyframes, type SxProps, useTheme } from '@mui/material';
+import { Box, keyframes, type SxProps, useTheme } from '@mui/material';
 
 // ─── Animations ─────────────────────────────────────────────────────────
 
@@ -27,11 +27,11 @@ export type VoiceRoomHostWrapperProps = {
   sx?: SxProps;
 };
 
-export const VoiceRoomHostWrapper = ({
+export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
   children,
   accountType = 'MEMBER',
   sx,
-}: VoiceRoomHostWrapperProps) => {
+}: VoiceRoomHostWrapperProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const normalizedTier = accountType.toUpperCase();
@@ -43,45 +43,32 @@ export const VoiceRoomHostWrapper = ({
 
   const baseDark = '#181c26';
   const baseLight = '#ffffff';
-  let innerBg = isDark ? alpha('#fff', 0.035) : '#f8fafc';
-  let innerBgConfig = {};
+  let innerBg = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc';
+  let innerBgAnimation = 'none';
 
   if (normalizedTier === 'ADMIN') {
     const c1 = '#8B5CF6';
     const c2 = '#F43F5E';
 
-    borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
-    glowShadow = `0 4px 20px -4px ${alpha(c2, 0.25)}`;
+    // Simplified 3-stop gradient
+    borderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
+    glowShadow = `0 4px 20px -4px ${c1}40`;
 
-    const mix1 = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
-    const mix2 = isDark
-      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
-    innerBg = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
-    innerBgConfig = {
-      backgroundSize: '200% 100%',
-      animation: `${panBackground} 5s ease-in-out infinite`,
-    };
+    innerBg = isDark
+      ? `linear-gradient(90deg, color-mix(in srgb, ${c1} 12%, ${baseDark}), color-mix(in srgb, ${c2} 12%, ${baseDark}), color-mix(in srgb, ${c1} 12%, ${baseDark}))`
+      : `linear-gradient(90deg, color-mix(in srgb, ${c1} 6%, ${baseLight}), color-mix(in srgb, ${c2} 6%, ${baseLight}), color-mix(in srgb, ${c1} 6%, ${baseLight}))`;
+    innerBgAnimation = `${panBackground} 6s ease-in-out infinite`;
   } else if (normalizedTier === 'SUPPORTER') {
     const c1 = '#0EA5E9';
     const c2 = '#FBBF24';
 
-    borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
-    glowShadow = `0 4px 20px -4px ${alpha(c1, 0.25)}`;
+    borderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
+    glowShadow = `0 4px 20px -4px ${c1}40`;
 
-    const mix1 = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
-    const mix2 = isDark
-      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
-    innerBg = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
-    innerBgConfig = {
-      backgroundSize: '200% 100%',
-      animation: `${panBackground} 5s ease-in-out infinite`,
-    };
+    innerBg = isDark
+      ? `linear-gradient(90deg, color-mix(in srgb, ${c1} 12%, ${baseDark}), color-mix(in srgb, ${c2} 12%, ${baseDark}), color-mix(in srgb, ${c1} 12%, ${baseDark}))`
+      : `linear-gradient(90deg, color-mix(in srgb, ${c1} 6%, ${baseLight}), color-mix(in srgb, ${c2} 6%, ${baseLight}), color-mix(in srgb, ${c1} 6%, ${baseLight}))`;
+    innerBgAnimation = `${panBackground} 6s ease-in-out infinite`;
   }
 
   return (
@@ -111,6 +98,9 @@ export const VoiceRoomHostWrapper = ({
               zIndex: -1,
               background: borderGradient,
               animation: `${spin} 3s linear infinite`,
+              animationPlayState: 'var(--card-anim-play-state, running)',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
             },
             '@media (prefers-reduced-motion: reduce)': {
               '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },
@@ -128,9 +118,11 @@ export const VoiceRoomHostWrapper = ({
           px: 1,
           borderRadius: 0.5,
           background: innerBg,
-          ...innerBgConfig,
+          backgroundSize: innerBgAnimation !== 'none' ? '200% 100%' : 'auto',
+          animation: innerBgAnimation,
+          animationPlayState: 'var(--card-anim-play-state, running)',
           border: hasAnimatedBorder ? 'none' : '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
+          borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
           boxSizing: 'border-box',
           minWidth: 0,
           height: '100%',
@@ -141,6 +133,6 @@ export const VoiceRoomHostWrapper = ({
       </Box>
     </Box>
   );
-};
+});
 
 export default VoiceRoomHostWrapper;

@@ -50,6 +50,7 @@ const GRID_GAP = 12;
 const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 
 const FAST_SCROLL_VELOCITY_THRESHOLD = 2.2;
+const SCROLL_ANIM_RESTORE_DELAY = 120;
 
 const sxCard = {
   height: CARD_HEIGHT,
@@ -62,17 +63,9 @@ const sxCard = {
   justifyContent: 'space-between',
 };
 
-const RoomListHeaderSlot = memo(({ onCreateRoom }: { onCreateRoom?: () => void }) => {
+const RoomListHeaderSlot = memo(function RoomListHeaderSlot() {
   const { isInRoom } = useLiveKitSession();
-  // if (isInRoom) return null;
-  return (
-    <DefaultHeader
-      sx={{
-        mt: isInRoom ? 0 : 1,
-        mb: 1,
-      }}
-    />
-  );
+  return <DefaultHeader sx={{ mt: isInRoom ? 0 : 1, mb: 1 }} />;
 });
 
 // ── 1. Isolated Fast-Scroll Pill ──
@@ -92,9 +85,7 @@ const FastScrollIndicator = memo(
         trigger: (durationMs = 180) => {
           setVisible((prev) => (prev ? prev : true));
           if (timerRef.current) clearTimeout(timerRef.current);
-          timerRef.current = setTimeout(() => {
-            setVisible(false);
-          }, durationMs);
+          timerRef.current = setTimeout(() => setVisible(false), durationMs);
         },
       }),
       []
@@ -148,10 +139,7 @@ interface RoomListModalsRef {
 const RoomListModalsHost = memo(
   forwardRef<
     RoomListModalsRef,
-    {
-      currentUserId?: string;
-      onJoinRoom: (room: RoomType) => void;
-    }
+    { currentUserId?: string; onJoinRoom: (room: RoomType) => void }
   >(({ currentUserId, onJoinRoom }, ref) => {
     const { checkIfFollowing, checkIfBlocked } = useCredentials();
 
@@ -289,7 +277,11 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
-  const [gridMetrics, setGridMetrics] = useState({ columns: 1, cardWidth: 340, scrollMargin: 0 });
+  const [gridMetrics, setGridMetrics] = useState({
+    columns: 1,
+    cardWidth: 340,
+    scrollMargin: 0,
+  });
 
   // ── Tab Switch Scroll Restoration State ──
   const savedScrollTopRef = useRef(0);
@@ -298,6 +290,13 @@ export const RoomlistMain = memo(function RoomlistMain({
   // ── Fast Scroll Velocity Detector ──
   const lastScrollPosRef = useRef(0);
   const lastScrollTimeRef = useRef(performance.now());
+
+  // ── Animation pause timer (direct DOM mutation, no React re-render) ──
+  const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Deferred footer ──
+  const footerSlotRef = useRef<HTMLDivElement>(null);
+  const [footerReady, setFooterReady] = useState(false);
 
   const stableOnSelectRoom = useCallback(
     (room: RoomType) => {
@@ -334,27 +333,33 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   const handleJoinFromSocialChat = useCallback(
     (roomId: string) => {
-      if (!isAuthenticated) {
-        return;
-      }
+      if (!isAuthenticated) return;
       const roomObj = getRoomById(roomId);
       if (roomObj) handleSelectRoom(roomObj);
     },
     [isAuthenticated, getRoomById, handleSelectRoom]
   );
 
+  // ── CLEANUP timer ──
+  useEffect(
+    () => () => {
+      if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+    },
+    []
+  );
+
   const handleScrollVelocity = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     if (!isVisibleRef.current) return;
 
     const currentTop = e.currentTarget.scrollTop;
-    savedScrollTopRef.current = currentTop; // Continuously save valid scroll positions
+    savedScrollTopRef.current = currentTop;
 
     const now = performance.now();
     const dt = now - lastScrollTimeRef.current;
 
     if (dt > 12) {
       const dy = Math.abs(currentTop - lastScrollPosRef.current);
-      const velocity = dy / dt; // pixels per ms
+      const velocity = dy / dt;
 
       if (velocity > FAST_SCROLL_VELOCITY_THRESHOLD || dy > ROW_TOTAL_HEIGHT * 2.5) {
         fastScrollIndicatorRef.current?.trigger(180);
@@ -363,14 +368,32 @@ export const RoomlistMain = memo(function RoomlistMain({
       lastScrollPosRef.current = currentTop;
       lastScrollTimeRef.current = now;
     }
+
+    // ── Pause heavy animations during scroll ──
+    // Direct DOM manipulation → no React re-render, no reconciliation cost.
+    // The CSS variable is inherited by every card's ::before pseudo-element.
+    const el = e.currentTarget;
+    if (el.style.getPropertyValue('--card-anim-play-state') !== 'paused') {
+      el.style.setProperty('--card-anim-play-state', 'paused');
+    }
+    if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
+    scrollEndTimerRef.current = setTimeout(() => {
+      el.style.setProperty('--card-anim-play-state', 'running');
+    }, SCROLL_ANIM_RESTORE_DELAY);
   }, []);
 
+  // ── RAF-throttled resize observer that IGNORES height-only changes ──
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
     const gridEl = gridContainerRef.current;
     if (!scrollEl || !gridEl) return;
 
-    const updateMeasurements = () => {
+    let rafId: number | null = null;
+    let lastWidth = 0;
+
+    const measureNow = () => {
+      rafId = null;
+
       const width = gridEl.clientWidth;
 
       if (width === 0) {
@@ -378,11 +401,15 @@ export const RoomlistMain = memo(function RoomlistMain({
         return;
       }
 
-      // If it WAS hidden and just became Visible, restore the scroll position instantly!
       if (!isVisibleRef.current) {
         scrollEl.scrollTop = savedScrollTopRef.current;
         isVisibleRef.current = true;
       }
+
+      // Skip if width hasn't meaningfully changed — avoids
+      // recomputing `computeStageLayout` on every address-bar toggle.
+      if (Math.abs(width - lastWidth) < 2) return;
+      lastWidth = width;
 
       const cols = Math.max(1, Math.floor((width + GRID_GAP) / (340 + GRID_GAP)));
       const computedCardWidth = Math.floor((width - GRID_GAP * (cols - 1)) / cols);
@@ -397,14 +424,41 @@ export const RoomlistMain = memo(function RoomlistMain({
       );
     };
 
+    const updateMeasurements = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(measureNow);
+    };
+
     updateMeasurements();
-    const resizeObserver = new ResizeObserver(updateMeasurements);
+    const ro = new ResizeObserver(updateMeasurements);
+    ro.observe(gridEl);
+    // NOTE: previously also observed scrollEl — removed, it fires
+    // on every mobile address-bar toggle & is not needed.
 
-    resizeObserver.observe(gridEl);
-    resizeObserver.observe(scrollEl);
-
-    return () => resizeObserver.disconnect();
+    return () => {
+      ro.disconnect();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
+
+  // ── Defer heavy footer until user scrolls near it ──
+  useEffect(() => {
+    const el = footerSlotRef.current;
+    const root = scrollContainerRef.current;
+    if (!el || !root || footerReady) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setFooterReady(true);
+          io.disconnect();
+        }
+      },
+      { root, rootMargin: '400px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [footerReady]);
 
   const filteredRooms = useMemo(() => {
     const search = filterRooms.searchQuery.trim().toLowerCase();
@@ -443,14 +497,13 @@ export const RoomlistMain = memo(function RoomlistMain({
     overscan: columns === 1 ? 4 : 3,
   });
 
-  // Extract scrolling state for the skeleton rendering logic inside VoiceRoomCard
   const isVirtualizerScrolling = rowVirtualizer.isScrolling;
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
 
-  // FIX: Subtract GRID_GAP from the padding to counteract the CSS Grid gap injection
-  const rawPaddingTop = virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
+  const rawPaddingTop =
+    virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
   const paddingTop = rawPaddingTop > 0 ? rawPaddingTop - GRID_GAP : 0;
 
   const rawPaddingBottom =
@@ -519,6 +572,9 @@ export const RoomlistMain = memo(function RoomlistMain({
           msOverflowStyle: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
           WebkitOverflowScrolling: 'touch',
+          // Stop heavy conic-gradient rotations at the compositor level
+          // when in active scroll — massive mobile win.
+          overscrollBehaviorY: 'contain',
         }}
       >
         <RoomListHeaderSlot />
@@ -549,15 +605,15 @@ export const RoomlistMain = memo(function RoomlistMain({
 
             {visibleCards.map((card, idx) => {
               if (card === 'creation') {
-                if (!isAuthenticated) {
-                  return null;
-                }
-
+                if (!isAuthenticated) return null;
                 return <RoomCardCreation key="creation-card" sx={sxCard} />;
               }
 
               return (
-                <VoiceRoomCardBorderWrapper key={card.roomId} accountType={card?.host?.accountType}>
+                <VoiceRoomCardBorderWrapper
+                  key={card.roomId}
+                  accountType={card?.host?.accountType}
+                >
                   <VoiceRoomCard
                     index={visibleSliceStart + idx - 1}
                     roomData={card}
@@ -580,7 +636,26 @@ export const RoomlistMain = memo(function RoomlistMain({
         )}
 
         <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
-        <RoomListFooter onCreateRoom={() => { }} />
+
+        {/*
+          Footer deferral:
+          • content-visibility: auto → browser skips rendering until near viewport
+          • containIntrinsicSize → reserves space so no CLS when footer expands
+          • Also gated by IntersectionObserver → React tree for footer not built until needed
+        */}
+        <Box
+          ref={footerSlotRef}
+          sx={{
+            contentVisibility: 'auto',
+            containIntrinsicSize: '0 380px',
+          }}
+        >
+          {footerReady ? (
+            <RoomListFooter onCreateRoom={() => { }} />
+          ) : (
+            <Box sx={{ height: 380 }} />
+          )}
+        </Box>
       </Box>
 
       <RoomListModalsHost
@@ -594,7 +669,10 @@ export const RoomlistMain = memo(function RoomlistMain({
         onScrollBottom={handleScrollToBottom}
       />
 
-      <SocialView onJoinRoom={handleJoinFromSocialChat} sx={{ display: isVisible ? 'flex' : 'none' }} />
+      <SocialView
+        onJoinRoom={handleJoinFromSocialChat}
+        sx={{ display: isVisible ? 'flex' : 'none' }}
+      />
 
       {isVisible && <LoginPromptDialog openBoolean={logOpen} />}
     </>
