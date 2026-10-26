@@ -52,9 +52,15 @@ const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 const FAST_SCROLL_VELOCITY_THRESHOLD = 2.2;
 const SCROLL_ANIM_RESTORE_DELAY = 120;
 
+// 3 rows ≈ 924px — matches typical content height, so loading→loaded
+// transition either grows silently below the fold (many rooms) or stays
+// locked by `minHeight` (few rooms). Either way → no CLS.
+const LOADING_ROW_COUNT = 3;
+const MIN_GRID_HEIGHT = LOADING_ROW_COUNT * ROW_TOTAL_HEIGHT;
+
 const sxCard = {
   height: CARD_HEIGHT,
-  minHeight: 280,
+  minHeight: CARD_HEIGHT,
   maxHeight: CARD_HEIGHT,
   width: '100%',
   maxWidth: { xs: '100%', sm: 1, md: 520 },
@@ -68,7 +74,7 @@ const RoomListHeaderSlot = memo(function RoomListHeaderSlot() {
   return <DefaultHeader sx={{ mt: isInRoom ? 0 : 1, mb: 1 }} />;
 });
 
-// ── 1. Isolated Fast-Scroll Pill ──
+// ── 1. Fast-Scroll Pill ──
 interface FastScrollIndicatorRef {
   trigger: (durationMs?: number) => void;
 }
@@ -130,7 +136,7 @@ const FastScrollIndicator = memo(
   })
 );
 
-// ── 2. Isolated Modal Host ──
+// ── 2. Modal Host ──
 interface RoomListModalsRef {
   openProfile: (rawUser: any) => void;
   openRoomDialog: (room: RoomType) => void;
@@ -277,26 +283,19 @@ export const RoomlistMain = memo(function RoomlistMain({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
+
   const [gridMetrics, setGridMetrics] = useState({
     columns: 1,
     cardWidth: 340,
     scrollMargin: 0,
   });
 
-  // ── Tab Switch Scroll Restoration State ──
   const savedScrollTopRef = useRef(0);
   const isVisibleRef = useRef(true);
 
-  // ── Fast Scroll Velocity Detector ──
   const lastScrollPosRef = useRef(0);
   const lastScrollTimeRef = useRef(performance.now());
-
-  // ── Animation pause timer (direct DOM mutation, no React re-render) ──
   const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── Deferred footer ──
-  const footerSlotRef = useRef<HTMLDivElement>(null);
-  const [footerReady, setFooterReady] = useState(false);
 
   const stableOnSelectRoom = useCallback(
     (room: RoomType) => {
@@ -340,7 +339,6 @@ export const RoomlistMain = memo(function RoomlistMain({
     [isAuthenticated, getRoomById, handleSelectRoom]
   );
 
-  // ── CLEANUP timer ──
   useEffect(
     () => () => {
       if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
@@ -369,9 +367,6 @@ export const RoomlistMain = memo(function RoomlistMain({
       lastScrollTimeRef.current = now;
     }
 
-    // ── Pause heavy animations during scroll ──
-    // Direct DOM manipulation → no React re-render, no reconciliation cost.
-    // The CSS variable is inherited by every card's ::before pseudo-element.
     const el = e.currentTarget;
     if (el.style.getPropertyValue('--card-anim-play-state') !== 'paused') {
       el.style.setProperty('--card-anim-play-state', 'paused');
@@ -382,7 +377,7 @@ export const RoomlistMain = memo(function RoomlistMain({
     }, SCROLL_ANIM_RESTORE_DELAY);
   }, []);
 
-  // ── RAF-throttled resize observer that IGNORES height-only changes ──
+  // ── Re-attach on loading flip so observer never bails on first mount ──
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
     const gridEl = gridContainerRef.current;
@@ -393,21 +388,18 @@ export const RoomlistMain = memo(function RoomlistMain({
 
     const measureNow = () => {
       rafId = null;
-
       const width = gridEl.clientWidth;
 
       if (width === 0) {
         isVisibleRef.current = false;
         return;
       }
-
       if (!isVisibleRef.current) {
         scrollEl.scrollTop = savedScrollTopRef.current;
         isVisibleRef.current = true;
       }
 
-      // Skip if width hasn't meaningfully changed — avoids
-      // recomputing `computeStageLayout` on every address-bar toggle.
+      // Only width changes matter — ignore height-only triggers.
       if (Math.abs(width - lastWidth) < 2) return;
       lastWidth = width;
 
@@ -432,33 +424,12 @@ export const RoomlistMain = memo(function RoomlistMain({
     updateMeasurements();
     const ro = new ResizeObserver(updateMeasurements);
     ro.observe(gridEl);
-    // NOTE: previously also observed scrollEl — removed, it fires
-    // on every mobile address-bar toggle & is not needed.
 
     return () => {
       ro.disconnect();
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, []);
-
-  // ── Defer heavy footer until user scrolls near it ──
-  useEffect(() => {
-    const el = footerSlotRef.current;
-    const root = scrollContainerRef.current;
-    if (!el || !root || footerReady) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setFooterReady(true);
-          io.disconnect();
-        }
-      },
-      { root, rootMargin: '400px 0px' }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [footerReady]);
+  }, [isRoomsLoading]);
 
   const filteredRooms = useMemo(() => {
     const search = filterRooms.searchQuery.trim().toLowerCase();
@@ -498,26 +469,8 @@ export const RoomlistMain = memo(function RoomlistMain({
   });
 
   const isVirtualizerScrolling = rowVirtualizer.isScrolling;
-
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
-
-  const rawPaddingTop =
-    virtualRows.length > 0 ? Math.max(0, virtualRows[0].start - scrollMargin) : 0;
-  const paddingTop = rawPaddingTop > 0 ? rawPaddingTop - GRID_GAP : 0;
-
-  const rawPaddingBottom =
-    virtualRows.length > 0
-      ? Math.max(0, totalSize - (virtualRows[virtualRows.length - 1].end - scrollMargin))
-      : 0;
-  const paddingBottom = rawPaddingBottom > 0 ? rawPaddingBottom - GRID_GAP : 0;
-
-  const visibleSliceStart = virtualRows.length > 0 ? virtualRows[0].index * columns : 0;
-  const visibleSliceEnd =
-    virtualRows.length > 0
-      ? Math.min(allCards.length, (virtualRows[virtualRows.length - 1].index + 1) * columns)
-      : 0;
-  const visibleCards = allCards.slice(visibleSliceStart, visibleSliceEnd);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
@@ -542,21 +495,6 @@ export const RoomlistMain = memo(function RoomlistMain({
     }
   }, [rowVirtualizer, rowCount]);
 
-  const skeletonFillColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(15, 23, 42, 0.04)';
-  const spacerSkeletonSx = {
-    gridColumn: '1 / -1',
-    width: '100%',
-    pointerEvents: 'none',
-    borderRadius: 0.5,
-    backgroundImage: `repeating-linear-gradient(
-      to bottom,
-      ${skeletonFillColor} 0px,
-      ${skeletonFillColor} ${CARD_HEIGHT}px,
-      transparent ${CARD_HEIGHT}px,
-      transparent ${ROW_TOTAL_HEIGHT}px
-    )`,
-  };
-
   return (
     <>
       <FastScrollIndicator ref={fastScrollIndicatorRef} isDark={isDark} />
@@ -572,90 +510,114 @@ export const RoomlistMain = memo(function RoomlistMain({
           msOverflowStyle: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
           WebkitOverflowScrolling: 'touch',
-          // Stop heavy conic-gradient rotations at the compositor level
-          // when in active scroll — massive mobile win.
           overscrollBehaviorY: 'contain',
         }}
       >
         <RoomListHeaderSlot />
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
-        {isRoomsLoading ? (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${columns}, 1fr)`,
-              gap: `${GRID_GAP}px`,
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <VoiceRoomCardSkeleton key={`loading-skeleton-${i}`} sx={sxCard} />
-            ))}
-          </Box>
-        ) : (
-          <Box
-            ref={gridContainerRef}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${columns}, 1fr)`,
-              gap: `${GRID_GAP}px`,
-            }}
-          >
-            {paddingTop > 0 && <Box sx={{ ...spacerSkeletonSx, height: `${paddingTop}px` }} />}
-
-            {visibleCards.map((card, idx) => {
-              if (card === 'creation') {
-                if (!isAuthenticated) return null;
-                return <RoomCardCreation key="creation-card" sx={sxCard} />;
-              }
-
-              return (
-                <VoiceRoomCardBorderWrapper
-                  key={card.roomId}
-                  accountType={card?.host?.accountType}
-                >
-                  <VoiceRoomCard
-                    index={visibleSliceStart + idx - 1}
-                    roomData={card}
-                    currentUserId={currentUserId}
-                    cardWidth={cardWidth}
-                    isScrolling={isVirtualizerScrolling}
-                    onJoinRoom={stableOnSelectRoom}
-                    onAvatarClick={handleAvatarClick}
-                    onOverflowClick={handleOverflowClick}
-                    sx={sxCard}
-                  />
-                </VoiceRoomCardBorderWrapper>
-              );
-            })}
-
-            {paddingBottom > 0 && (
-              <Box sx={{ ...spacerSkeletonSx, height: `${paddingBottom}px` }} />
-            )}
-          </Box>
-        )}
-
-        <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
-
         {/*
-          Footer deferral:
-          • content-visibility: auto → browser skips rendering until near viewport
-          • containIntrinsicSize → reserves space so no CLS when footer expands
-          • Also gated by IntersectionObserver → React tree for footer not built until needed
+          🔑 CLS FIX — the whole point of this rewrite:
+
+          BEFORE: virtualized content used `paddingTop` / `paddingBottom`
+                  on the grid → those are LAYOUT properties → every scroll
+                  tick invalidates layout of every visible card → CLS
+                  accumulates to multiple units during a fast scroll.
+
+          AFTER:  the outer grid container has a FIXED height = totalSize.
+                  Each virtual row is `position: absolute; top: 0` and
+                  shifted with `transform: translateY(rowStart - scrollMargin)`.
+                  Transform is COMPOSITOR-ONLY → no layout invalidation,
+                  no CLS, even at 100 mph fling.
+
+          `minHeight = MIN_GRID_HEIGHT` guarantees the grid never collapses
+          on the skeleton→loaded transition when there are very few rooms,
+          so the divider + footer below never jump upward.
         */}
         <Box
-          ref={footerSlotRef}
+          ref={gridContainerRef}
           sx={{
-            contentVisibility: 'auto',
-            containIntrinsicSize: '0 380px',
+            position: 'relative',
+            width: '100%',
+            height: isRoomsLoading ? MIN_GRID_HEIGHT : totalSize,
+            minHeight: MIN_GRID_HEIGHT,
+            // Isolate the grid from any parent layout flapping
+            contain: 'layout style',
           }}
         >
-          {footerReady ? (
-            <RoomListFooter onCreateRoom={() => { }} />
+          {isRoomsLoading ? (
+            // Skeletons in a plain grid — no absolute positioning needed.
+            // Container height is locked to MIN_GRID_HEIGHT, so replacing
+            // them with virtualized rows is height-stable.
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                gap: `${GRID_GAP}px`,
+              }}
+            >
+              {Array.from({ length: columns * LOADING_ROW_COUNT }).map((_, i) => (
+                <VoiceRoomCardSkeleton key={`loading-skeleton-${i}`} sx={sxCard} />
+              ))}
+            </Box>
           ) : (
-            <Box sx={{ height: 380 }} />
+            virtualRows.map((vr) => {
+              const rowStart = vr.index * columns;
+              const rowCards = allCards.slice(rowStart, rowStart + columns);
+              // Grid-relative Y. Using transform → no layout shift.
+              const y = vr.start - scrollMargin;
+
+              return (
+                <Box
+                  key={vr.key}
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: CARD_HEIGHT,
+                    transform: `translate3d(0, ${y}px, 0)`,
+                    // GPU-composited layer per row → fling stays at 60fps
+                    willChange: 'transform',
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    gap: `${GRID_GAP}px`,
+                    contain: 'layout style',
+                  }}
+                >
+                  {rowCards.map((card, colIdx) => {
+                    if (card === 'creation') {
+                      if (!isAuthenticated) return null;
+                      return <RoomCardCreation key="creation-card" sx={sxCard} />;
+                    }
+
+                    return (
+                      <VoiceRoomCardBorderWrapper
+                        key={card.roomId}
+                        accountType={card?.host?.accountType}
+                      >
+                        <VoiceRoomCard
+                          index={rowStart + colIdx}
+                          roomData={card}
+                          currentUserId={currentUserId}
+                          cardWidth={cardWidth}
+                          isScrolling={isVirtualizerScrolling}
+                          onJoinRoom={stableOnSelectRoom}
+                          onAvatarClick={handleAvatarClick}
+                          onOverflowClick={handleOverflowClick}
+                          sx={sxCard}
+                        />
+                      </VoiceRoomCardBorderWrapper>
+                    );
+                  })}
+                </Box>
+              );
+            })
           )}
         </Box>
+
+        <Divider sx={{ bgcolor: 'primary.main', my: 1 }} />
+        <RoomListFooter onCreateRoom={() => { }} />
       </Box>
 
       <RoomListModalsHost
