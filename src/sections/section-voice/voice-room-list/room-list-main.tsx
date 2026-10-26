@@ -52,9 +52,6 @@ const ROW_TOTAL_HEIGHT = CARD_HEIGHT + GRID_GAP;
 const FAST_SCROLL_VELOCITY_THRESHOLD = 2.2;
 const SCROLL_ANIM_RESTORE_DELAY = 120;
 
-// 3 rows ≈ 924px — matches typical content height, so loading→loaded
-// transition either grows silently below the fold (many rooms) or stays
-// locked by `minHeight` (few rooms). Either way → no CLS.
 const LOADING_ROW_COUNT = 3;
 const MIN_GRID_HEIGHT = LOADING_ROW_COUNT * ROW_TOTAL_HEIGHT;
 
@@ -377,7 +374,6 @@ export const RoomlistMain = memo(function RoomlistMain({
     }, SCROLL_ANIM_RESTORE_DELAY);
   }, []);
 
-  // ── Re-attach on loading flip so observer never bails on first mount ──
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;
     const gridEl = gridContainerRef.current;
@@ -398,8 +394,6 @@ export const RoomlistMain = memo(function RoomlistMain({
         scrollEl.scrollTop = savedScrollTopRef.current;
         isVisibleRef.current = true;
       }
-
-      // Only width changes matter — ignore height-only triggers.
       if (Math.abs(width - lastWidth) < 2) return;
       lastWidth = width;
 
@@ -465,7 +459,8 @@ export const RoomlistMain = memo(function RoomlistMain({
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => ROW_TOTAL_HEIGHT,
     scrollMargin,
-    overscan: columns === 1 ? 4 : 3,
+    // Higher overscan while scrolling → fewer gaps to cover with the ghost
+    overscan: columns === 1 ? 6 : 4,
   });
 
   const isVirtualizerScrolling = rowVirtualizer.isScrolling;
@@ -495,6 +490,29 @@ export const RoomlistMain = memo(function RoomlistMain({
     }
   }, [rowVirtualizer, rowCount]);
 
+  // ── Ghost skeleton overlay values ──
+  // Solid color used for the "empty card" ghost rectangles
+  const ghostFill = isDark ? 'rgba(255, 255, 255, 0.028)' : 'rgba(15, 23, 42, 0.03)';
+
+  // Horizontal row cadence — one solid bar per row, gap between rows
+  const ghostRowsGradient = `repeating-linear-gradient(to bottom,
+    ${ghostFill} 0px,
+    ${ghostFill} ${CARD_HEIGHT}px,
+    transparent ${CARD_HEIGHT}px,
+    transparent ${ROW_TOTAL_HEIGHT}px)`;
+
+  // Vertical column cadence — mask out the gutters between columns.
+  // calc() with % works inside repeating-linear-gradient on all modern browsers.
+  const cellWidth = `calc((100% + ${GRID_GAP}px) / ${columns} - ${GRID_GAP}px)`;
+  const stride = `calc((100% + ${GRID_GAP}px) / ${columns})`;
+  const columnMaskGradient = `repeating-linear-gradient(to right,
+    #000 0,
+    #000 ${cellWidth},
+    transparent ${cellWidth},
+    transparent ${stride})`;
+
+  const gridHeight = Math.max(totalSize - GRID_GAP, MIN_GRID_HEIGHT);
+
   return (
     <>
       <FastScrollIndicator ref={fastScrollIndicatorRef} isDark={isDark} />
@@ -517,40 +535,44 @@ export const RoomlistMain = memo(function RoomlistMain({
         <VoiceRoomsFilter initialFilters={filterRooms} onFilterChange={setFilterRooms} />
 
         {/*
-          🔑 CLS FIX — the whole point of this rewrite:
+          🔑 CLS + no-blank-scroll strategy:
 
-          BEFORE: virtualized content used `paddingTop` / `paddingBottom`
-                  on the grid → those are LAYOUT properties → every scroll
-                  tick invalidates layout of every visible card → CLS
-                  accumulates to multiple units during a fast scroll.
-
-          AFTER:  the outer grid container has a FIXED height = totalSize.
-                  Each virtual row is `position: absolute; top: 0` and
-                  shifted with `transform: translateY(rowStart - scrollMargin)`.
-                  Transform is COMPOSITOR-ONLY → no layout invalidation,
-                  no CLS, even at 100 mph fling.
-
-          `minHeight = MIN_GRID_HEIGHT` guarantees the grid never collapses
-          on the skeleton→loaded transition when there are very few rooms,
-          so the divider + footer below never jump upward.
+          • Outer container has FIXED height = totalSize (never uses padding).
+          • Rows are absolutely positioned and shifted with translate3d →
+            compositor-only, zero layout invalidation → 0 CLS on fling.
+          • A ::before pseudo-element paints a "ghost card grid" behind
+            everything (solid bars per row + column-gap mask). Rendered
+            rows paint over it. During a fast fling, when React can't keep
+            up with the browser's scroll speed, the ghost shows through —
+            the user sees skeleton card outlines instead of blank space.
+          • `minHeight` prevents the grid from collapsing on the
+            loading→loaded transition when there are very few rooms.
         */}
         <Box
           ref={gridContainerRef}
           sx={{
             position: 'relative',
             width: '100%',
-            height: isRoomsLoading ? MIN_GRID_HEIGHT : totalSize,
-            minHeight: MIN_GRID_HEIGHT,
-            // Isolate the grid from any parent layout flapping
+            height: gridHeight,
             contain: 'layout style',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 0,
+              backgroundImage: ghostRowsGradient,
+              maskImage: columnMaskGradient,
+              WebkitMaskImage: columnMaskGradient,
+            },
           }}
         >
           {isRoomsLoading ? (
-            // Skeletons in a plain grid — no absolute positioning needed.
-            // Container height is locked to MIN_GRID_HEIGHT, so replacing
-            // them with virtualized rows is height-stable.
+            // Real skeletons — they cover the ghost, which is fine
             <Box
               sx={{
+                position: 'relative',
+                zIndex: 1,
                 display: 'grid',
                 gridTemplateColumns: `repeat(${columns}, 1fr)`,
                 gap: `${GRID_GAP}px`,
@@ -564,7 +586,6 @@ export const RoomlistMain = memo(function RoomlistMain({
             virtualRows.map((vr) => {
               const rowStart = vr.index * columns;
               const rowCards = allCards.slice(rowStart, rowStart + columns);
-              // Grid-relative Y. Using transform → no layout shift.
               const y = vr.start - scrollMargin;
 
               return (
@@ -577,8 +598,8 @@ export const RoomlistMain = memo(function RoomlistMain({
                     width: '100%',
                     height: CARD_HEIGHT,
                     transform: `translate3d(0, ${y}px, 0)`,
-                    // GPU-composited layer per row → fling stays at 60fps
                     willChange: 'transform',
+                    zIndex: 1,
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columns}, 1fr)`,
                     gap: `${GRID_GAP}px`,
