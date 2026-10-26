@@ -1,8 +1,8 @@
 // src/sections/section-voice/voice-room-card/room-list-card-border-wrapper.tsx
 
-import React from 'react';
+import React, { memo } from 'react';
 
-import { alpha, Box, keyframes, type SxProps } from '@mui/material';
+import { alpha, Box, keyframes, useTheme, type SxProps } from '@mui/material';
 
 // ─── Animations ─────────────────────────────────────────────────────────
 
@@ -21,24 +21,29 @@ export type VoiceRoomCardBorderWrapperProps = {
   sx?: SxProps;
 };
 
-export const VoiceRoomCardBorderWrapper = ({
+export const VoiceRoomCardBorderWrapper = memo(function VoiceRoomCardBorderWrapper({
   children,
   accountType = 'MEMBER',
   sx,
-}: VoiceRoomCardBorderWrapperProps) => {
+}: VoiceRoomCardBorderWrapperProps) {
+  const theme = useTheme();
+
   const normalizedTier = accountType.toUpperCase();
   const hasAnimatedBorder = normalizedTier === 'ADMIN' || normalizedTier === 'SUPPORTER';
 
-  let borderGradient = 'none';
+  let mobileGradient = 'none';
+  let desktopGradient = 'none';
 
   if (normalizedTier === 'ADMIN') {
     const c1 = '#7C3AED';
     const c2 = '#E11D48';
-    borderGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
+    mobileGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
+    desktopGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
   } else if (normalizedTier === 'SUPPORTER') {
     const c1 = '#3B82F6';
     const c2 = '#F59E0B';
-    borderGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
+    mobileGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
+    desktopGradient = `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
   }
 
   return (
@@ -69,19 +74,33 @@ export const VoiceRoomCardBorderWrapper = ({
             '&::before': {
               content: '""',
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '200%',
-              aspectRatio: '1 / 1',
               zIndex: -1,
-              background: borderGradient,
-              animation: `${spin} 2s linear infinite`,
-              animationPlayState: 'var(--card-anim-play-state, running)',
-              willChange: 'transform',
               backfaceVisibility: 'hidden',
-            },
-            '@media (prefers-reduced-motion: reduce)': {
-              '&::before': { animation: 'none', transform: 'translate(-50%, -50%)' },
+
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: mobileGradient,
+
+              [theme.breakpoints.up('sm')]: {
+                top: '50%',
+                left: '50%',
+                right: 'auto',
+                bottom: 'auto',
+                width: '200%',
+                aspectRatio: '1 / 1',
+                background: desktopGradient,
+                animation: `${spin} 2s linear infinite`,
+                animationPlayState: 'var(--card-anim-play-state, running)',
+                willChange: 'transform',
+
+                // Only desktop can actually freeze a running spin
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  transform: 'translate(-50%, -50%)',
+                },
+              },
             },
           }),
         },
@@ -91,6 +110,6 @@ export const VoiceRoomCardBorderWrapper = ({
       {children}
     </Box>
   );
-};
+});
 
 export default VoiceRoomCardBorderWrapper;
