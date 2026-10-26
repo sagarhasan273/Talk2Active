@@ -1,6 +1,7 @@
 // src/sections/section-voice/voice-room-stage/room-stage-participants.tsx
 
 import { useSocket } from '@/core/contexts';
+import { useCredentials } from '@/core/slices';
 import { AccountTypeEnum } from '@/enums/enum-user';
 import useRoomSounds from '@/hooks/use-room-sounds';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
@@ -84,6 +85,8 @@ export const RoomStageParticipants = ({
   sx,
   ...other
 }: RoomStageParticipantsProps) => {
+  const { currentUserId } = useCredentials();
+
   const room = useRoomContext();
   const remoteLiveKitParticipants = useParticipants();
   const { localParticipant } = useLocalParticipant();
@@ -132,14 +135,18 @@ export const RoomStageParticipants = ({
         next.add(targetId);
         return next;
       });
-      socketCbRef.current.playUserLeave?.();
+
+      if (targetId !== currentUserId)
+        socketCbRef.current.playUserLeave?.();
     };
 
     const handleUserJoin = (payload: any) => {
       const joinedRoomId = localParticipant?.attributes?.roomId;
+      const targetId = extractParticipantId(payload);
       if (joinedRoomId !== payload.roomId) return;
-      socketCbRef.current.clearGhostId(extractParticipantId(payload));
-      socketCbRef.current.playUserJoin();
+      socketCbRef.current.clearGhostId(targetId);
+      if (targetId !== currentUserId)
+        socketCbRef.current.playUserJoin();
     };
 
     socket.on(SOCKET_EVENTS.BROADCAST_USER_LEAVE, handleUserLeave);

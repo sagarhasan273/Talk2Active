@@ -1,10 +1,8 @@
 // src/components/voice-room-event-listener.tsx
 
 import { useGetRoomsQuery } from '@/core/apis';
-import { useVoiceRoomSetting } from '@/core/contexts';
 import { useSocket } from '@/core/contexts/app-context/context-socket';
 import { useRoomTools } from '@/core/slices';
-import useRoomSounds from '@/hooks/use-room-sounds';
 import { SOCKET_EVENTS } from '@/lib/socket-events';
 import { RoomParticipantType, RoomType } from '@/types/type-room';
 
@@ -13,11 +11,8 @@ import React, { useEffect } from 'react';
 export const VoiceRoomEventListener: React.FC = () => {
   const { socket } = useSocket();
 
-  const { isInRoom } = useVoiceRoomSetting();
-
   const { addRoom, updateRoom, addParticipantToRoom, removeParticipantFromRoom } = useRoomTools();
-
-  const { playUserJoin } = useRoomSounds();
+  
 
   useGetRoomsQuery(null);
 
