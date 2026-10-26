@@ -2,10 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import AvatarWrapper from '@/sections/section-common/avatar-wrapper';
+import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
-import { alpha, Avatar, Box, Typography } from '@mui/material';
+import { alpha, Box, Typography } from '@mui/material';
 import { UserPlus } from 'lucide-react';
 
 export const computeStageLayout = (width: number, height: number, totalRequested: number) => {
@@ -177,30 +177,14 @@ export default function VoiceRoomCardStage({
                   flexShrink: 0,
                 }}
               >
-                <AvatarWrapper
+                <AnimatedAvatar
                   accountType={speaker?.accountType}
-                  showShadow={false}
-                  borderThickness={0.38}
-                  sx={{ width: '100%', height: '100%', boxSizing: 'border-box' }}
-                >
-                  <Avatar
-                    src={speaker?.profilePhoto || undefined}
-                    alt={speaker?.name}
-                    imgProps={{ loading: 'lazy', decoding: 'async' }}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      boxSizing: 'border-box',
-                      fontSize: layout.fontSize,
-                      fontWeight: 800,
-                      bgcolor: isDark ? '#252b3b' : '#f1f5f9',
-                      color: isDark ? '#fff' : '#0f172a',
-                      border: `2px solid ${isDark ? '#181c26' : '#ffffff'}`,
-                    }}
-                  >
-                    {getInitials(speaker?.name)}
-                  </Avatar>
-                </AvatarWrapper>
+                  src={speaker?.profilePhoto || undefined}
+                  name={speaker?.name}
+                  ringGap={7}
+                  speed={4}
+                  size={layout.size}
+                />
                 {speaker?.verified && (
                   <Box
                     sx={{
@@ -229,9 +213,9 @@ export default function VoiceRoomCardStage({
                   height: 14,
                   px: 0.6,
                   borderRadius: 0.75,
-                  bgcolor: isDark ? '#252b3b' : '#f1f5f9',
+                  bgcolor: speaker?.accountType !== 'MEMBER' ? '#faf8f8' : isDark ? '#252b3b' : '#f1f5f9',
                   border: '1px solid',
-                  borderColor: isDark ? alpha('#fff', 0.12) : '#cbd5e1',
+                  borderColor: speaker?.accountType !== 'MEMBER' ? '#ff0000' : isDark ? alpha('#fff', 0.12) : '#cbd5e1',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -241,13 +225,13 @@ export default function VoiceRoomCardStage({
                   boxSizing: 'border-box',
                 }}
               >
-                <FavoriteRoundedIcon sx={{ fontSize: 9.5, color: 'primary.main' }} />
+                <FavoriteRoundedIcon sx={{ fontSize: 9.5, color: speaker?.accountType !== 'MEMBER' ? '#ff0000' : 'primary.main' }} />
                 <Typography
                   noWrap
                   sx={{
                     fontSize: layout.pillFontSize,
                     fontWeight: 700,
-                    color: isDark ? 'grey.100' : '#1e293b',
+                    color: speaker?.accountType !== 'MEMBER' ? '#ff0000' : isDark ? 'grey.100' : '#1e293b',
                     lineHeight: 1,
                   }}
                 >

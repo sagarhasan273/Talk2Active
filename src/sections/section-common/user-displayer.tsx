@@ -1,5 +1,6 @@
 // src/sections/section-voice/voice-room-card/user-displayer.tsx
 
+import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
@@ -15,7 +16,6 @@ import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import {
   alpha,
-  Avatar,
   Box,
   Divider,
   Fade,
@@ -29,7 +29,6 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux'; // Import useSelector
 import DialogReportUser from '../../components/dialogs/dialog-report-user';
-import AvatarWrapper from './avatar-wrapper';
 import UserDisplayerWrapper from './user-displayer-wrapper';
 
 export type UserDisplayerProfile = {
@@ -102,14 +101,19 @@ export const UserDisplayer = ({
       friend_count: cachedStats?.friend_count ?? user.friend_count ?? 0,
       following_count: cachedStats?.following_count ?? user.following_count ?? 0,
     });
-  }, [resolvedUserId, cachedStats, user.follower_count, user.friend_count, user.following_count, open]);
+  }, [
+    resolvedUserId,
+    cachedStats,
+    user.follower_count,
+    user.friend_count,
+    user.following_count,
+    open,
+  ]);
 
   const handleStatsUpdate = useCallback(
     (updatedStatsList: UserStats[]) => {
       if (!Array.isArray(updatedStatsList)) return;
-      const targetStats = updatedStatsList.find(
-        (s) => String(s.userId) === String(resolvedUserId)
-      );
+      const targetStats = updatedStatsList.find((s) => String(s.userId) === String(resolvedUserId));
       if (targetStats) {
         setLiveStats({
           follower_count: targetStats.follower_count ?? 0,
@@ -122,7 +126,8 @@ export const UserDisplayer = ({
   );
 
   const accountCfg =
-    AccountTypeConfig[user.accountType?.toLowerCase() ?? AccountTypeEnum.MEMBER] ?? AccountTypeConfig.member;
+    AccountTypeConfig[user.accountType?.toLowerCase() ?? AccountTypeEnum.MEMBER] ??
+    AccountTypeConfig.member;
 
   const getInitials = (fullName: string) => {
     if (!fullName) return '';
@@ -461,43 +466,21 @@ export const UserDisplayer = ({
                 )}
               </Box>
 
-              {/* RIGHT: Large Square Profile Image Showcase */}
-              <AvatarWrapper accountType={user.accountType} variant='rounded' borderThickness={0.5}>
-                <Box
-                  sx={{
-                    position: 'relative',
-                    width: { xs: '100%', sm: 205 },
-                    height: { xs: 220, sm: 205 },
-                    flexShrink: 0,
-                    borderRadius: 0.5,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Avatar
-                    variant="square"
-                    src={user.profilePhoto || undefined}
-                    alt={user.name}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      fontSize: '3.25rem',
-                      fontWeight: 800,
-                      '& img': {
-                        objectFit: 'cover',
-                      },
-                    }}
-                  >
-                    {getInitials(user.name)}
-                  </Avatar>
-                </Box>
-              </AvatarWrapper>
+              <AnimatedAvatar
+                accountType={user.accountType}
+                src={user.profilePhoto || undefined}
+                name={user.name}
+                size={210}
+                ringGap={18}
+                speed={4}
+              />
             </Box>
           </UserDisplayerWrapper>
         </Fade>
-      </Modal >
+      </Modal>
 
       {/* Report User Modal Dialog */}
-      < DialogReportUser
+      <DialogReportUser
         open={reportOpen}
         userId={resolvedUserId}
         userName={user.name}

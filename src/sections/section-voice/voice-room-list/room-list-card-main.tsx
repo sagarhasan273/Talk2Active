@@ -7,18 +7,17 @@ import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import {
   alpha,
-  Avatar,
   Box,
   Button,
   Paper,
   Stack,
   type SxProps,
   Typography,
-  useTheme,
+  useTheme
 } from '@mui/material';
 
+import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import { Label, ParticipantLevel } from '@/components/label';
-import AvatarWrapper from '@/sections/section-common/avatar-wrapper';
 import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
 import VoiceRoomHostWrapper from './room-list-card-host-wrapper';
@@ -207,26 +206,14 @@ const VoiceRoomCardComponent = ({
           onClick={(e) => handleAvatarClick(e, roomData?.host)}
           sx={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, flexShrink: 0 }}
         >
-          <AvatarWrapper
+          <AnimatedAvatar
             accountType={roomData?.host?.accountType}
-            sx={{ width: 36, height: 36, boxSizing: 'border-box' }}
-          >
-            <Avatar
-              src={roomData?.host?.profilePhoto || undefined}
-              alt={roomData?.host?.name || 'Unknown'}
-              imgProps={{ loading: 'lazy', decoding: 'async' }}
-              sx={{
-                width: '100%',
-                height: '100%',
-                boxSizing: 'border-box',
-                fontSize: 14,
-                fontWeight: 800,
-                border: `2px solid ${theme.palette.primary.main}`,
-              }}
-            >
-              {(roomData?.host?.name || 'U').charAt(0).toUpperCase()}
-            </Avatar>
-          </AvatarWrapper>
+            src={roomData?.host?.profilePhoto || undefined}
+            name={roomData?.host?.name}
+            ringGap={4}
+            speed={4}
+            size={36}
+          />
         </Box>
         <Stack sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="body2" fontWeight={700} noWrap sx={{ color: isDark ? 'text.primary' : '#0f172a', lineHeight: 1.2, fontSize: 13 }}>
