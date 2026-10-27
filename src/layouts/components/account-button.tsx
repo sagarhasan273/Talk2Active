@@ -4,10 +4,10 @@ import { m } from 'framer-motion';
 import { useSelector } from 'react-redux';
 
 import { Badge } from '@mui/material';
-import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import { useTheme } from '@mui/material/styles';
 
+import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import { selectAccount } from 'src/core/slices';
 
 // ----------------------------------------------------------------------
@@ -39,19 +39,14 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
           },
         }}
       >
-        <Avatar
-          src={user?.profilePhoto}
-          alt={user?.name || displayName || ''}
-          sx={{
-            fontWeight: 800,
-            fontSize: '0.875rem',
-            letterSpacing: '0.04em',
-            width: 40,
-            height: 40,
-            ...sx,
-          }}
+        <AnimatedAvatar
+          accountType={user?.accountType}
+          src={user?.profilePhoto || undefined}
+          name={user?.name}
+          size={32}
+          ringGap={5}
+          speed={4}
         />
-
       </Badge>
     </IconButton>
   );

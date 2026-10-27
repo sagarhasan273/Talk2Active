@@ -51,9 +51,9 @@ export const AnimatedAvatar = ({
   let ringImageSrc = '';
 
   if (normalizedTier === 'ADMIN') {
-    ringImageSrc = `${CONFIG.assetsDir}/assets/background/supporter.68180b0d.png`;
+    ringImageSrc = `${CONFIG.assetsDir}/assets/background/ring-base-3.png`;
   } else if (normalizedTier === 'SUPPORTER' || normalizedTier === 'SUPPORTER_PLUS') {
-    ringImageSrc = `${CONFIG.assetsDir}/assets/background/supporter-plus.0d5f0ce3.png`;
+    ringImageSrc = `${CONFIG.assetsDir}/assets/background/ring-base-2.png`;
   }
 
   return (

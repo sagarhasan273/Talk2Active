@@ -4,7 +4,9 @@ import { useBoolean } from '@/hooks/use-boolean';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RadioRoundedIcon from '@mui/icons-material/RadioRounded';
 import { alpha, Box, Button, Paper, Stack, SxProps, Typography, useTheme } from '@mui/material';
-import { VoiceModalCreateRoom } from '../voice-modal-create-room';
+import { Suspense } from 'react';
+import { LazyVoiceModalCreateRoom } from './room-list-lazy';
+import { useEverTrue } from './room-list-scheduler';
 
 type RoomCardCreationProps = {
   sx?: SxProps;
@@ -19,6 +21,7 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
   const isDark = theme.palette.mode === 'dark';
 
   const open = useBoolean();
+  const modalMounted = useEverTrue(open.value);
 
   const handleCreation = (e: StopPropagationEvent) => {
     e.stopPropagation();
@@ -43,12 +46,14 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
           border: '1.5px dashed',
           borderColor: isDark ? alpha('#38bdf8', 0.3) : '#cbd5e1',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            borderColor: isDark ? '#38bdf8' : 'primary.main',
-            '& .creation-circle': {
-              transform: 'scale(1.06)',
+          '@media (hover: hover)': {
+            '&:hover': {
               borderColor: isDark ? '#38bdf8' : 'primary.main',
-              color: isDark ? '#38bdf8' : 'primary.main',
+              '& .creation-circle': {
+                transform: 'scale(1.06)',
+                borderColor: isDark ? '#38bdf8' : 'primary.main',
+                color: isDark ? '#38bdf8' : 'primary.main',
+              },
             },
           },
           ...sx,
@@ -147,7 +152,11 @@ export const RoomCardCreation = ({ sx }: RoomCardCreationProps) => {
           </Button>
         </Stack>
       </Paper>
-      <VoiceModalCreateRoom open={open.value} onClose={open.onFalse} />
+      {modalMounted && (
+        <Suspense fallback={null}>
+          <LazyVoiceModalCreateRoom open={open.value} onClose={open.onFalse} />
+        </Suspense>
+      )}
     </>
   );
 };

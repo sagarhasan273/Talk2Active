@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-list-card-dialog.tsx
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -68,8 +68,9 @@ export const RoomParticipantsDialog = ({
 
   const [anchor, setAnchor] = useState<{ el: HTMLElement; id: string } | null>(null);
 
-  const dedupedUsers = Array.from(
-    new Map(allUsers.map((user) => [participantId(user), user])).values()
+  const dedupedUsers = useMemo(
+    () => Array.from(new Map(allUsers.map((user) => [participantId(user), user])).values()),
+    [allUsers]
   );
 
   const getGridColumns = () => {

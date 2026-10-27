@@ -471,7 +471,7 @@ export const UserDisplayer = ({
                 src={user.profilePhoto || undefined}
                 name={user.name}
                 size={210}
-                ringGap={18}
+                ringGap={12}
                 speed={4}
               />
             </Box>

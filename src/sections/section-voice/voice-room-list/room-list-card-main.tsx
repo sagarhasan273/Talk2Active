@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-list-card-main.tsx
 
-import React, { memo, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
@@ -13,7 +13,7 @@ import {
   Stack,
   type SxProps,
   Typography,
-  useTheme
+  useTheme,
 } from '@mui/material';
 
 import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
@@ -21,7 +21,9 @@ import { Label, ParticipantLevel } from '@/components/label';
 import { RoomType } from '@/types/type-room';
 import { fgetLanguageName } from 'src/utils/helper';
 import VoiceRoomHostWrapper from './room-list-card-host-wrapper';
-import VoiceRoomCardStage, { computeStageLayout } from './room-list-card-stage';
+import VoiceRoomCardStage, { computeStageLayout, LiteAvatar } from './room-list-card-stage';
+import { BUTTON_HEIGHT, HEADER_HEIGHT, STAGE_HEIGHT } from './room-list-constants';
+import { hydratedRooms, hydrationQueue } from './room-list-scheduler';
 
 // ----------------------------------------------------------------------
 
@@ -35,12 +37,10 @@ type VoiceRoomCardExtendedProps = VoiceRoomCardProps & {
   onAvatarClick: (user: any) => void;
   onOverflowClick: (room: RoomType) => void;
   cardWidth?: number;
-  isScrolling?: boolean;
+  /** First-row cards skip the lite phase so above-the-fold content is full immediately. */
+  priority?: boolean;
   sx?: SxProps;
-  index?: number;
 };
-
-const STAGE_HEIGHT = 110;
 
 const sxCardBase = {
   height: '100%',
@@ -60,13 +60,32 @@ const VoiceRoomCardComponent = ({
   onAvatarClick,
   onOverflowClick,
   cardWidth = 320,
+  priority = false,
   sx,
 }: VoiceRoomCardExtendedProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const primaryMain = theme.palette.primary.main;
 
   const refs = useRef({ onJoinRoom, onAvatarClick, onOverflowClick });
   refs.current = { onJoinRoom, onAvatarClick, onOverflowClick };
+
+  // ── Progressive hydration ───────────────────────────────────────────
+  // Phase 1 (lite): static initials, no AnimatedAvatar, no image decode. Same geometry.
+  // Phase 2 (full): upgraded in an idle slot, one card at a time, paused on fast scroll.
+  const roomId = roomData?.roomId ?? '';
+  const [hydrated, setHydrated] = useState(() => priority || hydratedRooms.has(roomId));
+
+  useEffect(() => {
+    if (hydrated) {
+      hydratedRooms.add(roomId);
+      return undefined;
+    }
+    return hydrationQueue.enqueue(roomId, () => {
+      hydratedRooms.add(roomId);
+      setHydrated(true);
+    });
+  }, [hydrated, roomId]);
 
   const hostId = roomData?.host?.userId;
   const participants = roomData?.participants || [];
@@ -81,7 +100,7 @@ const VoiceRoomCardComponent = ({
     () =>
       participants.map((p) => ({
         ...p,
-        isHost: Boolean(hostId && (p?.userId === hostId || (p as any)?.userId === hostId)),
+        isHost: Boolean(hostId && p?.userId === hostId),
       })),
     [participants, hostId]
   );
@@ -108,30 +127,34 @@ const VoiceRoomCardComponent = ({
     refs.current.onOverflowClick(roomData);
   };
 
-  return (
-    <Paper
-      onClick={() => handleOverflowClick()}
-      elevation={0}
-      sx={[
-        {
-          p: 2,
-          borderRadius: 0.5,
-          position: 'relative',
-          cursor: 'pointer',
-          userSelect: 'none',
-          WebkitTapHighlightColor: 'transparent',
-          bgcolor: 'background.default',
-          border: '1px solid',
-          borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
-          transition: 'border-color 0.2s ease',
-          '&:hover': { borderColor: alpha(theme.palette.primary.main, isDark ? 0.45 : 0.4) },
-          ...sxCardBase,
+  const paperSx = useMemo(
+    () => [
+      {
+        p: 2,
+        borderRadius: 0.5,
+        position: 'relative',
+        cursor: 'pointer',
+        userSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        bgcolor: 'background.default',
+        border: '1px solid',
+        borderColor: isDark ? alpha('#fff', 0.08) : '#e2e8f0',
+        transition: 'border-color 0.2s ease',
+        // no sticky :hover on touch screens
+        '@media (hover: hover)': {
+          '&:hover': { borderColor: alpha(primaryMain, isDark ? 0.45 : 0.4) },
         },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
-      {/* 1. Header & Topic (Locked height so it never shifts) */}
-      <Box sx={{ flexShrink: 0, minWidth: 0, height: 52 }}>
+        ...sxCardBase,
+      },
+      ...(Array.isArray(sx) ? sx : [sx]),
+    ],
+    [isDark, primaryMain, sx]
+  );
+
+  return (
+    <Paper onClick={() => handleOverflowClick()} elevation={0} sx={paperSx as SxProps}>
+      {/* 1. Header & Topic (locked height so it never shifts) */}
+      <Box sx={{ flexShrink: 0, minWidth: 0, height: HEADER_HEIGHT }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} mb={1}>
           <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, overflow: 'hidden', height: 20 }}>
             {(roomData.languages?.length ? roomData.languages : ['en']).slice(0, 2).map((lang, idx) => (
@@ -140,7 +163,7 @@ const VoiceRoomCardComponent = ({
                 label={lang !== 'unknown' ? fgetLanguageName(lang) : 'Any'}
                 size="small"
                 color="primary"
-                sx={{ height: 20, borderRadius: 0.5, bgcolor: alpha(theme.palette.primary.main, 0.08) }}
+                sx={{ height: 20, borderRadius: 0.5, bgcolor: alpha(primaryMain, 0.08) }}
               />
             ))}
             {roomData?.level && (
@@ -177,14 +200,7 @@ const VoiceRoomCardComponent = ({
                 flexShrink: 0,
               }}
             >
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: 'success.main',
-                }}
-              />
+              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} />
               <Typography sx={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>Live</Typography>
             </Box>
           )}
@@ -206,14 +222,18 @@ const VoiceRoomCardComponent = ({
           onClick={(e) => handleAvatarClick(e, roomData?.host)}
           sx={{ position: 'relative', cursor: 'pointer', width: 36, height: 36, flexShrink: 0 }}
         >
-          <AnimatedAvatar
-            accountType={roomData?.host?.accountType}
-            src={roomData?.host?.profilePhoto || undefined}
-            name={roomData?.host?.name}
-            ringGap={4}
-            speed={4}
-            size={36}
-          />
+          {hydrated ? (
+            <AnimatedAvatar
+              accountType={roomData?.host?.accountType}
+              src={roomData?.host?.profilePhoto || undefined}
+              name={roomData?.host?.name}
+              ringGap={4}
+              speed={4}
+              size={36}
+            />
+          ) : (
+            <LiteAvatar name={roomData?.host?.name} size={36} fontSize={13} />
+          )}
         </Box>
         <Stack sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="body2" fontWeight={700} noWrap sx={{ color: isDark ? 'text.primary' : '#0f172a', lineHeight: 1.2, fontSize: 13 }}>
@@ -245,7 +265,7 @@ const VoiceRoomCardComponent = ({
         </Box>
       </VoiceRoomHostWrapper>
 
-      {/* 3. Stage Area: Strictly locked to 110px without mid-scroll DOM swapping */}
+      {/* 3. Stage Area: strictly locked height */}
       <Box
         sx={{
           height: STAGE_HEIGHT,
@@ -261,6 +281,7 @@ const VoiceRoomCardComponent = ({
       >
         {layout && (
           <VoiceRoomCardStage
+            lite={!hydrated}
             speakers={allUsers}
             availableSpace={availableSpace}
             layout={layout}
@@ -285,8 +306,8 @@ const VoiceRoomCardComponent = ({
         endIcon={isFull ? <BlockRoundedIcon sx={{ fontSize: 16 }} /> : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
         sx={{
           flexShrink: 0,
-          height: 36,
-          minHeight: 36,
+          height: BUTTON_HEIGHT,
+          minHeight: BUTTON_HEIGHT,
           borderRadius: 0.5,
           textTransform: 'none',
           fontWeight: 700,
@@ -299,6 +320,16 @@ const VoiceRoomCardComponent = ({
     </Paper>
   );
 };
+
+// ----------------------------------------------------------------------
+
+const sameParticipant = (a: any, b: any) =>
+  a?.userId === b?.userId &&
+  a?.name === b?.name &&
+  a?.profilePhoto === b?.profilePhoto &&
+  a?.verified === b?.verified &&
+  a?.accountType === b?.accountType &&
+  a?.follower_count === b?.follower_count;
 
 const areRoomCardPropsEqual = (prev: VoiceRoomCardExtendedProps, next: VoiceRoomCardExtendedProps) => {
   if (prev.currentUserId !== next.currentUserId) return false;
@@ -317,7 +348,8 @@ const areRoomCardPropsEqual = (prev: VoiceRoomCardExtendedProps, next: VoiceRoom
     r1.isActive !== r2.isActive ||
     r1.level !== r2.level ||
     r1.max_participants !== r2.max_participants ||
-    r1.host?.userId !== r2.host?.userId ||
+    (r1.languages || []).join(',') !== (r2.languages || []).join(',') ||
+    !sameParticipant(r1.host, r2.host) ||
     (r1.participants?.length ?? 0) !== (r2.participants?.length ?? 0)
   )
     return false;
@@ -325,7 +357,7 @@ const areRoomCardPropsEqual = (prev: VoiceRoomCardExtendedProps, next: VoiceRoom
   const p1 = r1.participants || [];
   const p2 = r2.participants || [];
   for (let i = 0; i < p1.length; i++) {
-    if (p1[i]?.userId !== p2[i]?.userId) return false;
+    if (!sameParticipant(p1[i], p2[i])) return false;
   }
   return true;
 };

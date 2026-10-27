@@ -1,18 +1,21 @@
 // src/sections/section-voice/voice-room-card/room-list-card-host-wrapper.tsx
 
-import React, { memo } from 'react';
+import React from 'react';
 
-import { Box, keyframes, type SxProps, useTheme } from '@mui/material';
+import { alpha, Box, keyframes, type SxProps, useTheme } from '@mui/material';
+import { HOST_STRIP_HEIGHT } from './room-list-constants';
 
 const spin = keyframes`
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
 `;
 
-const panBackground = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+// Replaces the old `background-position` animation (repaints every frame) with a
+// translateX on a 200%-wide layer: identical look, compositor-only.
+const panX = keyframes`
+  0%   { transform: translate3d(0, 0, 0); }
+  50%  { transform: translate3d(-50%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 `;
 
 export type AccountTier = 'ADMIN' | 'SUPPORTER' | 'MEMBER' | string;
@@ -23,65 +26,41 @@ export type VoiceRoomHostWrapperProps = {
   sx?: SxProps;
 };
 
-export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
+const baseDark = '#181c26';
+const baseLight = '#ffffff';
+
+const TIERS: Record<string, { c1: string; c2: string; glow: 'c1' | 'c2' }> = {
+  ADMIN: { c1: '#8B5CF6', c2: '#F43F5E', glow: 'c2' },
+  SUPPORTER: { c1: '#0EA5E9', c2: '#FBBF24', glow: 'c1' },
+};
+
+export const VoiceRoomHostWrapper = ({
   children,
   accountType = 'MEMBER',
   sx,
-}: VoiceRoomHostWrapperProps) {
+}: VoiceRoomHostWrapperProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const normalizedTier = accountType.toUpperCase();
+  const tier = (accountType || 'MEMBER').toUpperCase();
+  const cfg = TIERS[tier];
+  const animated = Boolean(cfg);
 
-  const hasAnimatedBorder = normalizedTier === 'ADMIN' || normalizedTier === 'SUPPORTER';
-
-  let mobileBorderGradient = 'none';
-  let desktopBorderGradient = 'none';
+  let borderGradient = 'none';
   let glowShadow = 'none';
+  let panGradient = 'none';
 
-  const baseDark = '#181c26';
-  const baseLight = '#ffffff';
-
-  let innerBgStatic: string = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc';
-  let innerBgDesktop: string = innerBgStatic;
-  let desktopInnerAnimation = 'none';
-
-  if (normalizedTier === 'ADMIN') {
-    const c1 = '#8B5CF6';
-    const c2 = '#F43F5E';
-
-    mobileBorderGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
-    desktopBorderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
-    glowShadow = `0 4px 20px -4px ${c1}40`;
-
-    const mix1 = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
-    const mix2 = isDark
-      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
-
-    innerBgStatic = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
-    innerBgDesktop = innerBgStatic;
-    desktopInnerAnimation = `${panBackground} 6s ease-in-out infinite`;
-  } else if (normalizedTier === 'SUPPORTER') {
-    const c1 = '#0EA5E9';
-    const c2 = '#FBBF24';
-
-    mobileBorderGradient = `linear-gradient(135deg, ${c1}, ${c2} 50%, ${c1})`;
-    desktopBorderGradient = `conic-gradient(from 0deg, ${c1}, ${c2}, ${c1})`;
-    glowShadow = `0 4px 20px -4px ${c1}40`;
-
-    const mix1 = isDark
-      ? `color-mix(in srgb, ${c1} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c1} 6%, ${baseLight})`;
-    const mix2 = isDark
-      ? `color-mix(in srgb, ${c2} 12%, ${baseDark})`
-      : `color-mix(in srgb, ${c2} 6%, ${baseLight})`;
-
-    innerBgStatic = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
-    innerBgDesktop = innerBgStatic;
-    desktopInnerAnimation = `${panBackground} 6s ease-in-out infinite`;
+  if (cfg) {
+    const { c1, c2 } = cfg;
+    borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
+    glowShadow = `0 4px 20px -4px ${alpha(cfg[cfg.glow], 0.25)}`;
+    const base = isDark ? baseDark : baseLight;
+    const pct = isDark ? 12 : 6;
+    const mix1 = `color-mix(in srgb, ${c1} ${pct}%, ${base})`;
+    const mix2 = `color-mix(in srgb, ${c2} ${pct}%, ${base})`;
+    panGradient = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
   }
+
+  const staticInnerBg = isDark ? alpha('#fff', 0.035) : '#f8fafc';
 
   return (
     <Box
@@ -90,53 +69,32 @@ export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
           position: 'relative',
           overflow: 'hidden',
           borderRadius: 0.75,
-          height: 54,
-          minHeight: 54,
-          maxHeight: 54,
+          height: HOST_STRIP_HEIGHT,
+          minHeight: HOST_STRIP_HEIGHT,
+          maxHeight: HOST_STRIP_HEIGHT,
           boxSizing: 'border-box',
-          p: hasAnimatedBorder ? '1.5px' : '0px',
+          p: animated ? '1.5px' : '0px',
           isolation: 'isolate',
           minWidth: 0,
           flexShrink: 0,
-          boxShadow: hasAnimatedBorder ? glowShadow : 'none',
-          ...(hasAnimatedBorder && {
+          boxShadow: animated ? glowShadow : 'none',
+          ...(animated && {
             '&::before': {
               content: '""',
               position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '130%', // was 300%
+              aspectRatio: '1 / 1',
               zIndex: -1,
-              backfaceVisibility: 'hidden',
-
-              // ── MOBILE (default) ─────────────────────────────
-              // Static border. Explicit `animation: 'none'` +
-              // `transform: 'none'` — no rotating GPU layer, no paint churn.
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: mobileBorderGradient,
-              animation: 'none',
-              animationPlayState: 'running',
-              transform: 'none',
-              willChange: 'auto',
-
-              // ── DESKTOP (sm+) ────────────────────────────────
-              [theme.breakpoints.up('sm')]: {
-                top: '50%',
-                left: '50%',
-                right: 'auto',
-                bottom: 'auto',
-                width: '300%',
-                aspectRatio: '1 / 1',
-                background: desktopBorderGradient,
-                animation: `${spin} 3s linear infinite`,
-                animationPlayState: 'var(--card-anim-play-state, running)',
-                transform: 'translate(-50%, -50%)',
-                willChange: 'transform',
-
-                '@media (prefers-reduced-motion: reduce)': {
-                  animation: 'none',
-                },
-              },
+              background: borderGradient,
+              transform: 'translate(-50%, -50%)',
+              willChange: 'transform',
+              pointerEvents: 'none',
+              animation: `${spin} 3s linear infinite`,
+            },
+            '@media (prefers-reduced-motion: reduce)': {
+              '&::before': { animation: 'none' },
             },
           }),
         },
@@ -145,44 +103,45 @@ export const VoiceRoomHostWrapper = memo(function VoiceRoomHostWrapper({
     >
       <Box
         sx={{
+          position: 'relative',
+          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           gap: 1.25,
           px: 1,
           borderRadius: 0.5,
-          border: hasAnimatedBorder ? 'none' : '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
+          background: animated ? (isDark ? baseDark : baseLight) : staticInnerBg,
+          border: animated ? 'none' : '1px solid',
+          borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
           boxSizing: 'border-box',
           minWidth: 0,
           height: '100%',
           width: '100%',
-
-          background: innerBgStatic,
-          backgroundSize: 'auto',
-          animation: 'none',
-          animationPlayState: 'running',
-
-          [theme.breakpoints.up('sm')]:
-            desktopInnerAnimation !== 'none'
-              ? {
-                background: innerBgDesktop,
-                backgroundSize: '200% 100%',
-                animation: desktopInnerAnimation,
-                animationPlayState: 'var(--card-anim-play-state, running)',
-                '@media (prefers-reduced-motion: reduce)': {
-                  animation: 'none',
-                  backgroundPosition: '0% 50%',
-                },
-              }
-              : {
-                animation: 'none',
-              },
+          ...(animated && {
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: '200%',
+              background: panGradient,
+              zIndex: 0,
+              pointerEvents: 'none',
+              willChange: 'transform',
+              animation: `${panX} 5s ease-in-out infinite`,
+            },
+            '& > *': { position: 'relative', zIndex: 1 },
+            '@media (prefers-reduced-motion: reduce)': {
+              '&::before': { animation: 'none' },
+            },
+          }),
         }}
       >
         {children}
       </Box>
     </Box>
   );
-});
+};
 
 export default VoiceRoomHostWrapper;

@@ -47,15 +47,15 @@ export const RoomCardParticipant = ({
           : isDark
             ? alpha('#fff', 0.08)
             : '#e2e8f0',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          borderColor: isHost ? theme.palette.warning.main : theme.palette.primary.main,
-          transform: 'translateY(-2px)',
-          boxShadow: isDark
-            ? '0 6px 18px rgba(0, 0, 0, 0.45)'
-            : '0 8px 20px rgba(15, 23, 42, 0.12)',
-          '& .participant-img': {
-            transform: 'scale(1.05)',
+        transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+        '@media (hover: hover)': {
+          '&:hover': {
+            borderColor: isHost ? theme.palette.warning.main : theme.palette.primary.main,
+            transform: 'translateY(-2px)',
+            boxShadow: isDark
+              ? '0 6px 18px rgba(0, 0, 0, 0.45)'
+              : '0 8px 20px rgba(15, 23, 42, 0.12)',
+            '& .participant-img': { transform: 'scale(1.05)' },
           },
         },
       }}
@@ -66,6 +66,7 @@ export const RoomCardParticipant = ({
         alt={user.name}
         variant="rounded"
         className="participant-img"
+        imgProps={{ loading: 'lazy', decoding: 'async' }}
         sx={{
           width: '100%',
           height: '100%',

@@ -18,13 +18,13 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { selectAccount } from 'src/core/slices';
 
-import { AvatarUser } from 'src/components/avatar-user';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { useSettingsContext } from 'src/components/settings';
 import { BaseOption } from 'src/components/settings/drawer/base-option';
 import { NavOptions } from 'src/components/settings/drawer/nav-options';
 
+import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import { Label } from '@/components/label';
 import { AccountTypeEnum } from '@/enums/enum-user';
 import { AccountButton } from './account-button';
@@ -137,20 +137,13 @@ export function AccountDrawer({ data = [], status = [], sx, ...other }: AccountD
 
       {/* Avatar + Name + Email Row */}
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ pr: 4 }}>
-        <AvatarUser
-          avatarUrl={user?.profilePhoto ?? null}
-          name={user?.name ?? ''}
-          verified={true}
+        <AnimatedAvatar
           accountType={user?.accountType}
-          sx={{
-            width: 54,
-            height: 54,
-            fontSize: '1.2rem',
-            fontWeight: 800,
-            flexShrink: 0,
-            border: '1px solid',
-            borderColor: isDark ? alpha('#fff', 0.12) : '#e2e8f0',
-          }}
+          src={user?.profilePhoto || undefined}
+          name={user?.name}
+          size={54}
+          ringGap={5}
+          speed={4}
         />
 
         <Box sx={{ minWidth: 0, flex: 1 }}>

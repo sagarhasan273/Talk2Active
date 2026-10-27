@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-card/room-list-card-stage.tsx
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 
 import AnimatedAvatar from '@/components/avatar-user/animated-avatar';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
@@ -11,15 +11,21 @@ import { UserPlus } from 'lucide-react';
 export const computeStageLayout = (width: number, height: number, totalRequested: number) => {
   if (!width || !height || totalRequested <= 0) return null;
 
-  const pillAllowance = 10;
+  const pillAllowance = 10; // Exact extra vertical space added by the follower pill (mt: -0.75 + height)
   const minGap = 8;
+
+  // Safety buffer guarantees border paddings never overflow the flex container
   const safeWidth = Math.max(180, width - 24);
 
+  // 1 to 5 participants stay on 1 row. 6 or more break to 2 rows.
   let bestRows = totalRequested >= 6 ? 2 : 1;
+
   let bestCols = bestRows === 1 ? totalRequested : Math.ceil(totalRequested / 2);
-  bestCols = Math.min(7, bestCols);
+  bestCols = Math.min(7, bestCols); // Absolute max limit of 7 columns
+
   let bestGap = bestRows === 1 && totalRequested <= 3 ? 16 : minGap;
 
+  // CRITICAL CLS FIX: Subtract pillAllowance for EVERY row so 2 rows never exceed 110px height
   const maxW = Math.floor((safeWidth - bestGap * (bestCols - 1)) / bestCols);
   const maxH =
     bestRows === 1
@@ -28,6 +34,7 @@ export const computeStageLayout = (width: number, height: number, totalRequested
 
   let bestSize = Math.min(maxW, maxH, 72);
 
+  // Safety Fallback: If 4 or 5 users squish smaller than 36px on a tiny screen, force 2 rows early
   if (bestRows === 1 && bestSize < 36 && totalRequested >= 4) {
     bestRows = 2;
     bestCols = Math.ceil(totalRequested / 2);
@@ -68,6 +75,8 @@ const formatCompactCount = (num: number = 0): string =>
   }).format(num);
 
 interface RoomStageProps {
+  /** Lite = static initials circles (no AnimatedAvatar / image decode). Same geometry as full. */
+  lite?: boolean;
   speakers: any[];
   availableSpace: number;
   layout: ReturnType<typeof computeStageLayout>;
@@ -83,7 +92,40 @@ type PodItem =
   | { type: 'empty'; key: string }
   | { type: 'overflow'; count: number; key: string };
 
-export default function VoiceRoomCardStage({
+export const LiteAvatar = memo(function LiteAvatar({
+  name,
+  size,
+  fontSize,
+}: {
+  name?: string;
+  size: number;
+  fontSize: number;
+}) {
+  return (
+    <Box
+      sx={(theme) => ({
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        boxSizing: 'border-box',
+        fontWeight: 800,
+        fontSize,
+        userSelect: 'none',
+        color: theme.palette.primary.main,
+        bgcolor: alpha(theme.palette.primary.main, 0.12),
+      })}
+    >
+      {getInitials(name)}
+    </Box>
+  );
+});
+
+function VoiceRoomCardStageComponent({
+  lite = false,
   speakers,
   availableSpace,
   layout,
@@ -101,7 +143,9 @@ export default function VoiceRoomCardStage({
     );
     for (let i = 0; i < availableSpace; i++) allSlots.push({ type: 'empty', key: `emp-${i}` });
 
-    if (allSlots.length <= layout.maxVisible) return allSlots;
+    if (allSlots.length <= layout.maxVisible) {
+      return allSlots;
+    }
 
     const visible = allSlots.slice(0, layout.maxVisible - 1);
     const hiddenCount = allSlots.length - visible.length;
@@ -112,6 +156,7 @@ export default function VoiceRoomCardStage({
 
   if (!layout) return null;
 
+  // Exact total height of a pod including its follower pill
   const podTotalHeight = layout.size + 8;
 
   return (
@@ -129,9 +174,7 @@ export default function VoiceRoomCardStage({
         alignContent: 'center',
         gap: `${layout.gapPx}px`,
         boxSizing: 'border-box',
-        // Note: the STAGE still clips (contain: strict = ... paint).
-        // That's fine — the stage is 110px tall & several hundred wide,
-        // so the spinner's 7px overflow fits well within it.
+        // Isolates internal stage rendering so it can NEVER trigger a page layout shift
         contain: 'strict',
       }}
     >
@@ -154,13 +197,8 @@ export default function VoiceRoomCardStage({
                 zIndex: 1,
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
-                // 🔥 FIX: dropped `paint` — it was clipping the ring on
-                // top / left / right (7 px on each side, from ringGap).
-                // `layout style` still isolates sibling layout impact.
-                contain: 'layout style',
-                '&:hover': {
-                  zIndex: 10,
-                  transform: 'scale(1.05)',
+                '@media (hover: hover)': {
+                  '&:hover': { zIndex: 10, transform: 'scale(1.05)' },
                 },
               }}
             >
@@ -171,20 +209,20 @@ export default function VoiceRoomCardStage({
                   borderRadius: '50%',
                   position: 'relative',
                   flexShrink: 0,
-                  // Only pausing animations during scroll — no clipping.
-                  '& *': {
-                    animationPlayState: 'var(--card-anim-play-state, running)' as any,
-                  },
                 }}
               >
-                <AnimatedAvatar
-                  accountType={speaker?.accountType}
-                  src={speaker?.profilePhoto || undefined}
-                  name={speaker?.name}
-                  ringGap={7}
-                  speed={4}
-                  size={layout.size}
-                />
+                {lite ? (
+                  <LiteAvatar name={speaker?.name} size={layout.size} fontSize={layout.fontSize} />
+                ) : (
+                  <AnimatedAvatar
+                    accountType={speaker?.accountType}
+                    src={speaker?.profilePhoto || undefined}
+                    name={speaker?.name}
+                    ringGap={5}
+                    speed={4}
+                    size={layout.size}
+                  />
+                )}
                 {speaker?.verified && (
                   <Box
                     sx={{
@@ -213,19 +251,9 @@ export default function VoiceRoomCardStage({
                   height: 14,
                   px: 0.6,
                   borderRadius: 0.75,
-                  bgcolor:
-                    speaker?.accountType !== 'MEMBER'
-                      ? '#faf8f8'
-                      : isDark
-                        ? '#252b3b'
-                        : '#f1f5f9',
+                  bgcolor: speaker?.accountType !== 'MEMBER' ? '#faf8f8' : isDark ? '#252b3b' : '#f1f5f9',
                   border: '1px solid',
-                  borderColor:
-                    speaker?.accountType !== 'MEMBER'
-                      ? '#ff0000'
-                      : isDark
-                        ? alpha('#fff', 0.12)
-                        : '#cbd5e1',
+                  borderColor: speaker?.accountType !== 'MEMBER' ? '#ff0000' : isDark ? alpha('#fff', 0.12) : '#cbd5e1',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -235,24 +263,13 @@ export default function VoiceRoomCardStage({
                   boxSizing: 'border-box',
                 }}
               >
-                <FavoriteRoundedIcon
-                  sx={{
-                    fontSize: 9.5,
-                    color:
-                      speaker?.accountType !== 'MEMBER' ? '#ff0000' : 'primary.main',
-                  }}
-                />
+                <FavoriteRoundedIcon sx={{ fontSize: 9.5, color: speaker?.accountType !== 'MEMBER' ? '#ff0000' : 'primary.main' }} />
                 <Typography
                   noWrap
                   sx={{
                     fontSize: layout.pillFontSize,
                     fontWeight: 700,
-                    color:
-                      speaker?.accountType !== 'MEMBER'
-                        ? '#ff0000'
-                        : isDark
-                          ? 'grey.100'
-                          : '#1e293b',
+                    color: speaker?.accountType !== 'MEMBER' ? '#ff0000' : isDark ? 'grey.100' : '#1e293b',
                     lineHeight: 1,
                   }}
                 >
@@ -363,3 +380,6 @@ export default function VoiceRoomCardStage({
     </Box>
   );
 }
+
+const VoiceRoomCardStage = memo(VoiceRoomCardStageComponent);
+export default VoiceRoomCardStage;
