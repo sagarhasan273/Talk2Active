@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { alpha, Box, keyframes, type SxProps, useTheme } from '@mui/material';
+import { alpha, Box, keyframes, type SxProps, useMediaQuery, useTheme } from '@mui/material';
 import { HOST_STRIP_HEIGHT } from './room-list-constants';
 
 const spin = keyframes`
@@ -40,24 +40,32 @@ export const VoiceRoomHostWrapper = ({
   sx,
 }: VoiceRoomHostWrapperProps) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
+
   const tier = (accountType || 'MEMBER').toUpperCase();
   const cfg = TIERS[tier];
   const animated = Boolean(cfg);
 
   let borderGradient = 'none';
+  let mobileBorderGradient = 'none';
   let glowShadow = 'none';
   let panGradient = 'none';
+  let staticPanGradient = 'none';
 
   if (cfg) {
     const { c1, c2 } = cfg;
     borderGradient = `conic-gradient(from 0deg, transparent 0%, ${alpha(c1, 0.2)} 15%, ${c1} 35%, ${c2} 50%, transparent 65%)`;
+    mobileBorderGradient = `linear-gradient(135deg, ${c1}, ${c2})`;
     glowShadow = `0 4px 20px -4px ${alpha(cfg[cfg.glow], 0.25)}`;
+
     const base = isDark ? baseDark : baseLight;
     const pct = isDark ? 12 : 6;
     const mix1 = `color-mix(in srgb, ${c1} ${pct}%, ${base})`;
     const mix2 = `color-mix(in srgb, ${c2} ${pct}%, ${base})`;
+
     panGradient = `linear-gradient(90deg, ${mix1}, ${mix2}, ${mix1})`;
+    staticPanGradient = `linear-gradient(90deg, ${mix1}, ${mix2})`;
   }
 
   const staticInnerBg = isDark ? alpha('#fff', 0.035) : '#f8fafc';
@@ -78,13 +86,14 @@ export const VoiceRoomHostWrapper = ({
           minWidth: 0,
           flexShrink: 0,
           boxShadow: animated ? glowShadow : 'none',
-          ...(animated && {
+          background: animated && isMobile ? mobileBorderGradient : 'transparent',
+          ...(animated && !isMobile && {
             '&::before': {
               content: '""',
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: '130%', // was 300%
+              width: '130%',
               aspectRatio: '1 / 1',
               zIndex: -1,
               background: borderGradient,
@@ -110,14 +119,17 @@ export const VoiceRoomHostWrapper = ({
           gap: 1.25,
           px: 1,
           borderRadius: 0.5,
-          background: animated ? (isDark ? baseDark : baseLight) : staticInnerBg,
+          // Use a static gradient for mobile, standard base for desktop animation, or fallback
+          background: animated
+            ? (isMobile ? staticPanGradient : (isDark ? baseDark : baseLight))
+            : staticInnerBg,
           border: animated ? 'none' : '1px solid',
           borderColor: isDark ? alpha('#fff', 0.06) : '#e2e8f0',
           boxSizing: 'border-box',
           minWidth: 0,
           height: '100%',
           width: '100%',
-          ...(animated && {
+          ...(animated && !isMobile && {
             '&::before': {
               content: '""',
               position: 'absolute',

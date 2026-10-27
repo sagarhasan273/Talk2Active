@@ -2,10 +2,9 @@
 
 import React from 'react';
 
-import { alpha, Box, keyframes, type SxProps, type Theme } from '@mui/material';
+import { alpha, Box, keyframes, useMediaQuery, useTheme, type SxProps, type Theme } from '@mui/material';
 import { CARD_HEIGHT, CARD_MAX_WIDTH } from './room-list-constants';
 
-// Transform-only animation => runs on the compositor, no repaint per frame.
 const spin = keyframes`
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to   { transform: translate(-50%, -50%) rotate(360deg); }
@@ -19,10 +18,12 @@ export type VoiceRoomCardBorderWrapperProps = {
   sx?: SxProps;
 };
 
-const gradient = (c1: string, c2: string) =>
+const conicGradient = (c1: string, c2: string) =>
   `conic-gradient(from 0deg, ${alpha(c1, 0.15)}, ${c1}, ${c2}, ${alpha(c1, 0.15)} 50%, ${c1}, ${c2}, ${alpha(c1, 0.15)})`;
 
-// Static style objects (built once, not on every render).
+const linearGradient = (c1: string, c2: string) =>
+  `linear-gradient(135deg, ${c1}, ${c2})`;
+
 const baseSx: SxProps<Theme> = {
   width: '100%',
   height: CARD_HEIGHT,
@@ -53,7 +54,6 @@ const animatedSx = (bg: string): SxProps<Theme> => ({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    // 150% of width always covers the card diagonal (was 200% => ~4MB layer per card)
     width: '150%',
     aspectRatio: '1 / 1',
     zIndex: -1,
@@ -68,9 +68,19 @@ const animatedSx = (bg: string): SxProps<Theme> => ({
   },
 });
 
+const mobileSx = (bg: string): SxProps<Theme> => ({
+  p: '2px',
+  background: bg,
+});
+
 const TIER_SX: Record<string, SxProps<Theme>> = {
-  ADMIN: animatedSx(gradient('#7C3AED', '#E11D48')),
-  SUPPORTER: animatedSx(gradient('#3B82F6', '#F59E0B')),
+  ADMIN: animatedSx(conicGradient('#7C3AED', '#E11D48')),
+  SUPPORTER: animatedSx(conicGradient('#3B82F6', '#F59E0B')),
+};
+
+const TIER_MOBILE_SX: Record<string, SxProps<Theme>> = {
+  ADMIN: mobileSx(linearGradient('#7C3AED', '#E11D48')),
+  SUPPORTER: mobileSx(linearGradient('#3B82F6', '#F59E0B')),
 };
 
 export const VoiceRoomCardBorderWrapper = ({
@@ -78,11 +88,14 @@ export const VoiceRoomCardBorderWrapper = ({
   accountType = 'MEMBER',
   sx,
 }: VoiceRoomCardBorderWrapperProps) => {
-  // accountType can be null from the API (default params only cover undefined)
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const tier = (accountType || 'MEMBER').toUpperCase();
+  const tierStyle = isMobile ? TIER_MOBILE_SX[tier] : TIER_SX[tier];
 
   return (
-    <Box sx={[baseSx, TIER_SX[tier] ?? false, ...(Array.isArray(sx) ? sx : [sx])] as SxProps<Theme>}>
+    <Box sx={[baseSx, tierStyle ?? false, ...(Array.isArray(sx) ? sx : [sx])] as SxProps<Theme>}>
       {children}
     </Box>
   );
