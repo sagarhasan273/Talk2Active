@@ -58,7 +58,7 @@ export const RoomChatMessage = ({
 
   if (message.isSystem) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', my: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'left', width: '100%', my: 1 }}>
         <Box
           sx={{
             display: 'flex',
@@ -66,7 +66,7 @@ export const RoomChatMessage = ({
             gap: 1,
             px: 2,
             py: 0.75,
-            borderRadius: 2,
+            borderRadius: 0.5,
             bgcolor: getSystemMessageBg(theme, message.systemType),
             border: `1px solid ${getSystemMessageBorder(theme, message.systemType)}`,
             color: getSystemMessageColor(theme, message.systemType),
@@ -206,7 +206,7 @@ export const RoomChatMessage = ({
             sx={{
               px: 1.5,
               py: 1,
-              borderRadius: 2,
+              borderRadius: 0.5,
               fontSize: 13,
               lineHeight: 1.45,
               color: message.isSelf ? '#fff' : 'text.primary',

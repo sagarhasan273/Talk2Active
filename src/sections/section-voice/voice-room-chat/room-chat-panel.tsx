@@ -732,11 +732,15 @@ export const RoomChatPanel = ({
         }}
       >
         <Box
-          component="input"
+          component="textarea"
+          rows={2}
           value={draft}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') send();
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDraft(e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
           }}
           placeholder={
             isAskingAi
@@ -749,7 +753,7 @@ export const RoomChatPanel = ({
                     ? `Whisper to ${whisperTarget.name}...`
                     : replyingTo
                       ? `Reply to ${replyingTo.authorName}...`
-                      : 'Send a message or type question for AI...'
+                      : 'Send a message or type question for AI...\n(Shift + Enter for new line)'
           }
           sx={{
             flex: 1,
@@ -765,8 +769,10 @@ export const RoomChatPanel = ({
             px: 1.5,
             py: 1,
             fontSize: 13,
+            fontFamily: 'inherit', // Crucial for textareas to inherit your theme font
             color: isDark ? 'text.primary' : '#0f172a',
             outline: 'none',
+            resize: 'none', // Prevents users from dragging the corner and breaking your layout
             '&::placeholder': { color: isDark ? 'text.disabled' : '#94a3b8' },
             '&:focus': {
               borderColor: whisperTarget
