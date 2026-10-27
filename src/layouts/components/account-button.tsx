@@ -42,7 +42,6 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
       }}
       {...other}
     >
-
       <Badge
         variant="dot"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
@@ -81,7 +80,6 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
       >
         {displayNameText}
       </Typography>
-
     </IconButton>
   );
 }
