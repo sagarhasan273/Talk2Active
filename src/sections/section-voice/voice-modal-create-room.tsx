@@ -240,14 +240,15 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      fullScreen={isMobile}
       PaperProps={{
         elevation: 0,
         sx: {
-          borderRadius: isMobile ? 0 : 1,
+          borderRadius: isMobile ? 0 : 0.5,
           overflow: 'hidden',
           bgcolor: isDark ? '#181c26' : '#ffffff',
           backgroundImage: 'none',
-          border: '1px solid',
+          border: isMobile ? 'none' : '1px solid',
           borderColor: isDark ? alpha('#fff', 0.1) : '#e2e8f0',
           boxShadow: isDark
             ? '0 24px 48px -12px rgba(0, 0, 0, 0.65)'
@@ -272,7 +273,7 @@ export const VoiceModalCreateRoom: React.FC<Props> = ({
             alignItems: 'center',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               sx={{
                 width: 38,

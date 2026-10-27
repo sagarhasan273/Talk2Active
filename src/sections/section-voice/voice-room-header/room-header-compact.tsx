@@ -141,13 +141,30 @@ export const CompactRoomHeader = ({
             </Tooltip>
           )}
 
-          {/* Room Topic & Metadata */}
-          <Box sx={{ minWidth: 0, flex: 1 }}>
+          {/* Room Topic & Metadata Wrapper */}
+          <Box
+            sx={{
+              minWidth: 0,
+              flex: 1,
+              overflowX: 'auto',
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+              // CSS mask creates a fade-out effect on the right edge
+              WebkitMaskImage: 'linear-gradient(to right, #000 85%, transparent 100%)',
+              maskImage: 'linear-gradient(to right, #000 85%, transparent 100%)',
+            }}
+          >
+            {/* Row 1: Topic */}
             <Stack
               direction="row"
               alignItems="center"
               spacing={1}
-              sx={{ minWidth: 0, mb: 0.35 }}
+              sx={{
+                minWidth: 'max-content',
+                mb: 0.35,
+                pr: 4 // Ensures content clears the fade when fully scrolled
+              }}
             >
               <Typography
                 noWrap
@@ -205,12 +222,15 @@ export const CompactRoomHeader = ({
               </Box>
             </Stack>
 
-            {/* Badges: Languages & Learning Level */}
+            {/* Row 2: Badges (Languages, Learning Level, Host) */}
             <Stack
               direction="row"
               alignItems="center"
               spacing={0.75}
-              sx={{ flexWrap: 'nowrap', overflow: 'hidden' }}
+              sx={{
+                minWidth: 'max-content',
+                pr: 4 // Ensures badges clear the fade when fully scrolled
+              }}
             >
               {languageDetails.map((lang, index) => (
                 <Label

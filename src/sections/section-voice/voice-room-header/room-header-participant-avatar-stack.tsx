@@ -15,11 +15,14 @@ const PRESETS = {
 } as const;
 
 type Props = {
-  /** Colour behind the stack (for the overlap cut-out). */
+  /** Colour behind the stack (avatar border colour). */
   surface?: string;
+  /** Speaking ring / badge colour (use a contrasting colour on a success-coloured surface). */
+  accent?: string;
+  onAccent?: string;
 };
 
-export function ParticipantAvatarStack({ surface }: Props) {
+export function ParticipantAvatarStack({ surface, accent, onAccent }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -39,8 +42,7 @@ export function ParticipantAvatarStack({ surface }: Props) {
       direction="row"
       alignItems="center"
       sx={{
-        pl: 0.5,
-        '& > *:not(:first-of-type)': { ml: `-${Math.round(size * 0.3)}px` },
+        gap: 0.5,
       }}
     >
       {visible.map((participant) => (
@@ -49,6 +51,8 @@ export function ParticipantAvatarStack({ surface }: Props) {
           participant={participant}
           size={size}
           surface={cutout}
+          accent={accent}
+          onAccent={onAccent}
         />
       ))}
 
@@ -62,7 +66,7 @@ export function ParticipantAvatarStack({ surface }: Props) {
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            bgcolor: isDark ? alpha('#fff', 0.1) : alpha(theme.palette.primary.main, 0.1),
+            bgcolor: accent ? alpha(accent, 0.18) : isDark ? alpha('#fff', 0.1) : alpha(theme.palette.primary.main, 0.1),
             border: `2px solid ${cutout}`,
             zIndex: 0,
           }}
@@ -72,7 +76,7 @@ export function ParticipantAvatarStack({ surface }: Props) {
               fontSize: size * 0.34,
               fontWeight: 800,
               lineHeight: 1,
-              color: isDark ? 'text.secondary' : 'primary.dark',
+              color: accent ?? (isDark ? 'text.secondary' : 'primary.dark'),
             }}
           >
             +{hiddenCount}

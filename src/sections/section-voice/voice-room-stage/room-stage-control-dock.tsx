@@ -154,8 +154,8 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
   }, [deafened, room]);
 
   const buttonSx = {
-    width: { xs: 40, sm: 42 },
-    height: { xs: 40, sm: 42 },
+    width: 28,
+    height: 28,
     p: 0,
     borderRadius: 0.5,
     bgcolor: surfaceBg,
@@ -179,11 +179,9 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           mx: { xs: 1, sm: 'auto' },
           mb: { xs: 1, sm: 1.5 },
           mt: 0.5,
-          px: { xs: 1.25, sm: 2 },
-          py: { xs: 1, sm: 1.25 },
-          borderRadius: 2,
-          // ── FIX (mobile paint): skip blur on mobile, it's the single
-          //    most expensive compositor op here and the dock is always visible.
+          px: { xs: 1, sm: 1 },
+          py: { xs: 1, sm: 1 },
+          borderRadius: 0.5,
           backdropFilter: { xs: 'none', sm: 'blur(16px)' },
           bgcolor: isMobile
             ? isDark
@@ -199,7 +197,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           maxWidth: 'sm',
-          gap: { xs: 0.75, sm: 1.25 },
+          gap: { xs: 1, sm: 4 },
         }}
       >
         {/* Left: Audio Inputs */}
@@ -221,7 +219,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
                 },
               }}
             >
-              {micMuted ? <MicOff size={18} /> : <Mic size={18} />}
+              {micMuted ? <MicOff size={14} /> : <Mic size={14} />}
             </IconButton>
           </Tooltip>
 
@@ -242,7 +240,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
                 },
               }}
             >
-              <Headphones size={18} />
+              <Headphones size={14} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -253,23 +251,23 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             size="small"
             disableElevation
             onClick={onToggleRaiseHand}
-            startIcon={<span style={{ fontSize: 14, lineHeight: 1 }}>✋</span>}
+            startIcon={<span style={{ fontSize: 12, lineHeight: 1 }}>✋</span>}
             sx={{
               textTransform: 'none',
               fontWeight: 600,
-              fontSize: 13,
+              fontSize: 12,
               borderRadius: 0.5,
-              px: { xs: 0, sm: 1.75 },
-              minWidth: { xs: 40, sm: 'auto' },
-              width: { xs: 40, sm: 'auto' },
-              height: { xs: 40, sm: 42 },
+              px: { xs: 0, sm: 1 },
+              minWidth: { xs: 28, sm: 'auto' },
+              width: { xs: 28, sm: 'auto' },
+              height: 28,
               bgcolor: handRaised ? alpha(theme.palette.warning.main, 0.18) : surfaceBg,
               color: handRaised ? 'warning.main' : 'text.primary',
               border: '1px solid',
               borderColor: handRaised ? alpha(theme.palette.warning.main, 0.45) : surfaceBorder,
               transition: 'all 0.18s ease',
               '& .MuiButton-startIcon': {
-                mr: { xs: 0, sm: 0.75 },
+                mr: { xs: 0, sm: 0.5 },
                 ml: 0,
               },
               '&:hover, &:focus, &:active, &.Mui-focusVisible': {
@@ -285,7 +283,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 
           <Tooltip title="Send reaction" arrow>
             <IconButton onClick={(e) => setEmojiAnchor(e.currentTarget)} sx={buttonSx}>
-              <Smile size={18} />
+              <Smile size={14} />
             </IconButton>
           </Tooltip>
 
@@ -309,7 +307,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
                   },
                 }}
               >
-                {isScreenSharing ? <ScreenShareOff size={18} /> : <ScreenShare size={18} />}
+                {isScreenSharing ? <ScreenShareOff size={14} /> : <ScreenShare size={14} />}
               </IconButton>
             </Tooltip>
           )}
@@ -321,20 +319,20 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             onClick={onToggleChat}
             sx={{ ...buttonSx, display: { xs: 'inline-flex', md: 'none' } }}
           >
-            <MessageSquare size={18} />
+            <MessageSquare size={14} />
           </IconButton>
 
           <Button
             onClick={(e) => setLeaveAnchorEl(e.currentTarget)}
             disableElevation
-            startIcon={<PhoneOff size={16} />}
+            startIcon={<PhoneOff size={12} />}
             sx={{
-              px: { xs: 0, sm: 2 },
-              minWidth: { xs: 40, sm: 'auto' },
-              width: { xs: 40, sm: 'auto' },
-              height: { xs: 40, sm: 42 },
+              px: { xs: 0, sm: 1 },
+              minWidth: { xs: 28, sm: 'auto' },
+              width: { xs: 28, sm: 'auto' },
+              height: 28,
               borderRadius: 0.5,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 600,
               textTransform: 'none',
               bgcolor: alpha(theme.palette.error.main, 0.14),
@@ -343,7 +341,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               borderColor: alpha(theme.palette.error.main, 0.3),
               transition: 'all 0.18s ease',
               '& .MuiButton-startIcon': {
-                mr: { xs: 0, sm: 0.75 },
+                mr: { xs: 0, sm: 0.5 },
                 ml: 0,
               },
               '&:hover': {
@@ -434,13 +432,13 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         }}
       >
         <Typography
-          variant="subtitle2"
+          variant="subtitle1"
           sx={{ fontWeight: 800, mb: 0.5, color: isDark ? 'text.primary' : '#0f172a' }}
         >
           Leave Room?
         </Typography>
         <Typography
-          variant="caption"
+          variant="subtitle2"
           sx={{ color: isDark ? 'text.secondary' : '#475569', display: 'block', mb: 2.5 }}
         >
           Are you sure you want to disconnect?
@@ -450,7 +448,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
             size="small"
             color="inherit"
             onClick={() => setLeaveAnchorEl(null)}
-            sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 0.5 }}
+            sx={{ height: 26, fontWeight: 600, textTransform: 'none', borderRadius: 0.5 }}
           >
             Cancel
           </Button>
@@ -463,7 +461,7 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
               setLeaveAnchorEl(null);
               handleLeaveRoom();
             }}
-            sx={{ fontWeight: 700, textTransform: 'none', borderRadius: 0.5 }}
+            sx={{ height: 26, fontWeight: 700, textTransform: 'none', borderRadius: 0.5 }}
           >
             Leave
           </Button>
@@ -474,3 +472,4 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 };
 
 export default RoomControlDock;
+

@@ -23,12 +23,16 @@ type Props = {
   participant: Participant;
   size?: number;
   surface?: string;
+  /** Speaking ring / badge colour. Defaults to theme success. */
+  accent?: string;
+  /** Icon colour on the badge. Defaults to white. */
+  onAccent?: string;
 };
 
-export function ParticipantAvatar({ participant, size = 32, surface }: Props) {
+export function ParticipantAvatar({ participant, size = 32, surface, accent, onAccent }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const success = theme.palette.success.main;
+  const success = accent ?? theme.palette.success.main;
   const cutout = surface ?? (isDark ? '#181c26' : '#ffffff');
 
   const speaking = useIsSpeaking(participant);
@@ -104,12 +108,12 @@ export function ParticipantAvatar({ participant, size = 32, surface }: Props) {
               width: badgeSize,
               height: badgeSize,
               borderRadius: '50%',
-              bgcolor: 'success.main',
+              bgcolor: success,
               border: `2px solid ${cutout}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: onAccent ?? '#fff',
               animation: `${badgeIn} 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
             }}
           >
