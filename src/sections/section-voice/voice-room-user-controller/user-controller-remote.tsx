@@ -32,7 +32,6 @@ import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
-import { fDateTime } from '@/utils/format-time';
 import {
   getStoredVolume,
   setStoredVolume,
@@ -173,17 +172,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
   return (
     <>
-      {user.joinedAt && (
-        <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
-          <Typography variant="caption" color="text.disabled">
-            Joined Stage:
-          </Typography>{' '}
-          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-            {fDateTime(user.joinedAt)}
-          </Typography>
-        </Paper>
-      )}
-
       {/* Remote Audio Volume */}
       <Paper elevation={0} sx={sectionCardSx}>
         <Typography
@@ -312,6 +300,50 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
         </Paper>
       )}
 
+      {/* Follow / Block / PM */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 1.25,
+          mb: 1.25,
+        }}
+      >
+        <ButtonRelationshipToggle
+          targetUser={{ id: userId, name: user.name }}
+          size="small"
+          variant="soft"
+          fullWidth
+        />
+        <ButtonBlockUser
+          targetUserId={user.userId}
+          userName={user.name}
+          isBlocked={isBlocked}
+          variant="soft"
+          size="small"
+        />
+        <ButtonReportUser
+          variant="soft"
+          targetUserId={userId}
+          size="small"
+          sx={{ flex: 1, minWidth: '100px' }}
+        />
+        <Button
+          variant="outlined"
+          color="inherit"
+          startIcon={<ChatIcon />}
+          onClick={() => onShare?.(userId)}
+          sx={{
+            borderRadius: 0.5,
+            fontWeight: 600,
+            textTransform: 'none',
+            borderColor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
+          }}
+        >
+          PM
+        </Button>
+      </Box>
+
       {/* Speaking Rating Button */}
       <Paper
         elevation={0}
@@ -361,50 +393,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           </Button>
         </Stack>
       </Paper>
-
-      {/* Follow / Block / PM */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 1.25,
-          mb: 1.25,
-        }}
-      >
-        <ButtonRelationshipToggle
-          targetUser={{ id: userId, name: user.name }}
-          size="small"
-          variant="soft"
-          fullWidth
-        />
-        <ButtonBlockUser
-          targetUserId={user.userId}
-          userName={user.name}
-          isBlocked={isBlocked}
-          variant="soft"
-          size="small"
-        />
-        <ButtonReportUser
-          variant="soft"
-          targetUserId={userId}
-          size="small"
-          sx={{ flex: 1, minWidth: '100px' }}
-        />
-        <Button
-          variant="outlined"
-          color="inherit"
-          startIcon={<ChatIcon />}
-          onClick={() => onShare?.(userId)}
-          sx={{
-            borderRadius: 0.5,
-            fontWeight: 600,
-            textTransform: 'none',
-            borderColor: isDark ? alpha('#fff', 0.12) : alpha('#000', 0.12),
-          }}
-        >
-          PM
-        </Button>
-      </Box>
     </>
   );
 };

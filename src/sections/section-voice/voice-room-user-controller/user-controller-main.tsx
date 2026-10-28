@@ -150,7 +150,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         },
       }}
     >
-
       <Box
         sx={{
           px: 3,
