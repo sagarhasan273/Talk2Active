@@ -1,6 +1,6 @@
 // src/sections/section-voice/voice-room-user-controller/user-controller-remote.tsx
 
-import { useRoomContext } from '@livekit/components-react';
+import { useRemoteParticipant, useRoomContext } from '@livekit/components-react';
 import {
   Chat as ChatIcon,
   Gavel as GavelIcon,
@@ -24,7 +24,8 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React, { useState } from 'react';
+import { ParticipantEvent, Track } from 'livekit-client';
+import React, { useEffect, useState } from 'react';
 
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import ButtonBlockUser from '@/components/buttons/button-block-user';
@@ -74,12 +75,41 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
     currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId)
   );
 
+  const remoteParticipant = useRemoteParticipant(userId);
+
   // Shared volume store — always in sync with the enforcement hook and
   // with the main drawer's deafened indicator.
   const [volume, setVolume] = useState<number>(() => getStoredVolume(userId));
 
-  // Host-mute toggle state (previously always sent `mute: true`)
-  const [hostMuted, setHostMuted] = useState(false);
+  // Reactively track if the user is currently muted
+  const [isMicMuted, setIsMicMuted] = useState(() => {
+    if (!remoteParticipant) return true;
+    const pub = remoteParticipant.getTrackPublication(Track.Source.Microphone);
+    return !pub || pub.isMuted;
+  });
+
+  useEffect(() => {
+    if (!remoteParticipant) return;
+
+    const updateMuteState = () => {
+      const pub = remoteParticipant.getTrackPublication(Track.Source.Microphone);
+      setIsMicMuted(!pub || pub.isMuted);
+    };
+
+    updateMuteState();
+
+    remoteParticipant.on(ParticipantEvent.TrackMuted, updateMuteState);
+    remoteParticipant.on(ParticipantEvent.TrackUnmuted, updateMuteState);
+    remoteParticipant.on(ParticipantEvent.TrackPublished, updateMuteState);
+    remoteParticipant.on(ParticipantEvent.TrackUnpublished, updateMuteState);
+
+    return () => {
+      remoteParticipant.off(ParticipantEvent.TrackMuted, updateMuteState);
+      remoteParticipant.off(ParticipantEvent.TrackUnmuted, updateMuteState);
+      remoteParticipant.off(ParticipantEvent.TrackPublished, updateMuteState);
+      remoteParticipant.off(ParticipantEvent.TrackUnpublished, updateMuteState);
+    };
+  }, [remoteParticipant]);
 
   const sectionCardSx = {
     p: 2,
@@ -116,17 +146,16 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
   const handleHostMute = async () => {
     if (!room?.localParticipant) return;
-    const next = !hostMuted;
+    // We only ever SEND a mute command, never unmute.
     const payload = JSON.stringify({
       type: 'FORCE_MUTE_PARTICIPANT',
       targetIdentity: userId,
-      mute: next,
+      mute: true,
     });
     await room.localParticipant.publishData(new TextEncoder().encode(payload), {
       reliable: true,
       topic: 'room_interactions',
     });
-    setHostMuted(next);
   };
 
   const handleHostKick = async () => {
@@ -255,11 +284,12 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
           <Stack direction="row" spacing={1.25}>
             <Button
               variant="contained"
-              color={hostMuted ? 'warning' : 'error'}
+              color="warning"
               size="small"
               disableElevation
               fullWidth
-              startIcon={hostMuted ? <MicIcon /> : <MicOffIcon />}
+              disabled={isMicMuted}
+              startIcon={isMicMuted ? <MicOffIcon /> : <MicIcon />}
               onClick={handleHostMute}
               sx={{
                 borderRadius: 0.5,
@@ -268,7 +298,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
                 boxShadow: 'none',
               }}
             >
-              {hostMuted ? 'Unmute for All' : 'Mute for All'}
+              {isMicMuted ? 'User Muted' : 'Force Mute'}
             </Button>
             <Button
               variant="outlined"

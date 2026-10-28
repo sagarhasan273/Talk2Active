@@ -149,8 +149,47 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
     onSpeakingChange(isSpeaking);
   }, [isSpeaking, onSpeakingChange]);
 
-  const micPub = rawParticipant.getTrackPublication(Track.Source.Microphone);
-  const isMuted = !rawParticipant.isMicrophoneEnabled || !micPub || micPub.isMuted;
+  // Use React state instead of useMemo so we can trigger re-renders
+  const [isMuted, setIsMuted] = useState(() => {
+    if (!rawParticipant) return true;
+    if (rawParticipant.isLocal && !rawParticipant.isMicrophoneEnabled) return true;
+    const micPub = rawParticipant.getTrackPublication(Track.Source.Microphone);
+    return !micPub || micPub.isMuted;
+  });
+
+  // Listen directly to LiveKit's internal events to sync the UI
+  useEffect(() => {
+    if (!rawParticipant) return;
+
+    const updateMuteStatus = () => {
+      if (rawParticipant.isLocal && !rawParticipant.isMicrophoneEnabled) {
+        setIsMuted(true);
+        return;
+      }
+      const micPub = rawParticipant.getTrackPublication(Track.Source.Microphone);
+      setIsMuted(!micPub || micPub.isMuted);
+    };
+
+    // Run once on mount
+    updateMuteStatus();
+
+    rawParticipant.on(ParticipantEvent.TrackMuted, updateMuteStatus);
+    rawParticipant.on(ParticipantEvent.TrackUnmuted, updateMuteStatus);
+    rawParticipant.on(ParticipantEvent.LocalTrackPublished, updateMuteStatus);
+    rawParticipant.on(ParticipantEvent.LocalTrackUnpublished, updateMuteStatus);
+    rawParticipant.on(ParticipantEvent.TrackPublished, updateMuteStatus);
+    rawParticipant.on(ParticipantEvent.TrackUnpublished, updateMuteStatus);
+
+    return () => {
+      // Cleanup listeners on unmount
+      rawParticipant.off(ParticipantEvent.TrackMuted, updateMuteStatus);
+      rawParticipant.off(ParticipantEvent.TrackUnmuted, updateMuteStatus);
+      rawParticipant.off(ParticipantEvent.LocalTrackPublished, updateMuteStatus);
+      rawParticipant.off(ParticipantEvent.LocalTrackUnpublished, updateMuteStatus);
+      rawParticipant.off(ParticipantEvent.TrackPublished, updateMuteStatus);
+      rawParticipant.off(ParticipantEvent.TrackUnpublished, updateMuteStatus);
+    };
+  }, [rawParticipant]);
 
   return (
     <Box

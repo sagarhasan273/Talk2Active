@@ -35,9 +35,7 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  // 🔑 Uses the shared audio controller — mic gain slider now actually
-  // applies real audio gain via Web Audio API (was previously a no-op
-  // slider that only wrote to sessionStorage).
+  // 🔑 Restored your custom hook! This ensures permissions and Krisp filters work.
   const {
     micGain,
     microphones,

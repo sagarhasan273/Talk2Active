@@ -1,6 +1,9 @@
 // src/sections/section-voice/voice-room-user-controller/user-controller-main.tsx
 
-import { useRoomContext } from '@livekit/components-react';
+import {
+  useLocalParticipant,
+  useRemoteParticipant
+} from '@livekit/components-react';
 import {
   Check as CheckIcon,
   Close as CloseIcon,
@@ -41,7 +44,6 @@ interface RoomUserControllerMainProps {
   onBlock?: (userId: string) => void;
   onReport?: (userId: string) => void;
   onVolumeChange?: (userId: string, volume: number) => void;
-  onToggleMute?: (userId: string) => void;
   onToggleDeafen?: (userId: string) => void;
   onShare?: (userId: string) => void;
   onKickParticipant?: (userId: string) => void;
@@ -53,27 +55,26 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const room = useRoomContext();
 
   const [copied, setCopied] = useState(false);
 
   const isSelf = Boolean(user?.isSelf);
   const userId = String(user?.userId || '');
 
-  // 🔑 Read the shared store — previously this always started at 50 even
-  // when a per-participant volume was already saved from an earlier session.
+  // 🔑 Reactive LiveKit Hooks to ensure the UI updates instantly
+  const { isMicrophoneEnabled } = useLocalParticipant();
+  const remoteParticipant = useRemoteParticipant(isSelf ? '' : userId);
+
   const [remoteVolume, setRemoteVolume] = useState<number>(() =>
     getStoredVolume(userId)
   );
 
   const isMuted = isSelf
-    ? room?.localParticipant
-      ? !room.localParticipant.isMicrophoneEnabled
-      : true
+    ? !isMicrophoneEnabled
     : (() => {
-      const p = room?.remoteParticipants.get(userId);
-      const micPub = p?.getTrackPublication(Track.Source.Microphone);
-      return p ? !p.isMicrophoneEnabled || !micPub || micPub.isMuted : true;
+      if (!remoteParticipant) return true;
+      const micPub = remoteParticipant.getTrackPublication(Track.Source.Microphone);
+      return !micPub || micPub.isMuted;
     })();
 
   const isDeafened = isSelf ? false : remoteVolume === 0;
@@ -374,7 +375,10 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         </Box>
 
         {isSelf ? (
-          <RoomUserControllerSelf user={user} isMuted={isMuted} />
+          <RoomUserControllerSelf
+            user={user}
+            isMuted={isMuted}
+          />
         ) : (
           <RoomUserControllerRemote
             {...props}
@@ -390,7 +394,4 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   );
 };
 
-// Note: removed the useless React.memo wrapper — the parent passes
-// `onClose` / `onRateOpen` inline every render, so shallow compare always
-// fails. If you want it back, wrap those in useCallback first.
 export default RoomUserControllerMain;

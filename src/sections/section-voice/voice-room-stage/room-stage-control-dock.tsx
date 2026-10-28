@@ -1,3 +1,5 @@
+// src/sections/section-voice/voice-room-stage/room-stage-control-dock.tsx
+
 import {
   Headphones,
   MessageSquare,
@@ -82,17 +84,22 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     }
   }, [localParticipant, micMuted, playToggleMute]);
 
-  // ── FIX 1a: state update is pure. Toggle only. ──
+  // ── FIX 1a: When deafening, automatically force the mic to mute ──
   const handleToggleDeafen = useCallback(() => {
-    setDeafened((prev) => !prev);
-  }, []);
+    setDeafened((prev) => {
+      const next = !prev;
+      if (next && localParticipant?.isMicrophoneEnabled) {
+        localParticipant.setMicrophoneEnabled(false);
+      }
+      return next;
+    });
+  }, [localParticipant]);
 
-  // ── FIX 1b: side effects live in an effect that runs ONLY on actual change.
-  //    Kept it idempotent so React StrictMode double-invoke is harmless.
+  // ── FIX 1b: Synchronize deafen state with remote tracks safely ──
   const prevDeafenedRef = useRef(deafened);
 
   useEffect(() => {
-    if (prevDeafenedRef.current === deafened) return; // skip mount + redundant updates
+    if (prevDeafenedRef.current === deafened) return;
     prevDeafenedRef.current = deafened;
 
     playToggleDeafen(deafened);
@@ -107,13 +114,20 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
         }
       });
     });
+  }, [deafened, room, playToggleDeafen]);
 
-    if (deafened && isMicrophoneEnabled) {
-      localParticipant?.setMicrophoneEnabled(false);
+  // ── FIX 1c: When mic becomes opened (unmuted), automatically undeafen ──
+  const prevMicEnabled = useRef(isMicrophoneEnabled);
+  useEffect(() => {
+    if (isMicrophoneEnabled && !prevMicEnabled.current) {
+      if (deafened) {
+        setDeafened(false);
+      }
     }
-  }, [deafened, room, isMicrophoneEnabled, localParticipant, playToggleDeafen]);
+    prevMicEnabled.current = isMicrophoneEnabled;
+  }, [isMicrophoneEnabled, deafened]);
 
-  // ── FIX 1c: keep new joiners / late-unmutes muted while deafened.
+  // ── FIX 1d: keep new joiners / late-unmutes muted while deafened. ──
   useEffect(() => {
     if (!deafened || !room) return undefined;
 
@@ -472,4 +486,3 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
 };
 
 export default RoomControlDock;
-
