@@ -143,26 +143,6 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         },
       }}
     >
-      {isMobile && (
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            pt: 1.25,
-            pb: 0.5,
-          }}
-        >
-          <Box
-            sx={{
-              width: 38,
-              height: 4,
-              borderRadius: 2,
-              bgcolor: isDark ? alpha('#fff', 0.2) : alpha('#000', 0.2),
-            }}
-          />
-        </Box>
-      )}
 
       <Box
         sx={{
@@ -179,6 +159,18 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
           position: 'relative',
         }}
       >
+        {isMobile && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 3,
+              width: 38,
+              height: 4,
+              borderRadius: 2,
+              bgcolor: isDark ? alpha('#fff', 0.2) : alpha('#000', 0.2),
+            }}
+          />
+        )}
         <Typography
           variant="subtitle2"
           fontWeight={800}
