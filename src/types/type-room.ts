@@ -1,6 +1,7 @@
 import type { LocalParticipant, Participant, RemoteParticipant } from 'livekit-client';
 import type { LucideIcon } from 'lucide-react';
 import type {
+  KickUserBodySchema,
   RoomCreateSchema,
   RoomJoinSchema,
   RoomLeaveSchema,
@@ -20,6 +21,7 @@ export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
 export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
 export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
+export type KickUserInput = z.infer<typeof KickUserBodySchema>;
 
 export type SelectedTabType = 'room-list' | 'room-space';
 

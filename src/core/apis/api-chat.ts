@@ -1,4 +1,4 @@
-import type { LeaveRoomUserInput, RoomJoinInput, RoomType } from '@/types/type-room';
+import type { KickUserInput, LeaveRoomUserInput, RoomJoinInput, RoomType } from '@/types/type-room';
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
@@ -126,6 +126,15 @@ export const chatApi = createApi({
       }),
       // invalidatesTags: ['chat-recall'],
     }),
+
+    kickUser: builder.mutation<{ message: string; status: boolean }, KickUserInput>({
+      query: (body) => ({
+        url: `room/${body.roomId}/kick`,
+        method: 'POST',
+        body,
+      }),
+      // invalidatesTags: ['chat-recall'],
+    }),
   }),
 });
 
@@ -137,4 +146,5 @@ export const {
   useJoinRoomRequestMutation,
   useJoinRoomMutation,
   useLeaveRoomMutation,
+  useKickUserMutation
 } = chatApi;

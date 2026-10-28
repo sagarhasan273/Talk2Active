@@ -25,6 +25,20 @@ export const RoomParticipantSchema = ParticipantSchema.extend({
   isSelf: z.boolean().optional().default(false)
 });
 
+export const KickedUserSchema = z.object({
+  user: z.string(),
+  reason: z.string().optional(),
+  ip: z.string().optional(),
+  deviceId: z.string().optional(),
+  kickedAt: z.date().optional(),
+});
+
+export const KickUserBodySchema = z.object({
+  roomId: z.string(),
+  targetUserId: z.string(),
+  reason: z.string().max(500, 'Reason is too long').optional(),
+});
+
 export const RoomBaseSchema = z.object({
   roomId: z.string(),
   room_key: z.string().regex(/^RM[A-F0-9]{10}$/, {
@@ -38,7 +52,7 @@ export const RoomBaseSchema = z.object({
   host: z.union([z.string(), UserSchema]),
   participants: z.array(RoomParticipantSchema).default([]),
   isActive: z.boolean().optional().default(true),
-  kickedUserIds: z.array(z.string()).optional(),
+  kickedUsers: z.array(KickedUserSchema).optional(),
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
