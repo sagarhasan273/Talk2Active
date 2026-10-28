@@ -84,18 +84,16 @@ export const RoomControlDock: React.FC<RoomControlDockProps> = ({
     }
   }, [localParticipant, micMuted, playToggleMute]);
 
-  // ── FIX 1a: When deafening, automatically force the mic to mute ──
   const handleToggleDeafen = useCallback(() => {
-    setDeafened((prev) => {
-      const next = !prev;
-      if (next && localParticipant?.isMicrophoneEnabled) {
-        localParticipant.setMicrophoneEnabled(false);
-      }
-      return next;
-    });
-  }, [localParticipant]);
+    const nextDeafened = !deafened;
 
-  // ── FIX 1b: Synchronize deafen state with remote tracks safely ──
+    if (nextDeafened && localParticipant?.isMicrophoneEnabled) {
+      localParticipant.setMicrophoneEnabled(false);
+    }
+
+    setDeafened(nextDeafened);
+  }, [deafened, localParticipant]);
+
   const prevDeafenedRef = useRef(deafened);
 
   useEffect(() => {

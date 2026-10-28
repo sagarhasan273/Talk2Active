@@ -182,7 +182,22 @@ export const RoomStageParticipants = ({
     };
 
     const handleActiveSpeakers = (speakers: Participant[]) => {
-      speakers.forEach((s) => clearGhostId(String(s.identity)));
+      setGhostIds((prev) => {
+        if (prev.size === 0) return prev;
+
+        let changed = false;
+        const next = new Set(prev);
+
+        speakers.forEach((s) => {
+          const id = String(s.identity);
+          if (next.has(id)) {
+            next.delete(id);
+            changed = true;
+          }
+        });
+
+        return changed ? next : prev;
+      });
     };
 
     room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
