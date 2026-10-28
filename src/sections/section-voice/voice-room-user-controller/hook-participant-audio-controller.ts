@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 const participantVolumeMap = new Map<string, number>();
 const participantPreviousVolumeMap = new Map<string, number>();
 
-const DEFAULT_MIC_GAIN = 25;
+const DEFAULT_MIC_GAIN = 45;
 let persistentMicGain = DEFAULT_MIC_GAIN;
 
 
@@ -210,17 +210,13 @@ export const useParticipantAudioController = ({
 
         const processedTrack = destination.stream.getAudioTracks()[0];
 
-        // ✅ replaceTrack returns a Promise. We're in a sync function
-        // (MUI's Slider.onChange), so we use .then/.catch — NOT await.
         sender
           .replaceTrack(processedTrack)
           .then(() => {
-            // Only commit the ID AFTER the swap succeeds.
             lastProcessedTrackId = processedTrack.id;
           })
           .catch((err) => {
             console.warn('[MicGain] replaceTrack failed:', err);
-            // Roll back so the next drag retries.
             lastProcessedTrackId = null;
           });
       }

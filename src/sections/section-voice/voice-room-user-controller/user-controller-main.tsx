@@ -5,12 +5,10 @@ import {
   useRemoteParticipant
 } from '@livekit/components-react';
 import {
-  Check as CheckIcon,
   Close as CloseIcon,
-  ContentCopy as CopyIcon,
   HeadsetOff as HeadsetOffIcon,
   MicOff as MicOffIcon,
-  CheckCircle as VerifiedIcon,
+  CheckCircle as VerifiedIcon
 } from '@mui/icons-material';
 import {
   alpha,
@@ -19,19 +17,19 @@ import {
   Box,
   Drawer,
   IconButton,
-  Tooltip,
+  Paper,
   Typography,
   useMediaQuery,
-  useTheme,
+  useTheme
 } from '@mui/material';
 import { Track } from 'livekit-client';
 import React, { useState } from 'react';
 
 import { UseBooleanReturn } from '@/hooks/use-boolean';
 import { ParticipantStageType } from '@/types/type-room';
+import { fDateTime } from '@/utils/format-time';
 import { fUsername } from 'src/utils/helper';
 import { getStoredVolume } from './hook-participant-audio-controller';
-import ParticipantStatsRow from './user-controller-participant-stats-row';
 import { RoomUserControllerRemote } from './user-controller-remote';
 import { RoomUserControllerSelf } from './user-controller-self';
 
@@ -89,6 +87,15 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
   };
 
   const initials = fUsername(user?.name || (isSelf ? 'You' : 'User'));
+
+  const sectionCardSx = {
+    p: 2,
+    mb: 1.5,
+    borderRadius: 0.5,
+    bgcolor: isDark ? alpha('#fff', 0.03) : alpha('#000', 0.02),
+    border: '1px solid',
+    borderColor: isDark ? alpha('#fff', 0.07) : alpha('#000', 0.06),
+  };
 
   return (
     <Drawer
@@ -261,8 +268,8 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
                 src={user?.profilePhoto || undefined}
                 alt={user?.name}
                 sx={{
-                  width: { xs: 92, sm: 108 },
-                  height: { xs: 92, sm: 108 },
+                  width: { xs: 120, sm: 184 },
+                  height: { xs: 120, sm: 184 },
                   borderRadius: 2.5,
                   fontSize: 26,
                   fontWeight: 800,
@@ -302,67 +309,16 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
                 <VerifiedIcon sx={{ color: 'info.main', fontSize: 17, flexShrink: 0 }} />
               )}
             </Box>
-
-            <Box
-              onClick={handleCopyId}
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                cursor: 'pointer',
-                width: 'fit-content',
-                maxWidth: '100%',
-                mb: 1.5,
-                px: 0.85,
-                py: 0.25,
-                borderRadius: 0.5,
-                bgcolor: isDark ? alpha('#fff', 0.04) : alpha('#000', 0.04),
-                border: '1px solid',
-                borderColor: copied
-                  ? alpha(theme.palette.success.main, 0.4)
-                  : isDark
-                    ? alpha('#fff', 0.06)
-                    : alpha('#000', 0.06),
-                transition: 'all 0.15s ease',
-                '&:hover': {
-                  borderColor: alpha(theme.palette.primary.main, 0.4),
-                },
-              }}
-            >
-              <Typography
-                variant="caption"
-                noWrap
-                sx={{
-                  color: copied ? 'success.main' : 'text.secondary',
-                  fontWeight: 600,
-                  fontSize: 11.5,
-                }}
-              >
-                @{user?.genUserId || 'username'}
-              </Typography>
-
-              <Tooltip
-                title={copied ? 'Copied to clipboard!' : 'Copy user ID'}
-                arrow
-                placement="top"
-              >
-                <IconButton size="small" disableRipple sx={{ p: 0, ml: 0.25 }}>
-                  {copied ? (
-                    <CheckIcon sx={{ fontSize: 13, color: 'success.main' }} />
-                  ) : (
-                    <CopyIcon sx={{ fontSize: 12, color: 'text.disabled' }} />
-                  )}
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            <ParticipantStatsRow
-              participant={{
-                follower_count: user?.follower_count,
-                following_count: user?.following_count,
-                friend_count: user?.friend_count,
-              }}
-            />
+            {user.joinedAt && (
+              <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
+                <Typography variant="caption" color="text.disabled">
+                  Joined Stage:
+                </Typography>{' '}
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  {fDateTime(user.joinedAt)}
+                </Typography>
+              </Paper>
+            )}
           </Box>
         </Box>
 

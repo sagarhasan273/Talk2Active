@@ -63,17 +63,6 @@ export const RoomUserControllerSelf: React.FC<RoomUserControllerSelfProps> = ({
 
   return (
     <>
-      {user.joinedAt && (
-        <Paper elevation={0} sx={{ ...sectionCardSx, py: 1.25, px: 1.75 }}>
-          <Typography variant="caption" color="text.disabled">
-            Joined Stage:
-          </Typography>{' '}
-          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-            {fDateTime(user.joinedAt)}
-          </Typography>
-        </Paper>
-      )}
-
       {/* Microphone Gain & AI Filter */}
       <Paper elevation={0} sx={sectionCardSx}>
         <Typography

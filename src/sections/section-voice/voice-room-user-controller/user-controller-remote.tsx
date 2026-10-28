@@ -77,11 +77,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
 
   const remoteParticipant = useRemoteParticipant(userId);
 
-  // Shared volume store — always in sync with the enforcement hook and
-  // with the main drawer's deafened indicator.
   const [volume, setVolume] = useState<number>(() => getStoredVolume(userId));
 
-  // Reactively track if the user is currently muted
   const [isMicMuted, setIsMicMuted] = useState(() => {
     if (!remoteParticipant) return true;
     const pub = remoteParticipant.getTrackPublication(Track.Source.Microphone);
