@@ -205,12 +205,12 @@ export const RoomUserControllerMain: React.FC<RoomUserControllerMainProps> = (pr
         </IconButton>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3 }, py: 2.5 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2, sm: 3 }, py: 2.5 }}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'flex-start',
-            gap: { xs: 2, sm: 2.5 },
+            gap: { xs: 1, sm: 2 },
             mb: 2,
           }}
         >

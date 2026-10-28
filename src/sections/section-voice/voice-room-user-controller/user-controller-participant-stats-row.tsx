@@ -26,9 +26,9 @@ export const ParticipantStatsRow = ({
   return (
     <Stack
       direction="row"
-      spacing={1}
       sx={{
         width: '100%',
+        gap: { xs: 0.5, sm: 1.5 }
       }}
     >
       {stats.map((item) => (

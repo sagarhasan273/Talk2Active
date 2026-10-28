@@ -149,7 +149,6 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
     onSpeakingChange(isSpeaking);
   }, [isSpeaking, onSpeakingChange]);
 
-  // Use React state instead of useMemo so we can trigger re-renders
   const [isMuted, setIsMuted] = useState(() => {
     if (!rawParticipant) return true;
     if (rawParticipant.isLocal && !rawParticipant.isMicrophoneEnabled) return true;
@@ -157,7 +156,6 @@ const LiveParticipantAudio: React.FC<LiveParticipantAudioProps> = ({
     return !micPub || micPub.isMuted;
   });
 
-  // Listen directly to LiveKit's internal events to sync the UI
   useEffect(() => {
     if (!rawParticipant) return;
 
@@ -214,13 +212,6 @@ type ParticipantTileProps = {
   isSharingScreen?: boolean;
 };
 
-// ────────────────────────────────────────────────────────────────────────
-// FIX (Bug 2): custom comparator so tiles don't re-render just because
-// `participants.map(parseParticipant)` in the parent created a new object
-// reference on every room event. Each actually-rendered field is compared.
-// `rawParticipant` (LiveKit Participant) is stable per session and carries
-// mute / speaking / quality identity, so it's a strong but cheap signal.
-// ────────────────────────────────────────────────────────────────────────
 const areParticipantTilePropsEqual = (
   prev: ParticipantTileProps,
   next: ParticipantTileProps
@@ -605,8 +596,6 @@ export const ParticipantTile = React.memo(
                       color: '#000',
                       boxShadow: `0 2px 8px ${alpha(theme.palette.warning.main, 0.45)}`,
                       zIndex: 2,
-                      // FIX (Bug 3): hint compositor + respect reduced-motion
-                      // so this infinite wiggle can't burn frames on mobile.
                       willChange: 'transform',
                       animation: `${handWiggle} 1.2s infinite ease-in-out`,
                       '@media (prefers-reduced-motion: reduce)': {
