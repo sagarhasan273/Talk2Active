@@ -157,10 +157,9 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const handleHostKick = async () => {
     if (!room?.localParticipant) return;
     const payload = JSON.stringify({
-      type: 'FORCE_MUTE_PARTICIPANT',
+      type: 'KICK_OUT_PARTICIPANT',
       targetIdentity: userId,
       mute: true,
-      kicked: true,
     });
     await room.localParticipant.publishData(new TextEncoder().encode(payload), {
       reliable: true,

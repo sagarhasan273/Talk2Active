@@ -42,6 +42,7 @@ export function RoomContainerMain({
     onLeaveRoom,
     playHandRaise,
   });
+
   dataRef.current = { localParticipant, onLeaveRoom, playHandRaise };
 
   // --- Stage Interaction Handlers ---
@@ -148,6 +149,13 @@ export function RoomContainerMain({
             } else {
               me?.setMicrophoneEnabled(!data.mute);
             }
+          }
+        }
+
+        if (data.type === 'KICK_OUT_PARTICIPANT') {
+          const me = dataRef.current.localParticipant;
+          if (data.targetIdentity === me?.identity) {
+            dataRef.current.onLeaveRoom?.();
           }
         }
       } catch (err) {
