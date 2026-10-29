@@ -30,6 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { ButtonRelationshipToggle } from '@/components/buttons';
 import ButtonBlockUser from '@/components/buttons/button-block-user';
 import ButtonReportUser from '@/components/buttons/button-report-user';
+import { useKickUserMutation } from '@/core/apis';
 import { useCredentials, useRoomTools } from '@/core/slices';
 import { ParticipantStageType } from '@/types/type-room';
 import {
@@ -44,7 +45,6 @@ interface RoomUserControllerRemoteProps {
   onVolumeChange?: (userId: string, volume: number) => void;
   onToggleDeafen?: (userId: string) => void;
   onShare?: (userId: string) => void;
-  onKickParticipant?: (userId: string) => void;
   onRateUser?: (userId: string, rating: number, levelFeedback: string) => void;
   onClose: () => void;
   onLocalVolumeTracked?: (volume: number) => void;
@@ -56,7 +56,6 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   onVolumeChange,
   onToggleDeafen,
   onShare,
-  onKickParticipant,
   onClose,
   onLocalVolumeTracked,
   onOpenRating,
@@ -69,6 +68,7 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const { room: roomJoined } = useRoomTools();
 
   const userId = String(user.userId);
+  const roomId = String(roomJoined?.roomId);
   const isBlocked = checkIfBlocked(userId);
   const isHost = Boolean(
     currentUser?.userId && currentUser?.userId === String(roomJoined?.host.userId)
@@ -77,6 +77,8 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   const remoteParticipant = useRemoteParticipant(userId);
 
   const [volume, setVolume] = useState<number>(() => getStoredVolume(userId));
+
+  const [kickUser] = useKickUserMutation();
 
   const [isMicMuted, setIsMicMuted] = useState(() => {
     if (!remoteParticipant) return true;
@@ -155,17 +157,9 @@ export const RoomUserControllerRemote: React.FC<RoomUserControllerRemoteProps> =
   };
 
   const handleHostKick = async () => {
-    if (!room?.localParticipant) return;
-    const payload = JSON.stringify({
-      type: 'KICK_OUT_PARTICIPANT',
-      targetIdentity: userId,
-      mute: true,
-    });
-    await room.localParticipant.publishData(new TextEncoder().encode(payload), {
-      reliable: true,
-      topic: 'room_interactions',
-    });
-    onKickParticipant?.(userId);
+    if (!room?.localParticipant || !roomId || !userId) return;
+
+    await kickUser({ targetUserId: userId, targetUserName: user?.name, roomId }).unwrap();
     onClose();
   };
 

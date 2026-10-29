@@ -129,7 +129,7 @@ export const chatApi = createApi({
 
     kickUser: builder.mutation<{ message: string; status: boolean }, KickUserInput>({
       query: (body) => ({
-        url: `room/${body.roomId}/kick`,
+        url: `livekit/${body.roomId}/kick`,
         method: 'POST',
         body,
       }),

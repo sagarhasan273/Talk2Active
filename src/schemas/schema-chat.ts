@@ -36,6 +36,7 @@ export const KickedUserSchema = z.object({
 export const KickUserBodySchema = z.object({
   roomId: z.string(),
   targetUserId: z.string(),
+  targetUserName: z.string(),
   reason: z.string().max(500, 'Reason is too long').optional(),
 });
 
